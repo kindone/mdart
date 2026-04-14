@@ -1,6 +1,7 @@
 {
   "name": "mdart",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "MdArt — markdown-native diagram DSL renderer",
   "type": "module",
   "exports": {
