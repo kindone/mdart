@@ -9,5 +9,5 @@
     "outDir":              "./dist",
     "rootDir":             "./src"
   },
-  "references": [{ "path": "../mdart" }]
+  "references": [{ "path": "../mdart/tsconfig.build.json" }]
 }

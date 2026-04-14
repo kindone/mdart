@@ -26,8 +26,6 @@
   "devDependencies": {
     "mdart": "*",
     "@types/markdown-it": "^14.1.2",
-    "markdown-it": "^14.1.1",
-    "typescript": "^5.9.3",
-    "esbuild": "^0.25.0"
+    "markdown-it": "^14.1.1"
   }
 }

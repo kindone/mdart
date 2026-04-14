@@ -4,6 +4,7 @@
     "lib":              ["ES2022"],
     "module":           "ESNext",
     "moduleResolution": "bundler",
+    "customConditions":  ["development"],
     "strict":           true,
     "skipLibCheck":     true,
     "noEmit":           true

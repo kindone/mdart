@@ -33,8 +33,6 @@
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.2",
     "rehype-stringify": "^10.0.1",
-    "unist-util-visit": "^5.1.0",
-    "typescript": "^5.9.3",
-    "esbuild": "^0.25.0"
+    "unist-util-visit": "^5.1.0"
   }
 }
