@@ -2,11 +2,110 @@
 
 A markdown-native diagram DSL that renders structured diagrams as inline SVG directly from fenced code blocks.
 
-| | | |
-|:---:|:---:|:---:|
-| ![Process](./docs/examples/process.svg) | ![Org chart](./docs/examples/org-chart.svg) | ![Kanban](./docs/examples/kanban.svg) |
-| ![Cycle](./docs/examples/cycle.svg) | ![SWOT](./docs/examples/swot.svg) | ![Gantt](./docs/examples/gantt.svg) |
-| ![Sequence](./docs/examples/sequence.svg) | ![Pyramid](./docs/examples/pyramid.svg) | |
+## Examples
+
+````markdown
+```mdart
+type: chevron-process
+title: Development Lifecycle
+
+Discovery → Design → Build → Test → Deploy
+```
+````
+
+![Process](./docs/examples/process.svg)
+
+---
+
+````markdown
+```mdart
+type: org-chart
+title: Engineering Team
+
+- CTO
+  - Frontend
+  - Backend
+  - Platform
+```
+````
+
+![Org chart](./docs/examples/org-chart.svg)
+
+---
+
+````markdown
+```mdart
+type: kanban
+title: Sprint Board
+
+- Backlog
+  - Write docs
+  - Fix bug #42
+- In Progress
+  - Add tests
+- Done
+  - Initial release
+```
+````
+
+![Kanban](./docs/examples/kanban.svg)
+
+---
+
+````markdown
+```mdart
+type: swot
+title: Product Analysis
+
++ Strong brand recognition
++ Existing distribution network
+- High customer acquisition cost
+- Limited mobile presence
+? Asia-Pacific expansion
+? API partnership programme
+! New low-cost competitor
+! Regulatory changes
+```
+````
+
+![SWOT](./docs/examples/swot.svg)
+
+---
+
+````markdown
+```mdart
+type: sequence
+title: Auth Flow
+
+- Browser
+  → API: POST /login
+- API
+  → DB: validate credentials
+- DB
+  → API: user record
+- API
+  → Browser: 200 + JWT
+```
+````
+
+![Sequence](./docs/examples/sequence.svg)
+
+---
+
+````markdown
+```mdart
+type: gantt-lite
+title: Q3 Roadmap
+
+- Research     [wk1–wk2]
+- Design       [wk2–wk4]
+- Development  [wk3–wk8]
+- Testing      [wk7–wk9]
+* Launch       [wk10]
+```
+````
+
+![Gantt](./docs/examples/gantt.svg)
 
 ## Packages
 
@@ -71,6 +170,9 @@ npm run test:all
 
 # Build all packages
 npm run build
+
+# Regenerate example SVGs after renderer changes
+npm run gen-examples
 ```
 
 ## License

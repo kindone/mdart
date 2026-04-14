@@ -2,7 +2,16 @@
 
 [marked](https://marked.js.org) v15 extension that renders `mdart` fenced code blocks as inline SVG.
 
-![Process example](../../docs/examples/process.svg)
+````markdown
+```mdart
+type: chevron-process
+title: Development Lifecycle
+
+Discovery → Design → Build → Test → Deploy
+```
+````
+
+![Process](../../docs/examples/process.svg)
 
 ## Install
 

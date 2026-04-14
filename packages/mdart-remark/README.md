@@ -2,7 +2,23 @@
 
 [unified](https://unifiedjs.com)/remark plugin that renders `mdart` fenced code blocks as inline SVG.
 
-![Sequence example](../../docs/examples/sequence.svg)
+````markdown
+```mdart
+type: sequence
+title: Auth Flow
+
+- Browser
+  → API: POST /login
+- API
+  → DB: validate credentials
+- DB
+  → API: user record
+- API
+  → Browser: 200 + JWT
+```
+````
+
+![Sequence](../../docs/examples/sequence.svg)
 
 ## Install
 

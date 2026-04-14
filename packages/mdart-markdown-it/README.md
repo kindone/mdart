@@ -2,7 +2,16 @@
 
 [markdown-it](https://github.com/markdown-it/markdown-it) v14 plugin that renders `mdart` fenced code blocks as inline SVG.
 
-![Cycle example](../../docs/examples/cycle.svg)
+````markdown
+```mdart
+type: cycle
+title: Build–Measure–Learn
+
+Plan → Build → Measure → Learn
+```
+````
+
+![Cycle](../../docs/examples/cycle.svg)
 
 ## Install
 

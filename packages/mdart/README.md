@@ -2,7 +2,19 @@
 
 Core renderer and parser for the MdArt diagram DSL.
 
-![Org chart example](../../docs/examples/org-chart.svg)
+````markdown
+```mdart
+type: org-chart
+title: Engineering Team
+
+- CTO
+  - Frontend
+  - Backend
+  - Platform
+```
+````
+
+![Org chart](../../docs/examples/org-chart.svg)
 
 ## Install
 
