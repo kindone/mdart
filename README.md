@@ -2,10 +2,11 @@
 
 A markdown-native diagram DSL that renders structured diagrams as inline SVG directly from fenced code blocks.
 
-```mdart
-type: process
-Discovery → Design → Build → Test → Deploy
-```
+| | | |
+|:---:|:---:|:---:|
+| ![Process](./docs/examples/process.svg) | ![Org chart](./docs/examples/org-chart.svg) | ![Kanban](./docs/examples/kanban.svg) |
+| ![Cycle](./docs/examples/cycle.svg) | ![SWOT](./docs/examples/swot.svg) | ![Gantt](./docs/examples/gantt.svg) |
+| ![Sequence](./docs/examples/sequence.svg) | ![Pyramid](./docs/examples/pyramid.svg) | |
 
 ## Packages
 

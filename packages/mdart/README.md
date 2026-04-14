@@ -2,6 +2,8 @@
 
 Core renderer and parser for the MdArt diagram DSL.
 
+![Org chart example](../../docs/examples/org-chart.svg)
+
 ## Install
 
 ```bash

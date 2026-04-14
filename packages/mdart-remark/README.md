@@ -2,6 +2,8 @@
 
 [unified](https://unifiedjs.com)/remark plugin that renders `mdart` fenced code blocks as inline SVG.
 
+![Sequence example](../../docs/examples/sequence.svg)
+
 ## Install
 
 ```bash

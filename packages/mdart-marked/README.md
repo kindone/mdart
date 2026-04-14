@@ -2,6 +2,8 @@
 
 [marked](https://marked.js.org) v15 extension that renders `mdart` fenced code blocks as inline SVG.
 
+![Process example](../../docs/examples/process.svg)
+
 ## Install
 
 ```bash

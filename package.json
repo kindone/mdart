@@ -10,7 +10,8 @@
     "build":         "npm run build --workspace=packages/mdart && npm run build --workspace=packages/mdart-marked && npm run build --workspace=packages/mdart-markdown-it && npm run build --workspace=packages/mdart-remark",
     "check":         "npm run check --workspaces --if-present",
     "test":          "npm run test --workspace=packages/mdart",
-    "test:all":      "npm run test --workspaces --if-present"
+    "test:all":      "npm run test --workspaces --if-present",
+    "gen-examples":  "node scripts/gen-examples.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
