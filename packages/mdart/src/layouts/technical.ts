@@ -190,10 +190,13 @@ function renderNetwork(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const n = allLabels.length
   const W = 580, H = 420
-  const cx = W / 2, cy = H / 2
-  // Scale radius to fit more nodes; clamp between 100–200
-  const R = Math.min(200, Math.max(100, 80 + n * 18))
+  const TITLE_H_net = spec.title ? 30 : 8
+  const cx = W / 2, cy = (H + TITLE_H_net) / 2
   const NODE_W = 104, NODE_H = 30
+  // Scale radius to fit more nodes; constrain so nodes don't clip title or edges
+  const maxRH = cy - TITLE_H_net - NODE_H / 2 - 12  // vertical clearance below title
+  const maxRW = cx - NODE_W / 2 - 8                  // horizontal clearance
+  const R = Math.min(maxRH, maxRW, Math.max(100, 80 + n * 18))
 
   // Position all nodes in a circle
   const positions = allLabels.map((_, i) => {
@@ -411,10 +414,19 @@ function renderStateMachine(spec: MdArtSpec, theme: MdArtTheme): string {
     </marker>
   </defs>`)
 
+  // Pre-scan to detect bidirectional pairs so we can curve them apart
+  const transitionSet = new Set<string>()
+  states.forEach((state, si) => {
+    state.flowChildren.forEach(fc => {
+      const ti = stateIdx.get(fc.label) ?? -1
+      if (ti >= 0 && si !== ti) transitionSet.add(`${si}-${ti}`)
+    })
+  })
+
   // Transitions (drawn under states)
   states.forEach((state, si) => {
     const src = pos[si]
-    state.flowChildren.forEach((fc, edgeIdx) => {
+    state.flowChildren.forEach((fc) => {
       const ti = stateIdx.get(fc.label) ?? -1
       if (ti < 0) return
       const dst = pos[ti]
@@ -428,6 +440,7 @@ function renderStateMachine(spec: MdArtSpec, theme: MdArtTheme): string {
           fc.value ? `<text x="${(bx + 32).toFixed(1)}" y="${(by - 6).toFixed(1)}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(fc.value, 12)}</text>` : '',
         )
       } else {
+        const isBidi = transitionSet.has(`${ti}-${si}`)
         const dx = dst.x - src.x, dy = dst.y - src.y
         const len = Math.sqrt(dx * dx + dy * dy) || 1
         const nx = dx / len, ny = dy / len
@@ -435,25 +448,39 @@ function renderStateMachine(spec: MdArtSpec, theme: MdArtTheme): string {
         const y1 = src.y + ny * (STATE_H / 2 + 2)
         const x2 = dst.x - nx * (STATE_W / 2 + 10)
         const y2 = dst.y - ny * (STATE_H / 2 + 8)
-        const sign = edgeIdx % 2 === 0 ? 1 : -1
-        const cpx = (x1 + x2) / 2 - ny * 24 * sign
-        const cpy = (y1 + y2) / 2 + nx * 24 * sign
-        const tx = (x1 + x2) / 2 - ny * 12 * sign
-        const ty = (y1 + y2) / 2 + nx * 12 * sign
+        const midX = (x1 + x2) / 2, midY = (y1 + y2) / 2
+        const toCenterX = cx - midX, toCenterY = cy - midY
+        // dot(perp_left, toward_center): perp_left = (-ny, nx)
+        const dot = (-ny) * toCenterX + nx * toCenterY
+        const naturalSign = dot < 0 ? 1 : -1   // positive = outward
+
+        // For bidirectional pairs the natural formula yields identical control points
+        // for both directions (the perpendicular flips exactly cancel). Fix: canonical
+        // direction (si < ti) curves outward as usual; reverse (si > ti) flips to inward.
+        const curveMag = isBidi ? 44 : 30
+        const effectiveSign = (isBidi && si > ti) ? -naturalSign : naturalSign
+
+        const cpx = midX - ny * curveMag * effectiveSign
+        const cpy = midY + nx * curveMag * effectiveSign
+        const labelOff = curveMag - 12
+        const tx = midX - ny * labelOff * effectiveSign
+        const ty = midY + nx * labelOff * effectiveSign
+        const lw = Math.min((fc.value?.length ?? 0) * 5.5 + 8, 90)
         parts.push(
           `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} Q${cpx.toFixed(1)},${cpy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.accent}66" stroke-width="1.5" marker-end="url(#sm-a)"/>`,
+          fc.value ? `<rect x="${(tx - lw / 2).toFixed(1)}" y="${(ty - 9).toFixed(1)}" width="${lw.toFixed(1)}" height="12" rx="3" fill="${theme.surface}" opacity="0.88"/>` : '',
           fc.value ? `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(fc.value, 14)}</text>` : '',
         )
       }
     })
   })
 
-  // Initial-state entry arrow (black dot → first state)
+  // Initial-state entry arrow (filled dot → first state)
   const fp = pos[0]
-  const dotX = fp.x - STATE_W / 2 - 30
+  const dotX = fp.x - STATE_W / 2 - 34
   parts.push(
-    `<circle cx="${dotX.toFixed(1)}" cy="${fp.y.toFixed(1)}" r="6" fill="${theme.text}"/>`,
-    `<line x1="${(dotX + 6).toFixed(1)}" y1="${fp.y.toFixed(1)}" x2="${(fp.x - STATE_W / 2 - 8).toFixed(1)}" y2="${fp.y.toFixed(1)}" stroke="${theme.text}" stroke-width="1.5" marker-end="url(#sm-a)"/>`,
+    `<circle cx="${dotX.toFixed(1)}" cy="${fp.y.toFixed(1)}" r="7" fill="${theme.text}"/>`,
+    `<line x1="${(dotX + 7).toFixed(1)}" y1="${fp.y.toFixed(1)}" x2="${(fp.x - STATE_W / 2 - 6).toFixed(1)}" y2="${fp.y.toFixed(1)}" stroke="${theme.text}" stroke-width="2.5" marker-end="url(#sm-a)"/>`,
   )
 
   // State boxes
@@ -465,7 +492,7 @@ function renderStateMachine(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = isFinal ? `${theme.accent}18` : theme.surface
 
     if (isFinal) {
-      parts.push(`<rect x="${(x - STATE_W/2 - 3).toFixed(1)}" y="${(y - STATE_H/2 - 3).toFixed(1)}" width="${STATE_W + 6}" height="${STATE_H + 6}" rx="8" fill="none" stroke="${theme.accent}44" stroke-width="1"/>`)
+      parts.push(`<rect x="${(x - STATE_W/2 - 4).toFixed(1)}" y="${(y - STATE_H/2 - 4).toFixed(1)}" width="${STATE_W + 8}" height="${STATE_H + 8}" rx="9" fill="none" stroke="${theme.accent}" stroke-width="2"/>`)
     }
     parts.push(
       `<rect x="${(x - STATE_W/2).toFixed(1)}" y="${(y - STATE_H/2).toFixed(1)}" width="${STATE_W}" height="${STATE_H}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,

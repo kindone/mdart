@@ -94,14 +94,17 @@ const BOX_H = 30
 function renderOrgChart(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.items.length === 0) return renderEmpty(theme)
 
-  const W = 640
   const depth = maxDepth(spec.items)
+  const totalLeaves = spec.items.reduce((s, i) => s + countLeaves(i), 0) || 1
+  // Ensure each leaf node has at least BOX_W + 8 px of horizontal space
+  const W = Math.max(640, totalLeaves * (BOX_W + 8) + 80)
   const levelH = spec.type === 'tree' ? 68 : 86
   const TITLE_H = spec.title ? 28 : 10
   const H = Math.max(160, depth * levelH + TITLE_H + 30)
   const startY = TITLE_H + BOX_H / 2
 
-  const nodes = layoutNodes(spec.items, 0, startY, W, levelH)
+  const HPAD = BOX_W / 2 + 4
+  const nodes = layoutNodes(spec.items, HPAD, startY, W - HPAD * 2, levelH)
   const flat = flatNodes(nodes)
 
   const lines: string[] = []
@@ -134,8 +137,8 @@ function renderOrgChart(spec: MdArtSpec, theme: MdArtTheme): string {
 // ── Mind-map (radial) ─────────────────────────────────────────────────────────
 
 function renderMindMap(spec: MdArtSpec, theme: MdArtTheme): string {
-  const W = 640, H = 480
-  const cx = W / 2, cy = H / 2
+  const W = 640, H = 520                 // taller to keep sub-branches in-canvas
+  const cx = W / 2, cy = H / 2          // cy = 260, gives 105px above/below for R1=155 + R2=95
 
   // Determine center label and branches
   let centerLabel: string
@@ -154,15 +157,16 @@ function renderMindMap(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const n = branches.length
   const R1 = 155   // center → branch
-  const R2 = 82    // branch → sub-branch
+  const R2 = 78    // branch → sub-branch (keep inside H=520 canvas at all angles)
 
-  const parts: string[] = []
+  // Separate arrays so lines are always drawn before shapes (shapes cover line endpoints)
+  const lines: string[] = []
+  const shapes: string[] = []
+  const texts: string[] = []
 
-  // Center node
-  parts.push(
-    `<ellipse cx="${cx}" cy="${cy}" rx="64" ry="24" fill="${theme.accent}44" stroke="${theme.accent}" stroke-width="1.5"/>`,
-    `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(centerLabel, 14)}</text>`,
-  )
+  // Center node — opaque fill so edges behind it don't bleed through
+  shapes.push(`<ellipse cx="${cx}" cy="${cy}" rx="64" ry="24" fill="${theme.surface}" stroke="${theme.accent}" stroke-width="1.5"/>`)
+  texts.push(`<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(centerLabel, 16)}</text>`)
 
   for (let i = 0; i < n; i++) {
     const angle = (2 * Math.PI * i / n) - Math.PI / 2
@@ -170,37 +174,33 @@ function renderMindMap(spec: MdArtSpec, theme: MdArtTheme): string {
     const by = cy + R1 * Math.sin(angle)
     const branch = branches[i]
 
-    // Connector from center to branch
-    parts.push(
-      `<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${theme.accent}55" stroke-width="2"/>`
-    )
+    // Connector from center to branch (lines drawn first, behind shapes)
+    lines.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${theme.accent}55" stroke-width="2"/>`)
 
     // Branch node (ellipse)
-    parts.push(
-      `<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="50" ry="20" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1"/>`,
-      `<text x="${bx.toFixed(1)}" y="${(by + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(branch.label, 13)}</text>`,
-    )
+    shapes.push(`<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="50" ry="20" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1"/>`)
+    texts.push(`<text x="${bx.toFixed(1)}" y="${(by + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(branch.label, 13)}</text>`)
 
     // Sub-branches
     const subs = branch.children
     const ns = subs.length
     for (let j = 0; j < ns; j++) {
-      const spread = Math.min(Math.PI * 0.55, Math.max(0.3, (ns - 1) * 0.35))
+      const spread = Math.min(Math.PI * 0.7, Math.max(0.45, (ns - 1) * 0.5))
       const subAngle = ns <= 1
         ? angle
         : angle + (j - (ns - 1) / 2) * (spread / Math.max(ns - 1, 1))
       const sx = bx + R2 * Math.cos(subAngle)
       const sy = by + R2 * Math.sin(subAngle)
 
-      parts.push(
-        `<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.muted}" stroke-width="1" opacity="0.8"/>`,
-        `<text x="${sx.toFixed(1)}" y="${(sy + 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(subs[j].label, 11)}</text>`,
-      )
+      lines.push(`<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.muted}" stroke-width="1" opacity="0.8"/>`)
+      // Sub-branch node: small opaque circle so the edge doesn't terminate on bare text
+      shapes.push(`<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="20" fill="${theme.surface}" stroke="${theme.muted}55" stroke-width="1"/>`)
+      texts.push(`<text x="${sx.toFixed(1)}" y="${(sy + 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(subs[j].label, 11)}</text>`)
     }
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${parts.join('\n  ')}
+  ${[...lines, ...shapes, ...texts].join('\n  ')}
 </svg>`
 }
 

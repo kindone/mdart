@@ -42,19 +42,24 @@ function wrapText(text: string, maxChars: number): string[] {
 
 export function renderProcess(spec: MdArtSpec, theme: MdArtTheme): string {
   switch (spec.type) {
-    case 'funnel':          return renderFunnel(spec, theme)
-    case 'roadmap':         return renderRoadmap(spec, theme)
-    case 'step-down':       return renderStepDown(spec, theme)
-    case 'step-up':         return renderStepUp(spec, theme)
-    case 'circle-process':  return renderCircleProcess(spec, theme)
-    case 'equation':        return renderEquation(spec, theme)
-    case 'bending-process': return renderBendingProcess(spec, theme)
-    case 'segmented-bar':   return renderSegmentedBar(spec, theme)
-    case 'phase-process':   return renderPhaseProcess(spec, theme)
-    case 'timeline-h':      return renderTimelineH(spec, theme)
-    case 'timeline-v':      return renderTimelineV(spec, theme)
-    case 'swimlane':        return renderSwimlane(spec, theme)
-    default:                return renderHorizontalProcess(spec, theme)
+    case 'chevron-process':  return renderChevronProcess(spec, theme)
+    case 'arrow-process':    return renderArrowProcess(spec, theme)
+    case 'circular-process': return renderCircularProcess(spec, theme)
+    case 'waterfall':        return renderWaterfall(spec, theme)
+    case 'snake-process':    return renderBendingProcess(spec, theme)
+    case 'funnel':           return renderFunnel(spec, theme)
+    case 'roadmap':          return renderRoadmap(spec, theme)
+    case 'step-down':        return renderStepDown(spec, theme)
+    case 'step-up':          return renderStepUp(spec, theme)
+    case 'circle-process':   return renderCircleProcess(spec, theme)
+    case 'equation':         return renderEquation(spec, theme)
+    case 'bending-process':  return renderBendingProcess(spec, theme)
+    case 'segmented-bar':    return renderSegmentedBar(spec, theme)
+    case 'phase-process':    return renderPhaseProcess(spec, theme)
+    case 'timeline-h':       return renderTimelineH(spec, theme)
+    case 'timeline-v':       return renderTimelineV(spec, theme)
+    case 'swimlane':         return renderSwimlane(spec, theme)
+    default:                 return renderHorizontalProcess(spec, theme)
   }
 }
 
@@ -281,6 +286,8 @@ function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: boolean)
 
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
+  // Arrowhead marker for L-shaped step connectors
+  parts.push(`<defs><marker id="step-arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="${theme.accent}"/></marker></defs>`)
 
   items.forEach((item, i) => {
     const x = startX + i * (BOX_W + GAP_X)
@@ -295,7 +302,7 @@ function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: boolean)
     parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, Math.floor(BOX_W / 6))}</text>`)
     if (item.value) parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 16).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, Math.floor(BOX_W / 5))}</text>`)
 
-    // Tiny L-shaped connector to next box
+    // L-shaped connector to next box with arrowhead
     if (i < n - 1) {
       const nextY = ascending
         ? titleH + 4 + (n - 2 - i) * (BOX_H + GAP_Y)
@@ -305,7 +312,7 @@ function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: boolean)
       const cornerY = ascending ? y : y + BOX_H
       const nextCornerY = ascending ? nextY + BOX_H : nextY
       const nextX = x + BOX_W + GAP_X
-      parts.push(`<polyline points="${(x + BOX_W).toFixed(1)},${cornerY} ${nextX},${cornerY} ${nextX},${nextCornerY}" fill="none" stroke="${theme.muted}" stroke-width="1.5"/>`)
+      parts.push(`<polyline points="${(x + BOX_W).toFixed(1)},${cornerY} ${nextX},${cornerY} ${nextX},${nextCornerY}" fill="none" stroke="${theme.accent}cc" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#step-arr)"/>`)
     }
   })
   return svgWrap(W, H, theme, parts)
@@ -405,9 +412,10 @@ function renderBendingProcess(spec: MdArtSpec, theme: MdArtTheme): string {
   const H = titleH + rows * (BOX_H + ROW_GAP) + 8
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
+  // bp-r with orient="auto" always points forward along the path direction,
+  // so it works correctly for both L→R rows and R→L rows without a separate bp-l marker.
   parts.push(`<defs>
-    <marker id="bp-r" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0,0 6,3 0,6" fill="${theme.muted}"/></marker>
-    <marker id="bp-l" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><polygon points="6,0 0,3 6,6" fill="${theme.muted}"/></marker>
+    <marker id="bp-r" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="${theme.accent}"/></marker>
   </defs>`)
 
   const positions = items.map((_, i) => {
@@ -432,17 +440,18 @@ function renderBendingProcess(spec: MdArtSpec, theme: MdArtTheme): string {
       if (sameRow) {
         const row = Math.floor(i / COLS)
         const goRight = row % 2 === 0
-        const marker = goRight ? 'url(#bp-r)' : 'url(#bp-l)'
+        // bp-r with orient="auto" is always forward-pointing regardless of travel direction
         const x1 = goRight ? x + BOX_W + 2 : x - 2
         const x2 = goRight ? next.x - 4 : next.x + BOX_W + 4
-        parts.push(`<line x1="${x1.toFixed(1)}" y1="${(y + BOX_H / 2).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${(y + BOX_H / 2).toFixed(1)}" stroke="${theme.muted}" stroke-width="1.2" marker-end="${marker}"/>`)
+        parts.push(`<line x1="${x1.toFixed(1)}" y1="${(y + BOX_H / 2).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${(y + BOX_H / 2).toFixed(1)}" stroke="${theme.accent}99" stroke-width="1.5" marker-end="url(#bp-r)"/>`)
       } else {
         // U-turn: down from end of current row, across, up (or down) to next row
         const row = Math.floor(i / COLS)
         const goRight = row % 2 === 0
-        const turnX = goRight ? x + BOX_W + 10 : x - 10
+        const turnX = goRight ? Math.min(x + BOX_W + 18, W - 6) : Math.max(x - 18, 6)
         const midY = y + BOX_H + ROW_GAP / 2
-        parts.push(`<path d="M${(x + (goRight ? BOX_W : 0)).toFixed(1)},${(y + BOX_H / 2).toFixed(1)} Q${turnX.toFixed(1)},${(y + BOX_H / 2).toFixed(1)} ${turnX.toFixed(1)},${midY.toFixed(1)} Q${turnX.toFixed(1)},${(next.y + BOX_H / 2).toFixed(1)} ${(next.x + (goRight ? BOX_W : 0)).toFixed(1)},${(next.y + BOX_H / 2).toFixed(1)}" fill="none" stroke="${theme.muted}" stroke-width="1.2" marker-end="${goRight ? 'url(#bp-l)' : 'url(#bp-r)'}"/>`)
+        // Always use bp-r — orient="auto" rotates it to match path direction at endpoint
+        parts.push(`<path d="M${(x + (goRight ? BOX_W : 0)).toFixed(1)},${(y + BOX_H / 2).toFixed(1)} Q${turnX.toFixed(1)},${(y + BOX_H / 2).toFixed(1)} ${turnX.toFixed(1)},${midY.toFixed(1)} Q${turnX.toFixed(1)},${(next.y + BOX_H / 2).toFixed(1)} ${(next.x + (goRight ? BOX_W : 0)).toFixed(1)},${(next.y + BOX_H / 2).toFixed(1)}" fill="none" stroke="${theme.accent}88" stroke-width="2" marker-end="url(#bp-r)"/>`)
       }
     }
   })
@@ -633,6 +642,216 @@ function renderSwimlane(spec: MdArtSpec, theme: MdArtTheme): string {
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
+
+// ── Chevron process ───────────────────────────────────────────────────────────
+// Classic overlapping chevron/arrow shapes in a row
+
+function renderChevronProcess(spec: MdArtSpec, theme: MdArtTheme): string {
+  const items = spec.items
+  if (items.length === 0) return renderEmpty(theme)
+  const n = items.length
+  if (n > 8) return renderHorizontalProcess(spec, theme)
+
+  const W = 600
+  const titleH = spec.title ? 28 : 8
+  const chevH = 54
+  const H = chevH + titleH + 28
+  const P = 20                                       // point depth
+  const GAP = 4                                      // gap between shapes
+  const chevW = Math.floor((W - 20 - (n - 1) * GAP) / n)
+  const startX = Math.floor((W - (n * chevW + (n - 1) * GAP)) / 2)
+  const y = titleH + 10
+  const cy = y + chevH / 2
+
+  const parts: string[] = []
+  if (spec.title) parts.push(titleEl(W, spec.title, theme))
+
+  items.forEach((item, i) => {
+    const x = startX + i * (chevW + GAP)
+    const t = n > 1 ? i / (n - 1) : 0
+    const fill = lerpColor(theme.primary, theme.secondary, t)
+    const isFirst = i === 0
+    const isLast = i === n - 1
+
+    let pts: string
+    if (n === 1) {
+      pts = `${x},${y} ${x + chevW},${y} ${x + chevW},${y + chevH} ${x},${y + chevH}`
+    } else if (isFirst) {
+      pts = `${x},${y} ${x + chevW - P},${y} ${x + chevW},${cy} ${x + chevW - P},${y + chevH} ${x},${y + chevH}`
+    } else if (isLast) {
+      pts = `${x},${y} ${x + chevW},${y} ${x + chevW},${y + chevH} ${x},${y + chevH} ${x + P},${cy}`
+    } else {
+      pts = `${x},${y} ${x + chevW - P},${y} ${x + chevW},${cy} ${x + chevW - P},${y + chevH} ${x},${y + chevH} ${x + P},${cy}`
+    }
+    parts.push(`<polygon points="${pts}" fill="${fill}ee" stroke="${theme.bg}" stroke-width="2.5"/>`)
+
+    // Text centered in the non-pointed body area
+    const bodyX = x + (isFirst ? 0 : P / 2)
+    const bodyW = chevW - (isFirst ? P : 0) - (isLast ? 0 : P)
+    const tx = bodyX + bodyW / 2
+    const lines = wrapText(item.label, Math.max(4, Math.floor(bodyW / 7)))
+    lines.slice(0, 2).forEach((line, li) => {
+      const ty = lines.length === 1 ? cy + 4 : cy + (li === 0 ? -5 : 9)
+      parts.push(`<text x="${tx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`)
+    })
+  })
+
+  return svgWrap(W, H, theme, parts)
+}
+
+// ── Arrow process ─────────────────────────────────────────────────────────────
+// Tall bordered boxes with oversized bold arrow connectors
+
+function renderArrowProcess(spec: MdArtSpec, theme: MdArtTheme): string {
+  const items = spec.items
+  if (items.length === 0) return renderEmpty(theme)
+  const n = items.length
+  if (n > 6) return renderVerticalProcess(spec, theme)
+
+  const W = 600
+  const titleH = spec.title ? 28 : 8
+  const ARROW_W = 30
+  const BOX_H = 70
+  const BOX_W = Math.min(116, Math.floor((W - 20 - (n - 1) * ARROW_W) / n))
+  const H = BOX_H + titleH + 32
+  const totalW = n * BOX_W + (n - 1) * ARROW_W
+  const startX = (W - totalW) / 2
+  const bY = titleH + 14
+
+  const parts: string[] = []
+  if (spec.title) parts.push(titleEl(W, spec.title, theme))
+
+  items.forEach((item, i) => {
+    const x = startX + i * (BOX_W + ARROW_W)
+    const t = n > 1 ? i / (n - 1) : 0
+    const fill = lerpColor(theme.primary, theme.secondary, t)
+    parts.push(`<rect x="${x.toFixed(1)}" y="${bY}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="2"/>`)
+    const cy = bY + BOX_H / 2
+    const lines = wrapText(item.label, Math.floor(BOX_W / 7))
+    lines.slice(0, 3).forEach((line, li) => {
+      const ty = cy + (li - (lines.length - 1) / 2) * 14 + 4
+      parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`)
+    })
+    if (i < n - 1) {
+      const ax = x + BOX_W + 4
+      const arrowH = 22
+      parts.push(`<polygon points="${ax},${(cy - arrowH / 2).toFixed(1)} ${(ax + ARROW_W - 8).toFixed(1)},${(cy - arrowH / 2).toFixed(1)} ${(ax + ARROW_W - 8).toFixed(1)},${(cy - arrowH).toFixed(1)} ${(ax + ARROW_W - 2).toFixed(1)},${cy.toFixed(1)} ${(ax + ARROW_W - 8).toFixed(1)},${(cy + arrowH).toFixed(1)} ${(ax + ARROW_W - 8).toFixed(1)},${(cy + arrowH / 2).toFixed(1)} ${ax},${(cy + arrowH / 2).toFixed(1)}" fill="${fill}99"/>`)
+    }
+  })
+
+  return svgWrap(W, H, theme, parts)
+}
+
+// ── Circular process ──────────────────────────────────────────────────────────
+// Numbered steps arranged around a circle with arc arrows between them
+
+function renderCircularProcess(spec: MdArtSpec, theme: MdArtTheme): string {
+  const items = spec.items
+  if (items.length === 0) return renderEmpty(theme)
+  const n = items.length
+
+  const W = 500, H = 440
+  const titleH = spec.title ? 28 : 8
+  const cx = W / 2, cy = titleH + (H - titleH) / 2
+  const R = Math.min(155, (H - titleH - 48) / 2)
+  const BOX_W = Math.min(100, Math.floor(2 * Math.PI * R / n * 0.72))
+  const BOX_H = 34
+
+  const parts: string[] = []
+  if (spec.title) parts.push(titleEl(W, spec.title, theme))
+  parts.push(`<defs><marker id="cp-arr" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${theme.accent}bb"/></marker></defs>`)
+
+  // Arc arrows between nodes (drawn first, behind boxes)
+  for (let i = 0; i < n; i++) {
+    const a1 = (2 * Math.PI * i / n) - Math.PI / 2
+    const a2 = (2 * Math.PI * ((i + 1) % n) / n) - Math.PI / 2
+    const angOff = Math.min(0.45, (Math.PI / n) * 0.7)
+    const sa = a1 + angOff, ea = a2 - angOff
+    const arcLen = ((ea - sa + 2 * Math.PI) % (2 * Math.PI))
+    if (arcLen < 0.1) continue
+    const x1 = cx + R * Math.cos(sa), y1 = cy + R * Math.sin(sa)
+    const x2 = cx + R * Math.cos(ea), y2 = cy + R * Math.sin(ea)
+    const largeArc = arcLen > Math.PI ? 1 : 0
+    parts.push(`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${largeArc},1 ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.accent}66" stroke-width="1.8" marker-end="url(#cp-arr)"/>`)
+  }
+
+  // Step boxes
+  items.forEach((item, i) => {
+    const angle = (2 * Math.PI * i / n) - Math.PI / 2
+    const bx = cx + R * Math.cos(angle)
+    const by = cy + R * Math.sin(angle)
+    const t = n > 1 ? i / (n - 1) : 0
+    const fill = lerpColor(theme.primary, theme.secondary, t)
+    parts.push(`<rect x="${(bx - BOX_W / 2).toFixed(1)}" y="${(by - BOX_H / 2).toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="6" fill="${fill}33" stroke="${fill}" stroke-width="1.8"/>`)
+    // Step number
+    parts.push(`<text x="${(bx - BOX_W / 2 + 9).toFixed(1)}" y="${(by - BOX_H / 2 + 11).toFixed(1)}" font-size="8.5" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${i + 1}</text>`)
+    const lines = wrapText(item.label, Math.floor(BOX_W / 7))
+    lines.slice(0, 2).forEach((line, li) => {
+      const ty = lines.length === 1 ? by + 4 : by + (li === 0 ? -5 : 8)
+      parts.push(`<text x="${bx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`)
+    })
+  })
+
+  return svgWrap(W, H, theme, parts)
+}
+
+// ── Waterfall process ─────────────────────────────────────────────────────────
+// Boxes cascading in a staircase descending left-to-right
+
+function renderWaterfall(spec: MdArtSpec, theme: MdArtTheme): string {
+  const items = spec.items
+  if (items.length === 0) return renderEmpty(theme)
+  const n = items.length
+
+  const BOX_H = 40
+  const STEP_Y = 24
+  const titleH = spec.title ? 28 : 8
+  // BOX_W chosen so steps never overlap: STEP_X = BOX_W + 8 (clear gap)
+  // Total diagram width = (n-1)*(BOX_W+8) + BOX_W + 40 = n*BOX_W + (n-1)*8 + 40
+  // Solve for BOX_W given W=560: BOX_W <= (560-40-(n-1)*8) / n
+  const BOX_W = Math.min(110, Math.floor((520 - (n - 1) * 8) / Math.max(n, 1)))
+  const STEP_X = BOX_W + 8
+  const totalH = STEP_Y * (n - 1) + BOX_H
+  const diagW = (n - 1) * STEP_X + BOX_W + 40
+  const W = Math.max(560, diagW)
+  const H = totalH + titleH + 36
+  const startX = (W - (STEP_X * (n - 1) + BOX_W)) / 2
+  const startY = titleH + 14
+
+  const parts: string[] = []
+  if (spec.title) parts.push(titleEl(W, spec.title, theme))
+
+  // Connector lines (drawn behind boxes)
+  for (let i = 0; i < n - 1; i++) {
+    const x1 = startX + i * STEP_X + BOX_W
+    const y1 = startY + i * STEP_Y + BOX_H / 2
+    const x2 = startX + (i + 1) * STEP_X
+    const y2 = startY + (i + 1) * STEP_Y + BOX_H / 2
+    const t = n > 1 ? i / (n - 1) : 0
+    const fill = lerpColor(theme.primary, theme.secondary, t)
+    parts.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${(x1 + 4).toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${fill}99" stroke-width="1.5"/>`)
+    parts.push(`<line x1="${(x1 + 4).toFixed(1)}" y1="${y1.toFixed(1)}" x2="${(x1 + 4).toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${fill}55" stroke-width="1.5" stroke-dasharray="3,3"/>`)
+    parts.push(`<line x1="${(x1 + 4).toFixed(1)}" y1="${y2.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${fill}99" stroke-width="1.5"/>`)
+  }
+
+  items.forEach((item, i) => {
+    const x = startX + i * STEP_X
+    const y = startY + i * STEP_Y
+    const t = n > 1 ? i / (n - 1) : 0
+    const fill = lerpColor(theme.primary, theme.secondary, t)
+    parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.5"/>`)
+    const lines = wrapText(item.label, Math.floor(BOX_W / 7))
+    const cy = y + BOX_H / 2
+    lines.slice(0, 2).forEach((line, li) => {
+      const ty = lines.length === 1 ? cy + 4 : cy + (li === 0 ? -5 : 8)
+      parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`)
+    })
+  })
+
+  return svgWrap(W, H, theme, parts)
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function truncate(s: string, max: number): string {
   return s.length > max ? s.slice(0, max - 1) + '…' : s
