@@ -2,58 +2,78 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>MdArt Renderer Lab</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; overflow: hidden; background: #1e1e1e; color: #d4d4d4; font-family: system-ui, sans-serif; }
+html { height: 100%; }
+body {
+  height: 100dvh; height: 100vh;
+  overflow: hidden;
+  background: #1e1e1e; color: #d4d4d4;
+  font-family: system-ui, sans-serif;
+  display: flex; flex-direction: column;
+}
 
 /* ── Toolbar ── */
 .toolbar {
   display: flex; align-items: center; gap: 8px;
   height: 44px; padding: 0 12px;
   background: #2d2d2d; border-bottom: 1px solid #3c3c3c;
-  flex-shrink: 0;
+  flex-shrink: 0; overflow: hidden;
 }
-.toolbar-title { font-size: 13px; font-weight: 600; color: #cccccc; margin-right: 4px; }
+.toolbar-title { font-size: 13px; font-weight: 600; color: #cccccc; flex-shrink: 0; }
 .toolbar select, .toolbar button {
   height: 28px; border-radius: 4px; font-size: 12px; cursor: pointer; outline: none;
 }
 .toolbar select {
-  background: #3c3c3c; color: #d4d4d4; border: 1px solid #555; padding: 0 8px; min-width: 140px;
+  background: #3c3c3c; color: #d4d4d4; border: 1px solid #555; padding: 0 8px; min-width: 130px;
 }
 .toolbar select:hover, .toolbar select:focus { border-color: #007acc; }
 .btn-apply {
-  background: #007acc; color: #fff; border: none; padding: 0 14px; font-weight: 600;
-  display: flex; align-items: center; gap: 5px;
+  background: #007acc; color: #fff; border: none; padding: 0 12px; font-weight: 600;
+  display: flex; align-items: center; gap: 4px; white-space: nowrap; flex-shrink: 0;
 }
 .btn-apply:hover { background: #0098ff; }
 .btn-apply:active { background: #005fa3; }
 .btn-apply:disabled { background: #555; color: #888; cursor: not-allowed; }
 .btn-reset {
-  background: transparent; color: #888; border: 1px solid #555; padding: 0 10px;
+  background: transparent; color: #888; border: 1px solid #555; padding: 0 10px; flex-shrink: 0;
 }
 .btn-reset:hover { background: #3c3c3c; color: #d4d4d4; border-color: #777; }
-.sep { flex: 1; }
+.sep { flex: 1; min-width: 0; }
 .status {
   font-size: 11px; font-family: monospace;
   padding: 3px 8px; border-radius: 3px;
   background: #2d2d2d; border: 1px solid #3c3c3c;
-  min-width: 120px; text-align: center;
+  white-space: nowrap; flex-shrink: 0;
 }
-.status.idle    { color: #6a9955; border-color: #3c5e3c; }
-.status.busy    { color: #dcdcaa; border-color: #5e5e3c; }
-.status.ok      { color: #4ec9b0; border-color: #3c5e5a; }
-.status.error   { color: #f44747; border-color: #5e3c3c; }
+.status.idle  { color: #6a9955; border-color: #3c5e3c; }
+.status.busy  { color: #dcdcaa; border-color: #5e5e3c; }
+.status.ok    { color: #4ec9b0; border-color: #3c5e5a; }
+.status.error { color: #f44747; border-color: #5e3c3c; }
 .nav-link {
-  font-size: 11px; color: #569cd6; text-decoration: none; padding: 3px 6px;
-  border-radius: 3px;
+  font-size: 11px; color: #569cd6; text-decoration: none;
+  padding: 3px 6px; border-radius: 3px; white-space: nowrap; flex-shrink: 0;
 }
 .nav-link:hover { background: #3c3c3c; }
 
-/* ── Main layout ── */
+/* ── Mobile tab bar ── */
+.mobile-tabs {
+  display: none;
+  background: #252526; border-bottom: 1px solid #3c3c3c; flex-shrink: 0;
+}
+.mobile-tab {
+  flex: 1; height: 38px; background: transparent; color: #858585;
+  border: none; border-bottom: 2px solid transparent; cursor: pointer;
+  font-size: 13px; font-weight: 500; transition: color .15s;
+}
+.mobile-tab.active { color: #007acc; border-bottom-color: #007acc; }
+.mobile-tab:hover:not(.active) { color: #d4d4d4; }
+
+/* ── Main area ── */
 .main {
-  display: flex; height: calc(100vh - 44px); overflow: hidden;
+  flex: 1; display: flex; overflow: hidden; min-height: 0;
 }
 
 /* ── Left: Monaco editor ── */
@@ -63,24 +83,19 @@ html, body { height: 100%; overflow: hidden; background: #1e1e1e; color: #d4d4d4
 }
 .editor-header {
   display: flex; align-items: center; gap: 6px;
-  height: 32px; padding: 0 12px; background: #252526; border-bottom: 1px solid #3c3c3c;
-  font-size: 11px; color: #858585; flex-shrink: 0;
+  height: 32px; padding: 0 10px; background: #252526; border-bottom: 1px solid #3c3c3c;
+  font-size: 11px; color: #858585; flex-shrink: 0; overflow: hidden;
 }
-.editor-header .filename { color: #d4d4d4; font-weight: 500; font-family: monospace; }
-.dirty-dot { width: 8px; height: 8px; border-radius: 50%; background: #e5c07b; display: none; }
+.editor-header .filename { color: #d4d4d4; font-weight: 500; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dirty-dot { width: 8px; height: 8px; border-radius: 50%; background: #e5c07b; display: none; flex-shrink: 0; }
 .dirty-dot.visible { display: inline-block; }
-#monaco-container { flex: 1; overflow: hidden; }
+#monaco-container { flex: 1; overflow: hidden; min-height: 0; }
 
-/* ── Right: source + preview ── */
-.right-col {
-  flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0;
-}
+/* ── Right col ── */
+.right-col { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
 /* mdart source pane */
-.source-pane {
-  display: flex; flex-direction: column; flex-shrink: 0;
-  border-bottom: 1px solid #3c3c3c;
-}
+.source-pane { display: flex; flex-direction: column; flex-shrink: 0; border-bottom: 1px solid #3c3c3c; }
 .pane-header {
   display: flex; align-items: center; justify-content: space-between;
   height: 28px; padding: 0 10px; background: #252526; border-bottom: 1px solid #3c3c3c;
@@ -108,9 +123,7 @@ html, body { height: 100%; overflow: hidden; background: #1e1e1e; color: #d4d4d4
 #mdart-source::selection { background: rgba(38,79,120,.6); }
 
 /* Preview pane */
-.preview-pane {
-  flex: 1; display: flex; flex-direction: column; overflow: hidden;
-}
+.preview-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .preview-body {
   flex: 1; overflow: auto; display: flex;
   align-items: flex-start; justify-content: center;
@@ -134,6 +147,59 @@ html, body { height: 100%; overflow: hidden; background: #1e1e1e; color: #d4d4d4
 #loading-overlay .loader-text { color: #858585; font-size: 13px; }
 .spinner { width: 32px; height: 32px; border: 3px solid #3c3c3c; border-top-color: #007acc; border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Mobile overrides (< 768px) ── */
+@media (max-width: 767px) {
+  /* Show mobile tabs, hide desktop-only hints */
+  .mobile-tabs { display: flex; }
+  .desktop-only { display: none !important; }
+
+  /* Toolbar: tighter */
+  .toolbar { gap: 6px; padding: 0 10px; }
+  .toolbar-title { font-size: 12px; }
+  #file-select { display: none; }   /* file selection via editor-header on mobile */
+  .btn-apply { padding: 0 10px; font-size: 12px; }
+  .btn-reset { display: none; }     /* reset via editor-header action on mobile */
+  .status { min-width: 0; font-size: 10px; padding: 2px 6px; }
+
+  /* Main: stack panes, one visible at a time */
+  .main { position: relative; }
+
+  .editor-col {
+    position: absolute; inset: 0; width: 100%;
+    border-right: none;
+    display: none;
+  }
+  .editor-col.mob-active { display: flex; }
+
+  /* right-col becomes a positioning context */
+  .right-col {
+    position: absolute; inset: 0;
+    width: 100%; flex: unset;
+  }
+
+  .source-pane {
+    position: absolute; inset: 0;
+    display: none; flex-shrink: unset; border-bottom: none;
+  }
+  .source-pane.mob-active { display: flex; }
+
+  /* Source textarea fills the pane on mobile */
+  #mdart-source { flex: 1; height: unset; font-size: 14px; }
+
+  .preview-pane {
+    position: absolute; inset: 0;
+    display: none; flex: unset;
+  }
+  .preview-pane.mob-active { display: flex; }
+
+  /* Editor header: show file select inline on mobile */
+  .editor-header { height: 40px; }
+  #mobile-file-select { display: block; }
+
+  /* Preview: more padding for mobile */
+  .preview-body { padding: 12px; }
+}
 </style>
 </head>
 <body>
@@ -160,35 +226,57 @@ html, body { height: 100%; overflow: hidden; background: #1e1e1e; color: #d4d4d4
     <option value="theme.ts">theme.ts</option>
   </select>
   <button class="btn-apply" id="btn-apply" title="Write file → esbuild → render  (Ctrl+Enter)">
-    ▶ Apply &amp; Render
+    ▶ Apply
   </button>
-  <button class="btn-reset" id="btn-reset" title="Restore original file content">↺ Reset</button>
+  <button class="btn-reset desktop-only" id="btn-reset" title="Restore original file content">↺ Reset</button>
   <span class="sep"></span>
   <span class="status idle" id="status">ready</span>
   <a href="/" class="nav-link">← Playground</a>
 </div>
 
+<!-- Mobile tab bar -->
+<div class="mobile-tabs">
+  <button class="mobile-tab" data-pane="editor">Renderer</button>
+  <button class="mobile-tab active" data-pane="source">Source</button>
+  <button class="mobile-tab" data-pane="preview">Preview</button>
+</div>
+
 <!-- Main -->
 <div class="main">
   <!-- Left: Monaco -->
-  <div class="editor-col">
+  <div class="editor-col" id="pane-editor">
     <div class="editor-header">
       <span class="filename" id="editor-filename">layouts/process.ts</span>
       <span class="dirty-dot" id="dirty-dot" title="Unsaved changes"></span>
-      <span style="flex:1"></span>
-      <span style="font-size:10px;color:#555">Ctrl+Enter to apply</span>
+      <span style="flex:1;min-width:4px"></span>
+      <!-- Mobile: file select lives here -->
+      <select id="mobile-file-select" title="Layout file" style="display:none;background:#3c3c3c;color:#d4d4d4;border:1px solid #555;border-radius:3px;font-size:11px;height:22px;padding:0 4px;cursor:pointer;max-width:130px;">
+        <option value="layouts/process.ts">process.ts</option>
+        <option value="layouts/list.ts">list.ts</option>
+        <option value="layouts/cycle.ts">cycle.ts</option>
+        <option value="layouts/matrix.ts">matrix.ts</option>
+        <option value="layouts/hierarchy.ts">hierarchy.ts</option>
+        <option value="layouts/pyramid.ts">pyramid.ts</option>
+        <option value="layouts/relationship.ts">relationship.ts</option>
+        <option value="layouts/statistical.ts">statistical.ts</option>
+        <option value="layouts/planning.ts">planning.ts</option>
+        <option value="layouts/technical.ts">technical.ts</option>
+        <option value="theme.ts">theme.ts</option>
+      </select>
+      <button id="btn-reset-mobile" style="display:none;background:transparent;color:#888;border:1px solid #555;border-radius:3px;font-size:11px;height:22px;padding:0 8px;cursor:pointer;margin-left:4px;" title="Reset">↺</button>
+      <span class="desktop-only" style="font-size:10px;color:#555;margin-left:4px;white-space:nowrap;">Ctrl+Enter</span>
     </div>
     <div id="monaco-container"></div>
   </div>
 
   <!-- Right: source input + preview -->
   <div class="right-col">
-    <div class="source-pane">
+    <div class="source-pane" id="pane-source">
       <div class="pane-header">
         <span>mdart source</span>
-          <select id="example-select" title="Load example">
+        <select id="example-select" title="Load example">
     <option value="">Examples…</option>
-    <optgroup label="Process">
+<optgroup label="Process">
       <option value="process">process</option>
       <option value="chevron-process">chevron-process</option>
       <option value="arrow-process">arrow-process</option>
@@ -310,14 +398,15 @@ html, body { height: 100%; overflow: hidden; background: #1e1e1e; color: #d4d4d4
       <option value="class">class</option>
     </optgroup>
   </select>
+        </select>
         <button class="btn-render-small" id="btn-render-only">▶ Render</button>
       </div>
       <textarea id="mdart-source" spellcheck="false" autocorrect="off"></textarea>
     </div>
-    <div class="preview-pane">
+    <div class="preview-pane" id="pane-preview">
       <div class="pane-header"><span>Preview</span></div>
       <div class="preview-body">
-        <div id="preview-inner"><span class="hint">Apply a renderer change or edit the source to preview</span></div>
+        <div id="preview-inner"><span class="hint">Select an example or apply a renderer change</span></div>
       </div>
     </div>
   </div>
@@ -1232,30 +1321,67 @@ title: Domain Model
   - [+] isValid(): boolean`,
 };
 
-// Default source matches the default file (process.ts)
-const DEFAULT_SOURCE = EXAMPLES['circular-process'];
-
-let monacoEditor = null;
-let originalContent = '';    // content when file was loaded
-let currentFile = 'layouts/process.ts';
-let renderTimer = null;
-
 // ── DOM refs ──────────────────────────────────────────────────────────────────
-const fileSelect    = document.getElementById('file-select');
-const btnApply      = document.getElementById('btn-apply');
-const btnReset      = document.getElementById('btn-reset');
-const btnRenderOnly = document.getElementById('btn-render-only');
-const exampleSelect = document.getElementById('example-select');
-const mdartSource   = document.getElementById('mdart-source');
-const previewInner  = document.getElementById('preview-inner');
-const statusEl      = document.getElementById('status');
-const editorFilename= document.getElementById('editor-filename');
-const dirtyDot      = document.getElementById('dirty-dot');
-const loadingOverlay= document.getElementById('loading-overlay');
+const fileSelect      = document.getElementById('file-select');
+const mobileFileSelect= document.getElementById('mobile-file-select');
+const btnApply        = document.getElementById('btn-apply');
+const btnReset        = document.getElementById('btn-reset');
+const btnResetMobile  = document.getElementById('btn-reset-mobile');
+const btnRenderOnly   = document.getElementById('btn-render-only');
+const exampleSelect   = document.getElementById('example-select');
+const mdartSource     = document.getElementById('mdart-source');
+const previewInner    = document.getElementById('preview-inner');
+const statusEl        = document.getElementById('status');
+const editorFilename  = document.getElementById('editor-filename');
+const dirtyDot        = document.getElementById('dirty-dot');
+const loadingOverlay  = document.getElementById('loading-overlay');
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let monacoEditor  = null;
+let originalContent = '';
+let currentFile   = 'layouts/process.ts';
+let renderTimer   = null;
+
+// ── Mobile tab switching ──────────────────────────────────────────────────────
+const isMobile = () => window.innerWidth < 768;
+
+const paneEls = {
+  editor:  document.getElementById('pane-editor'),
+  source:  document.getElementById('pane-source'),
+  preview: document.getElementById('pane-preview'),
+};
+const mobileTabs = document.querySelectorAll('.mobile-tab');
+
+function showMobilePane(name) {
+  mobileTabs.forEach(b => b.classList.toggle('active', b.dataset.pane === name));
+  Object.entries(paneEls).forEach(([k, el]) => el.classList.toggle('mob-active', k === name));
+  // Monaco needs a layout() call after becoming visible
+  if (name === 'editor' && monacoEditor) setTimeout(() => monacoEditor.layout(), 50);
+}
+
+mobileTabs.forEach(btn => btn.addEventListener('click', () => showMobilePane(btn.dataset.pane)));
+
+// Init mobile state — default to source tab
+if (isMobile()) showMobilePane('source');
+
+// Show/hide mobile-only controls based on viewport
+function applyMobileControls() {
+  const mob = isMobile();
+  mobileFileSelect.style.display  = mob ? 'block' : 'none';
+  btnResetMobile.style.display    = mob ? 'block' : 'none';
+}
+applyMobileControls();
+window.addEventListener('resize', applyMobileControls);
+
+// Keep both file selects in sync
+function syncFileSelects(file) {
+  fileSelect.value       = file;
+  mobileFileSelect.value = file;
+}
 
 // ── Status helpers ────────────────────────────────────────────────────────────
 function setStatus(state, text) {
-  statusEl.className = `status ${state}`;
+  statusEl.className = 'status ' + state;
   statusEl.textContent = text;
 }
 
@@ -1269,28 +1395,30 @@ function updateDirty() {
 async function loadFile(file) {
   setStatus('busy', 'loading…');
   try {
-    const res = await fetch(`/lab/source?file=${encodeURIComponent(file)}`);
+    const res  = await fetch('/lab/source?file=' + encodeURIComponent(file));
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     monacoEditor.setValue(data.content);
     originalContent = data.content;
     currentFile = file;
     editorFilename.textContent = file;
+    syncFileSelects(file);
     updateDirty();
     setStatus('idle', 'ready');
   } catch (err) {
     setStatus('error', 'load error');
-    showError(`Failed to load ${file}:\n${err.message}`);
+    showError('Failed to load ' + file + ':\n' + err.message);
   }
 }
 
 // ── Show SVG / error in preview ──────────────────────────────────────────────
 function showSVG(svg) {
   previewInner.innerHTML = svg;
+  if (isMobile()) showMobilePane('preview');
 }
 
 function showError(msg) {
-  previewInner.innerHTML = `<div class="error-box">${escapeHtml(msg)}</div>`;
+  previewInner.innerHTML = '<div class="error-box">' + escapeHtml(msg) + '</div>';
 }
 
 function escapeHtml(s) {
@@ -1299,14 +1427,13 @@ function escapeHtml(s) {
 
 // ── Apply: write + rebuild + render ──────────────────────────────────────────
 async function applyAndRender() {
-  const code = monacoEditor.getValue();
+  const code   = monacoEditor.getValue();
   const source = mdartSource.value.trim();
-  if (!source) { setStatus('error', 'no mdart source'); return; }
-
+  if (!source) { setStatus('error', 'no source'); return; }
   btnApply.disabled = true;
   setStatus('busy', 'building…');
   try {
-    const res = await fetch('/lab/apply', {
+    const res  = await fetch('/lab/apply', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ file: currentFile, content: code, mdartSource: source }),
@@ -1314,9 +1441,9 @@ async function applyAndRender() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     showSVG(data.svg);
-    originalContent = code;   // Mark as saved
+    originalContent = code;
     updateDirty();
-    setStatus('ok', `ok · ${data.buildMs}ms`);
+    setStatus('ok', 'ok · ' + data.buildMs + 'ms');
   } catch (err) {
     showError(String(err.message ?? err));
     setStatus('error', 'build error');
@@ -1331,14 +1458,14 @@ async function renderOnly() {
   if (!source) return;
   setStatus('busy', 'rendering…');
   try {
-    const res = await fetch('/lab/render', {
+    const res  = await fetch('/lab/render', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mdartSource: source }),
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    showSVG(data.svg);
+    previewInner.innerHTML = data.svg;
     setStatus('ok', 'rendered');
   } catch (err) {
     showError(String(err.message ?? err));
@@ -1351,15 +1478,20 @@ function scheduleRender() {
   renderTimer = setTimeout(renderOnly, 350);
 }
 
-// ── Wire up events ────────────────────────────────────────────────────────────
+// ── Wire events ───────────────────────────────────────────────────────────────
 fileSelect.addEventListener('change', () => loadFile(fileSelect.value));
+mobileFileSelect.addEventListener('change', () => loadFile(mobileFileSelect.value));
 btnApply.addEventListener('click', applyAndRender);
-btnReset.addEventListener('click', () => {
+
+function doReset() {
   if (!originalContent) return;
   monacoEditor.setValue(originalContent);
   updateDirty();
   setStatus('idle', 'reset');
-});
+}
+btnReset.addEventListener('click', doReset);
+btnResetMobile.addEventListener('click', doReset);
+
 btnRenderOnly.addEventListener('click', renderOnly);
 mdartSource.addEventListener('input', scheduleRender);
 mdartSource.addEventListener('keydown', e => {
@@ -1371,6 +1503,7 @@ mdartSource.addEventListener('keydown', e => {
     scheduleRender();
   }
 });
+
 // Map every layout type to its renderer file
 const TYPE_TO_FILE = {
   // process family
@@ -1486,9 +1619,7 @@ const TYPE_TO_FILE = {
   'class':         'layouts/technical.ts',
 };
 
-exampleSelect.addEventListener('change', async () => {
-  const key = exampleSelect.value;
-  if (!key || !EXAMPLES[key]) return;
+exampleSelect.addEventListener
   exampleSelect.value = '';
 
   // Load example source
@@ -1497,7 +1628,6 @@ exampleSelect.addEventListener('change', async () => {
   // Auto-switch Monaco to the corresponding renderer file
   const targetFile = TYPE_TO_FILE[key];
   if (targetFile && targetFile !== currentFile) {
-    fileSelect.value = targetFile;
     await loadFile(targetFile);
   }
 
@@ -1507,16 +1637,15 @@ exampleSelect.addEventListener('change', async () => {
 // ── Monaco init ───────────────────────────────────────────────────────────────
 require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs' } });
 require(['vs/editor/editor.main'], async function() {
-  // TypeScript compiler options — relax to allow experimentation
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
     target: monaco.languages.typescript.ScriptTarget.ES2022,
     moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
     allowNonTsExtensions: true,
-    noLib: true,   // suppress "lib not found" errors for ambient types
+    noLib: true,
   });
   monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-    noSemanticValidation: true,   // no type errors (we use esbuild, not tsc)
-    noSyntaxValidation: false,    // syntax errors still shown
+    noSemanticValidation: true,
+    noSyntaxValidation: false,
   });
 
   monacoEditor = monaco.editor.create(document.getElementById('monaco-container'), {
@@ -1524,7 +1653,7 @@ require(['vs/editor/editor.main'], async function() {
     theme: 'vs-dark',
     fontSize: 13,
     lineHeight: 20,
-    minimap: { enabled: true, scale: 1 },
+    minimap: { enabled: window.innerWidth >= 1024 },
     scrollBeyondLastLine: false,
     automaticLayout: true,
     tabSize: 2,
@@ -1533,20 +1662,17 @@ require(['vs/editor/editor.main'], async function() {
     bracketPairColorization: { enabled: true },
   });
 
-  // Ctrl+Enter → Apply & Render
   monacoEditor.addCommand(
     monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
     applyAndRender
   );
-
   monacoEditor.onDidChangeModelContent(updateDirty);
 
-  // Hide loading, init content
   loadingOverlay.style.display = 'none';
-  mdartSource.value = DEFAULT_SOURCE;
+  mdartSource.value = EXAMPLES['circular-process'];
 
   await loadFile('layouts/process.ts');
-  await renderOnly();   // Show initial preview with current build
+  await renderOnly();
 });
 </script>
 </body>
