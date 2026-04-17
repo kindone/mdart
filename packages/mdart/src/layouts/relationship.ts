@@ -257,7 +257,7 @@ function renderRadial(spec: MdArtSpec, theme: MdArtTheme): string {
     const angle = (2 * Math.PI * i / n) - Math.PI / 2
     const sx = cx + R * Math.cos(angle), sy = cy + R * Math.sin(angle)
     const item = spokes[i]
-    parts.push(`<line x1="${cx}" y1="${cy}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.border}44" stroke-width="1.5"/>`)
+    parts.push(`<line x1="${cx}" y1="${cy}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.border}cc" stroke-width="1.5"/>`)
     if (item) {
       parts.push(`<rect x="${(sx - 52).toFixed(1)}" y="${(sy - 18).toFixed(1)}" width="104" height="36" rx="5" fill="${theme.surface}" stroke="${theme.primary}66" stroke-width="1.2"/>`)
       parts.push(`<text x="${sx.toFixed(1)}" y="${(sy + 5).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, 12)}</text>`)
@@ -354,7 +354,7 @@ function renderDiverging(spec: MdArtSpec, theme: MdArtTheme): string {
 function renderOpposingArrows(spec: MdArtSpec, theme: MdArtTheme): string {
   const left  = spec.items[0] ?? { label: 'Force A', children: [] as MdArtSpec['items'][0]['children'] }
   const right = spec.items[1] ?? { label: 'Force B', children: [] as MdArtSpec['items'][0]['children'] }
-  const W = 520, TITLE_H = spec.title ? 28 : 8, H = 240 + TITLE_H
+  const W = 520, TITLE_H = spec.title ? 28 : 8, H = 148 + TITLE_H
   const cy = TITLE_H + (H - TITLE_H) / 2
   const AH = 68, gap = 18
   const lx1 = 8, lx2 = W / 2 - gap / 2
@@ -469,7 +469,7 @@ function renderWeb(spec: MdArtSpec, theme: MdArtTheme): string {
   const nodeR = Math.max(22, Math.min(34, 72 / n))
   items.forEach((item, i) => {
     const [nx, ny] = pos[i]
-    parts.push(`<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${nodeR}" fill="${theme.primary}22" stroke="${theme.primary}99" stroke-width="1.8"/>`)
+    parts.push(`<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${nodeR}" fill="${theme.surface}" stroke="${theme.primary}99" stroke-width="1.8"/>`)
     parts.push(`<text x="${nx.toFixed(1)}" y="${(ny + 4).toFixed(1)}" text-anchor="middle" font-size="${Math.max(8, Math.min(10, nodeR * 0.5)).toFixed(0)}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, 9)}</text>`)
   })
   return svg(W, H, theme, spec.title, parts)

@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MdArt Renderer Lab</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: #1e1e1e; color: #d4d4d4; font-family: system-ui, sans-serif; }
+
+/* ── Toolbar ── */
+.toolbar {
+  display: flex; align-items: center; gap: 8px;
+  height: 44px; padding: 0 12px;
+  background: #2d2d2d; border-bottom: 1px solid #3c3c3c;
+  flex-shrink: 0;
+}
+.toolbar-title { font-size: 13px; font-weight: 600; color: #cccccc; margin-right: 4px; }
+.toolbar select, .toolbar button {
+  height: 28px; border-radius: 4px; font-size: 12px; cursor: pointer; outline: none;
+}
+.toolbar select {
+  background: #3c3c3c; color: #d4d4d4; border: 1px solid #555; padding: 0 8px; min-width: 140px;
+}
+.toolbar select:hover, .toolbar select:focus { border-color: #007acc; }
+.btn-apply {
+  background: #007acc; color: #fff; border: none; padding: 0 14px; font-weight: 600;
+  display: flex; align-items: center; gap: 5px;
+}
+.btn-apply:hover { background: #0098ff; }
+.btn-apply:active { background: #005fa3; }
+.btn-apply:disabled { background: #555; color: #888; cursor: not-allowed; }
+.btn-reset {
+  background: transparent; color: #888; border: 1px solid #555; padding: 0 10px;
+}
+.btn-reset:hover { background: #3c3c3c; color: #d4d4d4; border-color: #777; }
+.sep { flex: 1; }
+.status {
+  font-size: 11px; font-family: monospace;
+  padding: 3px 8px; border-radius: 3px;
+  background: #2d2d2d; border: 1px solid #3c3c3c;
+  min-width: 120px; text-align: center;
+}
+.status.idle    { color: #6a9955; border-color: #3c5e3c; }
+.status.busy    { color: #dcdcaa; border-color: #5e5e3c; }
+.status.ok      { color: #4ec9b0; border-color: #3c5e5a; }
+.status.error   { color: #f44747; border-color: #5e3c3c; }
+.nav-link {
+  font-size: 11px; color: #569cd6; text-decoration: none; padding: 3px 6px;
+  border-radius: 3px;
+}
+.nav-link:hover { background: #3c3c3c; }
+
+/* ── Main layout ── */
+.main {
+  display: flex; height: calc(100vh - 44px); overflow: hidden;
+}
+
+/* ── Left: Monaco editor ── */
+.editor-col {
+  display: flex; flex-direction: column;
+  width: 58%; border-right: 1px solid #3c3c3c; flex-shrink: 0;
+}
+.editor-header {
+  display: flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px; background: #252526; border-bottom: 1px solid #3c3c3c;
+  font-size: 11px; color: #858585; flex-shrink: 0;
+}
+.editor-header .filename { color: #d4d4d4; font-weight: 500; font-family: monospace; }
+.dirty-dot { width: 8px; height: 8px; border-radius: 50%; background: #e5c07b; display: none; }
+.dirty-dot.visible { display: inline-block; }
+#monaco-container { flex: 1; overflow: hidden; }
+
+/* ── Right: source + preview ── */
+.right-col {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0;
+}
+
+/* mdart source pane */
+.source-pane {
+  display: flex; flex-direction: column; flex-shrink: 0;
+  border-bottom: 1px solid #3c3c3c;
+}
+.pane-header {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 28px; padding: 0 10px; background: #252526; border-bottom: 1px solid #3c3c3c;
+  font-size: 11px; color: #858585; flex-shrink: 0; gap: 6px;
+}
+.pane-header select {
+  background: #3c3c3c; color: #d4d4d4; border: 1px solid #555;
+  border-radius: 3px; font-size: 11px; height: 20px; padding: 0 4px; cursor: pointer;
+}
+.pane-header select:hover { border-color: #007acc; }
+.btn-render-small {
+  background: #007acc22; color: #569cd6; border: 1px solid #007acc44;
+  border-radius: 3px; font-size: 11px; height: 20px; padding: 0 8px; cursor: pointer;
+}
+.btn-render-small:hover { background: #007acc44; }
+#mdart-source {
+  width: 100%; height: 130px;
+  background: #1e1e1e; color: #d4d4d4;
+  border: none; outline: none; resize: none;
+  font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 12px;
+  line-height: 1.6; padding: 10px 12px; tab-size: 2;
+  white-space: pre; overflow-wrap: normal; overflow: auto;
+  caret-color: #569cd6;
+}
+#mdart-source::selection { background: rgba(38,79,120,.6); }
+
+/* Preview pane */
+.preview-pane {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+}
+.preview-body {
+  flex: 1; overflow: auto; display: flex;
+  align-items: flex-start; justify-content: center;
+  padding: 20px; background: #1a1a1a;
+}
+#preview-inner { max-width: 100%; }
+#preview-inner svg { max-width: 100%; height: auto; border-radius: 6px; }
+.error-box {
+  background: #1a0808; border: 1px solid #6e1d1d; border-radius: 6px;
+  padding: 14px 16px; font-family: monospace; font-size: 12px; color: #f44747;
+  max-width: 560px; white-space: pre-wrap; word-break: break-word; line-height: 1.6;
+}
+.hint { color: #858585; font-size: 12px; padding: 20px; }
+
+/* ── Loading overlay ── */
+#loading-overlay {
+  position: fixed; inset: 0; background: #1e1e1e;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px; z-index: 100;
+}
+#loading-overlay .loader-text { color: #858585; font-size: 13px; }
+.spinner { width: 32px; height: 32px; border: 3px solid #3c3c3c; border-top-color: #007acc; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loader-text">Loading Monaco Editor…</div>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <span class="toolbar-title">Renderer Lab</span>
+  <select id="file-select" title="Layout file to edit">
+    <option value="layouts/process.ts">process.ts</option>
+    <option value="layouts/list.ts">list.ts</option>
+    <option value="layouts/cycle.ts">cycle.ts</option>
+    <option value="layouts/matrix.ts">matrix.ts</option>
+    <option value="layouts/hierarchy.ts">hierarchy.ts</option>
+    <option value="layouts/pyramid.ts">pyramid.ts</option>
+    <option value="layouts/relationship.ts">relationship.ts</option>
+    <option value="layouts/statistical.ts">statistical.ts</option>
+    <option value="layouts/planning.ts">planning.ts</option>
+    <option value="layouts/technical.ts">technical.ts</option>
+    <option value="theme.ts">theme.ts</option>
+  </select>
+  <button class="btn-apply" id="btn-apply" title="Write file → esbuild → render  (Ctrl+Enter)">
+    ▶ Apply &amp; Render
+  </button>
+  <button class="btn-reset" id="btn-reset" title="Restore original file content">↺ Reset</button>
+  <span class="sep"></span>
+  <span class="status idle" id="status">ready</span>
+  <a href="/" class="nav-link">← Playground</a>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <!-- Left: Monaco -->
+  <div class="editor-col">
+    <div class="editor-header">
+      <span class="filename" id="editor-filename">layouts/process.ts</span>
+      <span class="dirty-dot" id="dirty-dot" title="Unsaved changes"></span>
+      <span style="flex:1"></span>
+      <span style="font-size:10px;color:#555">Ctrl+Enter to apply</span>
+    </div>
+    <div id="monaco-container"></div>
+  </div>
+
+  <!-- Right: source input + preview -->
+  <div class="right-col">
+    <div class="source-pane">
+      <div class="pane-header">
+        <span>mdart source</span>
+          <select id="example-select" title="Load example">
+    <option value="">Examples…</option>
+    <optgroup label="Process">
+      <option value="process">process</option>
+      <option value="chevron-process">chevron-process</option>
+      <option value="arrow-process">arrow-process</option>
+      <option value="circular-process">circular-process</option>
+      <option value="funnel">funnel</option>
+      <option value="roadmap">roadmap</option>
+      <option value="waterfall">waterfall</option>
+      <option value="snake-process">snake-process</option>
+      <option value="step-up">step-up</option>
+      <option value="step-down">step-down</option>
+      <option value="circle-process">circle-process</option>
+      <option value="equation">equation</option>
+      <option value="bending-process">bending-process</option>
+      <option value="segmented-bar">segmented-bar</option>
+      <option value="phase-process">phase-process</option>
+      <option value="timeline-h">timeline-h</option>
+      <option value="timeline-v">timeline-v</option>
+      <option value="swimlane">swimlane</option>
+    </optgroup>
+    <optgroup label="List">
+      <option value="bullet-list">bullet-list</option>
+      <option value="numbered-list">numbered-list</option>
+      <option value="checklist">checklist</option>
+      <option value="two-column-list">two-column-list</option>
+      <option value="timeline-list">timeline-list</option>
+      <option value="block-list">block-list</option>
+      <option value="chevron-list">chevron-list</option>
+      <option value="card-list">card-list</option>
+      <option value="zigzag-list">zigzag-list</option>
+      <option value="ribbon-list">ribbon-list</option>
+      <option value="hexagon-list">hexagon-list</option>
+      <option value="trapezoid-list">trapezoid-list</option>
+      <option value="tab-list">tab-list</option>
+      <option value="circle-list">circle-list</option>
+      <option value="icon-list">icon-list</option>
+    </optgroup>
+    <optgroup label="Cycle">
+      <option value="cycle">cycle</option>
+      <option value="donut-cycle">donut-cycle</option>
+      <option value="gear-cycle">gear-cycle</option>
+      <option value="spiral">spiral</option>
+      <option value="block-cycle">block-cycle</option>
+      <option value="segmented-cycle">segmented-cycle</option>
+      <option value="nondirectional-cycle">nondirectional-cycle</option>
+      <option value="multidirectional-cycle">multidirectional-cycle</option>
+      <option value="loop">loop</option>
+    </optgroup>
+    <optgroup label="Matrix">
+      <option value="swot">swot</option>
+      <option value="pros-cons">pros-cons</option>
+      <option value="comparison">comparison</option>
+      <option value="matrix-2x2">matrix-2x2</option>
+      <option value="bcg">bcg</option>
+      <option value="ansoff">ansoff</option>
+      <option value="matrix-nxm">matrix-nxm</option>
+    </optgroup>
+    <optgroup label="Hierarchy">
+      <option value="org-chart">org-chart</option>
+      <option value="tree">tree</option>
+      <option value="h-org-chart">h-org-chart</option>
+      <option value="hierarchy-list">hierarchy-list</option>
+      <option value="radial-tree">radial-tree</option>
+      <option value="decision-tree">decision-tree</option>
+      <option value="sitemap">sitemap</option>
+      <option value="bracket">bracket</option>
+      <option value="bracket-tree">bracket-tree</option>
+      <option value="mind-map">mind-map</option>
+    </optgroup>
+    <optgroup label="Pyramid">
+      <option value="pyramid">pyramid</option>
+      <option value="inverted-pyramid">inverted-pyramid</option>
+      <option value="pyramid-list">pyramid-list</option>
+      <option value="segmented-pyramid">segmented-pyramid</option>
+      <option value="diamond-pyramid">diamond-pyramid</option>
+    </optgroup>
+    <optgroup label="Relationship">
+      <option value="venn">venn</option>
+      <option value="venn-3">venn-3</option>
+      <option value="venn-4">venn-4</option>
+      <option value="concentric">concentric</option>
+      <option value="balance">balance</option>
+      <option value="counterbalance">counterbalance</option>
+      <option value="opposing-arrows">opposing-arrows</option>
+      <option value="web">web</option>
+      <option value="cluster">cluster</option>
+      <option value="target">target</option>
+      <option value="radial">radial</option>
+      <option value="converging">converging</option>
+      <option value="diverging">diverging</option>
+      <option value="plus">plus</option>
+    </optgroup>
+    <optgroup label="Statistical">
+      <option value="progress-list">progress-list</option>
+      <option value="bullet-chart">bullet-chart</option>
+      <option value="scorecard">scorecard</option>
+      <option value="treemap">treemap</option>
+      <option value="sankey">sankey</option>
+      <option value="waffle">waffle</option>
+      <option value="gauge">gauge</option>
+      <option value="radar">radar</option>
+      <option value="heatmap">heatmap</option>
+    </optgroup>
+    <optgroup label="Planning">
+      <option value="kanban">kanban</option>
+      <option value="gantt">gantt</option>
+      <option value="gantt-lite">gantt-lite</option>
+      <option value="sprint-board">sprint-board</option>
+      <option value="timeline">timeline</option>
+      <option value="milestone">milestone</option>
+      <option value="wbs">wbs</option>
+    </optgroup>
+    <optgroup label="Technical">
+      <option value="layered-arch">layered-arch</option>
+      <option value="entity">entity</option>
+      <option value="network">network</option>
+      <option value="pipeline">pipeline</option>
+      <option value="sequence">sequence</option>
+      <option value="state-machine">state-machine</option>
+      <option value="class">class</option>
+    </optgroup>
+  </select>
+        <button class="btn-render-small" id="btn-render-only">▶ Render</button>
+      </div>
+      <textarea id="mdart-source" spellcheck="false" autocorrect="off"></textarea>
+    </div>
+    <div class="preview-pane">
+      <div class="pane-header"><span>Preview</span></div>
+      <div class="preview-body">
+        <div id="preview-inner"><span class="hint">Apply a renderer change or edit the source to preview</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs/loader.js"></script>
+<script>
+const EXAMPLES = {
+  "process": `type: process
+title: Deployment Pipeline
+
+- Code Review
+- CI Build
+- Staging Deploy
+- Smoke Test
+- Production Deploy`,
+  "chevron-process": `type: chevron-process
+title: Sales Pipeline
+
+- Prospect
+- Qualify
+- Propose
+- Negotiate
+- Close`,
+  "arrow-process": `type: arrow-process
+title: Data Flow
+
+- Ingest
+- Validate
+- Transform
+- Enrich
+- Publish`,
+  "circular-process": `type: circular-process
+title: Product Lifecycle
+
+- Plan
+- Build
+- Test
+- Ship`,
+  "funnel": `type: funnel
+title: Conversion Funnel
+
+- Visitors: 10000
+- Sign-ups: 2400
+- Activated: 960
+- Paying: 192
+- Champions: 38`,
+  "roadmap": `type: roadmap
+title: Product Roadmap
+
+- Q1: Foundation
+- Q2: Growth
+- Q3: Scale
+- Q4: Expand`,
+  "waterfall": `type: waterfall
+title: Project Phases
+
+- Requirements
+- Design
+- Implementation
+- Testing
+- Deployment
+- Maintenance`,
+  "snake-process": `type: snake-process
+title: Onboarding Steps
+
+- Sign Up
+- Verify Email
+- Set Password
+- Complete Profile
+- Choose Plan
+- Add Payment
+- Invite Team
+- First Project`,
+  "step-up": `type: step-up
+title: Career Growth
+
+- Junior
+- Mid-Level
+- Senior
+- Staff
+- Principal`,
+  "step-down": `type: step-down
+title: Incident Response
+
+- Detect
+- Alert
+- Triage
+- Mitigate
+- Resolve
+- Post-mortem`,
+  "circle-process": `type: circle-process
+title: Agile Sprint
+
+- Plan
+- Design
+- Develop
+- Review
+- Retro`,
+  "equation": `type: equation
+title: Value Formula
+
+- User Value
+- Technical Quality
+- Speed of Delivery`,
+  "bending-process": `type: bending-process
+title: Build Pipeline
+
+- Checkout
+- Install Deps
+- Lint
+- Unit Tests
+- Build
+- Integration Tests
+- Security Scan
+- Deploy Staging
+- E2E Tests
+- Deploy Prod`,
+  "segmented-bar": `type: segmented-bar
+title: Time Allocation
+
+- Planning: 15
+- Development: 45
+- Testing: 25
+- Review: 15`,
+  "phase-process": `type: phase-process
+title: Product Launch
+
+- Discovery
+- Alpha
+- Beta
+- GA`,
+  "timeline-h": `type: timeline-h
+title: Company History
+
+- 2019: Founded
+- 2020: Seed Round
+- 2021: Product Launch
+- 2022: Series A
+- 2023: 1M Users
+- 2024: Profitable`,
+  "timeline-v": `type: timeline-v
+title: Release History
+
+- v1.0: Initial release
+- v1.2: Bug fixes & perf
+- v2.0: Major redesign
+- v2.5: API v2
+- v3.0: Enterprise tier`,
+  "swimlane": `type: swimlane
+title: Feature Development
+
+- Product
+  - Write spec
+  - Prioritize
+  - Accept
+- Design
+  - Wireframes
+  - Mockups
+  - Handoff
+- Engineering
+  - Implementation
+  - Code review
+  - Deploy`,
+  "bullet-list": `type: bullet-list
+title: Engineering Principles
+
+- Design for testability first
+- Minimal scope per change
+- Read before editing
+- Verify your work
+- Update docs alongside code`,
+  "numbered-list": `type: numbered-list
+title: Deploy Checklist
+
+- Run npm test
+- Build client
+- Build server
+- Restart service
+- Confirm health check`,
+  "checklist": `type: checklist
+title: PR Review
+
+- Tests pass [done]
+- No type errors [done]
+- Docs updated [done]
+- Breaking changes noted
+- Performance impact checked`,
+  "two-column-list": `type: two-column-list
+title: Tech Stack
+
+- Frontend: React + TypeScript
+- Backend: Node.js + Express
+- Database: SQLite
+- Auth: Passkeys
+- Deploy: PM2 + nginx
+- CI: GitHub Actions`,
+  "timeline-list": `type: timeline-list
+title: Sprint Timeline
+
+- Mon: Planning & kickoff
+- Tue: Core implementation
+- Wed: Integration & tests
+- Thu: Code review
+- Fri: Deploy & demo`,
+  "block-list": `type: block-list
+title: Core Values
+
+- Move Fast
+- Stay Curious
+- Default to Open
+- Own the Outcome`,
+  "chevron-list": `type: chevron-list
+title: User Journey
+
+- Discover product
+- Sign up for trial
+- Complete onboarding
+- Reach activation
+- Convert to paid`,
+  "card-list": `type: card-list
+title: Team Roles
+
+- Engineering Lead: System design & code quality
+- Product Manager: Roadmap & priorities
+- Designer: UX research & visual design
+- DevOps: Infrastructure & reliability`,
+  "zigzag-list": `type: zigzag-list
+title: Growth Levers
+
+- Acquisition
+- Activation
+- Retention
+- Revenue
+- Referral`,
+  "ribbon-list": `type: ribbon-list
+title: Awards
+
+- Best Developer Tool 2024
+- Top 10 Product of the Year
+- 5-Star Customer Rating`,
+  "hexagon-list": `type: hexagon-list
+title: Core Skills
+
+- Problem Solving
+- Communication
+- Leadership
+- Technical Depth
+- Product Sense
+- Execution`,
+  "trapezoid-list": `type: trapezoid-list
+title: Priority Tiers
+
+- Critical
+- High
+- Medium
+- Low`,
+  "tab-list": `type: tab-list
+title: Environments
+
+- Development
+  - Hot reload enabled
+  - Debug logging
+  - Seed data loaded
+- Staging
+  - Production build
+  - Anonymised data
+  - Feature flags on
+- Production
+  - CDN enabled
+  - Error tracking
+  - Alerting active`,
+  "circle-list": `type: circle-list
+title: Milestones
+
+- MVP Launch
+- 1K Users
+- Series A
+- 10K Users
+- Break-even`,
+  "icon-list": `type: icon-list
+title: Platform Features
+
+- ⚡ Real-time sync
+- 🔒 End-to-end encryption
+- 🌍 Multi-region support
+- 📱 Native mobile apps
+- 🤖 AI-powered search`,
+  "cycle": `type: cycle
+title: DevOps Loop
+
+- Plan
+- Code
+- Build
+- Test
+- Release
+- Deploy
+- Operate
+- Monitor`,
+  "donut-cycle": `type: donut-cycle
+title: OODA Loop
+
+- Observe
+- Orient
+- Decide
+- Act`,
+  "gear-cycle": `type: gear-cycle
+title: Engine
+
+- Input
+- Process
+- Output`,
+  "spiral": `type: spiral
+title: Growth Spiral
+
+- Idea
+- Validate
+- Build
+- Launch
+- Learn
+- Grow`,
+  "block-cycle": `type: block-cycle
+title: CI/CD Cycle
+
+- Commit
+- Build
+- Test
+- Deploy
+- Monitor`,
+  "segmented-cycle": `type: segmented-cycle
+title: Budget Allocation
+
+- Engineering: 40
+- Marketing: 25
+- Operations: 20
+- R&D: 15`,
+  "nondirectional-cycle": `type: nondirectional-cycle
+title: Ecosystem
+
+- Customers
+- Product
+- Revenue
+- Team`,
+  "multidirectional-cycle": `type: multidirectional-cycle
+title: Feedback System
+
+- Users
+- Metrics
+- Insights
+- Decisions`,
+  "loop": `type: loop
+title: Retry Logic
+
+- Send Request
+- Check Response
+- Handle Error
+- Backoff`,
+  "swot": `type: swot
+title: Product Analysis
+
++ Strong developer community
++ Fast time to market
+- Limited mobile support
+- High infrastructure cost
+? Enterprise market expansion
+? API monetisation
+! Growing competition
+! Regulatory changes`,
+  "pros-cons": `type: pros-cons
+title: Microservices vs Monolith
+
++ Independent deployments
++ Technology flexibility
++ Team autonomy
+- Distributed complexity
+- Network overhead
+- Harder to debug`,
+  "comparison": `type: comparison
+title: Framework Comparison
+
+- React
+  - Stars: 220k
+  - Size: 45kb
+  - Learning: Medium
+- Vue
+  - Stars: 207k
+  - Size: 34kb
+  - Learning: Easy
+- Svelte
+  - Stars: 78k
+  - Size: 10kb
+  - Learning: Easy`,
+  "matrix-2x2": `type: matrix-2x2
+title: Effort vs Impact
+
+- High Impact / Low Effort: Quick wins
+- High Impact / High Effort: Major projects
+- Low Impact / Low Effort: Fill-ins
+- Low Impact / High Effort: Avoid`,
+  "bcg": `type: bcg
+title: Product Portfolio
+
+- Stars: Cloud Platform
+- Question Marks: Mobile App
+- Cash Cows: Enterprise SaaS
+- Dogs: Legacy API`,
+  "ansoff": `type: ansoff
+title: Growth Strategy
+
+- Market Penetration: More users in current market
+- Product Development: New features for existing users
+- Market Development: Same product, new segments
+- Diversification: New product, new market`,
+  "matrix-nxm": `type: matrix-nxm
+title: Feature Matrix
+
+- Feature / Starter / Pro / Enterprise
+- SSO / - / - / ✓
+- API Access / ✓ / ✓ / ✓
+- SLA / - / 99.9% / 99.99%
+- Support / Email / Priority / Dedicated`,
+  "org-chart": `type: org-chart
+title: Engineering Org
+
+- CTO
+  - Platform Lead
+    - Backend
+    - Infrastructure
+  - Product Lead
+    - Frontend
+    - Mobile`,
+  "tree": `type: tree
+title: File System
+
+- src
+  - components
+    - Button.tsx
+    - Modal.tsx
+  - lib
+    - api.ts
+    - auth.ts
+  - index.ts`,
+  "h-org-chart": `type: h-org-chart
+title: Department Structure
+
+- CEO
+  - Engineering
+    - Frontend
+    - Backend
+  - Product
+    - Design
+    - Research
+  - Operations
+    - Finance
+    - HR`,
+  "hierarchy-list": `type: hierarchy-list
+title: Taxonomy
+
+- Technology
+  - Software
+    - Frontend
+    - Backend
+    - Mobile
+  - Hardware
+    - Compute
+    - Storage`,
+  "radial-tree": `type: radial-tree
+title: Topic Map
+
+- Architecture
+  - Frontend
+  - Backend
+  - Database
+  - Caching
+  - Security`,
+  "decision-tree": `type: decision-tree
+title: Support Triage
+
+- Is it broken?
+  - Yes → Is it urgent?
+    - Yes → PagerDuty
+    - No → File bug
+  - No → Is it a feature?
+    - Yes → Product backlog
+    - No → Docs`,
+  "sitemap": `type: sitemap
+title: App Navigation
+
+- Home
+  - Dashboard
+  - Analytics
+- Settings
+  - Profile
+  - Billing
+  - Team
+- Docs
+  - API Reference
+  - Guides`,
+  "bracket": `type: bracket
+title: Tournament
+
+- Quarterfinals
+  - Team A
+  - Team B
+  - Team C
+  - Team D
+- Semifinals
+  - Winner A/B
+  - Winner C/D
+- Final
+  - Champion`,
+  "bracket-tree": `type: bracket-tree
+title: Playoff Bracket
+
+- Round 1
+  - Alpha
+  - Beta
+  - Gamma
+  - Delta`,
+  "mind-map": `type: mind-map
+title: Product Strategy
+
+- Growth
+  - SEO
+  - Referrals
+  - Paid Ads
+- Retention
+  - Onboarding
+  - Notifications
+  - Support
+- Revenue
+  - Pricing
+  - Upsell
+  - Enterprise`,
+  "pyramid": `type: pyramid
+title: Maslow's Hierarchy
+
+- Self-actualisation
+- Esteem
+- Love & Belonging
+- Safety
+- Physiological`,
+  "inverted-pyramid": `type: inverted-pyramid
+title: Testing Strategy
+
+- Unit Tests
+- Integration Tests
+- E2E Tests
+- Manual QA`,
+  "pyramid-list": `type: pyramid-list
+title: Infrastructure Layers
+
+- Application
+- Runtime
+- OS
+- Hardware`,
+  "segmented-pyramid": `type: segmented-pyramid
+title: User Segments
+
+- Power Users: 5%
+- Regular Users: 30%
+- Casual Users: 65%`,
+  "diamond-pyramid": `type: diamond-pyramid
+title: Risk Profile
+
+- Extreme Risk
+- High Risk
+- Medium Risk
+- Low Risk
+- Minimal Risk`,
+  "venn": `type: venn
+title: Skill Overlap
+
+- Design
+- Engineering
+- Design ∩ Engineering
+- Product`,
+  "venn-3": `type: venn-3
+title: Product-Market Fit
+
+- User Needs
+- Our Capabilities
+- Market Opportunity
+- User Needs ∩ Our Capabilities
+- Our Capabilities ∩ Market Opportunity
+- User Needs ∩ Market Opportunity
+- User Needs ∩ Our Capabilities ∩ Market Opportunity`,
+  "venn-4": `type: venn-4
+title: Innovation Quadrants
+
+- Technology
+- Business
+- Design
+- Society`,
+  "concentric": `type: concentric
+title: Sphere of Influence
+
+- Direct Control
+- Influence
+- Awareness
+- Environment`,
+  "balance": `type: balance
+title: Trade-offs
+
+- Speed
+- Quality`,
+  "counterbalance": `type: counterbalance
+title: Push vs Pull
+
+- Push Marketing
+- Pull Marketing`,
+  "opposing-arrows": `type: opposing-arrows
+title: Supply & Demand
+
+- Supply Increases
+- Demand Decreases`,
+  "web": `type: web
+title: Service Dependencies
+
+- API Gateway
+- Auth Service
+- User Service
+- Order Service
+- Payment Service
+- Email Service`,
+  "cluster": `type: cluster
+title: Technology Clusters
+
+- Frontend
+  - React
+  - CSS
+  - TypeScript
+- Backend
+  - Node.js
+  - Express
+  - SQLite`,
+  "target": `type: target
+title: Strategic Focus
+
+- Core Business
+- Adjacent Opportunities
+- Future Bets`,
+  "radial": `type: radial
+title: Stakeholders
+
+- Product
+- Engineering
+- Design
+- Marketing
+- Sales
+- Support`,
+  "converging": `type: converging
+title: Unified Platform
+
+- Mobile App
+- Web App
+- Desktop App
+- API Clients`,
+  "diverging": `type: diverging
+title: Platform Outputs
+
+- Analytics Dashboard
+- Mobile Notifications
+- Email Reports
+- API Webhooks`,
+  "plus": `type: plus
+title: Cross-functional
+
+- Strategy
+- Execution
+- People
+- Technology`,
+  "progress-list": `type: progress-list
+title: Sprint Progress
+
+- Authentication: 100
+- Dashboard: 85
+- Settings: 60
+- Reports: 30
+- Mobile: 10`,
+  "bullet-chart": `type: bullet-chart
+title: KPI vs Target
+
+- Revenue: 85
+- Signups: 72
+- NPS: 90
+- Churn: 40`,
+  "scorecard": `type: scorecard
+title: Team Health
+
+- Velocity: 87
+- Quality: 92
+- Morale: 78
+- Delivery: 85`,
+  "treemap": `type: treemap
+title: Bundle Size
+
+- React: 45
+- Mermaid: 120
+- KaTeX: 90
+- mdart: 35
+- App code: 28
+- Other: 22`,
+  "sankey": `type: sankey
+title: Traffic Sources
+
+- Organic
+  → Dashboard (400)
+  → Signup (200)
+- Paid
+  → Signup (150)
+  → Landing (100)
+- Referral
+  → Signup (80)`,
+  "waffle": `type: waffle
+title: Market Share
+
+- Us: 34
+- Competitor A: 28
+- Competitor B: 22
+- Others: 16`,
+  "gauge": `type: gauge
+title: System Health
+
+- CPU: 42
+- Memory: 67
+- Disk: 23
+- Network: 58`,
+  "radar": `type: radar
+title: Team Skills
+
+- Frontend: 85
+- Backend: 90
+- DevOps: 70
+- Design: 55
+- Testing: 75
+- Documentation: 60`,
+  "heatmap": `type: heatmap
+title: Activity Heatmap
+
+- Mon
+  - 9am: 45
+  - 12pm: 80
+  - 3pm: 65
+  - 6pm: 30
+- Wed
+  - 9am: 55
+  - 12pm: 90
+  - 3pm: 70
+  - 6pm: 25
+- Fri
+  - 9am: 40
+  - 12pm: 75
+  - 3pm: 60
+  - 6pm: 20`,
+  "kanban": `type: kanban
+title: Sprint Board
+
+- Backlog
+  - Write docs
+  - Add dark mode
+  - Perf audit
+- In Progress
+  - API refactor
+  - Unit tests
+- Review
+  - Auth flow
+- Done
+  - Login page
+  - CI pipeline`,
+  "gantt": `type: gantt
+title: Q1 Project Plan
+
+- Requirements: 2024-01-01, 2024-01-14
+- Design: 2024-01-08, 2024-01-28
+- Development: 2024-01-22, 2024-03-15
+- Testing: 2024-03-01, 2024-03-22
+- Launch: 2024-03-20, 2024-03-31`,
+  "gantt-lite": `type: gantt-lite
+title: Q1 Roadmap
+
+- Auth system [wk1-wk2]
+- API layer [wk2-wk4]
+- UI components [wk3-wk5]
+* Beta launch [wk5]
+- Bug fixes [wk6-wk7]
+* v1.0 release [wk8]`,
+  "sprint-board": `type: sprint-board
+title: Sprint 14
+
+- Todo
+  - Implement search
+  - Fix nav bug
+  - Update icons
+- In Progress
+  - Checkout flow
+  - Dark mode
+- Done
+  - User profile
+  - Email verify`,
+  "timeline": `type: timeline
+title: Product Timeline
+
+- Jan: Research & discovery
+- Feb: Architecture & design
+- Mar: Core implementation
+- Apr: Beta testing
+- May: Public launch`,
+  "milestone": `type: milestone
+title: Key Milestones
+
+- MVP complete
+- First 100 users
+- Series A closed
+- 10k monthly actives
+- Breakeven reached`,
+  "wbs": `type: wbs
+title: Project Breakdown
+
+- Product Launch
+  - Research
+    - User interviews
+    - Competitor analysis
+  - Design
+    - Wireframes
+    - Prototypes
+  - Engineering
+    - Backend API
+    - Frontend UI
+    - Testing
+  - Launch
+    - Marketing
+    - Support docs`,
+  "layered-arch": `type: layered-arch
+title: System Architecture
+
+- Presentation Layer
+- Application Layer
+- Business Logic Layer
+- Data Access Layer
+- Database Layer`,
+  "entity": `type: entity
+title: Data Model
+
+- users
+  - id: uuid [PK]
+  - email: text
+  - created_at: timestamp
+- sessions
+  - id: uuid [PK]
+  - user_id: uuid [FK→users]
+  - expires_at: timestamp
+- messages
+  - id: uuid [PK]
+  - session_id: uuid [FK→sessions]
+  - role: text
+  - content: text`,
+  "network": `type: network
+title: Service Topology
+
+- Gateway
+  → Auth Service
+  → API Service
+    → Database
+    → Cache
+  → Static CDN`,
+  "pipeline": `type: pipeline
+title: ML Pipeline
+
+- Data Ingestion
+- Feature Engineering
+- Model Training
+- Validation
+- Serving`,
+  "sequence": `type: sequence
+title: Auth Flow
+
+- Browser
+  → Server: POST /login
+- Server
+  → Database: verify user
+- Database
+  → Server: user record
+- Server
+  → Browser: session cookie`,
+  "state-machine": `type: state-machine
+title: Order Lifecycle
+
+- pending
+  → processing: payment confirmed
+  → cancelled: timeout
+- processing
+  → shipped: packed
+  → failed: error
+- shipped
+  → delivered: confirmed
+- delivered
+  → refunded: dispute`,
+  "class": `type: class
+title: Domain Model
+
+- User
+  - [+] id: string
+  - [+] email: string
+  - [-] passwordHash: string
+  - [+] login(): boolean
+  - [+] logout(): void
+- Session
+  - [+] id: string
+  - [+] userId: string
+  - [+] expiresAt: Date
+  - [+] isValid(): boolean`,
+};
+
+// Default source matches the default file (process.ts)
+const DEFAULT_SOURCE = EXAMPLES['circular-process'];
+
+let monacoEditor = null;
+let originalContent = '';    // content when file was loaded
+let currentFile = 'layouts/process.ts';
+let renderTimer = null;
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const fileSelect    = document.getElementById('file-select');
+const btnApply      = document.getElementById('btn-apply');
+const btnReset      = document.getElementById('btn-reset');
+const btnRenderOnly = document.getElementById('btn-render-only');
+const exampleSelect = document.getElementById('example-select');
+const mdartSource   = document.getElementById('mdart-source');
+const previewInner  = document.getElementById('preview-inner');
+const statusEl      = document.getElementById('status');
+const editorFilename= document.getElementById('editor-filename');
+const dirtyDot      = document.getElementById('dirty-dot');
+const loadingOverlay= document.getElementById('loading-overlay');
+
+// ── Status helpers ────────────────────────────────────────────────────────────
+function setStatus(state, text) {
+  statusEl.className = `status ${state}`;
+  statusEl.textContent = text;
+}
+
+// ── Dirty tracking ────────────────────────────────────────────────────────────
+function updateDirty() {
+  const isDirty = monacoEditor && monacoEditor.getValue() !== originalContent;
+  dirtyDot.classList.toggle('visible', !!isDirty);
+}
+
+// ── Load a layout file into Monaco ───────────────────────────────────────────
+async function loadFile(file) {
+  setStatus('busy', 'loading…');
+  try {
+    const res = await fetch(`/lab/source?file=${encodeURIComponent(file)}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    monacoEditor.setValue(data.content);
+    originalContent = data.content;
+    currentFile = file;
+    editorFilename.textContent = file;
+    updateDirty();
+    setStatus('idle', 'ready');
+  } catch (err) {
+    setStatus('error', 'load error');
+    showError(`Failed to load ${file}:\n${err.message}`);
+  }
+}
+
+// ── Show SVG / error in preview ──────────────────────────────────────────────
+function showSVG(svg) {
+  previewInner.innerHTML = svg;
+}
+
+function showError(msg) {
+  previewInner.innerHTML = `<div class="error-box">${escapeHtml(msg)}</div>`;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Apply: write + rebuild + render ──────────────────────────────────────────
+async function applyAndRender() {
+  const code = monacoEditor.getValue();
+  const source = mdartSource.value.trim();
+  if (!source) { setStatus('error', 'no mdart source'); return; }
+
+  btnApply.disabled = true;
+  setStatus('busy', 'building…');
+  try {
+    const res = await fetch('/lab/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file: currentFile, content: code, mdartSource: source }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    showSVG(data.svg);
+    originalContent = code;   // Mark as saved
+    updateDirty();
+    setStatus('ok', `ok · ${data.buildMs}ms`);
+  } catch (err) {
+    showError(String(err.message ?? err));
+    setStatus('error', 'build error');
+  } finally {
+    btnApply.disabled = false;
+  }
+}
+
+// ── Render only (no rebuild) ──────────────────────────────────────────────────
+async function renderOnly() {
+  const source = mdartSource.value.trim();
+  if (!source) return;
+  setStatus('busy', 'rendering…');
+  try {
+    const res = await fetch('/lab/render', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mdartSource: source }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    showSVG(data.svg);
+    setStatus('ok', 'rendered');
+  } catch (err) {
+    showError(String(err.message ?? err));
+    setStatus('error', 'render error');
+  }
+}
+
+function scheduleRender() {
+  if (renderTimer) clearTimeout(renderTimer);
+  renderTimer = setTimeout(renderOnly, 350);
+}
+
+// ── Wire up events ────────────────────────────────────────────────────────────
+fileSelect.addEventListener('change', () => loadFile(fileSelect.value));
+btnApply.addEventListener('click', applyAndRender);
+btnReset.addEventListener('click', () => {
+  if (!originalContent) return;
+  monacoEditor.setValue(originalContent);
+  updateDirty();
+  setStatus('idle', 'reset');
+});
+btnRenderOnly.addEventListener('click', renderOnly);
+mdartSource.addEventListener('input', scheduleRender);
+mdartSource.addEventListener('keydown', e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = mdartSource.selectionStart;
+    mdartSource.value = mdartSource.value.slice(0,s) + '  ' + mdartSource.value.slice(mdartSource.selectionEnd);
+    mdartSource.selectionStart = mdartSource.selectionEnd = s + 2;
+    scheduleRender();
+  }
+});
+// Map every layout type to its renderer file
+const TYPE_TO_FILE = {
+  // process family
+  'process':          'layouts/process.ts',
+  'chevron-process':  'layouts/process.ts',
+  'arrow-process':    'layouts/process.ts',
+  'circular-process': 'layouts/process.ts',
+  'funnel':           'layouts/process.ts',
+  'roadmap':          'layouts/process.ts',
+  'waterfall':        'layouts/process.ts',
+  'snake-process':    'layouts/process.ts',
+  'step-up':          'layouts/process.ts',
+  'step-down':        'layouts/process.ts',
+  'circle-process':   'layouts/process.ts',
+  'equation':         'layouts/process.ts',
+  'bending-process':  'layouts/process.ts',
+  'segmented-bar':    'layouts/process.ts',
+  'phase-process':    'layouts/process.ts',
+  'timeline-h':       'layouts/process.ts',
+  'timeline-v':       'layouts/process.ts',
+  'swimlane':         'layouts/process.ts',
+  // list family
+  'bullet-list':      'layouts/list.ts',
+  'numbered-list':    'layouts/list.ts',
+  'checklist':        'layouts/list.ts',
+  'two-column-list':  'layouts/list.ts',
+  'timeline-list':    'layouts/list.ts',
+  'block-list':       'layouts/list.ts',
+  'chevron-list':     'layouts/list.ts',
+  'card-list':        'layouts/list.ts',
+  'zigzag-list':      'layouts/list.ts',
+  'ribbon-list':      'layouts/list.ts',
+  'hexagon-list':     'layouts/list.ts',
+  'trapezoid-list':   'layouts/list.ts',
+  'tab-list':         'layouts/list.ts',
+  'circle-list':      'layouts/list.ts',
+  'icon-list':        'layouts/list.ts',
+  // cycle family
+  'cycle':                 'layouts/cycle.ts',
+  'donut-cycle':           'layouts/cycle.ts',
+  'gear-cycle':            'layouts/cycle.ts',
+  'spiral':                'layouts/cycle.ts',
+  'block-cycle':           'layouts/cycle.ts',
+  'segmented-cycle':       'layouts/cycle.ts',
+  'nondirectional-cycle':  'layouts/cycle.ts',
+  'multidirectional-cycle':'layouts/cycle.ts',
+  'loop':                  'layouts/cycle.ts',
+  // matrix family
+  'swot':        'layouts/matrix.ts',
+  'pros-cons':   'layouts/matrix.ts',
+  'comparison':  'layouts/matrix.ts',
+  'matrix-2x2':  'layouts/matrix.ts',
+  'bcg':         'layouts/matrix.ts',
+  'ansoff':      'layouts/matrix.ts',
+  'matrix-nxm':  'layouts/matrix.ts',
+  // hierarchy family
+  'org-chart':      'layouts/hierarchy.ts',
+  'tree':           'layouts/hierarchy.ts',
+  'h-org-chart':    'layouts/hierarchy.ts',
+  'hierarchy-list': 'layouts/hierarchy.ts',
+  'radial-tree':    'layouts/hierarchy.ts',
+  'decision-tree':  'layouts/hierarchy.ts',
+  'sitemap':        'layouts/hierarchy.ts',
+  'bracket':        'layouts/hierarchy.ts',
+  'bracket-tree':   'layouts/hierarchy.ts',
+  'mind-map':       'layouts/hierarchy.ts',
+  // pyramid family
+  'pyramid':           'layouts/pyramid.ts',
+  'inverted-pyramid':  'layouts/pyramid.ts',
+  'pyramid-list':      'layouts/pyramid.ts',
+  'segmented-pyramid': 'layouts/pyramid.ts',
+  'diamond-pyramid':   'layouts/pyramid.ts',
+  // relationship family
+  'venn':              'layouts/relationship.ts',
+  'venn-3':            'layouts/relationship.ts',
+  'venn-4':            'layouts/relationship.ts',
+  'concentric':        'layouts/relationship.ts',
+  'balance':           'layouts/relationship.ts',
+  'counterbalance':    'layouts/relationship.ts',
+  'opposing-arrows':   'layouts/relationship.ts',
+  'web':               'layouts/relationship.ts',
+  'cluster':           'layouts/relationship.ts',
+  'target':            'layouts/relationship.ts',
+  'radial':            'layouts/relationship.ts',
+  'converging':        'layouts/relationship.ts',
+  'diverging':         'layouts/relationship.ts',
+  'plus':              'layouts/relationship.ts',
+  // statistical family
+  'progress-list': 'layouts/statistical.ts',
+  'bullet-chart':  'layouts/statistical.ts',
+  'scorecard':     'layouts/statistical.ts',
+  'treemap':       'layouts/statistical.ts',
+  'sankey':        'layouts/statistical.ts',
+  'waffle':        'layouts/statistical.ts',
+  'gauge':         'layouts/statistical.ts',
+  'radar':         'layouts/statistical.ts',
+  'heatmap':       'layouts/statistical.ts',
+  // planning family
+  'kanban':       'layouts/planning.ts',
+  'gantt':        'layouts/planning.ts',
+  'gantt-lite':   'layouts/planning.ts',
+  'sprint-board': 'layouts/planning.ts',
+  'timeline':     'layouts/planning.ts',
+  'milestone':    'layouts/planning.ts',
+  'wbs':          'layouts/planning.ts',
+  // technical family
+  'layered-arch':  'layouts/technical.ts',
+  'entity':        'layouts/technical.ts',
+  'network':       'layouts/technical.ts',
+  'pipeline':      'layouts/technical.ts',
+  'sequence':      'layouts/technical.ts',
+  'state-machine': 'layouts/technical.ts',
+  'class':         'layouts/technical.ts',
+};
+
+exampleSelect.addEventListener('change', async () => {
+  const key = exampleSelect.value;
+  if (!key || !EXAMPLES[key]) return;
+  exampleSelect.value = '';
+
+  // Load example source
+  mdartSource.value = EXAMPLES[key];
+
+  // Auto-switch Monaco to the corresponding renderer file
+  const targetFile = TYPE_TO_FILE[key];
+  if (targetFile && targetFile !== currentFile) {
+    fileSelect.value = targetFile;
+    await loadFile(targetFile);
+  }
+
+  renderOnly();
+});
+
+// ── Monaco init ───────────────────────────────────────────────────────────────
+require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs' } });
+require(['vs/editor/editor.main'], async function() {
+  // TypeScript compiler options — relax to allow experimentation
+  monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+    target: monaco.languages.typescript.ScriptTarget.ES2022,
+    moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+    allowNonTsExtensions: true,
+    noLib: true,   // suppress "lib not found" errors for ambient types
+  });
+  monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+    noSemanticValidation: true,   // no type errors (we use esbuild, not tsc)
+    noSyntaxValidation: false,    // syntax errors still shown
+  });
+
+  monacoEditor = monaco.editor.create(document.getElementById('monaco-container'), {
+    language: 'typescript',
+    theme: 'vs-dark',
+    fontSize: 13,
+    lineHeight: 20,
+    minimap: { enabled: true, scale: 1 },
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
+    tabSize: 2,
+    wordWrap: 'off',
+    renderLineHighlight: 'gutter',
+    bracketPairColorization: { enabled: true },
+  });
+
+  // Ctrl+Enter → Apply & Render
+  monacoEditor.addCommand(
+    monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+    applyAndRender
+  );
+
+  monacoEditor.onDidChangeModelContent(updateDirty);
+
+  // Hide loading, init content
+  loadingOverlay.style.display = 'none';
+  mdartSource.value = DEFAULT_SOURCE;
+
+  await loadFile('layouts/process.ts');
+  await renderOnly();   // Show initial preview with current build
+});
+</script>
+</body>
+</html>

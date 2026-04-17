@@ -405,8 +405,12 @@ function renderBendingProcess(spec: MdArtSpec, theme: MdArtTheme): string {
   if (items.length === 0) return renderEmpty(theme)
   const n = items.length
   const COLS = Math.ceil(Math.sqrt(n * 1.5))
-  const W = 560
-  const BOX_W = (W - 16) / COLS - 6, BOX_H = 36, ROW_GAP = 24
+  // TURN_EXT: space reserved on each side for the U-turn semicircle.
+  // Keeping box layout area identical to original 560px; SVG is wider to accommodate arcs.
+  const TURN_EXT = 32
+  const BASE_W = 560
+  const W = BASE_W + TURN_EXT * 2
+  const BOX_W = (BASE_W - 16) / COLS - 6, BOX_H = 36, ROW_GAP = 24
   const rows = Math.ceil(n / COLS)
   const titleH = spec.title ? 28 : 8
   const H = titleH + rows * (BOX_H + ROW_GAP) + 8
@@ -421,7 +425,7 @@ function renderBendingProcess(spec: MdArtSpec, theme: MdArtTheme): string {
   const positions = items.map((_, i) => {
     const row = Math.floor(i / COLS)
     const col = row % 2 === 0 ? i % COLS : COLS - 1 - (i % COLS)
-    const x = 8 + col * (BOX_W + 6)
+    const x = TURN_EXT + 8 + col * (BOX_W + 6)  // offset into the reserved inner area
     const y = titleH + 4 + row * (BOX_H + ROW_GAP)
     return { x, y }
   })
@@ -445,13 +449,20 @@ function renderBendingProcess(spec: MdArtSpec, theme: MdArtTheme): string {
         const x2 = goRight ? next.x - 4 : next.x + BOX_W + 4
         parts.push(`<line x1="${x1.toFixed(1)}" y1="${(y + BOX_H / 2).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${(y + BOX_H / 2).toFixed(1)}" stroke="${theme.accent}99" stroke-width="1.5" marker-end="url(#bp-r)"/>`)
       } else {
-        // U-turn: down from end of current row, across, up (or down) to next row
+        // U-turn: smooth semicircular arc using TURN_EXT clearance on each side.
+        // SVG arc (A command) produces a natural curve; Q beziers were clamped to
+        // only ~8px radius at the SVG edge, creating jagged bends.
         const row = Math.floor(i / COLS)
         const goRight = row % 2 === 0
-        const turnX = goRight ? Math.min(x + BOX_W + 18, W - 6) : Math.max(x - 18, 6)
-        const midY = y + BOX_H + ROW_GAP / 2
-        // Always use bp-r — orient="auto" rotates it to match path direction at endpoint
-        parts.push(`<path d="M${(x + (goRight ? BOX_W : 0)).toFixed(1)},${(y + BOX_H / 2).toFixed(1)} Q${turnX.toFixed(1)},${(y + BOX_H / 2).toFixed(1)} ${turnX.toFixed(1)},${midY.toFixed(1)} Q${turnX.toFixed(1)},${(next.y + BOX_H / 2).toFixed(1)} ${(next.x + (goRight ? BOX_W : 0)).toFixed(1)},${(next.y + BOX_H / 2).toFixed(1)}" fill="none" stroke="${theme.accent}88" stroke-width="2" marker-end="url(#bp-r)"/>`)
+        const xStart = x + (goRight ? BOX_W : 0)
+        const yStart = y + BOX_H / 2
+        const xEnd = next.x + (goRight ? BOX_W : 0)
+        const yEnd = next.y + BOX_H / 2
+        // Radius = half the vertical span between row midlines = perfect semicircle
+        const arcR = Math.round((yEnd - yStart) / 2)
+        // Sweep: 1 = clockwise (right U-turn), 0 = counter-clockwise (left U-turn)
+        const sweep = goRight ? 1 : 0
+        parts.push(`<path d="M${xStart.toFixed(1)},${yStart.toFixed(1)} A${arcR},${arcR} 0 0,${sweep} ${xEnd.toFixed(1)},${yEnd.toFixed(1)}" fill="none" stroke="${theme.accent}88" stroke-width="2" marker-end="url(#bp-r)"/>`)
       }
     }
   })
@@ -710,7 +721,7 @@ function renderArrowProcess(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const W = 600
   const titleH = spec.title ? 28 : 8
-  const ARROW_W = 30
+  const ARROW_W = 38                    // wider gap → more room for arrowhead
   const BOX_H = 70
   const BOX_W = Math.min(116, Math.floor((W - 20 - (n - 1) * ARROW_W) / n))
   const H = BOX_H + titleH + 32
@@ -734,8 +745,12 @@ function renderArrowProcess(spec: MdArtSpec, theme: MdArtTheme): string {
     })
     if (i < n - 1) {
       const ax = x + BOX_W + 4
-      const arrowH = 22
-      parts.push(`<polygon points="${ax},${(cy - arrowH / 2).toFixed(1)} ${(ax + ARROW_W - 8).toFixed(1)},${(cy - arrowH / 2).toFixed(1)} ${(ax + ARROW_W - 8).toFixed(1)},${(cy - arrowH).toFixed(1)} ${(ax + ARROW_W - 2).toFixed(1)},${cy.toFixed(1)} ${(ax + ARROW_W - 8).toFixed(1)},${(cy + arrowH).toFixed(1)} ${(ax + ARROW_W - 8).toFixed(1)},${(cy + arrowH / 2).toFixed(1)} ${ax},${(cy + arrowH / 2).toFixed(1)}" fill="${fill}99"/>`)
+      // arrowH = half-height of arrowhead tip; shaft is ~46% of that.
+      // With ARROW_W=38 and head 14px deep, shaft gets 22px — good horizontal balance.
+      const arrowH = 30
+      const shaftH = Math.round(arrowH * 0.46)  // ~14px shaft half-height
+      const headBase = ax + ARROW_W - 14         // head is 14px deep (was 10px)
+      parts.push(`<polygon points="${ax},${(cy - shaftH).toFixed(1)} ${headBase},${(cy - shaftH).toFixed(1)} ${headBase},${(cy - arrowH).toFixed(1)} ${(ax + ARROW_W - 2).toFixed(1)},${cy.toFixed(1)} ${headBase},${(cy + arrowH).toFixed(1)} ${headBase},${(cy + shaftH).toFixed(1)} ${ax},${(cy + shaftH).toFixed(1)}" fill="${fill}99"/>`)
     }
   })
 
@@ -759,20 +774,24 @@ function renderCircularProcess(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
-  parts.push(`<defs><marker id="cp-arr" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${theme.accent}bb"/></marker></defs>`)
+  parts.push(`<defs><marker id="cp-arr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0.5 L8,4.5 L0,8.5 Z" fill="${theme.accent}bb"/></marker></defs>`)
 
   // Arc arrows between nodes (drawn first, behind boxes)
   for (let i = 0; i < n; i++) {
     const a1 = (2 * Math.PI * i / n) - Math.PI / 2
     const a2 = (2 * Math.PI * ((i + 1) % n) / n) - Math.PI / 2
-    const angOff = Math.min(0.45, (Math.PI / n) * 0.7)
-    const sa = a1 + angOff, ea = a2 - angOff
+    // Per-endpoint clearance: project box half-extents onto the tangent direction at each angle.
+    // At angle θ the box extends BOX_W/2·|sin(θ)| + BOX_H/2·|cos(θ)| along the radius,
+    // dividing by R converts to radians. +0.025 adds a small visual gap.
+    const angOff = (angle: number) =>
+      (BOX_W / 2 * Math.abs(Math.sin(angle)) + BOX_H / 2 * Math.abs(Math.cos(angle))) / R + 0.025
+    const sa = a1 + angOff(a1), ea = a2 - angOff(a2)
     const arcLen = ((ea - sa + 2 * Math.PI) % (2 * Math.PI))
     if (arcLen < 0.1) continue
     const x1 = cx + R * Math.cos(sa), y1 = cy + R * Math.sin(sa)
     const x2 = cx + R * Math.cos(ea), y2 = cy + R * Math.sin(ea)
     const largeArc = arcLen > Math.PI ? 1 : 0
-    parts.push(`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${largeArc},1 ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.accent}66" stroke-width="1.8" marker-end="url(#cp-arr)"/>`)
+    parts.push(`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${largeArc},1 ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.accent}66" stroke-width="2.2" marker-end="url(#cp-arr)"/>`)
   }
 
   // Step boxes

@@ -230,6 +230,9 @@ function renderGearCycle(spec: MdArtSpec, theme: MdArtTheme): string {
 
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
+  // Arrow marker for directional indicators
+  parts.push(`<defs><marker id="gear-arr" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${theme.muted}dd"/></marker></defs>`)
+
   if (n === 1) {
     const item = items[0]
     const fill = theme.primary
@@ -286,6 +289,23 @@ function renderGearCycle(spec: MdArtSpec, theme: MdArtTheme): string {
     // n>=4: arrange in circular orbit
     const R = 130
     const outerR = 44, innerR = 32, teeth = 8
+
+    // Draw directional arc arrows between consecutive gears (before gears, so behind them)
+    for (let i = 0; i < n; i++) {
+      const a1 = (2 * Math.PI * i) / n - Math.PI / 2
+      const a2 = (2 * Math.PI * ((i + 1) % n)) / n - Math.PI / 2
+      // Arc slightly outside gear ring, going clockwise
+      const arcR = R + outerR * 0.55
+      const angOffset = outerR / R * 0.9  // angular offset to start/end past gear edge
+      const startA = a1 + angOffset
+      const endA   = a2 - angOffset
+      const x1 = cx + arcR * Math.cos(startA), y1 = cy + arcR * Math.sin(startA)
+      const x2 = cx + arcR * Math.cos(endA),   y2 = cy + arcR * Math.sin(endA)
+      // Large-arc flag: 0 for short arc (consecutive gears < 180° apart)
+      const sweep = ((endA - startA + 2 * Math.PI) % (2 * Math.PI)) > Math.PI ? 1 : 0
+      parts.push(`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${arcR.toFixed(1)},${arcR.toFixed(1)} 0 ${sweep},1 ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.muted}bb" stroke-width="1.8" marker-end="url(#gear-arr)"/>`)
+    }
+
     for (let i = 0; i < n; i++) {
       const item = items[i]
       const angle = (2 * Math.PI * i) / n - Math.PI / 2
