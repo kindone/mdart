@@ -88,9 +88,6 @@ async function renderFresh(mdartSource: string): Promise<string> {
 const app = express()
 app.use(express.json({ limit: '2mb' }))
 
-// Serve Monaco editor from workspace node_modules (avoids CDN dependency)
-app.use('/monaco', express.static('/home/ubuntu/mdart/node_modules/monaco-editor/min'))
-
 // Serve playground UI from public/
 app.use(express.static(path.join(__dirname, '../public')))
 

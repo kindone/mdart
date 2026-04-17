@@ -412,7 +412,7 @@ body {
   </div>
 </div>
 
-<script src="/monaco/vs/loader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs/loader.js"></script>
 <script>
 const EXAMPLES = {
   "process": `type: process
@@ -1619,8 +1619,10 @@ const TYPE_TO_FILE = {
   'class':         'layouts/technical.ts',
 };
 
-exampleSelect.addEventListener
-  exampleSelect.value = '';
+exampleSelect.addEventListener('change', async function() {
+  const key = exampleSelect.value;
+  if (!key || !EXAMPLES[key]) return;
+  exampleSelect.value = key;
 
   // Load example source
   mdartSource.value = EXAMPLES[key];
@@ -1635,7 +1637,7 @@ exampleSelect.addEventListener
 });
 
 // ── Monaco init ───────────────────────────────────────────────────────────────
-require.config({ paths: { vs: '/monaco/vs' } });
+require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs' } });
 require(['vs/editor/editor.main'], async function() {
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
     target: monaco.languages.typescript.ScriptTarget.ES2022,
