@@ -33,8 +33,21 @@ export const CATEGORY_THEMES: Record<string, MdArtTheme> = {
 
 // Named overrides
 export const NAMED_THEMES: Record<string, MdArtTheme> = {
+  // Neutral / monochromatic
   'mono-light': { primary:'#374151', secondary:'#1f2937', accent:'#6b7280', muted:'#d1d5db', bg:'#ffffff', surface:'#f9fafb', border:'#e5e7eb', text:'#111827', textMuted:'#6b7280', ...SEM },
   'mono-dark':  { primary:'#9ca3af', secondary:'#6b7280', accent:'#d1d5db', muted:'#374151', bg:'#111827', surface:'#1f2937', border:'#374151', text:'#f9fafb', textMuted:'#9ca3af', ...SEM },
+
+  // Color-named aliases for category themes — use whichever feels more natural:
+  //   theme: rose   vs   theme: relationship
+  'cyan':     CATEGORY_THEMES.list,
+  'emerald':  CATEGORY_THEMES.process,     // also covers statistical
+  'violet':   CATEGORY_THEMES.cycle,
+  'lavender': CATEGORY_THEMES.planning,
+  'amber':    CATEGORY_THEMES.hierarchy,
+  'orange':   CATEGORY_THEMES.pyramid,
+  'rose':     CATEGORY_THEMES.relationship,
+  'blue':     CATEGORY_THEMES.matrix,
+  'sky':      CATEGORY_THEMES.technical,
 }
 
 // Which theme category each layout type belongs to
