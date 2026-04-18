@@ -218,16 +218,131 @@ body {
 <div class="toolbar">
   <span class="toolbar-title">Renderer Lab</span>
   <select id="file-select" title="Layout file to edit">
-    <option value="layouts/process.ts">process.ts</option>
-    <option value="layouts/list.ts">list.ts</option>
-    <option value="layouts/cycle.ts">cycle.ts</option>
-    <option value="layouts/matrix.ts">matrix.ts</option>
-    <option value="layouts/hierarchy.ts">hierarchy.ts</option>
-    <option value="layouts/pyramid.ts">pyramid.ts</option>
-    <option value="layouts/relationship.ts">relationship.ts</option>
-    <option value="layouts/statistical.ts">statistical.ts</option>
-    <option value="layouts/planning.ts">planning.ts</option>
-    <option value="layouts/technical.ts">technical.ts</option>
+    <optgroup label="— process —">
+      <option value="layouts/process/process.ts">process</option>
+      <option value="layouts/process/chevron-process.ts">chevron-process</option>
+      <option value="layouts/process/arrow-process.ts">arrow-process</option>
+      <option value="layouts/process/circular-process.ts">circular-process</option>
+      <option value="layouts/process/funnel.ts">funnel</option>
+      <option value="layouts/process/roadmap.ts">roadmap</option>
+      <option value="layouts/process/waterfall.ts">waterfall</option>
+      <option value="layouts/process/snake-process.ts">snake-process</option>
+      <option value="layouts/process/step-up.ts">step-up</option>
+      <option value="layouts/process/step-down.ts">step-down</option>
+      <option value="layouts/process/circle-process.ts">circle-process</option>
+      <option value="layouts/process/equation.ts">equation</option>
+      <option value="layouts/process/bending-process.ts">bending-process</option>
+      <option value="layouts/process/segmented-bar.ts">segmented-bar</option>
+      <option value="layouts/process/phase-process.ts">phase-process</option>
+      <option value="layouts/process/timeline-h.ts">timeline-h</option>
+      <option value="layouts/process/timeline-v.ts">timeline-v</option>
+      <option value="layouts/process/swimlane.ts">swimlane</option>
+    </optgroup>
+    <optgroup label="— list —">
+      <option value="layouts/list/bullet-list.ts">bullet-list</option>
+      <option value="layouts/list/numbered-list.ts">numbered-list</option>
+      <option value="layouts/list/checklist.ts">checklist</option>
+      <option value="layouts/list/two-column-list.ts">two-column-list</option>
+      <option value="layouts/list/timeline-list.ts">timeline-list</option>
+      <option value="layouts/list/block-list.ts">block-list</option>
+      <option value="layouts/list/chevron-list.ts">chevron-list</option>
+      <option value="layouts/list/card-list.ts">card-list</option>
+      <option value="layouts/list/zigzag-list.ts">zigzag-list</option>
+      <option value="layouts/list/ribbon-list.ts">ribbon-list</option>
+      <option value="layouts/list/hexagon-list.ts">hexagon-list</option>
+      <option value="layouts/list/trapezoid-list.ts">trapezoid-list</option>
+      <option value="layouts/list/tab-list.ts">tab-list</option>
+      <option value="layouts/list/circle-list.ts">circle-list</option>
+      <option value="layouts/list/icon-list.ts">icon-list</option>
+    </optgroup>
+    <optgroup label="— cycle —">
+      <option value="layouts/cycle/cycle.ts">cycle</option>
+      <option value="layouts/cycle/donut-cycle.ts">donut-cycle</option>
+      <option value="layouts/cycle/gear-cycle.ts">gear-cycle</option>
+      <option value="layouts/cycle/spiral.ts">spiral</option>
+      <option value="layouts/cycle/block-cycle.ts">block-cycle</option>
+      <option value="layouts/cycle/segmented-cycle.ts">segmented-cycle</option>
+      <option value="layouts/cycle/nondirectional-cycle.ts">nondirectional-cycle</option>
+      <option value="layouts/cycle/multidirectional-cycle.ts">multidirectional-cycle</option>
+      <option value="layouts/cycle/loop.ts">loop</option>
+    </optgroup>
+    <optgroup label="— matrix —">
+      <option value="layouts/matrix/swot.ts">swot</option>
+      <option value="layouts/matrix/pros-cons.ts">pros-cons</option>
+      <option value="layouts/matrix/comparison.ts">comparison</option>
+      <option value="layouts/matrix/matrix-2x2.ts">matrix-2x2</option>
+      <option value="layouts/matrix/bcg.ts">bcg</option>
+      <option value="layouts/matrix/ansoff.ts">ansoff</option>
+      <option value="layouts/matrix/matrix-nxm.ts">matrix-nxm</option>
+    </optgroup>
+    <optgroup label="— hierarchy —">
+      <option value="layouts/hierarchy/org-chart.ts">org-chart</option>
+      <option value="layouts/hierarchy/tree.ts">tree</option>
+      <option value="layouts/hierarchy/h-org-chart.ts">h-org-chart</option>
+      <option value="layouts/hierarchy/hierarchy-list.ts">hierarchy-list</option>
+      <option value="layouts/hierarchy/radial-tree.ts">radial-tree</option>
+      <option value="layouts/hierarchy/decision-tree.ts">decision-tree</option>
+      <option value="layouts/hierarchy/sitemap.ts">sitemap</option>
+      <option value="layouts/hierarchy/bracket.ts">bracket</option>
+      <option value="layouts/hierarchy/bracket-tree.ts">bracket-tree</option>
+      <option value="layouts/hierarchy/mind-map.ts">mind-map</option>
+    </optgroup>
+    <optgroup label="— pyramid —">
+      <option value="layouts/pyramid/pyramid.ts">pyramid</option>
+      <option value="layouts/pyramid/inverted-pyramid.ts">inverted-pyramid</option>
+      <option value="layouts/pyramid/pyramid-list.ts">pyramid-list</option>
+      <option value="layouts/pyramid/segmented-pyramid.ts">segmented-pyramid</option>
+      <option value="layouts/pyramid/diamond-pyramid.ts">diamond-pyramid</option>
+    </optgroup>
+    <optgroup label="— relationship —">
+      <option value="layouts/relationship/venn.ts">venn</option>
+      <option value="layouts/relationship/venn-3.ts">venn-3</option>
+      <option value="layouts/relationship/venn-4.ts">venn-4</option>
+      <option value="layouts/relationship/concentric.ts">concentric</option>
+      <option value="layouts/relationship/balance.ts">balance</option>
+      <option value="layouts/relationship/counterbalance.ts">counterbalance</option>
+      <option value="layouts/relationship/opposing-arrows.ts">opposing-arrows</option>
+      <option value="layouts/relationship/web.ts">web</option>
+      <option value="layouts/relationship/cluster.ts">cluster</option>
+      <option value="layouts/relationship/target.ts">target</option>
+      <option value="layouts/relationship/radial.ts">radial</option>
+      <option value="layouts/relationship/converging.ts">converging</option>
+      <option value="layouts/relationship/diverging.ts">diverging</option>
+      <option value="layouts/relationship/plus.ts">plus</option>
+    </optgroup>
+    <optgroup label="— statistical —">
+      <option value="layouts/statistical/progress-list.ts">progress-list</option>
+      <option value="layouts/statistical/bullet-chart.ts">bullet-chart</option>
+      <option value="layouts/statistical/scorecard.ts">scorecard</option>
+      <option value="layouts/statistical/treemap.ts">treemap</option>
+      <option value="layouts/statistical/sankey.ts">sankey</option>
+      <option value="layouts/statistical/waffle.ts">waffle</option>
+      <option value="layouts/statistical/gauge.ts">gauge</option>
+      <option value="layouts/statistical/radar.ts">radar</option>
+      <option value="layouts/statistical/heatmap.ts">heatmap</option>
+    </optgroup>
+    <optgroup label="— planning —">
+      <option value="layouts/planning/kanban.ts">kanban</option>
+      <option value="layouts/planning/gantt.ts">gantt</option>
+      <option value="layouts/planning/gantt-lite.ts">gantt-lite</option>
+      <option value="layouts/planning/sprint-board.ts">sprint-board</option>
+      <option value="layouts/planning/timeline.ts">timeline</option>
+      <option value="layouts/planning/milestone.ts">milestone</option>
+      <option value="layouts/planning/wbs.ts">wbs</option>
+    </optgroup>
+    <optgroup label="— technical —">
+      <option value="layouts/technical/layered-arch.ts">layered-arch</option>
+      <option value="layouts/technical/entity.ts">entity</option>
+      <option value="layouts/technical/network.ts">network</option>
+      <option value="layouts/technical/pipeline.ts">pipeline</option>
+      <option value="layouts/technical/sequence.ts">sequence</option>
+      <option value="layouts/technical/state-machine.ts">state-machine</option>
+      <option value="layouts/technical/class.ts">class</option>
+    </optgroup>
+    <optgroup label="— shared —">
+      <option value="layouts/shared.ts">shared</option>
+      <option value="layouts/hierarchy/shared.ts">hierarchy/shared</option>
+    </optgroup>
     <option value="theme.ts">theme.ts</option>
   </select>
   <button class="btn-apply" id="btn-apply" title="Write file → esbuild → render  (Ctrl+Enter)">
@@ -251,21 +366,136 @@ body {
   <!-- Left: Monaco -->
   <div class="editor-col" id="pane-editor">
     <div class="editor-header">
-      <span class="filename" id="editor-filename">layouts/process.ts</span>
+      <span class="filename" id="editor-filename">layouts/process/circular-process.ts</span>
       <span class="dirty-dot" id="dirty-dot" title="Unsaved changes"></span>
       <span style="flex:1;min-width:4px"></span>
       <!-- Mobile: file select lives here -->
       <select id="mobile-file-select" title="Layout file" style="display:none;background:#3c3c3c;color:#d4d4d4;border:1px solid #555;border-radius:3px;font-size:11px;height:22px;padding:0 4px;cursor:pointer;max-width:130px;">
-        <option value="layouts/process.ts">process.ts</option>
-        <option value="layouts/list.ts">list.ts</option>
-        <option value="layouts/cycle.ts">cycle.ts</option>
-        <option value="layouts/matrix.ts">matrix.ts</option>
-        <option value="layouts/hierarchy.ts">hierarchy.ts</option>
-        <option value="layouts/pyramid.ts">pyramid.ts</option>
-        <option value="layouts/relationship.ts">relationship.ts</option>
-        <option value="layouts/statistical.ts">statistical.ts</option>
-        <option value="layouts/planning.ts">planning.ts</option>
-        <option value="layouts/technical.ts">technical.ts</option>
+        <optgroup label="— process —">
+          <option value="layouts/process/process.ts">process</option>
+          <option value="layouts/process/chevron-process.ts">chevron-process</option>
+          <option value="layouts/process/arrow-process.ts">arrow-process</option>
+          <option value="layouts/process/circular-process.ts">circular-process</option>
+          <option value="layouts/process/funnel.ts">funnel</option>
+          <option value="layouts/process/roadmap.ts">roadmap</option>
+          <option value="layouts/process/waterfall.ts">waterfall</option>
+          <option value="layouts/process/snake-process.ts">snake-process</option>
+          <option value="layouts/process/step-up.ts">step-up</option>
+          <option value="layouts/process/step-down.ts">step-down</option>
+          <option value="layouts/process/circle-process.ts">circle-process</option>
+          <option value="layouts/process/equation.ts">equation</option>
+          <option value="layouts/process/bending-process.ts">bending-process</option>
+          <option value="layouts/process/segmented-bar.ts">segmented-bar</option>
+          <option value="layouts/process/phase-process.ts">phase-process</option>
+          <option value="layouts/process/timeline-h.ts">timeline-h</option>
+          <option value="layouts/process/timeline-v.ts">timeline-v</option>
+          <option value="layouts/process/swimlane.ts">swimlane</option>
+        </optgroup>
+        <optgroup label="— list —">
+          <option value="layouts/list/bullet-list.ts">bullet-list</option>
+          <option value="layouts/list/numbered-list.ts">numbered-list</option>
+          <option value="layouts/list/checklist.ts">checklist</option>
+          <option value="layouts/list/two-column-list.ts">two-column-list</option>
+          <option value="layouts/list/timeline-list.ts">timeline-list</option>
+          <option value="layouts/list/block-list.ts">block-list</option>
+          <option value="layouts/list/chevron-list.ts">chevron-list</option>
+          <option value="layouts/list/card-list.ts">card-list</option>
+          <option value="layouts/list/zigzag-list.ts">zigzag-list</option>
+          <option value="layouts/list/ribbon-list.ts">ribbon-list</option>
+          <option value="layouts/list/hexagon-list.ts">hexagon-list</option>
+          <option value="layouts/list/trapezoid-list.ts">trapezoid-list</option>
+          <option value="layouts/list/tab-list.ts">tab-list</option>
+          <option value="layouts/list/circle-list.ts">circle-list</option>
+          <option value="layouts/list/icon-list.ts">icon-list</option>
+        </optgroup>
+        <optgroup label="— cycle —">
+          <option value="layouts/cycle/cycle.ts">cycle</option>
+          <option value="layouts/cycle/donut-cycle.ts">donut-cycle</option>
+          <option value="layouts/cycle/gear-cycle.ts">gear-cycle</option>
+          <option value="layouts/cycle/spiral.ts">spiral</option>
+          <option value="layouts/cycle/block-cycle.ts">block-cycle</option>
+          <option value="layouts/cycle/segmented-cycle.ts">segmented-cycle</option>
+          <option value="layouts/cycle/nondirectional-cycle.ts">nondirectional-cycle</option>
+          <option value="layouts/cycle/multidirectional-cycle.ts">multidirectional-cycle</option>
+          <option value="layouts/cycle/loop.ts">loop</option>
+        </optgroup>
+        <optgroup label="— matrix —">
+          <option value="layouts/matrix/swot.ts">swot</option>
+          <option value="layouts/matrix/pros-cons.ts">pros-cons</option>
+          <option value="layouts/matrix/comparison.ts">comparison</option>
+          <option value="layouts/matrix/matrix-2x2.ts">matrix-2x2</option>
+          <option value="layouts/matrix/bcg.ts">bcg</option>
+          <option value="layouts/matrix/ansoff.ts">ansoff</option>
+          <option value="layouts/matrix/matrix-nxm.ts">matrix-nxm</option>
+        </optgroup>
+        <optgroup label="— hierarchy —">
+          <option value="layouts/hierarchy/org-chart.ts">org-chart</option>
+          <option value="layouts/hierarchy/tree.ts">tree</option>
+          <option value="layouts/hierarchy/h-org-chart.ts">h-org-chart</option>
+          <option value="layouts/hierarchy/hierarchy-list.ts">hierarchy-list</option>
+          <option value="layouts/hierarchy/radial-tree.ts">radial-tree</option>
+          <option value="layouts/hierarchy/decision-tree.ts">decision-tree</option>
+          <option value="layouts/hierarchy/sitemap.ts">sitemap</option>
+          <option value="layouts/hierarchy/bracket.ts">bracket</option>
+          <option value="layouts/hierarchy/bracket-tree.ts">bracket-tree</option>
+          <option value="layouts/hierarchy/mind-map.ts">mind-map</option>
+        </optgroup>
+        <optgroup label="— pyramid —">
+          <option value="layouts/pyramid/pyramid.ts">pyramid</option>
+          <option value="layouts/pyramid/inverted-pyramid.ts">inverted-pyramid</option>
+          <option value="layouts/pyramid/pyramid-list.ts">pyramid-list</option>
+          <option value="layouts/pyramid/segmented-pyramid.ts">segmented-pyramid</option>
+          <option value="layouts/pyramid/diamond-pyramid.ts">diamond-pyramid</option>
+        </optgroup>
+        <optgroup label="— relationship —">
+          <option value="layouts/relationship/venn.ts">venn</option>
+          <option value="layouts/relationship/venn-3.ts">venn-3</option>
+          <option value="layouts/relationship/venn-4.ts">venn-4</option>
+          <option value="layouts/relationship/concentric.ts">concentric</option>
+          <option value="layouts/relationship/balance.ts">balance</option>
+          <option value="layouts/relationship/counterbalance.ts">counterbalance</option>
+          <option value="layouts/relationship/opposing-arrows.ts">opposing-arrows</option>
+          <option value="layouts/relationship/web.ts">web</option>
+          <option value="layouts/relationship/cluster.ts">cluster</option>
+          <option value="layouts/relationship/target.ts">target</option>
+          <option value="layouts/relationship/radial.ts">radial</option>
+          <option value="layouts/relationship/converging.ts">converging</option>
+          <option value="layouts/relationship/diverging.ts">diverging</option>
+          <option value="layouts/relationship/plus.ts">plus</option>
+        </optgroup>
+        <optgroup label="— statistical —">
+          <option value="layouts/statistical/progress-list.ts">progress-list</option>
+          <option value="layouts/statistical/bullet-chart.ts">bullet-chart</option>
+          <option value="layouts/statistical/scorecard.ts">scorecard</option>
+          <option value="layouts/statistical/treemap.ts">treemap</option>
+          <option value="layouts/statistical/sankey.ts">sankey</option>
+          <option value="layouts/statistical/waffle.ts">waffle</option>
+          <option value="layouts/statistical/gauge.ts">gauge</option>
+          <option value="layouts/statistical/radar.ts">radar</option>
+          <option value="layouts/statistical/heatmap.ts">heatmap</option>
+        </optgroup>
+        <optgroup label="— planning —">
+          <option value="layouts/planning/kanban.ts">kanban</option>
+          <option value="layouts/planning/gantt.ts">gantt</option>
+          <option value="layouts/planning/gantt-lite.ts">gantt-lite</option>
+          <option value="layouts/planning/sprint-board.ts">sprint-board</option>
+          <option value="layouts/planning/timeline.ts">timeline</option>
+          <option value="layouts/planning/milestone.ts">milestone</option>
+          <option value="layouts/planning/wbs.ts">wbs</option>
+        </optgroup>
+        <optgroup label="— technical —">
+          <option value="layouts/technical/layered-arch.ts">layered-arch</option>
+          <option value="layouts/technical/entity.ts">entity</option>
+          <option value="layouts/technical/network.ts">network</option>
+          <option value="layouts/technical/pipeline.ts">pipeline</option>
+          <option value="layouts/technical/sequence.ts">sequence</option>
+          <option value="layouts/technical/state-machine.ts">state-machine</option>
+          <option value="layouts/technical/class.ts">class</option>
+        </optgroup>
+        <optgroup label="— shared —">
+          <option value="layouts/shared.ts">shared</option>
+          <option value="layouts/hierarchy/shared.ts">hierarchy/shared</option>
+        </optgroup>
         <option value="theme.ts">theme.ts</option>
       </select>
       <button id="btn-reset-mobile" style="display:none;background:transparent;color:#888;border:1px solid #555;border-radius:3px;font-size:11px;height:22px;padding:0 8px;cursor:pointer;margin-left:4px;" title="Reset">↺</button>
@@ -1344,7 +1574,7 @@ const loadingOverlay  = document.getElementById('loading-overlay');
 // ── State ─────────────────────────────────────────────────────────────────────
 let monacoEditor  = null;
 let originalContent = '';
-let currentFile   = 'layouts/process.ts';
+let currentFile   = 'layouts/process/circular-process.ts';
 let renderTimer   = null;
 
 // ── Mobile tab switching ──────────────────────────────────────────────────────
@@ -1482,8 +1712,18 @@ function scheduleRender() {
 }
 
 // ── Wire events ───────────────────────────────────────────────────────────────
-fileSelect.addEventListener('change', () => loadFile(fileSelect.value));
-mobileFileSelect.addEventListener('change', () => loadFile(mobileFileSelect.value));
+async function onFileSelectChange(file) {
+  await loadFile(file);
+  // Auto-load the matching example into the source pane and refresh preview
+  const type = FILE_TO_TYPE[file];
+  if (type && EXAMPLES[type]) {
+    mdartSource.value = EXAMPLES[type];
+    renderOnly();
+  }
+}
+
+fileSelect.addEventListener('change', () => onFileSelectChange(fileSelect.value));
+mobileFileSelect.addEventListener('change', () => onFileSelectChange(mobileFileSelect.value));
 btnApply.addEventListener('click', applyAndRender);
 
 function doReset() {
@@ -1507,120 +1747,126 @@ mdartSource.addEventListener('keydown', e => {
   }
 });
 
-// Map every layout type to its renderer file
+// Map every layout type to its renderer file (one file per type)
 const TYPE_TO_FILE = {
   // process family
-  'process':          'layouts/process.ts',
-  'chevron-process':  'layouts/process.ts',
-  'arrow-process':    'layouts/process.ts',
-  'circular-process': 'layouts/process.ts',
-  'funnel':           'layouts/process.ts',
-  'roadmap':          'layouts/process.ts',
-  'waterfall':        'layouts/process.ts',
-  'snake-process':    'layouts/process.ts',
-  'step-up':          'layouts/process.ts',
-  'step-down':        'layouts/process.ts',
-  'circle-process':   'layouts/process.ts',
-  'equation':         'layouts/process.ts',
-  'bending-process':  'layouts/process.ts',
-  'segmented-bar':    'layouts/process.ts',
-  'phase-process':    'layouts/process.ts',
-  'timeline-h':       'layouts/process.ts',
-  'timeline-v':       'layouts/process.ts',
-  'swimlane':         'layouts/process.ts',
+  'process':           'layouts/process/process.ts',
+  'chevron-process':   'layouts/process/chevron-process.ts',
+  'arrow-process':     'layouts/process/arrow-process.ts',
+  'circular-process':  'layouts/process/circular-process.ts',
+  'funnel':            'layouts/process/funnel.ts',
+  'roadmap':           'layouts/process/roadmap.ts',
+  'waterfall':         'layouts/process/waterfall.ts',
+  'snake-process':     'layouts/process/snake-process.ts',
+  'step-up':           'layouts/process/step-up.ts',
+  'step-down':         'layouts/process/step-down.ts',
+  'circle-process':    'layouts/process/circle-process.ts',
+  'equation':          'layouts/process/equation.ts',
+  'bending-process':   'layouts/process/bending-process.ts',
+  'segmented-bar':     'layouts/process/segmented-bar.ts',
+  'phase-process':     'layouts/process/phase-process.ts',
+  'timeline-h':        'layouts/process/timeline-h.ts',
+  'timeline-v':        'layouts/process/timeline-v.ts',
+  'swimlane':          'layouts/process/swimlane.ts',
   // list family
-  'bullet-list':      'layouts/list.ts',
-  'numbered-list':    'layouts/list.ts',
-  'checklist':        'layouts/list.ts',
-  'two-column-list':  'layouts/list.ts',
-  'timeline-list':    'layouts/list.ts',
-  'block-list':       'layouts/list.ts',
-  'chevron-list':     'layouts/list.ts',
-  'card-list':        'layouts/list.ts',
-  'zigzag-list':      'layouts/list.ts',
-  'ribbon-list':      'layouts/list.ts',
-  'hexagon-list':     'layouts/list.ts',
-  'trapezoid-list':   'layouts/list.ts',
-  'tab-list':         'layouts/list.ts',
-  'circle-list':      'layouts/list.ts',
-  'icon-list':        'layouts/list.ts',
+  'bullet-list':       'layouts/list/bullet-list.ts',
+  'numbered-list':     'layouts/list/numbered-list.ts',
+  'checklist':         'layouts/list/checklist.ts',
+  'two-column-list':   'layouts/list/two-column-list.ts',
+  'timeline-list':     'layouts/list/timeline-list.ts',
+  'block-list':        'layouts/list/block-list.ts',
+  'chevron-list':      'layouts/list/chevron-list.ts',
+  'card-list':         'layouts/list/card-list.ts',
+  'zigzag-list':       'layouts/list/zigzag-list.ts',
+  'ribbon-list':       'layouts/list/ribbon-list.ts',
+  'hexagon-list':      'layouts/list/hexagon-list.ts',
+  'trapezoid-list':    'layouts/list/trapezoid-list.ts',
+  'tab-list':          'layouts/list/tab-list.ts',
+  'circle-list':       'layouts/list/circle-list.ts',
+  'icon-list':         'layouts/list/icon-list.ts',
   // cycle family
-  'cycle':                 'layouts/cycle.ts',
-  'donut-cycle':           'layouts/cycle.ts',
-  'gear-cycle':            'layouts/cycle.ts',
-  'spiral':                'layouts/cycle.ts',
-  'block-cycle':           'layouts/cycle.ts',
-  'segmented-cycle':       'layouts/cycle.ts',
-  'nondirectional-cycle':  'layouts/cycle.ts',
-  'multidirectional-cycle':'layouts/cycle.ts',
-  'loop':                  'layouts/cycle.ts',
+  'cycle':                  'layouts/cycle/cycle.ts',
+  'donut-cycle':            'layouts/cycle/donut-cycle.ts',
+  'gear-cycle':             'layouts/cycle/gear-cycle.ts',
+  'spiral':                 'layouts/cycle/spiral.ts',
+  'block-cycle':            'layouts/cycle/block-cycle.ts',
+  'segmented-cycle':        'layouts/cycle/segmented-cycle.ts',
+  'nondirectional-cycle':   'layouts/cycle/nondirectional-cycle.ts',
+  'multidirectional-cycle': 'layouts/cycle/multidirectional-cycle.ts',
+  'loop':                   'layouts/cycle/loop.ts',
   // matrix family
-  'swot':        'layouts/matrix.ts',
-  'pros-cons':   'layouts/matrix.ts',
-  'comparison':  'layouts/matrix.ts',
-  'matrix-2x2':  'layouts/matrix.ts',
-  'bcg':         'layouts/matrix.ts',
-  'ansoff':      'layouts/matrix.ts',
-  'matrix-nxm':  'layouts/matrix.ts',
+  'swot':        'layouts/matrix/swot.ts',
+  'pros-cons':   'layouts/matrix/pros-cons.ts',
+  'comparison':  'layouts/matrix/comparison.ts',
+  'matrix-2x2':  'layouts/matrix/matrix-2x2.ts',
+  'bcg':         'layouts/matrix/bcg.ts',
+  'ansoff':      'layouts/matrix/ansoff.ts',
+  'matrix-nxm':  'layouts/matrix/matrix-nxm.ts',
   // hierarchy family
-  'org-chart':      'layouts/hierarchy.ts',
-  'tree':           'layouts/hierarchy.ts',
-  'h-org-chart':    'layouts/hierarchy.ts',
-  'hierarchy-list': 'layouts/hierarchy.ts',
-  'radial-tree':    'layouts/hierarchy.ts',
-  'decision-tree':  'layouts/hierarchy.ts',
-  'sitemap':        'layouts/hierarchy.ts',
-  'bracket':        'layouts/hierarchy.ts',
-  'bracket-tree':   'layouts/hierarchy.ts',
-  'mind-map':       'layouts/hierarchy.ts',
+  'org-chart':      'layouts/hierarchy/org-chart.ts',
+  'tree':           'layouts/hierarchy/tree.ts',
+  'h-org-chart':    'layouts/hierarchy/h-org-chart.ts',
+  'hierarchy-list': 'layouts/hierarchy/hierarchy-list.ts',
+  'radial-tree':    'layouts/hierarchy/radial-tree.ts',
+  'decision-tree':  'layouts/hierarchy/decision-tree.ts',
+  'sitemap':        'layouts/hierarchy/sitemap.ts',
+  'bracket':        'layouts/hierarchy/bracket.ts',
+  'bracket-tree':   'layouts/hierarchy/bracket-tree.ts',
+  'mind-map':       'layouts/hierarchy/mind-map.ts',
   // pyramid family
-  'pyramid':           'layouts/pyramid.ts',
-  'inverted-pyramid':  'layouts/pyramid.ts',
-  'pyramid-list':      'layouts/pyramid.ts',
-  'segmented-pyramid': 'layouts/pyramid.ts',
-  'diamond-pyramid':   'layouts/pyramid.ts',
+  'pyramid':           'layouts/pyramid/pyramid.ts',
+  'inverted-pyramid':  'layouts/pyramid/inverted-pyramid.ts',
+  'pyramid-list':      'layouts/pyramid/pyramid-list.ts',
+  'segmented-pyramid': 'layouts/pyramid/segmented-pyramid.ts',
+  'diamond-pyramid':   'layouts/pyramid/diamond-pyramid.ts',
   // relationship family
-  'venn':              'layouts/relationship.ts',
-  'venn-3':            'layouts/relationship.ts',
-  'venn-4':            'layouts/relationship.ts',
-  'concentric':        'layouts/relationship.ts',
-  'balance':           'layouts/relationship.ts',
-  'counterbalance':    'layouts/relationship.ts',
-  'opposing-arrows':   'layouts/relationship.ts',
-  'web':               'layouts/relationship.ts',
-  'cluster':           'layouts/relationship.ts',
-  'target':            'layouts/relationship.ts',
-  'radial':            'layouts/relationship.ts',
-  'converging':        'layouts/relationship.ts',
-  'diverging':         'layouts/relationship.ts',
-  'plus':              'layouts/relationship.ts',
+  'venn':            'layouts/relationship/venn.ts',
+  'venn-3':          'layouts/relationship/venn-3.ts',
+  'venn-4':          'layouts/relationship/venn-4.ts',
+  'concentric':      'layouts/relationship/concentric.ts',
+  'balance':         'layouts/relationship/balance.ts',
+  'counterbalance':  'layouts/relationship/counterbalance.ts',
+  'opposing-arrows': 'layouts/relationship/opposing-arrows.ts',
+  'web':             'layouts/relationship/web.ts',
+  'cluster':         'layouts/relationship/cluster.ts',
+  'target':          'layouts/relationship/target.ts',
+  'radial':          'layouts/relationship/radial.ts',
+  'converging':      'layouts/relationship/converging.ts',
+  'diverging':       'layouts/relationship/diverging.ts',
+  'plus':            'layouts/relationship/plus.ts',
   // statistical family
-  'progress-list': 'layouts/statistical.ts',
-  'bullet-chart':  'layouts/statistical.ts',
-  'scorecard':     'layouts/statistical.ts',
-  'treemap':       'layouts/statistical.ts',
-  'sankey':        'layouts/statistical.ts',
-  'waffle':        'layouts/statistical.ts',
-  'gauge':         'layouts/statistical.ts',
-  'radar':         'layouts/statistical.ts',
-  'heatmap':       'layouts/statistical.ts',
+  'progress-list': 'layouts/statistical/progress-list.ts',
+  'bullet-chart':  'layouts/statistical/bullet-chart.ts',
+  'scorecard':     'layouts/statistical/scorecard.ts',
+  'treemap':       'layouts/statistical/treemap.ts',
+  'sankey':        'layouts/statistical/sankey.ts',
+  'waffle':        'layouts/statistical/waffle.ts',
+  'gauge':         'layouts/statistical/gauge.ts',
+  'radar':         'layouts/statistical/radar.ts',
+  'heatmap':       'layouts/statistical/heatmap.ts',
   // planning family
-  'kanban':       'layouts/planning.ts',
-  'gantt':        'layouts/planning.ts',
-  'gantt-lite':   'layouts/planning.ts',
-  'sprint-board': 'layouts/planning.ts',
-  'timeline':     'layouts/planning.ts',
-  'milestone':    'layouts/planning.ts',
-  'wbs':          'layouts/planning.ts',
+  'kanban':       'layouts/planning/kanban.ts',
+  'gantt':        'layouts/planning/gantt.ts',
+  'gantt-lite':   'layouts/planning/gantt-lite.ts',
+  'sprint-board': 'layouts/planning/sprint-board.ts',
+  'timeline':     'layouts/planning/timeline.ts',
+  'milestone':    'layouts/planning/milestone.ts',
+  'wbs':          'layouts/planning/wbs.ts',
   // technical family
-  'layered-arch':  'layouts/technical.ts',
-  'entity':        'layouts/technical.ts',
-  'network':       'layouts/technical.ts',
-  'pipeline':      'layouts/technical.ts',
-  'sequence':      'layouts/technical.ts',
-  'state-machine': 'layouts/technical.ts',
-  'class':         'layouts/technical.ts',
+  'layered-arch':  'layouts/technical/layered-arch.ts',
+  'entity':        'layouts/technical/entity.ts',
+  'network':       'layouts/technical/network.ts',
+  'pipeline':      'layouts/technical/pipeline.ts',
+  'sequence':      'layouts/technical/sequence.ts',
+  'state-machine': 'layouts/technical/state-machine.ts',
+  'class':         'layouts/technical/class.ts',
 };
+
+// Reverse map: file path → first diagram type that uses it (for example auto-load)
+const FILE_TO_TYPE = {};
+for (const [type, file] of Object.entries(TYPE_TO_FILE)) {
+  if (!(file in FILE_TO_TYPE)) FILE_TO_TYPE[file] = type;
+}
 
 exampleSelect.addEventListener('change', async function() {
   const key = exampleSelect.value;
@@ -1677,7 +1923,7 @@ require(['vs/editor/editor.main'], async function() {
   loadingOverlay.style.display = 'none';
   mdartSource.value = EXAMPLES['circular-process'];
 
-  await loadFile('layouts/process.ts');
+  await loadFile('layouts/process/circular-process.ts');
   await renderOnly();
 });
 </script>
