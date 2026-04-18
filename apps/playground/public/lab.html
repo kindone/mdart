@@ -6,9 +6,9 @@
 <title>MdArt Renderer Lab</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { height: 100%; }
+html { height: 100%; overflow: hidden; }
 body {
-  height: 100dvh; height: 100vh;
+  height: 100%;
   overflow: hidden;
   background: #1e1e1e; color: #d4d4d4;
   font-family: system-ui, sans-serif;
@@ -78,8 +78,10 @@ body {
 
 /* ── Left: Monaco editor ── */
 .editor-col {
+  position: relative;
   display: flex; flex-direction: column;
   width: 58%; border-right: 1px solid #3c3c3c; flex-shrink: 0;
+  overflow: hidden; min-height: 0;
 }
 .editor-header {
   display: flex; align-items: center; gap: 6px;
@@ -89,13 +91,15 @@ body {
 .editor-header .filename { color: #d4d4d4; font-weight: 500; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dirty-dot { width: 8px; height: 8px; border-radius: 50%; background: #e5c07b; display: none; flex-shrink: 0; }
 .dirty-dot.visible { display: inline-block; }
-#monaco-container { flex: 1; overflow: hidden; min-height: 0; }
+/* Absolute-position Monaco so it always gets an exact pixel-perfect height,
+   free from flex rounding issues that cause the last lines to be unreachable. */
+#monaco-container { position: absolute; top: 32px; left: 0; right: 0; bottom: 0; }
 
 /* ── Right col ── */
-.right-col { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.right-col { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; min-height: 0; }
 
 /* mdart source pane */
-.source-pane { display: flex; flex-direction: column; flex-shrink: 0; border-bottom: 1px solid #3c3c3c; }
+.source-pane { display: flex; flex-direction: column; flex: 2; min-height: 0; border-bottom: 1px solid #3c3c3c; }
 .pane-header {
   display: flex; align-items: center; justify-content: space-between;
   height: 28px; padding: 0 10px; background: #252526; border-bottom: 1px solid #3c3c3c;
@@ -112,7 +116,7 @@ body {
 }
 .btn-render-small:hover { background: #007acc44; }
 #mdart-source {
-  width: 100%; height: 130px;
+  width: 100%; flex: 1; min-height: 0;
   background: #1e1e1e; color: #d4d4d4;
   border: none; outline: none; resize: none;
   font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 12px;
@@ -123,7 +127,7 @@ body {
 #mdart-source::selection { background: rgba(38,79,120,.6); }
 
 /* Preview pane */
-.preview-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.preview-pane { flex: 3; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 .preview-body {
   flex: 1; overflow: auto; display: flex;
   align-items: flex-start; justify-content: center;
@@ -200,6 +204,7 @@ body {
 
   /* Editor header: show file select inline on mobile */
   .editor-header { height: 40px; }
+  #monaco-container { top: 40px; }
   #mobile-file-select { display: block; }
 
   /* Preview: more padding for mobile */
