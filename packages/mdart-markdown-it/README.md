@@ -13,6 +13,8 @@ Plan → Build → Measure → Learn
 
 ![Cycle](../../docs/examples/cycle.svg)
 
+Full syntax reference with rendered examples: **[docs/syntax.md](../../docs/syntax.md)**
+
 ## Install
 
 ```bash

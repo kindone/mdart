@@ -358,6 +358,17 @@
     }
     #html-preview.visible { display: block; }
 
+    /* Markdown mode: iframe fills the full preview area */
+    body.markdown-mode #preview-area {
+      padding: 0;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    body.markdown-mode #html-preview.visible {
+      flex: 1;
+      min-height: 0;
+    }
+
     /* Markdown mode: hide SVG-specific footer buttons */
     body.markdown-mode #copy-svg-btn,
     body.markdown-mode #download-btn { display: none; }
@@ -823,6 +834,1289 @@ title: Survey Results (Q3)
 
 Clarity and career growth remain the two lowest scores — both
 are addressed in the H2 people plan.`,
+
+  'Gallery — All Diagram Types': `# MdArt Diagram Gallery
+
+A reference page showing every layout type. Use this as a cheat-sheet for syntax and visual style.
+
+---
+
+## Process
+
+Sequential steps, pipelines, and flows.
+
+### process
+\`\`\`mdart process
+title: Release Pipeline
+- Plan
+- Code
+- Review
+- Test
+- Deploy
+\`\`\`
+
+### chevron-process
+\`\`\`mdart chevron-process
+title: Growth Funnel
+- Awareness
+- Interest
+- Evaluation
+- Trial
+- Adoption
+\`\`\`
+
+### arrow-process
+\`\`\`mdart arrow-process
+title: Design Sprint
+- Research
+- Prototype
+- Build
+- Launch
+\`\`\`
+
+### circular-process
+\`\`\`mdart circular-process
+title: Feedback Loop
+- Measure
+- Analyse
+- Improve
+- Deploy
+\`\`\`
+
+### funnel
+\`\`\`mdart funnel
+title: Sales Funnel
+- Leads: 4,200
+- Qualified: 1,800
+- Proposals: 640
+- Closed: 210
+\`\`\`
+
+### roadmap
+\`\`\`mdart roadmap
+title: Product Roadmap
+- Q1: Foundation
+- Q2: Growth
+- Q3: Scale
+- Q4: Polish
+\`\`\`
+
+### waterfall
+\`\`\`mdart waterfall
+title: Waterfall SDLC
+- Requirements
+- Design
+- Implementation
+- Verification
+- Maintenance
+\`\`\`
+
+### snake-process
+\`\`\`mdart snake-process
+title: Onboarding Journey
+- Sign Up
+- Verify Email
+- Set Password
+- Choose Plan
+- Add Team
+- Connect Repo
+- First Deploy
+- Go Live
+\`\`\`
+
+### step-up
+\`\`\`mdart step-up
+title: Career Ladder
+- IC1
+- IC2
+- IC3
+- Staff
+- Principal
+\`\`\`
+
+### step-down
+\`\`\`mdart step-down
+title: Delegation Chain
+- CEO
+- VP Eng
+- Director
+- Manager
+- Engineer
+\`\`\`
+
+### circle-process
+\`\`\`mdart circle-process
+title: PDCA
+- Plan: Goals
+- Do: Execute
+- Check: Measure
+- Act: Improve
+\`\`\`
+
+### equation
+\`\`\`mdart equation
+title: Value Equation
+- Problem
+  - Market gap
+  - User pain
+- Solution
+  - Core feature
+  - Differentiator
+- Result
+  - Product fit
+  - Revenue
+\`\`\`
+
+### bending-process
+\`\`\`mdart bending-process
+title: CI/CD Pipeline
+- Commit
+- Lint
+- Unit Tests
+- Build
+- Integration Tests
+- Security Scan
+- Stage
+- Smoke Tests
+- Prod
+\`\`\`
+
+### segmented-bar
+\`\`\`mdart segmented-bar
+title: Time Allocation
+- Deep work: 40%
+- Meetings: 25%
+- Comms: 20%
+- Admin: 15%
+\`\`\`
+
+### phase-process
+\`\`\`mdart phase-process
+title: Project Phases
+- Discovery
+  - Stakeholder interviews
+  - Competitive analysis
+- Definition
+  - Requirements
+  - Success metrics
+- Delivery
+  - Build
+  - QA
+- Launch
+  - Release
+  - Retrospective
+\`\`\`
+
+### timeline-h
+\`\`\`mdart timeline-h
+title: Company History
+- Founded: 2019
+- Seed round: 2020
+- Public beta: 2021
+- Series A: 2022
+- 1M users: 2023
+- Profitable: 2024
+\`\`\`
+
+### timeline-v
+\`\`\`mdart timeline-v
+title: Incident Timeline
+- 09:14: Alert fired
+  - PagerDuty notification sent
+- 09:17: On-call paged
+  - Engineer acknowledged
+- 09:23: Root cause identified
+  - Bad deploy at 09:10
+- 09:31: Fix deployed
+  - Rollback completed
+- 09:38: All services green
+\`\`\`
+
+### swimlane
+\`\`\`mdart swimlane
+title: Order Fulfilment
+- Customer
+  - Place order
+  - Confirm receipt
+- Warehouse
+  - Pick items
+  - Pack & label
+- Shipping
+  - Collect parcel
+  - Deliver
+\`\`\`
+
+---
+
+## List
+
+Items with distinct visual treatments.
+
+### bullet-list
+\`\`\`mdart bullet-list
+title: Engineering Principles
+- Ship early, ship often
+- Optimise for readability
+- Delete dead code ruthlessly
+- Instrument everything
+- Fail fast, recover faster
+\`\`\`
+
+### numbered-list
+\`\`\`mdart numbered-list
+title: Deployment Checklist
+- Feature flags enabled
+- Migrations reviewed
+- Rollback plan documented
+- Observability dashboards ready
+- Stakeholders notified
+\`\`\`
+
+### checklist
+\`\`\`mdart checklist
+title: PR Review Checklist
+- Tests pass [done]
+- Changelog updated [done]
+- Docs updated [done]
+- Breaking changes flagged
+- Performance impact assessed
+\`\`\`
+
+### two-column-list
+\`\`\`mdart two-column-list
+title: Tech Stack
+- Frontend: React + TypeScript
+- Backend: Node.js + Express
+- Database: PostgreSQL 16
+- Cache: Redis 7
+- Infra: AWS ECS + RDS
+\`\`\`
+
+### timeline-list
+\`\`\`mdart timeline-list
+title: Release History
+- v1.0: Core search
+- v1.2: Filters & sorting
+- v1.5: Saved searches
+- v2.0: Real-time updates
+- v2.3: Collaborative views
+\`\`\`
+
+### block-list
+\`\`\`mdart block-list
+title: Core Values
+- Strategy: Define your approach
+- Design: Shape the solution
+- Build: Execute the plan
+- Launch: Ship to the world
+\`\`\`
+
+### chevron-list
+\`\`\`mdart chevron-list
+title: Interview Stages
+- Recruiter screen
+- Technical phone
+- Take-home challenge
+- System design
+- Team fit
+- Offer
+\`\`\`
+
+### card-list
+\`\`\`mdart card-list
+title: Team Norms
+- Async by default
+  - Prefer written communication
+  - Document decisions
+- Bias to action
+  - Decide with 70% info
+  - Unblock yourself
+- No surprises
+  - Surface blockers early
+  - Keep stakeholders informed
+\`\`\`
+
+### zigzag-list
+\`\`\`mdart zigzag-list
+title: Quarterly OKRs
+- Grow ARR to $2M
+- Reduce churn below 3%
+- Ship mobile app v1
+- NPS above 60
+- Hire 4 engineers
+\`\`\`
+
+### ribbon-list
+\`\`\`mdart ribbon-list
+title: Product Pillars
+- Speed: Fastest in its class
+- Reliability: 99.9% uptime SLA
+- Security: SOC 2 Type II certified
+- Usability: Loved by developers
+\`\`\`
+
+### hexagon-list
+\`\`\`mdart hexagon-list
+title: DevOps Practices
+- Version control
+- CI/CD
+- Infrastructure as code
+- Monitoring
+- Incident response
+- Blameless post-mortems
+\`\`\`
+
+### trapezoid-list
+\`\`\`mdart trapezoid-list
+title: Abstraction Layers
+- Application
+- Framework
+- Runtime
+- OS
+- Hardware
+\`\`\`
+
+### tab-list
+\`\`\`mdart tab-list
+title: Environment Config
+- Development
+  - Debug logging enabled
+  - Hot reload active
+  - Seed data loaded
+- Staging
+  - Production parity
+  - Synthetic traffic
+  - Alerts muted
+- Production
+  - Full observability
+  - Alerts on-call
+  - Rate limiting enforced
+\`\`\`
+
+### circle-list
+\`\`\`mdart circle-list
+title: Design Tokens
+- Color: Brand palette & semantic roles
+- Typography: Scale, weight, and line-height
+- Spacing: Consistent margin and padding
+- Elevation: Shadow and z-index system
+- Motion: Duration and easing curves
+\`\`\`
+
+### icon-list
+\`\`\`mdart icon-list
+title: Platform Features
+- Encryption: End-to-end encrypted [🔒]
+- Performance: Sub-100ms API [⚡]
+- Analytics: Real-time insights [📊]
+- Multi-region: Global failover [🌍]
+- Integrations: 200+ connectors [🔗]
+\`\`\`
+
+---
+
+## Cycle
+
+Circular and recurring flows.
+
+### cycle
+\`\`\`mdart cycle
+title: Agile Sprint
+- Plan
+- Build
+- Review
+- Retro
+\`\`\`
+
+### donut-cycle
+\`\`\`mdart donut-cycle
+title: Content Pipeline
+- Ideate
+- Draft
+- Edit
+- Publish
+- Promote
+\`\`\`
+
+### gear-cycle
+\`\`\`mdart gear-cycle
+title: Flywheel
+- Lower prices
+- More customers
+- More volume
+- Lower costs
+\`\`\`
+
+### spiral
+\`\`\`mdart spiral
+title: Learning Spiral
+- Awareness
+- Understanding
+- Application
+- Mastery
+- Teaching
+\`\`\`
+
+### block-cycle
+\`\`\`mdart block-cycle
+title: Incident Response
+- Detect
+- Respond
+- Resolve
+- Review
+\`\`\`
+
+### segmented-cycle
+\`\`\`mdart segmented-cycle
+title: Budget Allocation
+- Engineering
+- Marketing
+- Sales
+- G&A
+- Retrospective
+\`\`\`
+
+### nondirectional-cycle
+\`\`\`mdart nondirectional-cycle
+title: Team Rituals
+- Standup
+- Planning
+- Demo
+- Retro
+\`\`\`
+
+### multidirectional-cycle
+\`\`\`mdart multidirectional-cycle
+title: Data Flows
+- Ingest
+- Transform
+- Store
+- Serve
+- Monitor
+\`\`\`
+
+### loop
+\`\`\`mdart loop
+title: Retry Logic
+- Attempt
+- Check
+- Backoff
+\`\`\`
+
+---
+
+## Matrix
+
+Two-axis comparisons and quadrant views.
+
+### swot
+\`\`\`mdart swot
+title: Competitive Position
++ Developer-first experience
++ Strong API ecosystem
+- Limited enterprise features
+- No mobile SDK
+? AI-native integrations
+? Partner channel expansion
+! Incumbent price cuts
+! Open-source alternative gaining traction
+\`\`\`
+
+### pros-cons
+\`\`\`mdart pros-cons
+title: Microservices vs Monolith
+- Pros
+  - Independent deployments
+  - Technology flexibility
+  - Fault isolation
+- Cons
+  - Operational complexity
+  - Network latency overhead
+  - Higher infra cost
+\`\`\`
+
+### comparison
+\`\`\`mdart comparison
+title: Database Options
+- Type
+  - PostgreSQL: Relational
+  - MongoDB: Document
+  - Redis: Key-value
+- ACID
+  - PostgreSQL: Full
+  - MongoDB: Multi-doc
+  - Redis: Single-key
+- Best for
+  - PostgreSQL: Structured data
+  - MongoDB: Flexible schema
+  - Redis: Cache & queues
+\`\`\`
+
+### matrix-2x2
+\`\`\`mdart matrix-2x2
+title: Eisenhower Matrix
+- Quick Wins
+  - Fix login bug
+  - Add dark mode
+- Big Bets
+  - Mobile app
+  - AI features
+- Fill-ins
+  - Tooltip polish
+  - Docs update
+- Avoid
+  - Custom report builder
+  - Legacy API
+\`\`\`
+
+### bcg
+\`\`\`mdart bcg
+title: Portfolio Analysis
+- Stars
+  - Cloud platform
+  - Mobile SDK
+- Question Marks
+  - AI assistant
+  - Marketplace
+- Cash Cows
+  - Core API
+  - Enterprise plan
+- Dogs
+  - Legacy desktop app
+\`\`\`
+
+### ansoff
+\`\`\`mdart ansoff
+title: Growth Strategy
+- Market Penetration
+  - Loyalty program
+  - Upsell campaigns
+- Product Development
+  - Mobile app
+  - API v2
+- Market Development
+  - Asia-Pacific launch
+  - SMB segment
+- Diversification
+  - Marketplace
+  - Consulting arm
+\`\`\`
+
+### matrix-nxm
+\`\`\`mdart matrix-nxm
+title: Skills Matrix
+- Alice
+  - Expert
+  - Proficient
+  - Learning
+- Bob
+  - Proficient
+  - Expert
+  - Expert
+- Carol
+  - Learning
+  - Proficient
+  - Expert
+\`\`\`
+
+---
+
+## Hierarchy
+
+Org charts, trees, and mind maps.
+
+### org-chart
+\`\`\`mdart org-chart
+title: Engineering Org
+- CTO
+  - VP Platform
+    - Infra Team
+    - SRE Team
+  - VP Product Eng
+    - Frontend Team
+    - Backend Team
+  - VP Data
+    - Data Eng Team
+    - ML Team
+\`\`\`
+
+### tree
+\`\`\`mdart tree
+title: Project Structure
+- src
+  - components
+    - Button
+    - Modal
+    - Form
+  - hooks
+    - useAuth
+    - useData
+  - utils
+    - api
+    - format
+\`\`\`
+
+### h-org-chart
+\`\`\`mdart h-org-chart
+title: Decision Hierarchy
+- CEO
+  - CFO
+    - Controller
+  - CTO
+    - Engineering Lead
+  - CMO
+    - Brand
+    - Growth
+\`\`\`
+
+### hierarchy-list
+\`\`\`mdart hierarchy-list
+title: Knowledge Base
+- Getting Started
+  - Installation
+  - Quick start
+  - Core concepts
+- Guides
+  - Authentication
+  - Webhooks
+  - Rate limiting
+- Reference
+  - REST API
+  - SDK docs
+  - CLI reference
+\`\`\`
+
+### radial-tree
+\`\`\`mdart radial-tree
+title: Core Platform
+- Mobile
+  - iOS
+  - Android
+- Web
+  - React
+  - API
+- Data
+  - Analytics
+  - ML
+- Design
+  - UI
+  - UX
+\`\`\`
+
+### decision-tree
+\`\`\`mdart decision-tree
+title: Incident Severity
+- Urgent?
+  - SEV-1: Page on-call now
+  - Revenue impacted?
+    - SEV-2: Notify team lead
+    - SEV-3: File ticket
+\`\`\`
+
+### sitemap
+\`\`\`mdart sitemap
+title: Marketing Site
+- Home
+- Product
+  - Features
+  - Pricing
+  - Changelog
+- Docs
+  - API Reference
+  - Guides
+- Company
+  - About
+  - Blog
+  - Careers
+\`\`\`
+
+### bracket
+\`\`\`mdart bracket
+title: Hackathon Finals
+- Team Alpha
+- Team Beta
+- Team Gamma
+- Team Delta
+- Team Echo
+- Team Foxtrot
+- Team Golf
+- Team Hotel
+\`\`\`
+
+### bracket-tree
+\`\`\`mdart bracket-tree
+title: Playoff Bracket
+- Team Alpha
+- Team Beta
+- Team Gamma
+- Team Delta
+\`\`\`
+
+### mind-map
+\`\`\`mdart mind-map
+title: Product Strategy
+- Market
+  - SMB
+  - Enterprise
+  - Developer
+- Distribution
+  - PLG
+  - Sales-led
+  - Partnerships
+- Moat
+  - Data network effects
+  - Switching costs
+  - Brand
+\`\`\`
+
+---
+
+## Pyramid
+
+Stacked and tiered shapes.
+
+### pyramid
+\`\`\`mdart pyramid
+title: Maslow's Hierarchy
+- Self-actualisation
+- Esteem
+- Belonging
+- Safety
+- Physiological
+\`\`\`
+
+### inverted-pyramid
+\`\`\`mdart inverted-pyramid
+title: Acquisition Funnel
+- Awareness
+- Interest
+- Consideration
+- Intent
+- Purchase
+\`\`\`
+
+### pyramid-list
+\`\`\`mdart pyramid-list
+title: Testing Trophy
+- E2E Tests
+- Integration Tests
+- Unit Tests
+- Static Analysis
+\`\`\`
+
+### segmented-pyramid
+\`\`\`mdart segmented-pyramid
+title: Investment Allocation
+- Speculative: 5%
+- Growth: 20%
+- Balanced: 35%
+- Conservative: 40%
+\`\`\`
+
+### diamond-pyramid
+\`\`\`mdart diamond-pyramid
+title: Adoption Curve
+- Niche
+- Early Adopters
+- Mainstream
+- Late Majority
+- Laggards
+\`\`\`
+
+---
+
+## Relationship
+
+Connections, overlaps, and flows between sets.
+
+### venn
+\`\`\`mdart venn
+- Design
+  - UX Research
+  - Prototyping
+- Engineering
+  - Frontend
+  - Backend
+- Product ∩ Engineering
+\`\`\`
+
+### venn-3
+\`\`\`mdart venn-3
+- Marketing
+- Sales
+- Product
+- All Three ∩
+\`\`\`
+
+### venn-4
+\`\`\`mdart venn-4
+- Strategy
+  - OKRs
+  - Roadmap
+- Design
+  - Brand
+  - UX
+- Engineering
+  - Frontend
+  - Backend
+- Data
+  - Analytics
+  - ML
+\`\`\`
+
+### concentric
+\`\`\`mdart concentric
+title: Scope Layers
+- Vision
+- Strategy
+- Goals
+- Initiatives
+- Tasks
+\`\`\`
+
+### balance
+\`\`\`mdart balance
+- Benefits
+  - Speed
+  - Flexibility
+  - Cost savings
+- Risks
+  - Complexity
+  - Dependencies
+  - Maintenance
+\`\`\`
+
+### counterbalance
+\`\`\`mdart counterbalance
+title: Build vs Buy
+- Build
+  - Full control
+  - Custom fit
+  - High upfront cost
+- Buy
+  - Fast to ship
+  - Lower cost
+  - Vendor dependency
+\`\`\`
+
+### opposing-arrows
+\`\`\`mdart opposing-arrows
+- Supply
+  - Inventory
+  - Production
+  - Logistics
+- Demand
+  - Orders
+  - Forecast
+  - Trends
+\`\`\`
+
+### web
+\`\`\`mdart web
+title: Team Dependencies
+- Frontend
+- Backend
+- Design
+- Data
+- DevOps
+- QA
+\`\`\`
+
+### cluster
+\`\`\`mdart cluster
+title: Engineering Org
+- Platform
+  - Core API
+  - Auth
+  - Billing
+- Product
+  - Search
+  - Feed
+  - Notifications
+- Infrastructure
+  - Compute
+  - Storage
+  - Monitoring
+\`\`\`
+
+### target
+\`\`\`mdart target
+title: Focus Areas
+- Core Goal
+- Must Have
+- Should Have
+- Nice to Have
+\`\`\`
+
+### radial
+\`\`\`mdart radial
+title: Platform
+- Mobile
+  - iOS
+  - Android
+- Web
+  - React
+  - API
+- Data
+  - Analytics
+- Design
+  - UI
+  - UX
+- Security
+\`\`\`
+
+### converging
+\`\`\`mdart converging
+title: Product-Market Fit
+- User Research
+- Market Analysis
+- Technical Feasibility
+- Business Viability
+- Product-Market Fit
+\`\`\`
+
+### diverging
+\`\`\`mdart diverging
+title: Platform APIs
+- Core Platform
+- Mobile SDK
+- Web Embed
+- Partner API
+- Webhooks
+\`\`\`
+
+### plus
+\`\`\`mdart plus
+title: Growth Framework
+- Acquire
+- Activate
+- Retain
+- Revenue
+- Referral
+\`\`\`
+
+---
+
+## Statistical
+
+Data visualisation.
+
+### progress-list
+\`\`\`mdart progress-list
+title: Q3 KPIs
+- ARR growth: 84%
+- Churn rate: 72%
+- NPS: 78%
+- API uptime: 99%
+- Deploy frequency: 91%
+\`\`\`
+
+### bullet-chart
+\`\`\`mdart bullet-chart
+title: Sales vs Target
+- Revenue: 78 [85]
+- Pipeline: 62 [70]
+- Deals Closed: 91 [80]
+- Retention: 88 [90]
+\`\`\`
+
+### scorecard
+\`\`\`mdart scorecard
+title: Platform Health
+- MRR: $128K [+12%]
+- Churn: 2.1% [-0.3%]
+- MAU: 48,200 [+8%]
+- ARPU: $2.65 [+4%]
+\`\`\`
+
+### treemap
+\`\`\`mdart treemap
+title: Code by Module
+- auth: 18%
+- api: 32%
+- ui: 25%
+- db: 14%
+- workers: 8%
+- utils: 3%
+\`\`\`
+
+### sankey
+\`\`\`mdart sankey
+title: Traffic Sources
+- Organic: 45
+  - Landing Page
+  - Blog
+  - Docs
+- Paid: 30
+  - Landing Page
+  - Pricing
+- Direct: 25
+  - Dashboard
+  - Onboarding
+\`\`\`
+
+### waffle
+\`\`\`mdart waffle
+title: Budget Allocation
+- Engineering: 30%
+- Marketing: 20%
+- Sales: 10%
+- Operations: 10%
+- Other: 30%
+\`\`\`
+
+### gauge
+\`\`\`mdart gauge
+title: Health Metrics
+- Uptime: 99%
+- Error Rate: 52%
+- Satisfaction: 84%
+\`\`\`
+
+### radar
+\`\`\`mdart radar
+title: Team Capabilities
+- Frontend: 85
+- Backend: 90
+- DevOps: 70
+- Data: 65
+- Security: 55
+- Mobile: 40
+\`\`\`
+
+### heatmap
+\`\`\`mdart heatmap
+title: Deploys by Day & Hour
+- Mon
+  - Morning: 5
+  - Midday: 8
+  - Afternoon: 3
+  - Evening: 1
+- Tue
+  - Morning: 7
+  - Midday: 12
+  - Afternoon: 6
+  - Evening: 2
+- Wed
+  - Morning: 4
+  - Midday: 9
+  - Afternoon: 8
+  - Evening: 3
+- Thu
+  - Morning: 6
+  - Midday: 11
+  - Afternoon: 5
+  - Evening: 2
+- Fri
+  - Morning: 3
+  - Midday: 5
+  - Afternoon: 2
+  - Evening: 0
+\`\`\`
+
+---
+
+## Planning
+
+Project timelines and task boards.
+
+### kanban
+\`\`\`mdart kanban
+title: Feature Board
+- Backlog
+  - API rate limiting
+  - Dark mode
+  - CSV export
+- In Progress
+  - Auth refresh flow [active]
+  - Dashboard v2 [active]
+- Review
+  - Webhook retry logic
+- Done
+  - Search v2 [done]
+  - Onboarding redesign [done]
+\`\`\`
+
+### gantt
+\`\`\`mdart gantt
+title: Q3 Project Plan
+- Discovery [wk1-wk2]
+- Design [wk2-wk4]
+- Backend API [wk3-wk8]
+- Frontend [wk5-wk10]
+- Testing [wk9-wk11]
+- Launch [wk12-wk13]
+\`\`\`
+
+### gantt-lite
+\`\`\`mdart gantt-lite
+title: Sprint Timeline
+- API design [wk1–wk2]
+- Core implementation [wk2–wk5]
+* Alpha cut [wk5]
+- Testing & hardening [wk5–wk7]
+- Docs & examples [wk6–wk8]
+* GA release [wk8]
+\`\`\`
+
+### sprint-board
+\`\`\`mdart sprint-board
+title: Sprint 24
+- Backlog
+  - Write migration guide: 3
+  - Add OpenAPI spec: 5
+  - Improve error messages: 2
+- In Progress
+  - Pagination refactor: 5 [active]
+  - Token refresh logic: 3 [active]
+- Done
+  - Rate limiter: 5 [done]
+  - Health check endpoint: 2 [done]
+\`\`\`
+
+### timeline
+\`\`\`mdart timeline
+title: Product Milestones
+- Q1 '22: Private beta [done]
+- Q3 '22: 500 design partners [done]
+- Q1 '23: Public launch [done]
+- Q3 '23: Series A [active]
+- Q1 '24: 10,000 teams
+- Q4 '24: Profitable
+\`\`\`
+
+### milestone
+\`\`\`mdart milestone
+title: Launch Readiness
+- Security audit complete [done]
+- Load testing passed [done]
+- Docs site live [done]
+- Support runbook ready [active]
+- Status page configured
+- Rollback plan tested
+\`\`\`
+
+### wbs
+\`\`\`mdart wbs
+title: Platform Launch
+- Frontend
+  - Components [done]
+  - State Mgmt [active]
+- Backend
+  - API Design [done]
+  - Auth [active]
+- QA
+  - Unit Tests
+  - E2E
+\`\`\`
+
+---
+
+## Technical
+
+Architecture and system diagrams.
+
+### layered-arch
+\`\`\`mdart layered-arch
+title: Application Architecture
+- Presentation
+  - React SPA
+  - Mobile App
+- API Gateway
+  - Rate limiting
+  - Auth middleware
+- Services
+  - User service
+  - Order service
+  - Payment service
+- Data
+  - PostgreSQL
+  - Redis
+  - S3
+\`\`\`
+
+### entity
+\`\`\`mdart entity
+title: Core Data Model
+- users
+  - id [PK]
+  - email
+  - created_at
+- teams
+  - id [PK]
+  - name
+  - owner_id [FK→users]
+- projects
+  - id [PK]
+  - team_id [FK→teams]
+  - name
+  - status
+\`\`\`
+
+### network
+\`\`\`mdart network
+title: Service Topology
+- Browser
+  → API Server
+  → CDN
+- API Server
+  → Worker
+  → SQLite
+- Worker
+  → Claude CLI
+  → MCP Server
+\`\`\`
+
+### pipeline
+\`\`\`mdart pipeline
+title: CI/CD Pipeline
+- Source → Lint → Test → Build → Deploy → Monitor
+\`\`\`
+
+### sequence
+\`\`\`mdart sequence
+title: Auth Flow
+- Browser
+  → API: POST /login
+- API
+  → DB: SELECT user
+- DB
+  → API: user row
+- API
+  → Browser: Set-Cookie
+\`\`\`
+
+### state-machine
+\`\`\`mdart state-machine
+title: Order Lifecycle
+- Pending
+  → Processing: payment ok
+  → Cancelled: timeout
+- Processing
+  → Shipped: packed
+  → Pending: retry
+- Shipped
+  → Delivered: confirmed
+- Delivered [final]
+- Cancelled [final]
+\`\`\`
+
+### class
+\`\`\`mdart class
+title: Domain Model
+- Animal [abstract]
+  - + name
+  - + species
+  - + speak() [abstract]
+- Dog
+  - - breed
+  - + speak()
+  - + fetch()
+- Cat
+  - + purr()
+  - + scratch()
+\`\`\`
+`,
 }
 
 // ── Init dropdowns ────────────────────────────────────────────────────────────

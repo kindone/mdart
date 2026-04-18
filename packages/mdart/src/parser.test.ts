@@ -155,6 +155,29 @@ describe('parseMdArt', () => {
     expect(spec.items[0].flowChildren[0].label).toBe('Target A')
   })
 
+  it('flow children (→) are also visible as regular children', () => {
+    const src = '- Source\n  → Target A\n  → Target B'
+    const spec = parseMdArt(src)
+    // soft exchangeability: flow children appear in children[] too
+    expect(spec.items[0].children).toHaveLength(2)
+    expect(spec.items[0].children[0].label).toBe('Target A')
+  })
+
+  it('regular children (-) are also visible as flow children', () => {
+    const src = '- Source\n  - Target A\n  - Target B'
+    const spec = parseMdArt(src)
+    // soft exchangeability: regular children appear in flowChildren[] too
+    expect(spec.items[0].flowChildren).toHaveLength(2)
+    expect(spec.items[0].flowChildren[0].label).toBe('Target A')
+  })
+
+  it('+ prefix items are visible to non-SWOT renderers via label', () => {
+    const spec = parseMdArt('type: process\n\n+ Step one\n+ Step two')
+    expect(spec.items).toHaveLength(2)
+    expect(spec.items[0].label).toBe('Step one')
+    expect(spec.items[1].label).toBe('Step two')
+  })
+
   // ── Milestone ──────────────────────────────────────────────────────────────
 
   it('parses * milestone items', () => {

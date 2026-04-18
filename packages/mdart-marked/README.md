@@ -13,6 +13,8 @@ Discovery → Design → Build → Test → Deploy
 
 ![Process](../../docs/examples/process.svg)
 
+Full syntax reference with rendered examples: **[docs/syntax.md](../../docs/syntax.md)**
+
 ## Install
 
 ```bash

@@ -175,6 +175,10 @@ npm run build
 npm run gen-examples
 ```
 
+## Syntax reference
+
+Full syntax documentation with rendered examples for all 101 layout types, color overrides, and modifier attrs: **[docs/syntax.md](./docs/syntax.md)**
+
 ## License
 
 MIT

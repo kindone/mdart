@@ -141,7 +141,11 @@ const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
 export function renderMdArt(raw: string, hintType?: string): string {
   try {
     const spec = parseMdArt(raw, hintType)
-    const theme = getTheme(spec.type, spec.theme)
+    let theme = getTheme(spec.type, spec.theme)
+    // Apply per-fence color overrides from front-matter
+    if (spec.colors && Object.keys(spec.colors).length > 0) {
+      theme = { ...theme, ...spec.colors } as typeof theme
+    }
     const renderer = LAYOUT_RENDERERS[spec.type]
     if (!renderer) return renderFallback(spec, theme)
     return renderer(spec, theme)

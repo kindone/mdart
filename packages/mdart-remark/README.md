@@ -20,6 +20,8 @@ title: Auth Flow
 
 ![Sequence](../../docs/examples/sequence.svg)
 
+Full syntax reference with rendered examples: **[docs/syntax.md](../../docs/syntax.md)**
+
 ## Install
 
 ```bash

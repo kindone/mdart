@@ -287,7 +287,7 @@ function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: boolean)
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
   // Arrowhead marker for L-shaped step connectors
-  parts.push(`<defs><marker id="step-arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="${theme.accent}"/></marker></defs>`)
+  parts.push(`<defs><marker id="step-arr" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto"><polygon points="0,0 5,2.5 0,5" fill="${theme.accent}"/></marker></defs>`)
 
   items.forEach((item, i) => {
     const x = startX + i * (BOX_W + GAP_X)
@@ -302,17 +302,18 @@ function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: boolean)
     parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, Math.floor(BOX_W / 6))}</text>`)
     if (item.value) parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 16).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, Math.floor(BOX_W / 5))}</text>`)
 
-    // L-shaped connector to next box with arrowhead
+    // Diagonal connector from current box corner → next box corner
     if (i < n - 1) {
       const nextY = ascending
         ? titleH + 4 + (n - 2 - i) * (BOX_H + GAP_Y)
         : titleH + 4 + (i + 1) * (BOX_H + GAP_Y)
-      // For step-down: corner at (box.right, box.bottom) → right → nextBox.top-left
-      // For step-up:   corner at (box.right, box.top)    → right → nextBox.bottom-left
-      const cornerY = ascending ? y : y + BOX_H
-      const nextCornerY = ascending ? nextY + BOX_H : nextY
-      const nextX = x + BOX_W + GAP_X
-      parts.push(`<polyline points="${(x + BOX_W).toFixed(1)},${cornerY} ${nextX},${cornerY} ${nextX},${nextCornerY}" fill="none" stroke="${theme.accent}cc" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#step-arr)"/>`)
+      // step-down: depart from bottom-right, arrive at top-left of next box
+      // step-up:   depart from top-right,    arrive at bottom-left of next box
+      const x1 = x + BOX_W
+      const y1 = ascending ? y : y + BOX_H
+      const x2 = x + BOX_W + GAP_X
+      const y2 = ascending ? nextY + BOX_H : nextY
+      parts.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${theme.accent}cc" stroke-width="2.5" marker-end="url(#step-arr)"/>`)
     }
   })
   return svgWrap(W, H, theme, parts)

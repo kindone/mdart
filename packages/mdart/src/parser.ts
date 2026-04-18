@@ -18,6 +18,7 @@ export interface MdArtSpec {
   items: MdArtItem[]
   nodes?: string[]        // for network graph sections
   edges?: Array<{from: string, to: string}>
+  colors?: Record<string, string | string[]>  // per-fence color overrides
   raw: string
 }
 
@@ -124,7 +125,17 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
       else if (key === 'title') spec.title = val
       else if (key === 'direction') spec.direction = val as 'LR' | 'TB'
       else if (key === 'width') spec.width = parseInt(val, 10) || undefined
-      else {
+      else if (['primary','secondary','accent','muted','bg','surface','border','text','textmuted','danger','warning'].includes(key)) {
+        // Per-fence color override (e.g. `danger: #ff0000`)
+        // Normalize camelCase lookup: textMuted can be entered as "textmuted" or "textMuted"
+        const camelKey = key === 'textmuted' ? 'textMuted' : key
+        if (!spec.colors) spec.colors = {}
+        spec.colors[camelKey] = val
+      } else if (key === 'palette') {
+        // palette: #f00, #0f0, #00f  (comma-separated hex colours)
+        if (!spec.colors) spec.colors = {}
+        spec.colors['palette'] = val.split(',').map(c => c.trim()).filter(Boolean)
+      } else {
         // Not a recognized front-matter key — treat as body start
         bodyStart = i
         break
@@ -144,6 +155,7 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
   // ── Arrow chain detection ──────────────────────────────────────────────────
   // Check if the entire body is a single arrow-chain line
   const bodyLines = lines.slice(bodyStart).filter(l => l.trim())
+    .map(l => l.replace(/ -> /g, ' → '))  // normalise ASCII arrow in chain detection
   if (bodyLines.length === 1 && bodyLines[0].includes(' → ')) {
     // Strip any leading bullet marker (- or *) before splitting
     const chainLine = bodyLines[0].trim().replace(/^[-*]\s+/, '')
@@ -158,7 +170,10 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
 
   for (let i = bodyStart; i < lines.length; i++) {
     const line = lines[i]
+    // Normalise ASCII arrow -> to unicode → so both syntaxes work
     const trimmed = line.trim()
+      .replace(/^->\s/, '→ ')          // flow-child prefix:  -> Target
+      .replace(/ -> /g, ' → ')         // chain / edge separator:  A -> B -> C
     if (!trimmed) continue
 
     // Section headers
@@ -216,8 +231,10 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
       }
       if (parentItem) {
         parentItem.flowChildren.push(item)
+        parentItem.children.push(item)       // also visible to non-flow renderers
       } else if (spec.items.length > 0) {
         spec.items[spec.items.length - 1].flowChildren.push(item)
+        spec.items[spec.items.length - 1].children.push(item)
       }
       // Do NOT push flow children onto the stack
       continue
@@ -277,6 +294,7 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
         spec.items.push(item)
       } else {
         stack[stack.length - 1].item.children.push(item)
+        stack[stack.length - 1].item.flowChildren.push(item)  // also visible to flow renderers
       }
       stack.push({ item, depth })
       continue

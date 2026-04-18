@@ -16,6 +16,8 @@ title: Engineering Team
 
 ![Org chart](../../docs/examples/org-chart.svg)
 
+Full syntax documentation with rendered examples for all 101 layout types, color overrides, and modifier attrs: **[docs/syntax.md](../../docs/syntax.md)**
+
 ## Install
 
 ```bash

@@ -62,7 +62,7 @@ function renderProgressList(spec: MdArtSpec, theme: MdArtTheme): string {
     const fillW = Math.max(0, BAR_W * pct / 100)
 
     // Color by value threshold
-    const barColor = pct >= 70 ? theme.accent : pct >= 40 ? '#fbbf24' : '#f87171'
+    const barColor = pct >= 70 ? theme.accent : pct >= 40 ? theme.warning : theme.danger
 
     rows.push(
       // Track
@@ -104,7 +104,7 @@ function renderScorecard(spec: MdArtSpec, theme: MdArtTheme): string {
     const y = TITLE_H + GAP + row * (CARD_H + GAP)
     const value = item.value ?? item.attrs[0] ?? '—'
     const change = item.attrs.find(a => /^[+\-]/.test(a))
-    const changeColor = change?.startsWith('+') ? '#34d399' : '#f87171'
+    const changeColor = change?.startsWith('+') ? theme.accent : theme.danger
 
     cards.push(
       `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${CARD_H}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>`,
@@ -132,8 +132,7 @@ function renderTreemap(spec: MdArtSpec, theme: MdArtTheme): string {
   const CONTENT_H = H - TITLE_H - 8
 
   // Simple row-based treemap: fill rows left-to-right
-  const colors = [theme.primary, theme.secondary, theme.accent, theme.muted,
-    '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6']
+  const colors = [theme.primary, theme.secondary, theme.accent, theme.muted, ...theme.palette]
 
   const cells: string[] = []
 
@@ -194,7 +193,7 @@ function renderBulletChart(spec: MdArtSpec, theme: MdArtTheme): string {
 
     // Actual value bar (60% height, centered)
     const actH = BAR_H * 0.6, actY = barY + (BAR_H - actH) / 2
-    const barColor = val >= 0.7 ? theme.accent : val >= 0.4 ? '#fbbf24' : '#f87171'
+    const barColor = val >= 0.7 ? theme.accent : val >= 0.4 ? theme.warning : theme.danger
     parts.push(`<rect x="${BAR_X}" y="${actY.toFixed(1)}" width="${(BAR_W * val).toFixed(1)}" height="${actH.toFixed(1)}" rx="2" fill="${barColor}"/>`)
 
     // Target marker
@@ -217,7 +216,7 @@ function renderSankey(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
 
-  const colors = [theme.primary, theme.secondary, theme.accent, theme.muted, '#f59e0b', '#ec4899']
+  const colors = [theme.primary, theme.secondary, theme.accent, theme.muted, ...theme.palette]
 
   // Parse source weights
   const srcW = items.map(it => Math.max(1, parseFloat((it.value ?? it.attrs[0] ?? '1').replace('%', '')) || 1))
@@ -309,7 +308,7 @@ function renderWaffle(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
 
-  const colors = [theme.primary, theme.secondary, theme.accent, theme.muted, '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6']
+  const colors = [theme.primary, theme.secondary, theme.accent, theme.muted, ...theme.palette]
   const rawVals = items.map(it => Math.max(0, parseFloat((it.value ?? it.attrs[0] ?? '0').replace('%', '')) || 0))
   const total = rawVals.reduce((a, b) => a + b, 0) || 100
   // Convert to square counts (round, force sum = 100)
@@ -377,7 +376,7 @@ function renderGauge(spec: MdArtSpec, theme: MdArtTheme): string {
       const angle = Math.PI * (1 - val)  // π=left, 0=right
       const ex = cx + R * Math.cos(angle), ey = cy - R * Math.sin(angle)
       const largeArc = 0  // arc is always ≤180° (half-circle), so never a large arc
-      const col = val >= 0.7 ? theme.accent : val >= 0.4 ? '#fbbf24' : '#f87171'
+      const col = val >= 0.7 ? theme.accent : val >= 0.4 ? theme.warning : theme.danger
       parts.push(`<path d="M${lx},${cy} A${R},${R} 0 ${largeArc},1 ${ex.toFixed(1)},${ey.toFixed(1)}" fill="none" stroke="${col}" stroke-width="${SW}" stroke-linecap="round"/>`)
       // Tip dot
       parts.push(`<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="${(SW / 2).toFixed(1)}" fill="${col}"/>`)

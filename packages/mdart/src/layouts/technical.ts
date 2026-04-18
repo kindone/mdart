@@ -151,13 +151,13 @@ function renderEntity(spec: MdArtSpec, theme: MdArtTheme): string {
       const fy = y + HEADER_H + fi * FIELD_H + 14
       const isPK = field.attrs.includes('PK')
       const isFK = field.attrs.includes('FK')
-      const textColor = isPK ? theme.accent : isFK ? '#c4b5fd' : theme.textMuted
+      const textColor = isPK ? theme.accent : isFK ? `${theme.secondary}ee` : theme.textMuted
 
       parts.push(`<text x="${(x + 10).toFixed(1)}" y="${fy.toFixed(1)}" font-size="10" fill="${textColor}" font-family="ui-monospace,monospace">${tt(field.label, 16)}</text>`)
 
       if (isPK || isFK) {
         const badge = isPK ? 'PK' : 'FK'
-        const badgeColor = isPK ? theme.accent : '#a78bfa'
+        const badgeColor = isPK ? theme.accent : theme.secondary
         const bx = x + ENT_W - 28
         parts.push(
           `<rect x="${bx.toFixed(1)}" y="${(fy - 11).toFixed(1)}" width="24" height="13" rx="3" fill="${badgeColor}22" stroke="${badgeColor}66" stroke-width="0.5"/>`,
@@ -575,9 +575,9 @@ function renderClass(spec: MdArtSpec, theme: MdArtTheme): string {
       const fy = curY + fi * FIELD_H + 13
       const isPK = field.attrs.includes('PK')
       const isFK = field.attrs.includes('FK')
-      const visMatch = field.label.match(/^([+\-#~])/)
+      const visMatch = field.label.match(/^\[([+\-#~])\]/) ?? field.label.match(/^([+\-#~])/)
       const vis = visMatch ? visMatch[1] + ' ' : '  '
-      const raw = field.label.replace(/^[+\-#~]\s*/, '')
+      const raw = field.label.replace(/^\[[+\-#~]\]\s*|^[+\-#~]\s*/, '')
       const color = isPK ? theme.accent : isFK ? '#c4b5fd' : `${theme.textMuted}cc`
       parts.push(`<text x="${(x + 7).toFixed(1)}" y="${fy.toFixed(1)}" font-size="10" fill="${color}" font-family="ui-monospace,monospace">${escapeXml(vis + truncate(raw, maxCharsPerField))}</text>`)
       if (isPK || isFK) {
@@ -600,9 +600,9 @@ function renderClass(spec: MdArtSpec, theme: MdArtTheme): string {
     // Methods
     methods.forEach((method, mi) => {
       const my = curY + mi * FIELD_H + 13
-      const visMatch = method.label.match(/^([+\-#~])/)
+      const visMatch = method.label.match(/^\[([+\-#~])\]/) ?? method.label.match(/^([+\-#~])/)
       const vis = visMatch ? visMatch[1] + ' ' : '  '
-      const raw = method.label.replace(/^[+\-#~]\s*/, '')
+      const raw = method.label.replace(/^\[[+\-#~]\]\s*|^[+\-#~]\s*/, '')
       const isStatic = method.attrs.includes('static')
       parts.push(`<text x="${(x + 7).toFixed(1)}" y="${my.toFixed(1)}" font-size="10" fill="${theme.primary}cc" font-family="ui-monospace,monospace"${isStatic ? ' text-decoration="underline"' : ''}>${escapeXml(vis + truncate(raw, maxCharsPerField))}</text>`)
     })
