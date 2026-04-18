@@ -277,7 +277,7 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
     // Special case: for swot type, top-level (depth 0) '-' items are SWOT weakness markers.
     if (trimmed.startsWith('- ')) {
       const rest = trimmed.slice(2).trim()
-      if (spec.type === 'swot' && depth === 0) {
+      if ((spec.type === 'swot' || spec.type === 'pros-cons') && depth === 0) {
         // Treat as SWOT weakness prefix item (flat, no parent-child nesting)
         const item = parseItem(rest)
         item.prefix = '-'

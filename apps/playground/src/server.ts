@@ -22,7 +22,9 @@ import express     from 'express'
 import path        from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readFile, writeFile, copyFile, unlink } from 'node:fs/promises'
-import { exec as execCb } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { exec as execCb, spawn as spawnProc } from 'node:child_process'
+import { createInterface } from 'node:readline'
 import { promisify } from 'node:util'
 import { tmpdir } from 'node:os'
 
@@ -345,6 +347,175 @@ app.post('/lab/render', async (req, res) => {
 app.get('/lab', (_req, res) => {
   res.sendFile(path.join(__dirname, '../public/lab.html'))
 })
+
+// ── Lab chat (Claude) ─────────────────────────────────────────────────────────
+
+const CLAUDE_BIN = process.env.CLAUDE_PATH
+  ?? `${process.env.HOME ?? '/usr/local'}/.local/bin/claude`
+
+// Single in-memory conversation session — resets on server restart.
+let chatSessionId: string | null = null
+
+/**
+ * GET /lab/chat/status
+ * Returns { available: true } if the Claude CLI binary is reachable.
+ */
+app.get('/lab/chat/status', (_req, res) => {
+  res.json({ available: existsSync(CLAUDE_BIN) })
+})
+
+/**
+ * DELETE /lab/chat/session
+ * Clears the stored Claude session so the next message starts fresh.
+ */
+app.delete('/lab/chat/session', (_req, res) => {
+  chatSessionId = null
+  res.json({ ok: true })
+})
+
+/**
+ * POST /lab/chat
+ * Body: { message: string, context?: string }
+ * Streams a Claude response as SSE.  context is prepended to the message so
+ * Claude sees the current file + mdart source without polluting chat history.
+ */
+app.post('/lab/chat', (req, res) => {
+  const { message, context } = req.body as { message?: string; context?: string }
+  if (!message?.trim()) { res.status(400).json({ error: 'message required' }); return }
+
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.setHeader('X-Accel-Buffering', 'no')
+  res.flushHeaders()
+
+  const fullMessage = context?.trim()
+    ? `${context.trim()}\n\n${message.trim()}`
+    : message.trim()
+
+  const args = [
+    '--print', fullMessage,
+    '--output-format', 'stream-json',
+    '--verbose',
+    '--include-partial-messages',
+    '--permission-mode', 'acceptEdits',
+    '--mcp-config', '{"mcpServers":{}}',  // empty MCP config
+    '--strict-mcp-config',            // ignore global ~/.claude.json MCP servers
+    '--system-prompt', LAB_SYSTEM_PROMPT,
+  ]
+  if (chatSessionId) args.push('--resume', chatSessionId)
+
+  // Strip CLAUDE* env vars to prevent sub-agent IPC hang (see CLAUDE.md)
+  const cleanEnv: NodeJS.ProcessEnv = {}
+  for (const [k, v] of Object.entries(process.env)) {
+    if (!k.startsWith('CLAUDE')) cleanEnv[k] = v
+  }
+  if (process.env.ANTHROPIC_BASE_URL) cleanEnv.ANTHROPIC_BASE_URL = process.env.ANTHROPIC_BASE_URL
+
+  const child = spawnProc(CLAUDE_BIN, args, {
+    env: { ...cleanEnv, CI: 'true' },
+    shell: false,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    cwd: MDART_PKG,
+  })
+
+  function sse(event: string, data: unknown): void {
+    if (res.writableEnded) return
+    try { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`) } catch { /* socket closed */ }
+  }
+
+  function finish() {
+    if (!res.writableEnded) res.end()
+  }
+
+  // Drain stderr to prevent the child's stderr buffer from blocking it
+  child.stderr.resume()
+
+  const rl = createInterface({ input: child.stdout, crlfDelay: Infinity })
+
+  rl.on('error', (err) => { sse('error', { message: err.message }); finish() })
+
+  rl.on('line', (line) => {
+    if (!line.trim()) return
+    let chunk: Record<string, unknown>
+    try { chunk = JSON.parse(line) as Record<string, unknown> } catch { return }
+
+    if (chunk.type === 'system' && chunk.subtype === 'init') {
+      chatSessionId = chunk.session_id as string
+    }
+
+    // Forward streaming text deltas; skip large/noisy chunk types to reduce traffic
+    const ev = chunk.type === 'stream_event'
+      ? (chunk.event as Record<string, unknown> | undefined)
+      : null
+    const isTextDelta = ev?.type === 'content_block_delta' &&
+      (ev.delta as Record<string, unknown> | undefined)?.type === 'text_delta'
+    const isResult = chunk.type === 'result'
+    const isInit   = chunk.type === 'system' && chunk.subtype === 'init'
+    if (isTextDelta || isResult || isInit) sse('chunk', chunk)
+
+    if (isResult) {
+      const isErr = chunk.is_error as boolean
+      if (isErr) {
+        const detail = (chunk.errors as string[] | undefined)?.join('; ') || String(chunk.result)
+        sse('error', { message: detail })
+      } else {
+        sse('done', { session_id: chunk.session_id })
+      }
+      finish()
+    }
+  })
+
+  child.on('error', (err) => { sse('error', { message: err.message }); finish() })
+  child.on('close', (code) => {
+    if (!res.writableEnded) {
+      if (code !== 0) sse('error', { message: `Claude exited with code ${code}` })
+      finish()
+    }
+  })
+
+  // Kill child if browser disconnects
+  res.on('close', () => { child.kill() })
+})
+
+const LAB_SYSTEM_PROMPT = `\
+You are an AI assistant embedded in the MdArt Renderer Lab — a browser tool
+for editing TypeScript layout renderers and previewing SVG diagrams live.
+
+## Architecture
+
+Each of the 101 diagram types lives in its own file:
+  packages/mdart/src/layouts/{family}/{type}.ts
+Each exports a single function:
+  export function render(spec: MdArtSpec, theme: MdArtTheme): string
+
+Shared SVG helpers:  layouts/shared.ts
+Tree-layout helpers: layouts/hierarchy/shared.ts
+Theme definitions:   packages/mdart/src/theme.ts
+Parser:              packages/mdart/src/parser.ts
+
+## Key types
+
+MdArtSpec   — spec.type, spec.title, spec.items (MdArtItem[]), spec.colors?
+MdArtItem   — item.label, item.value?, item.children[], item.attrs[]
+MdArtTheme  — primary, secondary, accent, muted, bg, surface, border,
+               text, textMuted, danger, warning, palette (string[])
+
+## Shared helpers (layouts/shared.ts)
+
+svgWrap(inner, W, H, theme)  — wraps content in a full <svg> with bg rect
+escapeXml(str)               — escapes & < > for SVG text nodes
+tt(str, max)                 — truncates with ellipsis
+renderEmpty(theme)           — placeholder SVG for empty input
+
+## Your role
+
+- Explain how a renderer works and suggest improvements
+- Help debug SVG layout math or visual issues
+- Write or rewrite renderer code when asked
+- After editing a file the user clicks Apply to rebuild (~250 ms) and preview
+
+Keep responses concise. Show code diffs when suggesting changes.`
 
 /** GET /health */
 app.get('/health', (_req, res) => {

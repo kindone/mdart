@@ -9,12 +9,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const W = 560, H = 440
   const cx = W / 2, cy = H / 2
   const R = 158
+  const CR = 38  // center circle radius
   const parts: string[] = []
   for (let i = 0; i < n; i++) {
     const angle = (2 * Math.PI * i / n) - Math.PI / 2
     const sx = cx + R * Math.cos(angle), sy = cy + R * Math.sin(angle)
+    // start line from circle edge, not center — so it never crosses the circle
+    const lx = cx + CR * Math.cos(angle), ly = cy + CR * Math.sin(angle)
     const item = spokes[i]
-    parts.push(`<line x1="${cx}" y1="${cy}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.border}cc" stroke-width="1.5"/>`)
+    parts.push(`<line x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.border}cc" stroke-width="1.5"/>`)
     if (item) {
       parts.push(`<rect x="${(sx - 52).toFixed(1)}" y="${(sy - 18).toFixed(1)}" width="104" height="36" rx="5" fill="${theme.surface}" stroke="${theme.primary}66" stroke-width="1.2"/>`)
       parts.push(`<text x="${sx.toFixed(1)}" y="${(sy + 5).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, 12)}</text>`)
@@ -24,7 +27,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       })
     }
   }
-  parts.push(`<circle cx="${cx}" cy="${cy}" r="38" fill="${theme.accent}33" stroke="${theme.accent}" stroke-width="1.5"/>`)
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${CR}" fill="${theme.surface}" stroke="${theme.accent}" stroke-width="1.5"/>`)
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${CR}" fill="${theme.accent}22" stroke="none"/>`)
   const cw = centerLabel.split(' ')
   if (cw.length === 1) {
     parts.push(`<text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(centerLabel, 12)}</text>`)
