@@ -10,7 +10,7 @@
 ```mdart                 ← full front-matter
 type: kanban
 title: Sprint 22
-theme: mono-light        ← default · mono-light · mono-dark · soft · vibrant
+theme: rose              ← any named theme (see Themes section below)
 - Item
 ```
 ````
@@ -454,6 +454,85 @@ title: Monthly Metrics
 - Churn: 2.1% [-0.3%]
 - MAU: 48,200 [+8%]
 - NPS: 72 [+5]
+```
+
+---
+
+## Themes
+
+Each diagram family has its own default color scheme. Override with `theme:` in front-matter, `configureMdArt()` globally, or plugin-level config.
+
+### Named themes
+
+| Name | Hue | Default for |
+|---|---|---|
+| `mono-light` | Neutral light | — |
+| `mono-dark` | Neutral dark | — |
+| `cyan` | Cyan | list types |
+| `emerald` | Green | process, statistical |
+| `violet` | Purple | cycle |
+| `lavender` | Light purple | planning |
+| `amber` | Gold | hierarchy |
+| `orange` | Orange | pyramid |
+| `rose` | Red-pink | relationship |
+| `blue` | Blue | matrix |
+| `sky` | Sky blue | technical |
+
+````mdart
+type: venn
+theme: sky
+title: Cloud & Edge
+
+- Cloud Computing
+  - Auto-scaling
+  - Managed services
+- Edge Computing
+  - Low latency
+  - Offline capable
+- A ∩ B
+  - Hybrid workloads
+````
+
+### Global configuration
+
+Set defaults once at app startup — applies to every diagram rendered in that process:
+
+```ts
+import { configureMdArt } from 'mdart'
+
+// Use mono-light theme for all diagrams
+configureMdArt({ theme: 'mono-light' })
+
+// Override specific colors globally
+configureMdArt({ colors: { bg: '#0f172a', surface: '#1e293b' } })
+```
+
+Reset to defaults (useful in tests):
+
+```ts
+import { resetMdArtConfig } from 'mdart'
+resetMdArtConfig()
+```
+
+### Plugin-level config
+
+Passed to the plugin factory — overrides global config, but still below per-fence front-matter:
+
+```ts
+// marked
+const marked = new Marked({ extensions: [mdartExtension({ theme: 'mono-light' })] })
+
+// markdown-it
+const md = new MarkdownIt().use(mdartPlugin({ theme: 'mono-light' }))
+
+// remark/unified
+unified().use(remarkMdart({ theme: 'mono-light' }))
+```
+
+### Priority (lowest → highest)
+
+```
+family default  <  global config  <  plugin config  <  per-fence front-matter
 ```
 
 ---

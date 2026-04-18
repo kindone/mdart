@@ -1,6 +1,6 @@
 {
   "name": "mdart-markdown-it",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "description": "markdown-it v14 plugin that renders mdart diagram fences as inline SVG",
   "type": "module",

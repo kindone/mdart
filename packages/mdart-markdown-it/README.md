@@ -27,7 +27,7 @@ npm install mdart mdart-markdown-it markdown-it
 import MarkdownIt from 'markdown-it'
 import { mdartPlugin } from 'mdart-markdown-it'
 
-const md = new MarkdownIt().use(mdartPlugin)
+const md = new MarkdownIt().use(mdartPlugin())
 
 const html = md.render(`
 # Hello
@@ -44,6 +44,24 @@ Discovery → Design → Build → Test → Deploy
 import { renderWithMarkdownIt } from 'mdart-markdown-it'
 
 const html = renderWithMarkdownIt(markdown)
+```
+
+## Configuration
+
+`mdartPlugin()` is a factory — call it with an optional config to set plugin-level defaults:
+
+```ts
+import { configureMdArt } from 'mdart'
+import { mdartPlugin, renderWithMarkdownIt } from 'mdart-markdown-it'
+
+// Global — applies everywhere
+configureMdArt({ theme: 'mono-light' })
+
+// Plugin-level — overrides global for this md instance
+const md = new MarkdownIt().use(mdartPlugin({ theme: 'mono-dark' }))
+
+// Convenience wrapper with config
+const html = renderWithMarkdownIt(markdown, { theme: 'mono-dark' })
 ```
 
 ## How it works

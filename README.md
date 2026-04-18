@@ -122,7 +122,7 @@ MdArt supports 10 diagram families out of the box:
 
 **Process** · **List** · **Cycle** · **Matrix** · **Hierarchy** · **Pyramid** · **Relationship** · **Statistical** · **Planning** · **Technical**
 
-Each family has multiple layout types (99 total) — org charts, kanban boards, Gantt charts, sequence diagrams, SWOT analyses, Sankey flows, and much more.
+Each family has multiple layout types (101 total) — org charts, kanban boards, Gantt charts, sequence diagrams, SWOT analyses, Sankey flows, and much more.
 
 ## Quick start
 
@@ -140,6 +140,15 @@ Plan → Build → Measure → Learn
 
 document.body.innerHTML = svg
 ```
+
+Apply a theme globally or per fence:
+
+```ts
+import { configureMdArt } from 'mdart'
+configureMdArt({ theme: 'mono-light' })
+```
+
+Or per fence with `theme: mono-light` in front-matter. Available themes: `mono-light` · `mono-dark` · `cyan` · `emerald` · `violet` · `lavender` · `amber` · `orange` · `rose` · `blue` · `sky`
 
 See the individual package READMEs for markdown ecosystem integrations.
 

@@ -87,12 +87,13 @@ document.addEventListener('click', (e) => {
 
 ## API
 
-### `renderMdArt(source, hintType?)`
+### `renderMdArt(source, hintType?, pluginConfig?)`
 
 | Parameter | Type | Description |
 |---|---|---|
 | `source` | `string` | MdArt DSL source (with or without front-matter) |
 | `hintType` | `string \| undefined` | Layout type hint (overridden by front-matter `type:`) |
+| `pluginConfig` | `MdArtConfig \| undefined` | Plugin-level config (overrides global, below per-fence) |
 
 Returns a `string` containing a self-contained SVG element.
 
@@ -102,18 +103,48 @@ Throws if the source cannot be parsed or the layout type is unknown.
 
 Returns an `MdArtSpec` object with the parsed `type`, `title`, `theme`, and `items`.
 
+### `configureMdArt(config)`
+
+Sets global defaults applied to every `renderMdArt()` call. Subsequent calls replace (not merge) the previous config.
+
+| Field | Type | Description |
+|---|---|---|
+| `theme` | `string \| undefined` | Default theme name |
+| `colors` | `Partial<MdArtTheme> \| undefined` | Default color overrides |
+
+### `resetMdArtConfig()`
+
+Resets global config to empty defaults. Primarily for use in tests.
+
 ## Themes
 
-Pass `theme:` in front-matter to switch colour schemes:
+Each diagram family has a built-in color scheme. Override it per fence, globally, or at the plugin level.
+
+### Named themes
+
+`mono-light` · `mono-dark` · `cyan` · `emerald` · `violet` · `lavender` · `amber` · `orange` · `rose` · `blue` · `sky`
 
 ```
 type: process
-theme: mono-light
+theme: emerald
 
 Step 1 → Step 2 → Step 3
 ```
 
-Available themes: `default`, `mono-light`, `mono-dark`, `ocean`, `forest`, `sunset`.
+### Global configuration
+
+```ts
+import { configureMdArt, resetMdArtConfig } from 'mdart'
+
+// Apply to all diagrams in this process
+configureMdArt({ theme: 'mono-light' })
+
+// Or override individual colors
+configureMdArt({ colors: { primary: '#6366f1', bg: '#0f172a' } })
+
+// Reset (useful in tests)
+resetMdArtConfig()
+```
 
 ## License
 

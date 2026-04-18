@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty } from '../shared'
+import { escapeXml, tt } from '../shared'
 
 const BCG_QUADS = [
   { key: 'stars',     keywords: ['star'],            label: '★ Stars',          sub: 'High growth · High share', fill: '#1e3a5f', text: '#93c5fd' },

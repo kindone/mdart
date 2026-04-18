@@ -39,7 +39,7 @@ import { remarkMdart }     from 'mdart-remark'
 
 const html = await unified()
   .use(remarkParse)
-  .use(remarkMdart)                              // ← before remarkRehype
+  .use(remarkMdart())                            // ← before remarkRehype
   .use(remarkRehype, { allowDangerousHtml: true })
   .use(rehypeStringify, { allowDangerousHtml: true })
   .process(markdown)
@@ -52,6 +52,24 @@ const html = await unified()
 import { renderWithUnified } from 'mdart-remark'
 
 const html = await renderWithUnified(markdown)
+```
+
+## Configuration
+
+`remarkMdart()` is a factory — call it with an optional config to set plugin-level defaults:
+
+```ts
+import { configureMdArt } from 'mdart'
+import { remarkMdart, renderWithUnified } from 'mdart-remark'
+
+// Global — applies everywhere
+configureMdArt({ theme: 'mono-light' })
+
+// Plugin-level — overrides global for this pipeline
+unified().use(remarkMdart({ theme: 'mono-dark' }))
+
+// Convenience wrapper with config
+const html = await renderWithUnified(markdown, { theme: 'mono-dark' })
 ```
 
 ## How it works

@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty } from '../shared'
+import { escapeXml, tt } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // Expect top-level items with children: "Pros" and "Cons"

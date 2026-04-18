@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty } from '../shared'
+import { escapeXml, tt } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // Collect items by prefix char or by group name
