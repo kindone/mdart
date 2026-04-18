@@ -82,7 +82,6 @@ export const LAYOUT_CATEGORY: Record<string, string> = {
 
 export function getTheme(type: string, override?: string): MdArtTheme {
   if (override && NAMED_THEMES[override]) return NAMED_THEMES[override]
-  if (override && CATEGORY_THEMES[override]) return CATEGORY_THEMES[override]
   const category = LAYOUT_CATEGORY[type] ?? 'process'
   return CATEGORY_THEMES[category]
 }
