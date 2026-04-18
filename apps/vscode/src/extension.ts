@@ -29,6 +29,6 @@ export function deactivate(): void {}
  * We apply our plugin and return the mutated instance.
  */
 export function extendMarkdownIt(md: MarkdownIt): MarkdownIt {
-  md.use(mdartPlugin)
+  md.use(mdartPlugin())
   return md
 }

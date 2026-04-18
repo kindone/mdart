@@ -9,7 +9,15 @@
  * Usage (app code):
  *   import { Marked } from 'marked'
  *   import { mdartExtension } from 'marked-mdart'
+ *
+ *   // With global config (applies to all diagrams site-wide):
+ *   import { configureMdArt } from 'mdart'
+ *   configureMdArt({ theme: 'mono-light' })
  *   const marked = new Marked({ extensions: [mdartExtension()] })
+ *
+ *   // With plugin-level config (overrides global for this marked instance):
+ *   const marked = new Marked({ extensions: [mdartExtension({ theme: 'mono-dark' })] })
+ *
  *   const html = await marked.parse(markdown)
  */
 
@@ -17,6 +25,7 @@ import { Marked, type TokenizerExtension, type RendererExtension, type Tokens } 
 
 // In a published package this would be:  import { renderMdArt } from '@mdart/core'
 import { renderMdArt } from 'mdart'
+import type { MdArtConfig } from 'mdart'
 
 // ── Token type ────────────────────────────────────────────────────────────────
 
@@ -29,7 +38,14 @@ interface MdartToken extends Tokens.Generic {
 
 // ── Extension ─────────────────────────────────────────────────────────────────
 
-export function mdartExtension(): TokenizerExtension & RendererExtension {
+/**
+ * Create a marked extension that renders ```mdart fences as inline SVG.
+ *
+ * @param config - Optional plugin-level config. Merged on top of any global
+ *                 config set via `configureMdArt()`, but below per-fence
+ *                 front-matter values.
+ */
+export function mdartExtension(config?: MdArtConfig): TokenizerExtension & RendererExtension {
   return {
     name:  'mdart',
     level: 'block',
@@ -54,7 +70,7 @@ export function mdartExtension(): TokenizerExtension & RendererExtension {
     renderer(token: Tokens.Generic): string {
       const t = token as MdartToken
       try {
-        return renderMdArt(t.source, t.hintType)
+        return renderMdArt(t.source, t.hintType, config)
       } catch (err) {
         return `<pre class="mdart-error">${String(err)}</pre>`
       }
@@ -64,8 +80,13 @@ export function mdartExtension(): TokenizerExtension & RendererExtension {
 
 // ── Convenience wrapper ───────────────────────────────────────────────────────
 
-/** Render a full Markdown document, with mdart fences replaced by SVG. */
-export async function renderWithMarked(markdown: string): Promise<string> {
-  const instance = new Marked({ extensions: [mdartExtension()] })
+/**
+ * Render a full Markdown document, with mdart fences replaced by SVG.
+ *
+ * @param markdown - Source markdown string
+ * @param config   - Optional plugin-level config (see `mdartExtension`)
+ */
+export async function renderWithMarked(markdown: string, config?: MdArtConfig): Promise<string> {
+  const instance = new Marked({ extensions: [mdartExtension(config)] })
   return await instance.parse(markdown)
 }

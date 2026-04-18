@@ -1,5 +1,7 @@
 import { parseMdArt } from './parser'
 import { getTheme } from './theme'
+import { getGlobalConfig } from './config'
+import type { MdArtConfig } from './config'
 import type { MdArtSpec } from './parser'
 import type { MdArtTheme } from './theme'
 
@@ -249,11 +251,26 @@ const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
   class: renderClass,
 }
 
-export function renderMdArt(raw: string, hintType?: string): string {
+/**
+ * Render an MdArt source string to SVG.
+ *
+ * @param raw          - Raw mdart source (front-matter + items)
+ * @param hintType     - Optional layout type hint from the fence header
+ * @param pluginConfig - Optional plugin-level config (merged on top of global,
+ *                       below per-fence front-matter)
+ */
+export function renderMdArt(raw: string, hintType?: string, pluginConfig?: MdArtConfig): string {
   try {
-    const spec = parseMdArt(raw, hintType)
-    let theme = getTheme(spec.type, spec.theme)
-    // Apply per-fence color overrides from front-matter
+    const spec      = parseMdArt(raw, hintType)
+    const globalCfg = getGlobalConfig()
+
+    // Theme resolution: per-fence > plugin > global > category default
+    const themeKey = spec.theme ?? pluginConfig?.theme ?? globalCfg.theme
+    let theme = getTheme(spec.type, themeKey)
+
+    // Color overrides: global < plugin < per-fence (each layer spreads on top)
+    if (globalCfg.colors)                          theme = { ...theme, ...globalCfg.colors }
+    if (pluginConfig?.colors)                      theme = { ...theme, ...pluginConfig.colors }
     if (spec.colors && Object.keys(spec.colors).length > 0) {
       theme = { ...theme, ...spec.colors } as typeof theme
     }

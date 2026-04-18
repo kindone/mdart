@@ -7,5 +7,7 @@
 
 export { renderMdArt }                           from './renderer'
 export { parseMdArt }                            from './parser'
+export { configureMdArt, resetMdArtConfig }      from './config'
 export type { MdArtSpec, MdArtItem }             from './parser'
 export type { MdArtTheme }                       from './theme'
+export type { MdArtConfig }                      from './config'

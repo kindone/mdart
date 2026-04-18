@@ -12,7 +12,15 @@
  * Usage (app code):
  *   import MarkdownIt from 'markdown-it'
  *   import { mdartPlugin } from 'markdown-it-mdart'
- *   const md = new MarkdownIt().use(mdartPlugin)
+ *
+ *   // With global config (applies to all diagrams site-wide):
+ *   import { configureMdArt } from 'mdart'
+ *   configureMdArt({ theme: 'mono-light' })
+ *   const md = new MarkdownIt().use(mdartPlugin())
+ *
+ *   // With plugin-level config (overrides global for this md instance):
+ *   const md = new MarkdownIt().use(mdartPlugin({ theme: 'mono-dark' }))
+ *
  *   const html = md.render(markdown)
  */
 
@@ -21,41 +29,59 @@ import type { PluginSimple } from 'markdown-it'
 
 // In a published package this would be:  import { renderMdArt } from '@mdart/core'
 import { renderMdArt } from 'mdart'
+import type { MdArtConfig } from 'mdart'
 
 // ── Plugin ────────────────────────────────────────────────────────────────────
 
-export const mdartPlugin: PluginSimple = (md: MarkdownIt): void => {
-  // Capture the original fence renderer so non-mdart fences pass through.
-  const defaultFence =
-    md.renderer.rules['fence'] ??
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((tokens: any[], idx: number, options: MarkdownIt['options'], _env: unknown, self: MarkdownIt['renderer']) =>
-      self.renderToken(tokens, idx, options))
+/**
+ * Create a markdown-it plugin that renders ```mdart fences as inline SVG.
+ *
+ * @param config - Optional plugin-level config. Merged on top of any global
+ *                 config set via `configureMdArt()`, but below per-fence
+ *                 front-matter values.
+ *
+ * @example
+ * const md = new MarkdownIt().use(mdartPlugin({ theme: 'mono-light' }))
+ */
+export function mdartPlugin(config?: MdArtConfig): PluginSimple {
+  return (md: MarkdownIt): void => {
+    // Capture the original fence renderer so non-mdart fences pass through.
+    const defaultFence =
+      md.renderer.rules['fence'] ??
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ((tokens: any[], idx: number, options: MarkdownIt['options'], _env: unknown, self: MarkdownIt['renderer']) =>
+        self.renderToken(tokens, idx, options))
 
-  md.renderer.rules['fence'] = (tokens, idx, options, env, self) => {
-    const token = tokens[idx]
-    // token.info = "mdart" or "mdart hintType"
-    const parts    = token.info.trim().split(/\s+/)
-    const lang     = parts[0]
-    const hintType = parts[1]  // optional
+    md.renderer.rules['fence'] = (tokens, idx, options, env, self) => {
+      const token = tokens[idx]
+      // token.info = "mdart" or "mdart hintType"
+      const parts    = token.info.trim().split(/\s+/)
+      const lang     = parts[0]
+      const hintType = parts[1]  // optional
 
-    if (lang === 'mdart') {
-      try {
-        return renderMdArt(token.content, hintType)
-      } catch (err) {
-        return `<pre class="mdart-error">${md.utils.escapeHtml(String(err))}</pre>`
+      if (lang === 'mdart') {
+        try {
+          return renderMdArt(token.content, hintType, config)
+        } catch (err) {
+          return `<pre class="mdart-error">${md.utils.escapeHtml(String(err))}</pre>`
+        }
       }
-    }
 
-    return defaultFence(tokens, idx, options, env, self)
+      return defaultFence(tokens, idx, options, env, self)
+    }
   }
 }
 
 // ── Convenience wrapper ───────────────────────────────────────────────────────
 
-/** Render a full Markdown document, with mdart fences replaced by SVG. */
-export function renderWithMarkdownIt(markdown: string): string {
+/**
+ * Render a full Markdown document, with mdart fences replaced by SVG.
+ *
+ * @param markdown - Source markdown string
+ * @param config   - Optional plugin-level config (see `mdartPlugin`)
+ */
+export function renderWithMarkdownIt(markdown: string, config?: MdArtConfig): string {
   const md = new MarkdownIt({ html: false, linkify: true, typographer: true })
-  md.use(mdartPlugin)
+  md.use(mdartPlugin(config))
   return md.render(markdown)
 }
