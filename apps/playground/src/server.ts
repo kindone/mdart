@@ -2,15 +2,19 @@
  * MdArt rendering service — mini-app
  *
  * Provides:
- *   POST /render              → { svg, type, title, tabCount }
- *   POST /render/states       → { states: string[], type, tabCount }
- *   POST /render/ecosystem    → { html, adapter }
- *   GET  /lab                 → renderer lab UI (Monaco editor)
- *   GET  /lab/source          → { content } — read a layout source file
- *   POST /lab/apply           → { svg, buildMs } — write + rebuild + render
- *   POST /lab/render          → { svg } — render with current build (no rebuild)
- *   GET  /                    → playground UI
- *   GET  /health              → { ok: true }
+ *   GET  /                  → README landing page (dynamically rendered)
+ *   GET  /demo              → merged demo + renderer lab UI
+ *   GET  /lab               → redirect to /demo (backward compat)
+ *   POST /render            → { svg, type, title, tabCount }
+ *   POST /render/states     → { states: string[], type, tabCount }
+ *   POST /render/ecosystem  → { html, adapter }
+ *   GET  /lab/source        → { content } — read a layout source file
+ *   POST /lab/apply         → { svg, buildMs } — write + rebuild + render
+ *   POST /lab/render        → { svg } — render with current build (no rebuild)
+ *   GET  /lab/chat/status   → { available: bool }
+ *   DELETE /lab/chat/session → { ok: true }
+ *   POST /lab/chat          → SSE stream
+ *   GET  /health            → { ok: true }
  *
  * Command template (register in steward app configs):
  *   /home/ubuntu/claude-steward/node_modules/.bin/tsx /home/ubuntu/mdart/apps/playground/src/server.ts {port}
@@ -49,11 +53,14 @@ if (!port || isNaN(port)) {
   process.exit(1)
 }
 
-// ── Lab constants ─────────────────────────────────────────────────────────────
+// ── Paths ─────────────────────────────────────────────────────────────────────
 
-const MDART_PKG  = '/home/ubuntu/mdart/packages/mdart'
-const MDART_SRC  = `${MDART_PKG}/src`
-const DIST_INDEX = `${MDART_PKG}/dist/index.js`
+const MDART_ROOT  = path.resolve(__dirname, '../../..')
+const MDART_PKG   = path.join(MDART_ROOT, 'packages/mdart')
+const MDART_SRC   = path.join(MDART_PKG, 'src')
+const DIST_INDEX  = path.join(MDART_PKG, 'dist/index.js')
+const README_PATH = path.join(MDART_ROOT, 'README.md')
+const DOCS_DIR    = path.join(MDART_ROOT, 'docs')
 
 /** Files the lab is allowed to read and write */
 const ALLOWED_LAB_FILES = new Set([
@@ -195,8 +202,141 @@ async function renderFresh(mdartSource: string): Promise<string> {
 const app = express()
 app.use(express.json({ limit: '2mb' }))
 
+// ── README landing page ───────────────────────────────────────────────────────
+
+/**
+ * GET /
+ * Dynamically renders README.md through the marked adapter and wraps it
+ * in a styled HTML template. Served fresh on every request so edits to
+ * README.md are reflected instantly without a server restart.
+ */
+app.get('/', async (_req, res) => {
+  try {
+    const md   = await readFile(README_PATH, 'utf8')
+    const body = await renderWithMarked(md)
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.send(README_TEMPLATE(body))
+  } catch (err) {
+    res.status(500).send(`<pre>Failed to render README: ${String(err)}</pre>`)
+  }
+})
+
+/** Minimal styled HTML wrapper for the rendered README */
+function README_TEMPLATE(body: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MdArt</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0d10; --surface: #16161d; --border: #2a2a38;
+      --text: #e2e2ea; --muted: #6b6b80; --accent: #4f6ef7;
+      --green: #34d399; --mono: 'JetBrains Mono','Fira Code',ui-monospace,monospace;
+    }
+    html { background: var(--bg); color: var(--text); font-family: system-ui,-apple-system,sans-serif; }
+    body { max-width: 800px; margin: 0 auto; padding: 0 20px 80px; }
+
+    /* ── Site header ── */
+    .site-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 0 20px; border-bottom: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+    .site-logo { font-size: 20px; font-weight: 700; letter-spacing: -.5px; }
+    .site-logo span { color: var(--accent); }
+    .site-header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .btn-demo {
+      background: var(--accent); color: #fff; border: none;
+      padding: 7px 18px; border-radius: 6px; font-size: 13px; font-weight: 600;
+      cursor: pointer; text-decoration: none; display: inline-block;
+      transition: opacity .15s;
+    }
+    .btn-demo:hover { opacity: .85; }
+    .btn-npm {
+      color: var(--muted); font-size: 12px; text-decoration: none;
+      padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+      transition: color .15s, border-color .15s;
+    }
+    .btn-npm:hover { color: var(--text); border-color: var(--muted); }
+
+    /* ── Prose ── */
+    .prose h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px; letter-spacing: -.5px; }
+    .prose h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .prose h3 { font-size: 15px; font-weight: 600; margin: 28px 0 8px; color: var(--text); }
+    .prose h4 { font-size: 13px; font-weight: 600; margin: 20px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .prose p  { margin: 10px 0; line-height: 1.75; color: #c8c8d8; font-size: 14px; }
+    .prose a  { color: var(--accent); text-decoration: none; }
+    .prose a:hover { text-decoration: underline; }
+    .prose strong { color: var(--text); font-weight: 600; }
+    .prose em { color: #a8a8c0; font-style: italic; }
+    .prose hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+    .prose ul,.prose ol { margin: 10px 0 10px 22px; }
+    .prose li { margin: 4px 0; line-height: 1.7; color: #c8c8d8; font-size: 14px; }
+
+    /* code */
+    .prose code {
+      font-family: var(--mono); font-size: 12px;
+      background: var(--surface); color: #ce9178;
+      padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border);
+    }
+    .prose pre {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px 18px; overflow-x: auto; margin: 14px 0;
+    }
+    .prose pre code {
+      background: none; border: none; padding: 0; color: var(--text);
+      font-size: 12.5px; line-height: 1.65;
+    }
+
+    /* tables */
+    .prose table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+    .prose th,.prose td { padding: 8px 14px; border: 1px solid var(--border); text-align: left; }
+    .prose th { background: var(--surface); color: var(--text); font-weight: 600; }
+    .prose tr:nth-child(even) td { background: #0f0f14; }
+
+    /* images — README has SVG diagram images */
+    .prose img { max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0; display: block; }
+
+    /* mdart inline SVGs from the adapter */
+    .prose svg { max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0; display: block; }
+    .mdart-error { color: #f87171; font-size: 12px; font-family: var(--mono); }
+  </style>
+</head>
+<body>
+  <div class="site-header">
+    <span class="site-logo">Md<span>Art</span></span>
+    <div class="site-header-right">
+      <a href="https://www.npmjs.com/package/mdart" target="_blank" rel="noopener" class="btn-npm">npm ↗</a>
+      <a href="/demo" class="btn-demo">Try Demo →</a>
+    </div>
+  </div>
+  <div class="prose">${body}</div>
+</body>
+</html>`
+}
+
+// ── Static file serving ───────────────────────────────────────────────────────
+
+// Serve docs/ for README image references (./docs/examples/*.svg → /docs/examples/*.svg)
+app.use('/docs', express.static(DOCS_DIR))
+
 // Serve playground UI from public/
 app.use(express.static(path.join(__dirname, '../public')))
+
+// ── Page routes ───────────────────────────────────────────────────────────────
+
+/** GET /demo — serve the merged demo + renderer lab UI */
+app.get('/demo', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../public/demo.html'))
+})
+
+/** GET /lab — redirect to /demo for backward compatibility */
+app.get('/lab', (_req, res) => {
+  res.redirect(301, '/demo')
+})
 
 // ── Playground routes ─────────────────────────────────────────────────────────
 
@@ -343,11 +483,6 @@ app.post('/lab/render', async (req, res) => {
   }
 })
 
-/** GET /lab — serve the renderer lab UI */
-app.get('/lab', (_req, res) => {
-  res.sendFile(path.join(__dirname, '../public/lab.html'))
-})
-
 // ── Lab chat (Claude) ─────────────────────────────────────────────────────────
 
 const CLAUDE_BIN = process.env.CLAUDE_PATH
@@ -479,8 +614,8 @@ app.post('/lab/chat', (req, res) => {
 })
 
 const LAB_SYSTEM_PROMPT = `\
-You are an AI assistant embedded in the MdArt Renderer Lab — a browser tool
-for editing TypeScript layout renderers and previewing SVG diagrams live.
+You are an AI assistant embedded in the MdArt Demo — a browser tool for
+authoring mdart diagrams and editing TypeScript layout renderers.
 
 ## Architecture
 
@@ -514,6 +649,7 @@ renderEmpty(theme)           — placeholder SVG for empty input
 - Help debug SVG layout math or visual issues
 - Write or rewrite renderer code when asked
 - After editing a file the user clicks Apply to rebuild (~250 ms) and preview
+- Help author mdart source diagrams and explain syntax
 
 Keep responses concise. Show code diffs when suggesting changes.`
 
