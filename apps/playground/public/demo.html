@@ -978,7 +978,7 @@ function populateExampleSelect() {
   while (sel.options.length > 1) sel.remove(1)
 
   if (mode === 'renderer') {
-    // Grouped by family — 101 types
+    // Grouped by family — 97 types
     for (const [fam, types] of Object.entries(families)) {
       const grp = document.createElement('optgroup')
       grp.label = fam
@@ -1043,7 +1043,7 @@ function loadTypeExample(type) {
   }
 }
 
-// Populate type example select in source pane (all 101 types grouped)
+// Populate type example select in source pane (all 97 types grouped)
 ;(function() {
   const sel = document.getElementById('type-example-select')
   for (const [fam, types] of Object.entries(families)) {

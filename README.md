@@ -122,7 +122,7 @@ MdArt supports 10 diagram families out of the box:
 
 **Process** · **List** · **Cycle** · **Matrix** · **Hierarchy** · **Pyramid** · **Relationship** · **Statistical** · **Planning** · **Technical**
 
-Each family has multiple layout types (101 total) — org charts, kanban boards, Gantt charts, sequence diagrams, SWOT analyses, Sankey flows, and much more.
+Each family has multiple layout types (97 total) — org charts, kanban boards, Gantt charts, sequence diagrams, SWOT analyses, Sankey flows, and much more.
 
 ## Quick start
 
@@ -186,11 +186,11 @@ npm run gen-examples
 
 ## Gallery
 
-Browse all 101 layout types with live rendered previews: **[docs/gallery.html](./docs/gallery.html)**
+Browse all 97 layout types with live rendered previews: **[docs/gallery.html](./docs/gallery.html)**
 
 ## Syntax reference
 
-Full syntax documentation with rendered examples for all 101 layout types, color overrides, and modifier attrs: **[docs/syntax.md](./docs/syntax.md)**
+Full syntax documentation with rendered examples for all 97 layout types, color overrides, and modifier attrs: **[docs/syntax.md](./docs/syntax.md)**
 
 ## License
 

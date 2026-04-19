@@ -38,7 +38,7 @@ Arrow chain shorthand: `Step 1 -> Step 2 -> Step 3`
 
 ## Syntax patterns
 
-Most of the 101 layout types share one of five input patterns. Visual rendering varies; syntax does not.
+Most of the 97 layout types share one of five input patterns. Visual rendering varies; syntax does not.
 
 ---
 
