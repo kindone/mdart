@@ -2,6 +2,21 @@ import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, tt } from '../shared'
 
+function wrapIx(text: string, maxChars: number): string[] {
+  if (text.length <= maxChars) return [text]
+  const words = text.split(' ')
+  const lines: string[] = []
+  let cur = ''
+  for (const w of words) {
+    if (!cur) { cur = w; continue }
+    if (cur.length + 1 + w.length <= maxChars) { cur += ' ' + w }
+    else { lines.push(cur); cur = w }
+  }
+  if (cur) lines.push(cur)
+  if (lines.length === 0) return [tt(text, maxChars)]
+  return lines.length === 1 ? lines : [lines[0], tt(lines.slice(1).join(' '), maxChars)]
+}
+
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
     ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
@@ -52,7 +67,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (centerIx) {
     const icx = (c1x + c2x + c3x) / 3
     const icy = (c1y + c2y + c3y) / 3
-    parts.push(`<text x="${icx.toFixed(1)}" y="${(icy + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="600">${tt(centerIx.label, 10)}</text>`)
+    const ixLines = wrapIx(centerIx.label, 12)
+    const ixLineH = 11
+    const ixStartY = icy - (ixLines.length - 1) * ixLineH / 2 + 3
+    ixLines.forEach((line, li) => {
+      parts.push(`<text x="${icx.toFixed(1)}" y="${(ixStartY + li * ixLineH).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="600">${line}</text>`)
+    })
   }
 
   return svg(W, H, theme, spec.title, parts)

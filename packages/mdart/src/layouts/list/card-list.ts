@@ -29,10 +29,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${CARD_H}" rx="7" fill="${theme.surface}" stroke="${fill}66" stroke-width="1.2"/>`)
     // Rounded-top header path
     parts.push(`<path d="M${(x+7).toFixed(1)},${y.toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${x.toFixed(1)},${(y+7).toFixed(1)} L${x.toFixed(1)},${(y+HEADER_H).toFixed(1)} L${(x+CARD_W).toFixed(1)},${(y+HEADER_H).toFixed(1)} L${(x+CARD_W).toFixed(1)},${(y+7).toFixed(1)} Q${(x+CARD_W).toFixed(1)},${y.toFixed(1)} ${(x+CARD_W-7).toFixed(1)},${y.toFixed(1)} Z" fill="${fill}"/>`)
-    parts.push(`<text x="${(x+CARD_W/2).toFixed(1)}" y="${(y+HEADER_H/2+4).toFixed(1)}" text-anchor="middle" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${tt(item.label, 14)}</text>`)
+    const headerMax = Math.floor((CARD_W - 16) / 6.5)
+    const childMax  = Math.floor((CARD_W - 16) / 6.0)
+    parts.push(`<text x="${(x+CARD_W/2).toFixed(1)}" y="${(y+HEADER_H/2+4).toFixed(1)}" text-anchor="middle" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${tt(item.label, headerMax)}</text>`)
     item.children.slice(0, maxChildren).forEach((child, ci) => {
       const cy = y + HEADER_H + ci * ROW_H + ROW_H
-      parts.push(`<text x="${(x+CARD_W/2).toFixed(1)}" y="${cy.toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(child.label, 14)}</text>`)
+      parts.push(`<text x="${(x+CARD_W/2).toFixed(1)}" y="${cy.toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(child.label, childMax)}</text>`)
     })
   })
   return svg(W, H, theme, parts)

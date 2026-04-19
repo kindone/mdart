@@ -66,16 +66,22 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<rect x="${x}" y="${y}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${theme.surface}" stroke="${headerFill}" stroke-opacity="0.55" stroke-width="1"/>`)
     // Colored header (top corners rounded)
     parts.push(`<path d="M ${x + 5} ${y} L ${x + BOX_W - 5} ${y} Q ${x + BOX_W} ${y} ${x + BOX_W} ${y + 5} L ${x + BOX_W} ${y + HEADER_H} L ${x} ${y + HEADER_H} L ${x} ${y + 5} Q ${x} ${y} ${x + 5} ${y} Z" fill="${headerFill}"/>`)
-    // Header text
-    parts.push(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, 16)}</text>`)
+    // Header text — maxChars derived from actual box width (font-size 10 ≈ 5.5 px/char)
+    const headerMaxChars = Math.floor((BOX_W - 8) / 5.5)
+    parts.push(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, headerMaxChars)}</text>`)
 
-    // Body content: children or value
+    // Body content: children or value — maxChars derived from actual box width (font-size 9 ≈ 5.0 px/char)
+    const bodyMaxChars = Math.floor((BOX_W - 12) / 5.0)
     const bodyLines: string[] = item.children.length > 0
-      ? item.children.slice(0, 2).map(c => truncate(c.label, 18))
-      : (item.value ? [truncate(item.value, 18)] : [])
+      ? item.children.slice(0, 2).map(c => truncate(c.label, bodyMaxChars))
+      : (item.value ? [truncate(item.value, bodyMaxChars)] : [])
 
+    // Vertically centre the text block inside the body area
+    const lineH = 13
+    const bodyMidY = y + HEADER_H + (BOX_H - HEADER_H) / 2
+    const firstBaselineY = bodyMidY - (bodyLines.length * lineH) / 2 + 9 * 0.75  // 0.75 ≈ cap-height ratio
     bodyLines.forEach((line, li) => {
-      parts.push(`<text x="${x + 6}" y="${y + HEADER_H + 14 + li * 13}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(line)}</text>`)
+      parts.push(`<text x="${x + 6}" y="${(firstBaselineY + li * lineH).toFixed(1)}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(line)}</text>`)
     })
   }
 

@@ -451,9 +451,6 @@ pre.int-code {
 
   <!-- MdArt controls -->
   <div class="ctrl-group" id="ctrl-mdart">
-    <select id="hint-select" title="Type hint (overrides auto-detect)">
-      <option value="">Auto-detect</option>
-    </select>
     <button class="btn btn-primary" id="btn-render">Render</button>
   </div>
 
@@ -1000,7 +997,7 @@ function populateExampleSelect() {
     const arr = mode === 'markdown' ? examples.markdown : examples.mdart
     for (const e of arr) {
       const opt = document.createElement('option')
-      opt.value = e.name; opt.textContent = e.name
+      opt.value = e.slug; opt.textContent = e.name
       sel.appendChild(opt)
     }
   }
@@ -1011,14 +1008,13 @@ document.getElementById('example-select').addEventListener('change', function() 
   if (mode === 'renderer') {
     loadTypeExample(this.value)
   } else {
-    const selectedName = this.value
-    const map = mode === 'markdown' ? MARKDOWN_EXAMPLES : EXAMPLES
-    const src = map[selectedName]
+    const slug = this.value
+    const arr = mode === 'markdown' ? examples.markdown : examples.mdart
+    const cat = mode === 'markdown' ? 'markdown' : 'mdart'
+    const found = arr.find(e => e.slug === slug)
+    const src = found?.content
     if (src && monacoEditor) {
       monacoEditor.setValue(src)
-      const arr = mode === 'markdown' ? examples.markdown : examples.mdart
-      const cat = mode === 'markdown' ? 'markdown' : 'mdart'
-      const found = arr.find(e => e.name === selectedName)
       currentExample = found ? { category: cat, slug: found.slug } : null
       exampleBaseContent = src
       updateSaveBtn()
@@ -1066,14 +1062,6 @@ function loadTypeExample(type) {
   }
 })()
 
-// ── Hint type select (MdArt mode) ─────────────────────────────────────────────
-
-LAYOUT_TYPES.forEach(t => {
-  const opt = document.createElement('option')
-  opt.value = opt.textContent = t
-  document.getElementById('hint-select').appendChild(opt)
-})
-
 // ── Renderer file select ──────────────────────────────────────────────────────
 
 document.getElementById('file-select').addEventListener('change', function() {
@@ -1119,13 +1107,12 @@ async function renderMdArt(explicit = false) {
   if (!monacoEditor) return
   const source = monacoEditor.getValue().trim()
   if (!source) return
-  const hintType = document.getElementById('hint-select').value || undefined
   setStatus('busy', 'rendering…')
   try {
     const res = await fetch('/render', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source, hintType }),
+      body: JSON.stringify({ source }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -1484,6 +1471,7 @@ window.addEventListener('resize', () => { if (!isMobile()) showMobPane('editor')
 // ── Chat panel ────────────────────────────────────────────────────────────────
 
 const CHAT_HISTORY_KEY = 'mdart-chat-history'
+const PENDING_JOB_KEY   = 'mdart-pending-job'
 const MAX_HISTORY = 60
 
 function loadHistory() {
@@ -1533,39 +1521,26 @@ function appendStreamingMessage() {
   return body
 }
 
-async function sendChat() {
-  if (chatStreaming) return
-  const input = document.getElementById('chat-input')
-  const message = input.value.trim()
-  if (!message) return
-  input.value = ''
-  input.style.height = ''
-
-  chatHistory.push({ role: 'user', content: message })
-  saveHistory(chatHistory)
-  appendMessage('user', message)
-
-  let context = ''
-  if (document.getElementById('chat-include-ctx').checked) {
-    if (mode === 'renderer' && monacoEditor) {
-      context = `Current renderer file: ${currentFile}\n\`\`\`typescript\n${monacoEditor.getValue().slice(0,4000)}\n\`\`\`\n\nCurrent mdart source:\n\`\`\`\n${document.getElementById('mdart-source').value.slice(0,1000)}\n\`\`\``
-    } else if (monacoEditor) {
-      context = `Current ${mode} source:\n\`\`\`\n${monacoEditor.getValue().slice(0,2000)}\n\`\`\``
-    }
-  }
-
-  chatStreaming = true
-  document.getElementById('btn-chat-send').disabled = true
-  const bodyEl = appendStreamingMessage()
+/**
+ * Connects to a job's SSE stream, replaying buffered events and live-streaming new ones.
+ * Updates bodyEl with streamed text. Returns the accumulated text.
+ * Clears localStorage pending job on done/error.
+ */
+async function connectToStream(jobId, bodyEl) {
   let accumulated = ''
-
   try {
-    const res = await fetch('/lab/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, context }),
-    })
-    const reader = res.body.getReader()
+    const streamRes = await fetch(`/lab/chat/stream/${jobId}`)
+    if (!streamRes.ok) {
+      if (streamRes.status === 404) {
+        bodyEl.innerHTML = '<span style="color:#f44747">Job not found — server may have restarted</span>'
+        bodyEl.classList.remove('chat-typing')
+        localStorage.removeItem(PENDING_JOB_KEY)
+        return accumulated
+      }
+      throw new Error(`Stream error ${streamRes.status}`)
+    }
+
+    const reader = streamRes.body.getReader()
     const decoder = new TextDecoder()
     let buf = ''
 
@@ -1595,12 +1570,13 @@ async function sendChat() {
         }
         if (evtName === 'done') {
           bodyEl.classList.remove('chat-typing')
-          chatHistory.push({ role: 'assistant', content: accumulated })
-          saveHistory(chatHistory)
-          // Reload renderer file and rebuild if in renderer mode
+          localStorage.removeItem(PENDING_JOB_KEY)
+          if (accumulated && (chatHistory.length === 0 || chatHistory[chatHistory.length - 1].role !== 'assistant' || chatHistory[chatHistory.length - 1].content !== accumulated)) {
+            chatHistory.push({ role: 'assistant', content: accumulated })
+            saveHistory(chatHistory)
+          }
           if (mode === 'renderer') {
             await loadRendererFile(currentFile)
-            // Auto-apply: rebuild bundle and re-render preview so changes take effect immediately
             await applyRenderer()
             const notice = document.createElement('div')
             notice.className = 'chat-notice'; notice.textContent = '↻ File reloaded · bundle rebuilt'
@@ -1610,12 +1586,78 @@ async function sendChat() {
         if (evtName === 'error') {
           bodyEl.innerHTML = `<span style="color:#f44747">Error: ${escHtml(parsed.message ?? 'Unknown error')}</span>`
           bodyEl.classList.remove('chat-typing')
+          localStorage.removeItem(PENDING_JOB_KEY)
         }
       }
     }
   } catch (err) {
     bodyEl.innerHTML = `<span style="color:#f44747">Connection error: ${escHtml(err.message)}</span>`
     bodyEl.classList.remove('chat-typing')
+    localStorage.removeItem(PENDING_JOB_KEY)
+  }
+  return accumulated
+}
+
+async function sendChat() {
+  if (chatStreaming) return
+  const input = document.getElementById('chat-input')
+  const message = input.value.trim()
+  if (!message) return
+  input.value = ''
+  input.style.height = ''
+
+  chatHistory.push({ role: 'user', content: message })
+  saveHistory(chatHistory)
+  appendMessage('user', message)
+
+  let context = ''
+  if (document.getElementById('chat-include-ctx').checked) {
+    if (mode === 'renderer' && monacoEditor) {
+      context = `Current renderer file: ${currentFile}\n\`\`\`typescript\n${monacoEditor.getValue().slice(0,4000)}\n\`\`\`\n\nCurrent mdart source:\n\`\`\`\n${document.getElementById('mdart-source').value.slice(0,1000)}\n\`\`\``
+    } else if (monacoEditor) {
+      context = `Current ${mode} source:\n\`\`\`\n${monacoEditor.getValue().slice(0,2000)}\n\`\`\``
+    }
+  }
+
+  chatStreaming = true
+  document.getElementById('btn-chat-send').disabled = true
+  const bodyEl = appendStreamingMessage()
+
+  // Generate a stable jobId stored in localStorage so we can reconnect if the page closes
+  const jobId = crypto.randomUUID()
+  localStorage.setItem(PENDING_JOB_KEY, JSON.stringify({ jobId, timestamp: Date.now() }))
+
+  try {
+    const startRes = await fetch('/lab/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, context, jobId }),
+    })
+    if (!startRes.ok) throw new Error(`Start failed: ${startRes.status}`)
+    await connectToStream(jobId, bodyEl)
+  } catch (err) {
+    bodyEl.innerHTML = `<span style="color:#f44747">Connection error: ${escHtml(err.message)}</span>`
+    bodyEl.classList.remove('chat-typing')
+    localStorage.removeItem(PENDING_JOB_KEY)
+  } finally {
+    chatStreaming = false
+    document.getElementById('btn-chat-send').disabled = false
+  }
+}
+
+async function attemptReconnect(jobId) {
+  if (chatStreaming) return
+  chatStreaming = true
+  document.getElementById('btn-chat-send').disabled = true
+  const bodyEl = appendStreamingMessage()
+  bodyEl.innerHTML = '<em style="color:#888;font-size:12px">Reconnecting to in-progress response…</em>'
+  bodyEl.classList.add('chat-typing')
+  try {
+    await connectToStream(jobId, bodyEl)
+  } catch (err) {
+    bodyEl.innerHTML = `<span style="color:#f44747">Reconnect error: ${escHtml(err.message)}</span>`
+    bodyEl.classList.remove('chat-typing')
+    localStorage.removeItem(PENDING_JOB_KEY)
   } finally {
     chatStreaming = false
     document.getElementById('btn-chat-send').disabled = false
@@ -1647,6 +1689,37 @@ document.getElementById('btn-chat-toggle').addEventListener('click', () => {
 document.getElementById('chat-input').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() }
 })
+
+// Reconnect to an in-progress job if the page was closed while Claude was running
+;(function checkPendingJob() {
+  const raw = localStorage.getItem(PENDING_JOB_KEY)
+  if (!raw) return
+  let pending
+  try { pending = JSON.parse(raw) } catch { localStorage.removeItem(PENDING_JOB_KEY); return }
+  if (!pending.jobId || (Date.now() - pending.timestamp) > 2 * 60 * 60 * 1000) {
+    localStorage.removeItem(PENDING_JOB_KEY)
+    return
+  }
+  // Show a pending badge on the chat button and auto-open when clicked
+  const chatToggle = document.getElementById('btn-chat-toggle')
+  chatToggle.style.position = 'relative'
+  const badge = document.createElement('span')
+  badge.id = 'chat-pending-badge'
+  badge.style.cssText = 'position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#c084fc;display:block'
+  chatToggle.appendChild(badge)
+
+  function onOpen() {
+    const b = document.getElementById('chat-pending-badge')
+    if (b) b.remove()
+    setTimeout(() => attemptReconnect(pending.jobId), 100)
+  }
+  // If chat panel is already open, reconnect immediately; otherwise on next open
+  if (document.getElementById('chat-panel').classList.contains('open')) {
+    onOpen()
+  } else {
+    chatToggle.addEventListener('click', onOpen, { once: true })
+  }
+})()
 
 // Claude availability check
 fetch('/lab/chat/status').then(r => r.json()).then(data => {

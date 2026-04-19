@@ -7,17 +7,37 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   let pros: MdArtItem[] = []
   let cons: MdArtItem[] = []
 
+  // The parser flattens pros-cons like swot (stack reset on each depth-0 item),
+  // so children of "Pros"/"Cons" headers appear as separate flat top-level items.
+  // We track currentSection to route those flat siblings to the right bucket.
+  let currentSection: 'pros' | 'cons' | null = null
+
   for (const item of spec.items) {
     const lower = item.label.toLowerCase()
-    if (lower.includes('pro') || lower.includes('advantage') || lower.includes('benefit')) {
-      pros = item.children.length ? item.children : pros
-    } else if (lower.includes('con') || lower.includes('disadvantage') || lower.includes('risk')) {
-      cons = item.children.length ? item.children : cons
-    } else if (item.prefix === '+') {
-      pros.push(item)
-    } else if (item.prefix === '-') {
-      cons.push(item)
+    const isProsHeader = lower.includes('pro') || lower.includes('advantage') || lower.includes('benefit')
+    const isConsHeader = lower.includes('con') || lower.includes('disadvantage') || lower.includes('risk')
+
+    if (isProsHeader) {
+      currentSection = 'pros'
+      // If children were nested (non-swot format), consume them directly
+      if (item.children.length) { pros.push(...item.children); currentSection = null }
+      continue
     }
+    if (isConsHeader) {
+      currentSection = 'cons'
+      if (item.children.length) { cons.push(...item.children); currentSection = null }
+      continue
+    }
+
+    // Explicit + prefix always means pro
+    if (item.prefix === '+') { pros.push(item); continue }
+
+    // Route flat siblings by whichever section header came last
+    if (currentSection === 'pros') { pros.push(item); continue }
+    if (currentSection === 'cons') { cons.push(item); continue }
+
+    // Fallback: bare - prefix with no section context → cons
+    if (item.prefix === '-') cons.push(item)
   }
 
   const maxRows = Math.max(pros.length, cons.length, 1)
@@ -52,11 +72,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     svgContent += `<rect x="0" y="${rowY}" width="${HALF}" height="${ROW_H}" fill="${rowBg}" />`
     svgContent += `<rect x="${HALF}" y="${rowY}" width="${HALF}" height="${ROW_H}" fill="${rowBg}" />`
 
+    // font-size 11 ≈ 5.8 px/char; "✓ " prefix ≈ 14px; right margin 6px
+    const colMaxChars = Math.floor((HALF - PAD - 14 - 6) / 5.8)
     if (i < pros.length) {
-      svgContent += `<text x="${PAD}" y="${rowY + 23}" font-size="11" fill="#6ee7b7" font-family="system-ui,sans-serif">✓ ${tt(pros[i].label, 26)}</text>`
+      svgContent += `<text x="${PAD}" y="${rowY + 23}" font-size="11" fill="#6ee7b7" font-family="system-ui,sans-serif">✓ ${tt(pros[i].label, colMaxChars)}</text>`
     }
     if (i < cons.length) {
-      svgContent += `<text x="${HALF + PAD}" y="${rowY + 23}" font-size="11" fill="#fda4af" font-family="system-ui,sans-serif">✗ ${tt(cons[i].label, 26)}</text>`
+      svgContent += `<text x="${HALF + PAD}" y="${rowY + 23}" font-size="11" fill="#fda4af" font-family="system-ui,sans-serif">✗ ${tt(cons[i].label, colMaxChars)}</text>`
     }
 
     if (i < maxRows - 1) {

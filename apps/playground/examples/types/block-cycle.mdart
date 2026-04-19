@@ -2,6 +2,13 @@ type: block-cycle
 title: Incident Response
 
 - Detect
+  - Detect anomaly
 - Respond
+  - Closely analyze the situation
+  - Alert affected personnels
 - Resolve
+  - Provide workaround
+  - Devise a fix to the issue
 - Review
+  - Perform tests
+  - Monitor system status

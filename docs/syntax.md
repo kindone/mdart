@@ -261,7 +261,7 @@ title: Support Tickets by Day & Shift
 ```
 
 #### `sankey`
-Top-level items = sources with `value` = flow weight; children = destination names.
+Top-level items = sources with `value` = source flow weight; children = destination names, with optional target flow weights.
 ```
 - Organic: 45
   - Blog
@@ -273,14 +273,14 @@ Top-level items = sources with `value` = flow weight; children = destination nam
 ```mdart sankey
 title: Traffic Sources
 - Organic: 45
-  - Blog
-  - Docs
+  - Blog: 15
+  - Docs: 30
 - Paid: 30
   - Landing Page
   - Demo
 - Referral: 25
-  - Signup
-  - Pricing
+  - Signup: 10
+  - Pricing: 15
 ```
 
 #### `gantt` · `gantt-lite`

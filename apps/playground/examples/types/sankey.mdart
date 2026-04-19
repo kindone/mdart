@@ -2,11 +2,11 @@ type: sankey
 title: Traffic Sources
 
 - Organic: 45
-  → Landing Page (20)
-  → Blog (15)
-  → Docs (10)
+  → Landing Page: 20
+  → Blog: 15
+  → Docs: 10
 - Paid: 30
-  → Landing Page (20)
-  → Pricing (10)
+  → Landing Page: 20
+  → Pricing: 10
 - Direct: 25
-  → Dashboard (25)
+  → Dashboard: 25

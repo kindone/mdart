@@ -13,7 +13,8 @@
  *   POST /lab/render        → { svg } — render with current build (no rebuild)
  *   GET  /lab/chat/status   → { available: bool }
  *   DELETE /lab/chat/session → { ok: true }
- *   POST /lab/chat          → SSE stream
+ *   POST /lab/chat          → { jobId } — start background job
+ *   GET  /lab/chat/stream/:jobId → SSE replay + live stream
  *   GET  /health            → { ok: true }
  *
  * Command template (register in steward app configs):
@@ -30,6 +31,7 @@ import { existsSync } from 'node:fs'
 import { exec as execCb, spawn as spawnProc } from 'node:child_process'
 import { createInterface } from 'node:readline'
 import { promisify } from 'node:util'
+import { randomUUID } from 'node:crypto'
 import { tmpdir } from 'node:os'
 
 import { renderMdArt, parseMdArt } from 'mdart'
@@ -595,6 +597,37 @@ const CLAUDE_BIN = process.env.CLAUDE_PATH
 // Single in-memory conversation session — resets on server restart.
 let chatSessionId: string | null = null
 
+// ── Chat job store ────────────────────────────────────────────────────────────
+
+interface ChatJob {
+  id: string
+  status: 'running' | 'done' | 'error'
+  /** Full event replay log — every SSE event broadcast to this job */
+  events: Array<{ event: string; data: unknown }>
+  /** Live SSE watchers (reconnected clients) */
+  watchers: Set<import('http').ServerResponse>
+  createdAt: number
+}
+
+const chatJobs = new Map<string, ChatJob>()
+
+// Prune jobs older than 2 hours every 30 minutes
+setInterval(() => {
+  const cutoff = Date.now() - 2 * 60 * 60 * 1000
+  for (const [id, job] of chatJobs) {
+    if (job.createdAt < cutoff) chatJobs.delete(id)
+  }
+}, 30 * 60 * 1000).unref()
+
+function broadcastToJob(job: ChatJob, event: string, data: unknown): void {
+  job.events.push({ event, data })
+  for (const watcher of job.watchers) {
+    if (!watcher.writableEnded) {
+      try { watcher.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`) } catch { /* disconnected */ }
+    }
+  }
+}
+
 /**
  * GET /lab/chat/status
  * Returns { available: true } if the Claude CLI binary is reachable.
@@ -614,19 +647,39 @@ app.delete('/lab/chat/session', (_req, res) => {
 
 /**
  * POST /lab/chat
- * Body: { message: string, context?: string }
- * Streams a Claude response as SSE.  context is prepended to the message so
- * Claude sees the current file + mdart source without polluting chat history.
+ * Body: { message: string, context?: string, jobId?: string }
+ *
+ * Starts a background Claude job and returns { jobId } immediately.
+ * If a job with the given jobId already exists (reconnect), returns the same jobId.
+ * Use GET /lab/chat/stream/:jobId to receive the SSE stream.
  */
 app.post('/lab/chat', (req, res) => {
-  const { message, context } = req.body as { message?: string; context?: string }
+  const { message, context, jobId: clientJobId } = req.body as {
+    message?: string; context?: string; jobId?: string
+  }
   if (!message?.trim()) { res.status(400).json({ error: 'message required' }); return }
 
-  res.setHeader('Content-Type', 'text/event-stream')
-  res.setHeader('Cache-Control', 'no-cache')
-  res.setHeader('Connection', 'keep-alive')
-  res.setHeader('X-Accel-Buffering', 'no')
-  res.flushHeaders()
+  // If client already has a job running (reconnect), just return its id
+  if (clientJobId && chatJobs.has(clientJobId)) {
+    res.json({ jobId: clientJobId })
+    return
+  }
+
+  const jobId = (clientJobId && /^[0-9a-f-]{36}$/i.test(clientJobId))
+    ? clientJobId
+    : randomUUID()
+
+  const job: ChatJob = {
+    id: jobId,
+    status: 'running',
+    events: [],
+    watchers: new Set(),
+    createdAt: Date.now(),
+  }
+  chatJobs.set(jobId, job)
+
+  // Respond immediately with jobId — Claude runs as a background job
+  res.json({ jobId })
 
   const fullMessage = context?.trim()
     ? `${context.trim()}\n\n${message.trim()}`
@@ -638,13 +691,12 @@ app.post('/lab/chat', (req, res) => {
     '--verbose',
     '--include-partial-messages',
     '--permission-mode', 'acceptEdits',
-    '--mcp-config', '{"mcpServers":{}}',  // empty MCP config
-    '--strict-mcp-config',            // ignore global ~/.claude.json MCP servers
+    '--mcp-config', '{"mcpServers":{}}',
+    '--strict-mcp-config',
     '--system-prompt', LAB_SYSTEM_PROMPT,
   ]
   if (chatSessionId) args.push('--resume', chatSessionId)
 
-  // Strip CLAUDE* env vars to prevent sub-agent IPC hang (see CLAUDE.md)
   const cleanEnv: NodeJS.ProcessEnv = {}
   for (const [k, v] of Object.entries(process.env)) {
     if (!k.startsWith('CLAUDE')) cleanEnv[k] = v
@@ -658,21 +710,14 @@ app.post('/lab/chat', (req, res) => {
     cwd: MDART_PKG,
   })
 
-  function sse(event: string, data: unknown): void {
-    if (res.writableEnded) return
-    try { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`) } catch { /* socket closed */ }
-  }
-
-  function finish() {
-    if (!res.writableEnded) res.end()
-  }
-
-  // Drain stderr to prevent the child's stderr buffer from blocking it
   child.stderr.resume()
 
   const rl = createInterface({ input: child.stdout, crlfDelay: Infinity })
 
-  rl.on('error', (err) => { sse('error', { message: err.message }); finish() })
+  rl.on('error', (err) => {
+    broadcastToJob(job, 'error', { message: err.message })
+    job.status = 'error'
+  })
 
   rl.on('line', (line) => {
     if (!line.trim()) return
@@ -683,7 +728,6 @@ app.post('/lab/chat', (req, res) => {
       chatSessionId = chunk.session_id as string
     }
 
-    // Forward streaming text deltas; skip large/noisy chunk types to reduce traffic
     const ev = chunk.type === 'stream_event'
       ? (chunk.event as Record<string, unknown> | undefined)
       : null
@@ -691,30 +735,80 @@ app.post('/lab/chat', (req, res) => {
       (ev.delta as Record<string, unknown> | undefined)?.type === 'text_delta'
     const isResult = chunk.type === 'result'
     const isInit   = chunk.type === 'system' && chunk.subtype === 'init'
-    if (isTextDelta || isResult || isInit) sse('chunk', chunk)
+    if (isTextDelta || isResult || isInit) broadcastToJob(job, 'chunk', chunk)
 
     if (isResult) {
       const isErr = chunk.is_error as boolean
       if (isErr) {
         const detail = (chunk.errors as string[] | undefined)?.join('; ') || String(chunk.result)
-        sse('error', { message: detail })
+        broadcastToJob(job, 'error', { message: detail })
+        job.status = 'error'
       } else {
-        sse('done', { session_id: chunk.session_id })
+        broadcastToJob(job, 'done', { session_id: chunk.session_id })
+        job.status = 'done'
       }
-      finish()
+      // Close all watcher connections
+      for (const watcher of job.watchers) {
+        if (!watcher.writableEnded) watcher.end()
+      }
+      job.watchers.clear()
     }
   })
 
-  child.on('error', (err) => { sse('error', { message: err.message }); finish() })
+  child.on('error', (err) => {
+    broadcastToJob(job, 'error', { message: err.message })
+    job.status = 'error'
+    for (const watcher of job.watchers) {
+      if (!watcher.writableEnded) watcher.end()
+    }
+    job.watchers.clear()
+  })
+
   child.on('close', (code) => {
-    if (!res.writableEnded) {
-      if (code !== 0) sse('error', { message: `Claude exited with code ${code}` })
-      finish()
+    if (job.status === 'running') {
+      if (code !== 0) {
+        broadcastToJob(job, 'error', { message: `Claude exited with code ${code}` })
+        job.status = 'error'
+      } else {
+        job.status = 'done'
+      }
+      for (const watcher of job.watchers) {
+        if (!watcher.writableEnded) watcher.end()
+      }
+      job.watchers.clear()
     }
   })
+  // Note: No res.on('close') → child.kill() — job runs to completion even if browser disconnects
+})
 
-  // Kill child if browser disconnects
-  res.on('close', () => { child.kill() })
+/**
+ * GET /lab/chat/stream/:jobId
+ * SSE endpoint: replays all buffered events then live-streams new ones.
+ * Connect here after POST /lab/chat returns a jobId, and after page reloads.
+ */
+app.get('/lab/chat/stream/:jobId', (req, res) => {
+  const job = chatJobs.get(req.params.jobId)
+  if (!job) { res.status(404).json({ error: 'job not found' }); return }
+
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.setHeader('X-Accel-Buffering', 'no')
+  res.flushHeaders()
+
+  // Replay all buffered events from the start
+  for (const { event, data } of job.events) {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+  }
+
+  if (job.status !== 'running') {
+    res.end()
+    return
+  }
+
+  // Register as a live watcher for future events
+  job.watchers.add(res)
+  res.on('close', () => { job.watchers.delete(res) })
 })
 
 const LAB_SYSTEM_PROMPT = `\

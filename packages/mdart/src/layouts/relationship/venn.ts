@@ -2,6 +2,21 @@ import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, tt } from '../shared'
 
+function wrapIx(text: string, maxChars: number): string[] {
+  if (text.length <= maxChars) return [text]
+  const words = text.split(' ')
+  const lines: string[] = []
+  let cur = ''
+  for (const w of words) {
+    if (!cur) { cur = w; continue }
+    if (cur.length + 1 + w.length <= maxChars) { cur += ' ' + w }
+    else { lines.push(cur); cur = w }
+  }
+  if (cur) lines.push(cur)
+  if (lines.length === 0) return [tt(text, maxChars)]
+  return lines.length === 1 ? lines : [lines[0], tt(lines.slice(1).join(' '), maxChars)]
+}
+
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
     ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
@@ -57,11 +72,17 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const ixLabel = intersects[0]?.label ?? ''
   if (ixLabel) {
-    parts.push(
-      `<text x="${(W / 2).toFixed(1)}" y="${(cy - 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="500">${tt(ixLabel, 12)}</text>`,
-    )
+    const ixLines = wrapIx(ixLabel, 12)
+    const ixLineH = 13
+    // Centre the label block around cy; 1 line → cy-4, 2 lines → cy-10.5 / cy+2.5
+    const ixStartY = cy - (ixLines.length - 1) * ixLineH / 2 - 4
+    ixLines.forEach((line, li) => {
+      parts.push(`<text x="${(W / 2).toFixed(1)}" y="${(ixStartY + li * ixLineH).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="500">${line}</text>`)
+    })
+    // Children start below the label block
+    const childStartY = ixStartY + ixLines.length * ixLineH + 2
     intersects[0].children.slice(0, 3).forEach((ch, idx) => {
-      parts.push(`<text x="${(W / 2).toFixed(1)}" y="${(cy + 14 + idx * 15).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.accent}" font-family="system-ui,sans-serif" opacity="0.8">${tt(ch.label, 10)}</text>`)
+      parts.push(`<text x="${(W / 2).toFixed(1)}" y="${(childStartY + idx * 15).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.accent}" font-family="system-ui,sans-serif" opacity="0.8">${tt(ch.label, 10)}</text>`)
     })
   }
 

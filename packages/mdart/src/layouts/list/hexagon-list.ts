@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty } from '../shared'
+import { escapeXml, lerpColor, renderEmpty } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -29,6 +29,25 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       return `${(cx + R * Math.cos(a)).toFixed(1)},${(cy + R * Math.sin(a)).toFixed(1)}`
     }).join(' ')
 
+  // Plain truncation — no SVG <title> wrapper, escapeXml applied at render site
+  const MAX_CHARS = 10
+  const trunc = (s: string, max: number) => s.length > max ? s.slice(0, max - 1) + '…' : s
+
+  // Split a label into up to two lines at a word boundary
+  function wrapLabel(label: string): [string, string | null] {
+    if (label.length <= MAX_CHARS) return [label, null]
+    const words = label.split(' ')
+    let line1 = ''
+    for (let i = 0; i < words.length; i++) {
+      const attempt = line1 ? line1 + ' ' + words[i] : words[i]
+      if (attempt.length <= MAX_CHARS) { line1 = attempt; continue }
+      // if line1 is empty the oversized word is words[i] itself — skip it for line2
+      const rest = (line1 ? words.slice(i) : words.slice(i + 1)).join(' ')
+      return [line1 || trunc(words[i], MAX_CHARS), rest ? trunc(rest, MAX_CHARS) : null]
+    }
+    return [line1, null]
+  }
+
   const parts: string[] = []
   if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
 
@@ -39,8 +58,21 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = items.length > 1 ? i / (items.length - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
     parts.push(`<polygon points="${hexPoints(cx, cy)}" fill="${fill}33" stroke="${fill}" stroke-width="1.5"/>`)
-    parts.push(`<text x="${cx.toFixed(1)}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(item.label, 9)}</text>`)
-    if (item.value) parts.push(`<text x="${cx.toFixed(1)}" y="${(cy + 8).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, 9)}</text>`)
+    const [line1, line2] = wrapLabel(item.label)
+    if (line2 && item.value) {
+      // 3 rows: shift everything up a little
+      parts.push(`<text x="${cx.toFixed(1)}" y="${(cy - 13).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line1)}</text>`)
+      parts.push(`<text x="${cx.toFixed(1)}" y="${(cy + 1).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line2)}</text>`)
+      parts.push(`<text x="${cx.toFixed(1)}" y="${(cy + 15).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(trunc(item.value!, MAX_CHARS))}</text>`)
+    } else if (line2) {
+      // two label lines, no value — vertically centre the pair
+      parts.push(`<text x="${cx.toFixed(1)}" y="${(cy - 7).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line1)}</text>`)
+      parts.push(`<text x="${cx.toFixed(1)}" y="${(cy + 7).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line2)}</text>`)
+    } else {
+      // single line (original layout)
+      parts.push(`<text x="${cx.toFixed(1)}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line1)}</text>`)
+      if (item.value) parts.push(`<text x="${cx.toFixed(1)}" y="${(cy + 8).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(trunc(item.value, MAX_CHARS))}</text>`)
+    }
   })
   return svg(W, H, theme, parts)
 }
