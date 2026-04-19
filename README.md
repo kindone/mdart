@@ -184,6 +184,10 @@ npm run build
 npm run gen-examples
 ```
 
+## Gallery
+
+Browse all 101 layout types with live rendered previews: **[docs/gallery.html](./docs/gallery.html)**
+
 ## Syntax reference
 
 Full syntax documentation with rendered examples for all 101 layout types, color overrides, and modifier attrs: **[docs/syntax.md](./docs/syntax.md)**
