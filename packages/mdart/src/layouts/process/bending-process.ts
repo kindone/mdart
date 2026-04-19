@@ -49,19 +49,30 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       if (sameRow) {
         const row = Math.floor(i / COLS)
         const goRight = row % 2 === 0
-        const x1 = goRight ? x + BOX_W + 2 : x - 2
-        const x2 = goRight ? next.x - 4 : next.x + BOX_W + 4
+        const x1 = goRight ? x + BOX_W + 1 : x - 1
+        const x2 = goRight ? next.x - 1 : next.x + BOX_W + 1
         parts.push(`<line x1="${x1.toFixed(1)}" y1="${(y + BOX_H / 2).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${(y + BOX_H / 2).toFixed(1)}" stroke="${theme.accent}99" stroke-width="1.5" marker-end="url(#bp-r)"/>`)
       } else {
         const row = Math.floor(i / COLS)
         const goRight = row % 2 === 0
-        const xStart = x + (goRight ? BOX_W : 0)
-        const yStart = y + BOX_H / 2
-        const xEnd = next.x + (goRight ? BOX_W : 0)
-        const yEnd = next.y + BOX_H / 2
-        const arcR = Math.round((yEnd - yStart) / 2)
-        const sweep = goRight ? 1 : 0
-        parts.push(`<path d="M${xStart.toFixed(1)},${yStart.toFixed(1)} A${arcR},${arcR} 0 0,${sweep} ${xEnd.toFixed(1)},${yEnd.toFixed(1)}" fill="none" stroke="${theme.accent}88" stroke-width="2" marker-end="url(#bp-r)"/>`)
+        const xPivot = x + (goRight ? BOX_W : 0)   // same as next.x + (goRight ? BOX_W : 0)
+        const yMid1 = y + BOX_H / 2
+        const yMid2 = next.y + BOX_H / 2
+        const ext = Math.round(TURN_EXT * 0.5)      // horizontal run length (16px)
+        const r   = Math.round(ROW_GAP / 3)          // rounded-corner radius   (8px)
+        const d   = goRight ? 1 : -1                 // +1 right-turn, -1 left-turn
+        const sw  = goRight ? 1 : 0                  // CW for right, CCW for left
+        const xA  = xPivot + d * ext                 // end of first H / start of second H
+        const xB  = xPivot + d * (ext + r)           // tip of both corner arcs (V segment x)
+        const path = [
+          `M${xPivot},${yMid1.toFixed(1)}`,
+          `H${xA}`,
+          `A${r},${r} 0 0,${sw} ${xB},${(yMid1 + r).toFixed(1)}`,
+          `V${(yMid2 - r).toFixed(1)}`,
+          `A${r},${r} 0 0,${sw} ${xA},${yMid2.toFixed(1)}`,
+          `H${xPivot}`
+        ].join(' ')
+        parts.push(`<path d="${path}" fill="none" stroke="${theme.accent}88" stroke-width="2" marker-end="url(#bp-r)"/>`)
       }
     }
   })

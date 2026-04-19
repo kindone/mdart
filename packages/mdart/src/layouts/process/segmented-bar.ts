@@ -23,14 +23,29 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const weights = items.map(it => parseFloat(it.value ?? '') || 1)
   const total = weights.reduce((s, w) => s + w, 0)
 
+  // Build a path with per-side corner rounding so only the bar's outer edges are rounded.
+  // SVG <rect rx> rounds all four corners, which breaks the flat joins between segments.
+  const segPath = (x: number, y: number, w: number, h: number, rl: number, rr: number) => [
+    `M${(x + rl).toFixed(1)},${y}`,
+    `H${(x + w - rr).toFixed(1)}`,
+    rr ? `A${rr},${rr} 0 0,1 ${(x+w).toFixed(1)},${(y+rr).toFixed(1)}` : '',
+    `V${(y + h - rr).toFixed(1)}`,
+    rr ? `A${rr},${rr} 0 0,1 ${(x+w-rr).toFixed(1)},${(y+h).toFixed(1)}` : '',
+    `H${(x + rl).toFixed(1)}`,
+    rl ? `A${rl},${rl} 0 0,1 ${x},${(y+h-rl).toFixed(1)}` : '',
+    `V${(y + rl).toFixed(1)}`,
+    rl ? `A${rl},${rl} 0 0,1 ${(x+rl).toFixed(1)},${y}` : '',
+    'Z'
+  ].filter(Boolean).join(' ')
+
   let curX = PAD
   items.forEach((item, i) => {
     const segW = (weights[i] / total) * BAR_W
     const t = items.length > 1 ? i / (items.length - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const isFirst = i === 0, isLast = i === items.length - 1
-    const rx = isFirst || isLast ? 5 : 0
-    parts.push(`<rect x="${curX.toFixed(1)}" y="${BAR_Y}" width="${segW.toFixed(1)}" height="${BAR_H}" rx="${rx}" fill="${fill}"/>`)
+    const rl = isFirst ? 5 : 0, rr = isLast ? 5 : 0
+    parts.push(`<path d="${segPath(curX, BAR_Y, segW, BAR_H, rl, rr)}" fill="${fill}"/>`)
     const lx = curX + segW / 2
     parts.push(`<text x="${lx.toFixed(1)}" y="${(BAR_Y + BAR_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${tt(item.label, Math.floor(segW / 7))}</text>`)
     parts.push(`<text x="${lx.toFixed(1)}" y="${(BAR_Y + BAR_H + 14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${fill}" font-family="system-ui,sans-serif">${item.value ?? Math.round(weights[i] / total * 100) + '%'}</text>`)
