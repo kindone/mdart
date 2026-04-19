@@ -25,7 +25,7 @@
 import express     from 'express'
 import path        from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { readFile, writeFile, copyFile, unlink } from 'node:fs/promises'
+import { readFile, writeFile, readdir, copyFile, unlink } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { exec as execCb, spawn as spawnProc } from 'node:child_process'
 import { createInterface } from 'node:readline'
@@ -61,6 +61,7 @@ const MDART_SRC   = path.join(MDART_PKG, 'src')
 const DIST_INDEX  = path.join(MDART_PKG, 'dist/index.js')
 const README_PATH = path.join(MDART_ROOT, 'README.md')
 const DOCS_DIR    = path.join(MDART_ROOT, 'docs')
+const EXAMPLES_DIR  = path.join(__dirname, '../examples')
 
 /** Files the lab is allowed to read and write */
 const ALLOWED_LAB_FILES = new Set([
@@ -221,14 +222,18 @@ app.get('/', async (_req, res) => {
   }
 })
 
-/** Minimal styled HTML wrapper for the rendered README */
-function README_TEMPLATE(body: string): string {
+/** Minimal styled HTML wrapper for rendered Markdown pages */
+function README_TEMPLATE(body: string, opts: { title?: string; backHref?: string; backLabel?: string } = {}): string {
+  const { title = 'MdArt', backHref, backLabel = '← Back' } = opts
+  const backBtn = backHref
+    ? `<a href="${backHref}" class="btn-npm">${backLabel}</a>`
+    : ''
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MdArt</title>
+  <title>${title}</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -309,6 +314,7 @@ function README_TEMPLATE(body: string): string {
   <div class="site-header">
     <span class="site-logo">Md<span>Art</span></span>
     <div class="site-header-right">
+      ${backBtn}
       <a href="https://www.npmjs.com/package/mdart" target="_blank" rel="noopener" class="btn-npm">npm ↗</a>
       <a href="/demo" class="btn-demo">Try Demo →</a>
     </div>
@@ -318,7 +324,105 @@ function README_TEMPLATE(body: string): string {
 </html>`
 }
 
+// ── Examples API ──────────────────────────────────────────────────────────────
+
+/**
+ * GET /examples
+ * Returns all example files as JSON: { mdart, markdown, types }
+ * mdart/markdown: [{slug, name, content}] sorted by names.json order
+ * types: {typeName: content}
+ */
+app.get('/examples', async (_req, res) => {
+  try {
+    const readCategory = async (cat: string): Promise<{slug: string; name: string; content: string}[]> => {
+      const dir = path.join(EXAMPLES_DIR, cat)
+      const ext = cat === 'markdown' ? '.md' : '.mdart'
+      let names: Record<string, string> = {}
+      try { names = JSON.parse(await readFile(path.join(dir, 'names.json'), 'utf8')) } catch {}
+      const files = (await readdir(dir).catch(() => [])).filter(f => f.endsWith(ext))
+      const entries = await Promise.all(files.map(async f => {
+        const slug = f.slice(0, -ext.length)
+        const content = await readFile(path.join(dir, f), 'utf8')
+        return { slug, name: names[slug] ?? slug, content }
+      }))
+      // Sort by names.json key order, then alphabetically for unlisted
+      const order = Object.keys(names)
+      return entries.sort((a, b) => {
+        const ai = order.indexOf(a.slug), bi = order.indexOf(b.slug)
+        if (ai !== -1 && bi !== -1) return ai - bi
+        if (ai !== -1) return -1
+        if (bi !== -1) return 1
+        return a.slug.localeCompare(b.slug)
+      })
+    }
+
+    const readTypes = async (): Promise<Record<string, string>> => {
+      const dir = path.join(EXAMPLES_DIR, 'types')
+      const files = (await readdir(dir).catch(() => [])).filter(f => f.endsWith('.mdart'))
+      const entries = await Promise.all(files.map(async f => {
+        const type = f.slice(0, -'.mdart'.length)
+        const content = await readFile(path.join(dir, f), 'utf8')
+        return [type, content] as [string, string]
+      }))
+      return Object.fromEntries(entries)
+    }
+
+    const [mdart, markdown, types] = await Promise.all([
+      readCategory('mdart'),
+      readCategory('markdown'),
+      readTypes(),
+    ])
+    res.json({ mdart, markdown, types })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+/**
+ * POST /examples/:category/:slug
+ * Saves example content to disk. category = mdart | markdown | types
+ */
+app.post('/examples/:category/:slug', express.json(), async (req, res) => {
+  const { category, slug } = req.params
+  if (!['mdart', 'markdown', 'types'].includes(category)) {
+    return res.status(400).json({ error: 'Invalid category' })
+  }
+  const ext = category === 'markdown' ? '.md' : '.mdart'
+  const file = path.resolve(path.join(EXAMPLES_DIR, category, slug + ext))
+  if (!file.startsWith(path.resolve(EXAMPLES_DIR) + path.sep)) {
+    return res.status(403).json({ error: 'Forbidden' })
+  }
+  const { content } = req.body as { content?: string }
+  if (typeof content !== 'string') return res.status(400).json({ error: 'content required' })
+  try {
+    await writeFile(file, content, 'utf8')
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
 // ── Static file serving ───────────────────────────────────────────────────────
+
+// Render .md files under /docs/ as styled HTML pages (must come before static middleware)
+app.get('/docs/*path', async (req, res, next) => {
+  if (!req.path.endsWith('.md')) return next()
+  const rel  = req.path.slice('/docs/'.length)          // e.g. "syntax.md"
+  const file = path.resolve(DOCS_DIR, rel)
+  // Security: reject path traversal attempts
+  if (!file.startsWith(path.resolve(DOCS_DIR) + path.sep) && file !== path.resolve(DOCS_DIR)) {
+    return res.status(403).send('Forbidden')
+  }
+  try {
+    const md   = await readFile(file, 'utf8')
+    const body = await renderWithMarked(md)
+    const name = path.basename(file, '.md')
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.send(README_TEMPLATE(body, { title: `${name} — MdArt`, backHref: '/', backLabel: '← Home' }))
+  } catch {
+    next()   // fall through to static (serves raw file, or 404)
+  }
+})
 
 // Serve docs/ for README image references (./docs/examples/*.svg → /docs/examples/*.svg)
 app.use('/docs', express.static(DOCS_DIR))

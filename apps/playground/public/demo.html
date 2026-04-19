@@ -41,6 +41,7 @@ body {
 /* Mode-specific controls */
 .ctrl-group { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
 .ctrl-group.hidden { display: none; }
+.hidden { display: none !important; }
 
 .toolbar select {
   height: 28px; border-radius: 4px; font-size: 12px; cursor: pointer; outline: none;
@@ -89,6 +90,17 @@ body {
   padding: 3px 6px; border-radius: 3px; white-space: nowrap; flex-shrink: 0;
 }
 .nav-link:hover { background: #3c3c3c; }
+
+.btn-auto {
+  height: 28px; padding: 0 9px; border-radius: 4px; font-size: 11px;
+  cursor: pointer; outline: none; white-space: nowrap; flex-shrink: 0;
+  background: transparent; color: #666; border: 1px solid #444;
+  transition: color .1s, border-color .1s;
+}
+.btn-auto:hover { color: #aaa; border-color: #666; }
+.btn-auto.on { color: #4ec9b0; border-color: #3c5e5a; background: #1a2e2c; }
+#btn-save-example { color: #e5c07b; border-color: #5e5220; }
+#btn-save-example:hover { background: #2d2510; border-color: #e5c07b; }
 
 /* ── Mobile tab bar ── */
 .mobile-tabs {
@@ -369,8 +381,29 @@ pre.int-code {
 @media (max-width: 767px) {
   .mobile-tabs { display: flex; }
   .desktop-only { display: none !important; }
-  .toolbar { gap: 4px; padding: 0 8px; }
+
+  /* Two-row toolbar: row 1 = mode toggle + Claude, row 2 = controls + examples */
+  .toolbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 5px 8px;
+    gap: 5px;
+    overflow: visible;
+    align-items: center;
+  }
   .toolbar-logo { display: none; }
+  .mode-toggle { order: 1; }
+  .sep { order: 2; }           /* flex:1 spacer keeps Claude flush-right on row 1 */
+  .btn-claude { order: 3; }
+  .status-badge { display: none; }
+  /* .toolbar-break: full-width zero-height element that forces a new flex row */
+  .toolbar-break { display: block; flex-basis: 100%; height: 0; order: 4; }
+  /* Mode controls + examples on row 2 */
+  .ctrl-group { order: 5; flex-shrink: 1; }
+  #example-select { order: 6; flex: 1 1 0; max-width: none; }
+  /* Shrink the renderer file-select on mobile so it doesn't overflow */
+  #file-select { max-width: 130px; }
+
   .main { position: relative; }
   .editor-col {
     position: absolute; inset: 0; width: 100%; border-right: none;
@@ -391,8 +424,7 @@ pre.int-code {
   .preview-pane.mob-active { visibility: visible; pointer-events: auto; z-index: 2; }
   #mdart-source { font-size: 14px; }
   .chat-panel { width: 100%; max-width: 100%; }
-  .mode-btn { padding: 0 7px; font-size: 11px; }
-  .status-badge { display: none; }
+  .mode-btn { padding: 0 8px; font-size: 12px; }
 }
 </style>
 </head>
@@ -414,6 +446,9 @@ pre.int-code {
     <button class="mode-btn" data-mode="renderer">Renderer</button>
   </div>
 
+  <!-- Mobile row-break: pushes controls to second row on narrow screens -->
+  <span class="toolbar-break"></span>
+
   <!-- MdArt controls -->
   <div class="ctrl-group" id="ctrl-mdart">
     <select id="hint-select" title="Type hint (overrides auto-detect)">
@@ -429,6 +464,7 @@ pre.int-code {
       <option value="markdown-it">markdown-it v14</option>
       <option value="unified">unified / remark</option>
     </select>
+    <button class="btn btn-primary" id="btn-render-md">Render</button>
   </div>
 
   <!-- Renderer controls -->
@@ -568,10 +604,15 @@ pre.int-code {
 
   <span class="sep"></span>
 
+  <!-- Shared: auto-render toggle (hidden in renderer mode) -->
+  <button class="btn-auto on" id="btn-auto-render" title="Toggle auto-render on content change">Auto</button>
+
   <!-- Shared: examples dropdown -->
   <select id="example-select" class="toolbar" style="height:28px;border-radius:4px;font-size:12px;cursor:pointer;background:#3c3c3c;color:#d4d4d4;border:1px solid #555;padding:0 8px;max-width:140px;" title="Load an example">
     <option value="">Examples…</option>
   </select>
+
+  <button class="btn btn-ghost hidden" id="btn-save-example" title="Save changes to this example file">💾 Save</button>
 
   <button class="btn-claude hidden" id="btn-chat-toggle" title="Claude AI assistant (Ctrl+Shift+K)">✦ Claude</button>
   <span class="status-badge idle" id="status-badge">ready</span>
@@ -714,407 +755,27 @@ for (const [fam, types] of Object.entries(families)) {
 }
 const FILE_TO_TYPE = Object.fromEntries(Object.entries(TYPE_TO_FILE).map(([t,f]) => [f,t]))
 
-// ── Curated examples (MdArt mode) ─────────────────────────────────────────────
+// ── Examples (loaded from server) ────────────────────────────────────────────
 
-const EXAMPLES = {
-  'Process — Build Pipeline': `type: process
-title: Build Pipeline
+// Populated by fetchExamples() before Monaco init completes
+let examples = { mdart: [], markdown: [], types: {} }
+// mdart/markdown: [{slug, name, content}]; types: {type: content}
 
-- Plan
-- Code
-- Review
-- Test
-- Deploy`,
+// Build lookup maps after loading
+let EXAMPLES = {}         // name → content  (mdart curated)
+let MARKDOWN_EXAMPLES = {} // name → content  (markdown curated)
+let TYPE_EXAMPLES = {}    // type → content   (per-type)
 
-  'SWOT Analysis': `type: swot
-title: Product Launch
-
-+ Strong brand recognition
-+ Experienced engineering team
-- High customer acquisition cost
-- No mobile app yet
-? Asia-Pacific expansion
-? Enterprise tier pricing
-! Well-funded competitor entering market
-! Regulatory changes in EU`,
-
-  'Org Chart': `type: org-chart
-title: Engineering
-
-- CTO
-  - Frontend Lead
-    - Alice
-    - Bob
-  - Backend Lead
-    - Carol
-    - Dave
-  - Platform Lead
-    - Eve`,
-
-  'Tab List': `type: tab-list
-title: API Reference
-
-- Overview
-  REST API built on HTTP with JSON payloads.
-  Base URL: https://api.example.com/v1
-- Authentication
-  Use Bearer tokens in the Authorization header.
-  Tokens expire after 24 hours.
-- Rate Limits
-  100 requests per minute per API key.
-  Burst up to 200 req/s for 10 seconds.`,
-
-  'Kanban Board': `type: kanban
-title: Sprint 14
-
-- Backlog
-  - Write API docs
-  - Set up CI pipeline
-  - Design onboarding flow
-- In Progress
-  - Auth refresh token logic
-  - Dashboard redesign
-- Review
-  - Rate limiting middleware
-- Done
-  - Database migrations
-  - Unit tests for parser`,
-
-  'Sequence Diagram': `type: sequence
-title: OAuth Flow
-
-- Browser
-  - → Auth Server: GET /authorize?client_id=…
-  - → Auth Server: POST /token (code exchange)
-  - → API Server: GET /me (Bearer token)
-- Auth Server
-  - → Browser: 302 redirect + code
-  - → Browser: { access_token, refresh_token }
-- API Server
-  - → Browser: { id, email, name }`,
-
-  'Gantt Chart': `type: gantt-lite
-title: Q1 Roadmap
-
-- Discovery [wk1–wk2]
-- Design [wk2–wk4]
-- Implementation [wk4–wk10]
-* Beta Launch [wk10]
-- QA & Polish [wk10–wk12]
-* GA Release [wk12]`,
-
-  'Mind Map': `type: mind-map
-title: Product Strategy
-
-- Growth
-  - Acquisition
-  - Activation
-  - Retention
-- Platform
-  - API
-  - Integrations
-  - SDKs
-- Revenue
-  - Pricing
-  - Enterprise
-  - Partnerships`,
+function rebuildExampleMaps() {
+  EXAMPLES = Object.fromEntries(examples.mdart.map(e => [e.name, e.content]))
+  MARKDOWN_EXAMPLES = Object.fromEntries(examples.markdown.map(e => [e.name, e.content]))
+  TYPE_EXAMPLES = examples.types
 }
 
-// ── Markdown examples ─────────────────────────────────────────────────────────
-
-const MARKDOWN_EXAMPLES = {
-  'Process — Build Pipeline': `# Deployment Pipeline
-
-Our standard release process moves code from commit to production
-through four automated gates.
-
-\`\`\`mdart process
-title: Release Pipeline
-
-Plan → Code → Review → Test → Deploy
-\`\`\`
-
-Each stage must pass before the next begins.`,
-
-  'Architecture — System Overview': `# System Architecture
-
-The platform is divided into three layers.
-
-\`\`\`mdart layered-arch
-title: Platform Layers
-
-- Presentation
-  - Web app
-  - Mobile app
-  - Public API
-- Application
-  - Auth service
-  - Worker service
-  - Scheduler
-- Data
-  - Postgres
-  - Redis
-  - Object storage
-\`\`\`
-
-All inter-service communication goes through the application layer.`,
-
-  'Planning — Sprint Board': `# Sprint 22 · Week 3
-
-\`\`\`mdart kanban
-title: Sprint 22
-
-- Backlog
-  - Refresh token rotation
-  - Dark mode polish
-- In Progress
-  - Rate limiting middleware
-  - Dashboard v2 layout
-- Review
-  - CSV export feature
-- Done
-  - Auth flow refactor
-  - API error codes
-\`\`\`
-
-Blockers: Dashboard v2 is waiting on design sign-off.`,
-
-  'Strategy — SWOT Analysis': `# Product Strategy · Q3 Review
-
-\`\`\`mdart swot
-title: Competitive Position
-
-+ Strong developer community
-+ Best-in-class onboarding
-- No enterprise SSO yet
-- Mobile app gaps
-? APAC market entry
-? AI-assisted editing tier
-! Well-funded new entrant
-! Pricing pressure from below
-\`\`\`
-
-The primary threat is a new entrant with deep pockets.`,
-
-  'Technical — Auth Sequence': `# OAuth 2.0 — Authorization Code Flow
-
-\`\`\`mdart sequence
-title: OAuth Flow
-
-- Browser
-  - → Auth Server: GET /authorize?client_id=…&scope=openid
-  - → Auth Server: POST /token (code + PKCE verifier)
-  - → Resource API: GET /me  (Bearer token)
-- Auth Server
-  - → Browser: 302 redirect + code
-  - → Browser: { access_token, id_token, refresh_token }
-- Resource API
-  - → Browser: { id, email, name }
-\`\`\`
-
-PKCE is mandatory for all public clients.`,
-
-  'Report — Mixed Diagrams': `# Engineering Quarterly Report
-
-## Delivery
-
-\`\`\`mdart gantt-lite
-title: Q3 Milestones
-
-- Discovery & design [wk1–wk2]
-- Core implementation [wk3–wk8]
-* Beta to design partners [wk8]
-- Hardening & docs [wk9–wk11]
-* GA release [wk12]
-\`\`\`
-
-We shipped on schedule.
-
-## Team health
-
-\`\`\`mdart progress-list
-title: Survey Results (Q3)
-
-- Autonomy: 88
-- Clarity of goals: 76
-- Work-life balance: 82
-- Career growth: 71
-- Overall: 80
-\`\`\``,
-
-  'Gallery — All Diagram Types': `# MdArt Diagram Gallery
-
-## Process
-
-\`\`\`mdart chevron-process
-title: Growth Funnel
-- Awareness
-- Interest
-- Evaluation
-- Trial
-- Adoption
-\`\`\`
-
-\`\`\`mdart bending-process
-title: CI/CD Pipeline
-- Commit
-- Lint
-- Unit Tests
-- Build
-- Integration Tests
-- Security Scan
-- Stage
-- Smoke Tests
-- Prod
-\`\`\`
-
-## Hierarchy
-
-\`\`\`mdart mind-map
-title: Product Strategy
-- Growth
-  - Acquisition
-  - Activation
-- Platform
-  - API
-  - Integrations
-- Revenue
-  - Pricing
-  - Enterprise
-\`\`\`
-
-## Matrix
-
-\`\`\`mdart matrix-2x2
-title: Eisenhower Matrix
-- Quick Wins
-  - Fix login bug
-- Big Bets
-  - Mobile app
-- Fill-ins
-  - Docs update
-- Avoid
-  - Legacy API
-\`\`\`
-
-## Statistical
-
-\`\`\`mdart radar
-title: Team Capabilities
-- Frontend: 85
-- Backend: 90
-- DevOps: 70
-- Data: 65
-- Security: 55
-- Mobile: 40
-\`\`\``,
-}
-
-// ── Per-type examples (Renderer mode) ────────────────────────────────────────
-
-const TYPE_EXAMPLES = {
-  'process': `type: process\ntitle: Deployment Pipeline\n\n- Code Review\n- CI Build\n- Staging Deploy\n- Smoke Test\n- Production Deploy`,
-  'chevron-process': `type: chevron-process\ntitle: Sales Pipeline\n\n- Prospect\n- Qualify\n- Propose\n- Negotiate\n- Close`,
-  'arrow-process': `type: arrow-process\ntitle: Data Flow\n\n- Ingest\n- Validate\n- Transform\n- Enrich\n- Publish`,
-  'circular-process': `type: circular-process\ntitle: Product Lifecycle\n\n- Plan\n- Build\n- Test\n- Ship`,
-  'funnel': `type: funnel\ntitle: Conversion Funnel\n\n- Visitors: 10000\n- Sign-ups: 2400\n- Activated: 960\n- Paying: 192\n- Champions: 38`,
-  'roadmap': `type: roadmap\ntitle: Product Roadmap\n\n- Q1: Foundation\n- Q2: Growth\n- Q3: Scale\n- Q4: Expand`,
-  'waterfall': `type: waterfall\ntitle: Project Phases\n\n- Requirements\n- Design\n- Implementation\n- Testing\n- Deployment\n- Maintenance`,
-  'snake-process': `type: snake-process\ntitle: Onboarding Steps\n\n- Sign Up\n- Verify Email\n- Set Password\n- Complete Profile\n- Choose Plan\n- Add Payment\n- Invite Team\n- First Project`,
-  'step-up': `type: step-up\ntitle: Career Growth\n\n- Junior\n- Mid-Level\n- Senior\n- Staff\n- Principal`,
-  'step-down': `type: step-down\ntitle: Incident Response\n\n- Detect\n- Alert\n- Triage\n- Mitigate\n- Resolve\n- Post-mortem`,
-  'circle-process': `type: circle-process\ntitle: Agile Sprint\n\n- Plan\n- Design\n- Develop\n- Review\n- Retro`,
-  'equation': `type: equation\ntitle: Value Formula\n\n- User Value\n- Technical Quality\n- Speed of Delivery`,
-  'bending-process': `type: bending-process\ntitle: Build Pipeline\n\n- Checkout\n- Install Deps\n- Lint\n- Unit Tests\n- Build\n- Integration Tests\n- Security Scan\n- Deploy Staging\n- E2E Tests\n- Deploy Prod`,
-  'segmented-bar': `type: segmented-bar\ntitle: Time Allocation\n\n- Planning: 15\n- Development: 45\n- Testing: 25\n- Review: 15`,
-  'phase-process': `type: phase-process\ntitle: Product Launch\n\n- Discovery\n- Alpha\n- Beta\n- GA`,
-  'timeline-h': `type: timeline-h\ntitle: Company History\n\n- 2019: Founded\n- 2020: Seed Round\n- 2021: Product Launch\n- 2022: Series A\n- 2023: 1M Users\n- 2024: Profitable`,
-  'timeline-v': `type: timeline-v\ntitle: Release History\n\n- v1.0: Initial release\n- v1.2: Bug fixes & perf\n- v2.0: Major redesign\n- v2.5: API v2\n- v3.0: Enterprise tier`,
-  'swimlane': `type: swimlane\ntitle: Feature Development\n\n- Product\n  - Write spec\n  - Prioritize\n  - Accept\n- Design\n  - Wireframes\n  - Mockups\n  - Handoff\n- Engineering\n  - Implementation\n  - Code review\n  - Deploy`,
-  'bullet-list': `type: bullet-list\ntitle: Engineering Principles\n\n- Design for testability first\n- Minimal scope per change\n- Read before editing\n- Verify your work\n- Update docs alongside code`,
-  'numbered-list': `type: numbered-list\ntitle: Deploy Checklist\n\n- Run npm test\n- Build client\n- Build server\n- Restart service\n- Confirm health check`,
-  'checklist': `type: checklist\ntitle: PR Review\n\n- Tests pass [done]\n- No type errors [done]\n- Docs updated [done]\n- Breaking changes noted\n- Performance impact checked`,
-  'two-column-list': `type: two-column-list\ntitle: Tech Stack\n\n- Frontend: React + TypeScript\n- Backend: Node.js + Express\n- Database: SQLite\n- Auth: Passkeys\n- Deploy: PM2 + nginx`,
-  'timeline-list': `type: timeline-list\ntitle: Sprint Timeline\n\n- Mon: Planning & kickoff\n- Tue: Core implementation\n- Wed: Code review\n- Thu: Testing & fixes\n- Fri: Deploy & retro`,
-  'block-list': `type: block-list\ntitle: Core Values\n\n- Honesty: Radical transparency\n- Quality: Never ship broken\n- Speed: Bias to action\n- Care: People first`,
-  'chevron-list': `type: chevron-list\ntitle: Interview Stages\n\n- Recruiter screen\n- Technical phone\n- Take-home challenge\n- System design\n- Team fit\n- Offer`,
-  'card-list': `type: card-list\ntitle: Team Norms\n\n- Async by default\n  - Prefer written communication\n  - Document decisions\n- Bias to action\n  - Decide with 70% info\n  - Unblock yourself`,
-  'zigzag-list': `type: zigzag-list\ntitle: Quarterly OKRs\n\n- Grow ARR to $2M\n- Reduce churn below 3%\n- Ship mobile app v1\n- NPS above 60\n- Hire 4 engineers`,
-  'ribbon-list': `type: ribbon-list\ntitle: Product Pillars\n\n- Speed: Fastest in its class\n- Reliability: 99.9% uptime SLA\n- Security: SOC 2 Type II\n- Usability: Loved by developers`,
-  'hexagon-list': `type: hexagon-list\ntitle: DevOps Practices\n\n- Version control\n- CI/CD\n- Infrastructure as code\n- Monitoring\n- Incident response\n- Blameless post-mortems`,
-  'trapezoid-list': `type: trapezoid-list\ntitle: Abstraction Layers\n\n- Application\n- Framework\n- Runtime\n- OS\n- Hardware`,
-  'tab-list': `type: tab-list\ntitle: Environment Config\n\n- Development\n  - Debug logging enabled\n  - Hot reload active\n- Staging\n  - Production parity\n  - Alerts muted\n- Production\n  - Full observability\n  - Rate limiting enforced`,
-  'circle-list': `type: circle-list\ntitle: Design Tokens\n\n- Color: Brand palette & semantic roles\n- Typography: Scale, weight, and line-height\n- Spacing: Consistent margin and padding\n- Elevation: Shadow and z-index system`,
-  'icon-list': `type: icon-list\ntitle: Platform Features\n\n- Encryption: End-to-end encrypted [🔒]\n- Performance: Sub-100ms API [⚡]\n- Analytics: Real-time insights [📊]\n- Multi-region: Global failover [🌍]`,
-  'cycle': `type: cycle\ntitle: Agile Sprint\n\n- Plan\n- Build\n- Review\n- Retro`,
-  'donut-cycle': `type: donut-cycle\ntitle: Content Pipeline\n\n- Ideate\n- Draft\n- Edit\n- Publish\n- Promote`,
-  'gear-cycle': `type: gear-cycle\ntitle: Flywheel\n\n- Lower prices\n- More customers\n- More volume\n- Lower costs`,
-  'spiral': `type: spiral\ntitle: Learning Spiral\n\n- Awareness\n- Understanding\n- Application\n- Mastery\n- Teaching`,
-  'block-cycle': `type: block-cycle\ntitle: Incident Response\n\n- Detect\n- Respond\n- Resolve\n- Review`,
-  'segmented-cycle': `type: segmented-cycle\ntitle: Budget Allocation\n\n- Engineering\n- Marketing\n- Sales\n- G&A`,
-  'nondirectional-cycle': `type: nondirectional-cycle\ntitle: Team Rituals\n\n- Standup\n- Planning\n- Demo\n- Retro`,
-  'multidirectional-cycle': `type: multidirectional-cycle\ntitle: Data Flows\n\n- Ingest\n- Transform\n- Store\n- Serve\n- Monitor`,
-  'loop': `type: loop\ntitle: Retry Logic\n\n- Attempt\n- Check\n- Backoff`,
-  'swot': `type: swot\ntitle: Product Analysis\n\n+ Strong brand recognition\n+ Experienced team\n- High CAC\n- No mobile app\n? APAC expansion\n? Enterprise tier\n! Competitor entering market\n! Regulatory changes`,
-  'pros-cons': `type: pros-cons\ntitle: Microservices vs Monolith\n\n- Pros\n  - Independent deployments\n  - Technology flexibility\n  - Fault isolation\n- Cons\n  - Operational complexity\n  - Network latency\n  - Higher infra cost`,
-  'comparison': `type: comparison\ntitle: Database Options\n\n- Type\n  - PostgreSQL: Relational\n  - MongoDB: Document\n  - Redis: Key-value\n- ACID\n  - PostgreSQL: Full\n  - MongoDB: Multi-doc\n  - Redis: Single-key`,
-  'matrix-2x2': `type: matrix-2x2\ntitle: Eisenhower Matrix\n\n- Quick Wins\n  - Fix login bug\n  - Add dark mode\n- Big Bets\n  - Mobile app\n  - AI features\n- Fill-ins\n  - Docs update\n- Avoid\n  - Legacy API`,
-  'bcg': `type: bcg\ntitle: Portfolio Analysis\n\n- Stars\n  - Cloud platform\n  - Mobile SDK\n- Question Marks\n  - AI assistant\n- Cash Cows\n  - Core API\n  - Enterprise plan\n- Dogs\n  - Legacy desktop app`,
-  'ansoff': `type: ansoff\ntitle: Growth Strategy\n\n- Market Penetration\n  - Loyalty program\n- Product Development\n  - Mobile app\n  - API v2\n- Market Development\n  - APAC launch\n- Diversification\n  - Marketplace`,
-  'matrix-nxm': `type: matrix-nxm\ntitle: Skills Matrix\n\n- Alice\n  - Expert\n  - Proficient\n  - Learning\n- Bob\n  - Proficient\n  - Expert\n  - Expert`,
-  'org-chart': `type: org-chart\ntitle: Engineering Org\n\n- CTO\n  - VP Platform\n    - Infra Team\n    - SRE Team\n  - VP Product Eng\n    - Frontend Team\n    - Backend Team`,
-  'tree': `type: tree\ntitle: Project Structure\n\n- src\n  - components\n    - Button\n    - Modal\n  - hooks\n    - useAuth\n    - useData\n  - utils\n    - api\n    - format`,
-  'h-org-chart': `type: h-org-chart\ntitle: Decision Hierarchy\n\n- CEO\n  - CFO\n    - Controller\n  - CTO\n    - Engineering Lead\n  - CMO\n    - Brand\n    - Growth`,
-  'hierarchy-list': `type: hierarchy-list\ntitle: Knowledge Base\n\n- Getting Started\n  - Installation\n  - Quick start\n- Guides\n  - Authentication\n  - Webhooks\n- Reference\n  - REST API\n  - SDK docs`,
-  'radial-tree': `type: radial-tree\ntitle: Core Platform\n\n- Mobile\n  - iOS\n  - Android\n- Web\n  - React\n  - API\n- Data\n  - Analytics\n  - ML`,
-  'decision-tree': `type: decision-tree\ntitle: Incident Severity\n\n- Urgent?\n  - SEV-1: Page on-call now\n  - Revenue impacted?\n    - SEV-2: Notify team lead\n    - SEV-3: File ticket`,
-  'sitemap': `type: sitemap\ntitle: Marketing Site\n\n- Home\n- Product\n  - Features\n  - Pricing\n- Docs\n  - API Reference\n  - Guides\n- Company\n  - About\n  - Blog`,
-  'bracket': `type: bracket\ntitle: Hackathon Finals\n\n- Team Alpha\n- Team Beta\n- Team Gamma\n- Team Delta\n- Team Echo\n- Team Foxtrot\n- Team Golf\n- Team Hotel`,
-  'bracket-tree': `type: bracket-tree\ntitle: Playoff Bracket\n\n- Team Alpha\n- Team Beta\n- Team Gamma\n- Team Delta`,
-  'mind-map': `type: mind-map\ntitle: Product Strategy\n\n- Market\n  - SMB\n  - Enterprise\n  - Developer\n- Distribution\n  - PLG\n  - Sales-led\n- Moat\n  - Data network effects\n  - Brand`,
-  'pyramid': `type: pyramid\ntitle: Maslow's Hierarchy\n\n- Self-actualisation\n- Esteem\n- Belonging\n- Safety\n- Physiological`,
-  'inverted-pyramid': `type: inverted-pyramid\ntitle: Acquisition Funnel\n\n- Awareness\n- Interest\n- Consideration\n- Intent\n- Purchase`,
-  'pyramid-list': `type: pyramid-list\ntitle: Testing Trophy\n\n- E2E Tests\n- Integration Tests\n- Unit Tests\n- Static Analysis`,
-  'segmented-pyramid': `type: segmented-pyramid\ntitle: Investment Allocation\n\n- Speculative: 5%\n- Growth: 20%\n- Balanced: 35%\n- Conservative: 40%`,
-  'diamond-pyramid': `type: diamond-pyramid\ntitle: Adoption Curve\n\n- Niche\n- Early Adopters\n- Mainstream\n- Late Majority\n- Laggards`,
-  'venn': `type: venn\n\n- Design\n  - UX Research\n  - Prototyping\n- Engineering\n  - Frontend\n  - Backend\n- Product ∩ Engineering`,
-  'venn-3': `type: venn-3\n\n- Marketing\n- Sales\n- Product\n- All Three ∩`,
-  'venn-4': `type: venn-4\n\n- Strategy\n  - OKRs\n- Design\n  - Brand\n- Engineering\n  - Frontend\n- Data\n  - Analytics`,
-  'concentric': `type: concentric\ntitle: Scope Layers\n\n- Vision\n- Strategy\n- Goals\n- Initiatives\n- Tasks`,
-  'balance': `type: balance\n\n- Benefits\n  - Speed\n  - Flexibility\n  - Cost savings\n- Risks\n  - Complexity\n  - Dependencies`,
-  'counterbalance': `type: counterbalance\ntitle: Build vs Buy\n\n- Build\n  - Full control\n  - Custom fit\n- Buy\n  - Fast to ship\n  - Lower cost`,
-  'opposing-arrows': `type: opposing-arrows\n\n- Supply\n  - Inventory\n  - Production\n- Demand\n  - Orders\n  - Forecast`,
-  'web': `type: web\ntitle: Team Dependencies\n\n- Frontend\n- Backend\n- Design\n- Data\n- DevOps\n- QA`,
-  'cluster': `type: cluster\ntitle: Engineering Org\n\n- Platform\n  - Core API\n  - Auth\n- Product\n  - Search\n  - Feed\n- Infrastructure\n  - Compute\n  - Storage`,
-  'target': `type: target\ntitle: Focus Areas\n\n- Core Goal\n- Must Have\n- Should Have\n- Nice to Have`,
-  'radial': `type: radial\ntitle: Platform\n\n- Mobile\n  - iOS\n  - Android\n- Web\n  - React\n  - API\n- Data\n  - Analytics\n- Design\n  - UI\n  - UX`,
-  'converging': `type: converging\ntitle: Product-Market Fit\n\n- User Research\n- Market Analysis\n- Technical Feasibility\n- Business Viability\n- Product-Market Fit`,
-  'diverging': `type: diverging\ntitle: Platform APIs\n\n- Core Platform\n- Mobile SDK\n- Web Embed\n- Partner API\n- Webhooks`,
-  'plus': `type: plus\ntitle: Growth Framework\n\n- Acquire\n- Activate\n- Retain\n- Revenue\n- Referral`,
-  'progress-list': `type: progress-list\ntitle: Q3 KPIs\n\n- ARR growth: 84\n- Churn rate: 28\n- NPS: 78\n- API uptime: 99\n- Deploy frequency: 91`,
-  'bullet-chart': `type: bullet-chart\ntitle: Sales vs Target\n\n- Revenue: 78 [85]\n- Pipeline: 62 [70]\n- Deals Closed: 91 [80]\n- Retention: 88 [90]`,
-  'scorecard': `type: scorecard\ntitle: Platform Health\n\n- MRR: $128K [+12%]\n- Churn: 2.1% [-0.3%]\n- MAU: 48,200 [+8%]\n- ARPU: $2.65 [+4%]`,
-  'treemap': `type: treemap\ntitle: Code by Module\n\n- auth: 18\n- api: 32\n- ui: 25\n- db: 14\n- workers: 8\n- utils: 3`,
-  'sankey': `type: sankey\ntitle: Traffic Sources\n\n- Organic: 45\n  - Landing Page\n  - Blog\n  - Docs\n- Paid: 30\n  - Landing Page\n  - Pricing\n- Direct: 25\n  - Dashboard`,
-  'waffle': `type: waffle\ntitle: Budget Allocation\n\n- Engineering: 30\n- Marketing: 20\n- Sales: 10\n- Operations: 10\n- Other: 30`,
-  'gauge': `type: gauge\ntitle: Health Metrics\n\n- Uptime: 99\n- Error Rate: 52\n- Satisfaction: 84`,
-  'radar': `type: radar\ntitle: Team Capabilities\n\n- Frontend: 85\n- Backend: 90\n- DevOps: 70\n- Data: 65\n- Security: 55\n- Mobile: 40`,
-  'heatmap': `type: heatmap\ntitle: Deploys by Day\n\n- Mon\n  - Morning: 5\n  - Midday: 8\n  - Afternoon: 3\n- Tue\n  - Morning: 7\n  - Midday: 12\n  - Afternoon: 6\n- Wed\n  - Morning: 4\n  - Midday: 9\n  - Afternoon: 8`,
-  'kanban': `type: kanban\ntitle: Sprint 14\n\n- Backlog\n  - Write API docs\n  - Design onboarding flow\n- In Progress\n  - Auth refresh token logic\n  - Dashboard redesign\n- Review\n  - Rate limiting middleware\n- Done\n  - Database migrations`,
-  'gantt': `type: gantt\ntitle: Q3 Project Plan\n\n- Discovery [wk1-wk2]\n- Design [wk2-wk4]\n- Backend API [wk3-wk8]\n- Frontend [wk5-wk10]\n- Testing [wk9-wk11]\n- Launch [wk12-wk13]`,
-  'gantt-lite': `type: gantt-lite\ntitle: Sprint Timeline\n\n- API design [wk1–wk2]\n- Core implementation [wk2–wk5]\n* Alpha cut [wk5]\n- Testing & hardening [wk5–wk7]\n- Docs & examples [wk6–wk8]\n* GA release [wk8]`,
-  'sprint-board': `type: sprint-board\ntitle: Sprint 24\n\n- Backlog\n  - Write migration guide: 3\n  - Add OpenAPI spec: 5\n- In Progress\n  - Pagination refactor: 5 [active]\n  - Token refresh logic: 3 [active]\n- Done\n  - Rate limiter: 5 [done]`,
-  'timeline': `type: timeline\ntitle: Product Milestones\n\n- Q1 '22: Private beta [done]\n- Q3 '22: 500 design partners [done]\n- Q1 '23: Public launch [done]\n- Q3 '23: Series A [active]\n- Q1 '24: 10,000 teams`,
-  'milestone': `type: milestone\ntitle: Launch Readiness\n\n- Security audit complete [done]\n- Load testing passed [done]\n- Docs site live [done]\n- Support runbook ready [active]\n- Status page configured\n- Rollback plan tested`,
-  'wbs': `type: wbs\ntitle: Platform Launch\n\n- Frontend\n  - Components [done]\n  - State Mgmt [active]\n- Backend\n  - API Design [done]\n  - Auth [active]\n- QA\n  - Unit Tests\n  - E2E`,
-  'layered-arch': `type: layered-arch\ntitle: Application Architecture\n\n- Presentation\n  - React SPA\n  - Mobile App\n- API Gateway\n  - Rate limiting\n  - Auth middleware\n- Services\n  - User service\n  - Order service\n- Data\n  - PostgreSQL\n  - Redis`,
-  'entity': `type: entity\ntitle: Core Data Model\n\n- users\n  - id [PK]\n  - email\n  - created_at\n- teams\n  - id [PK]\n  - name\n  - owner_id [FK→users]\n- projects\n  - id [PK]\n  - team_id [FK→teams]\n  - name`,
-  'network': `type: network\ntitle: Service Topology\n\n- Browser\n  → API Server\n  → CDN\n- API Server\n  → Worker\n  → SQLite\n- Worker\n  → Claude CLI`,
-  'pipeline': `type: pipeline\ntitle: CI/CD Pipeline\n\n- Source → Lint → Test → Build → Deploy → Monitor`,
-  'sequence': `type: sequence\ntitle: Auth Flow\n\n- Browser\n  → API: POST /login\n- API\n  → DB: SELECT user\n- DB\n  → API: user row\n- API\n  → Browser: Set-Cookie`,
-  'state-machine': `type: state-machine\ntitle: Order Lifecycle\n\n- Pending\n  → Processing: payment ok\n  → Cancelled: timeout\n- Processing\n  → Shipped: packed\n- Shipped\n  → Delivered: confirmed\n- Delivered [final]\n- Cancelled [final]`,
-  'class': `type: class\ntitle: Domain Model\n\n- Animal [abstract]\n  - + name\n  - + species\n  - + speak() [abstract]\n- Dog\n  - - breed\n  - + speak()\n  - + fetch()`,
-}
+const examplesReady = fetch('/examples')
+  .then(r => r.json())
+  .then(data => { examples = data; rebuildExampleMaps() })
+  .catch(() => {})
 
 // ── Integration docs (Markdown mode Code sub-tab) ─────────────────────────────
 
@@ -1220,12 +881,24 @@ let renderTimer = null
 let previewSubTab = 'preview'
 let chatSessionId = null
 let chatStreaming = false
+// Per-mode editor content saved on mode switch so switching back restores where you left off
+const savedContent = { mdart: '', markdown: '', renderer: '' }
+let currentExample = null  // { category: 'mdart'|'markdown'|'types', slug: string } | null
+let exampleBaseContent = ''  // content at time of load, for dirty detection
+// Auto-render on change (persisted); renderer mode is always manual
+let autoRender = localStorage.getItem('mdart-auto-render') !== 'false'
 
 // ── Mode switching ────────────────────────────────────────────────────────────
 
 function setMode(newMode) {
   if (newMode === mode && monacoEditor) return
+  // Save current editor content before leaving this mode
+  if (monacoEditor && mode !== newMode) {
+    savedContent[mode] = monacoEditor.getValue()
+  }
   mode = newMode
+  currentExample = null
+  updateSaveBtn()
 
   // Update toggle buttons
   document.querySelectorAll('.mode-btn').forEach(b =>
@@ -1273,28 +946,33 @@ function setMode(newMode) {
   document.getElementById('dirty-dot').classList.toggle('visible', newMode === 'renderer' && isDirty)
   document.getElementById('dirty-dot-header').classList.toggle('visible', newMode === 'renderer' && isDirty)
 
+  // Auto-render toggle: irrelevant in renderer mode (always manual there)
+  document.getElementById('btn-auto-render').classList.toggle('hidden', newMode === 'renderer')
+
   // Populate example select for current mode
   populateExampleSelect()
 
   // Monaco language
   if (monacoEditor) {
     const lang = newMode === 'renderer' ? 'typescript' : newMode === 'markdown' ? 'markdown' : 'plaintext'
-    const model = monaco.editor.createModel(monacoEditor.getValue(), lang)
-    monacoEditor.setModel(model)
+    monaco.editor.setModelLanguage(monacoEditor.getModel(), lang)
 
     if (newMode === 'renderer') {
-      // Load the current file
+      // Pre-populate mdart-source with example for current type if empty
+      const srcEl = document.getElementById('mdart-source')
+      if (!srcEl.value.trim()) {
+        const type = FILE_TO_TYPE[currentFile]
+        srcEl.value = (type && TYPE_EXAMPLES[type]) || TYPE_EXAMPLES['process'] || ''
+      }
+      // Always load from disk — savedContent.renderer not used
       loadRendererFile(currentFile)
     } else if (newMode === 'markdown') {
-      if (!monacoEditor.getValue().includes('```mdart')) {
-        monacoEditor.setValue(Object.values(MARKDOWN_EXAMPLES)[0])
-      }
+      // Restore saved markdown content, or fall back to first example
+      monacoEditor.setValue(savedContent.markdown || (examples.markdown[0]?.content ?? ''))
       renderMarkdown(true)
     } else {
-      // mdart mode: restore mdart editor with default if empty
-      if (!monacoEditor.getValue().trim()) {
-        monacoEditor.setValue(EXAMPLES['Process — Build Pipeline'])
-      }
+      // Restore saved mdart content, or fall back to default example
+      monacoEditor.setValue(savedContent.mdart || (examples.mdart[0]?.content ?? ''))
       renderMdArt(true)
     }
   }
@@ -1319,10 +997,10 @@ function populateExampleSelect() {
       sel.appendChild(grp)
     }
   } else {
-    const map = mode === 'markdown' ? MARKDOWN_EXAMPLES : EXAMPLES
-    for (const name of Object.keys(map)) {
+    const arr = mode === 'markdown' ? examples.markdown : examples.mdart
+    for (const e of arr) {
       const opt = document.createElement('option')
-      opt.value = name; opt.textContent = name
+      opt.value = e.name; opt.textContent = e.name
       sel.appendChild(opt)
     }
   }
@@ -1333,10 +1011,17 @@ document.getElementById('example-select').addEventListener('change', function() 
   if (mode === 'renderer') {
     loadTypeExample(this.value)
   } else {
+    const selectedName = this.value
     const map = mode === 'markdown' ? MARKDOWN_EXAMPLES : EXAMPLES
-    const src = map[this.value]
+    const src = map[selectedName]
     if (src && monacoEditor) {
       monacoEditor.setValue(src)
+      const arr = mode === 'markdown' ? examples.markdown : examples.mdart
+      const cat = mode === 'markdown' ? 'markdown' : 'mdart'
+      const found = arr.find(e => e.name === selectedName)
+      currentExample = found ? { category: cat, slug: found.slug } : null
+      exampleBaseContent = src
+      updateSaveBtn()
       if (mode === 'markdown') renderMarkdown(true)
       else renderMdArt(true)
     }
@@ -1410,16 +1095,8 @@ async function loadRendererFile(file) {
     const data = await res.json()
     if (!res.ok) throw new Error(data.error)
     if (monacoEditor) {
-      const model = monaco.editor.createModel(data.content, 'typescript')
-      monacoEditor.setModel(model)
-      // Re-attach change listener
-      monacoEditor.onDidChangeModelContent(() => {
-        if (mode !== 'renderer') return
-        isDirty = monacoEditor.getValue() !== originalContent
-        document.getElementById('dirty-dot').classList.toggle('visible', isDirty)
-        document.getElementById('dirty-dot-header').classList.toggle('visible', isDirty)
-        document.getElementById('btn-apply').disabled = !isDirty
-      })
+      monacoEditor.setValue(data.content)
+      monaco.editor.setModelLanguage(monacoEditor.getModel(), 'typescript')
     }
     originalContent = data.content
     isDirty = false
@@ -1665,7 +1342,70 @@ function hideIntegration() {
 // ── Buttons ───────────────────────────────────────────────────────────────────
 
 document.getElementById('btn-render').addEventListener('click', () => renderMdArt(true))
+document.getElementById('btn-render-md').addEventListener('click', () => renderMarkdown(true))
 document.getElementById('btn-apply').addEventListener('click', applyRenderer)
+
+// Auto-render toggle
+function syncAutoBtn() {
+  const btn = document.getElementById('btn-auto-render')
+  btn.classList.toggle('on', autoRender)
+  btn.title = autoRender ? 'Auto-render on (click to disable)' : 'Auto-render off (click to enable)'
+  // Hide manual Render buttons when auto is on — they're redundant
+  document.getElementById('btn-render').classList.toggle('hidden', autoRender)
+  document.getElementById('btn-render-md').classList.toggle('hidden', autoRender)
+  document.getElementById('btn-render-only').classList.toggle('hidden', autoRender)
+}
+
+function updateSaveBtn() {
+  const btn = document.getElementById('btn-save-example')
+  const hasExample = currentExample !== null && currentExample.slug
+  const isDirtyExample = hasExample && monacoEditor && monacoEditor.getValue() !== exampleBaseContent
+  btn.classList.toggle('hidden', !isDirtyExample)
+}
+document.getElementById('btn-auto-render').addEventListener('click', () => {
+  autoRender = !autoRender
+  localStorage.setItem('mdart-auto-render', autoRender)
+  syncAutoBtn()
+  // If just turned on, render immediately so preview is up to date
+  if (autoRender && mode !== 'renderer') dispatchRender(false)
+})
+syncAutoBtn()
+
+document.getElementById('btn-save-example').addEventListener('click', async () => {
+  if (!currentExample) return
+  const content = monacoEditor.getValue()
+  const btn = document.getElementById('btn-save-example')
+  btn.textContent = '⏳ Saving…'
+  btn.disabled = true
+  try {
+    const res = await fetch(`/examples/${currentExample.category}/${currentExample.slug}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    })
+    if (!res.ok) throw new Error('Save failed')
+    // Update local cache
+    if (currentExample.category === 'mdart') {
+      const ex = examples.mdart.find(e => e.slug === currentExample.slug)
+      if (ex) ex.content = content
+    } else if (currentExample.category === 'markdown') {
+      const ex = examples.markdown.find(e => e.slug === currentExample.slug)
+      if (ex) ex.content = content
+    } else {
+      examples.types[currentExample.slug] = content
+    }
+    rebuildExampleMaps()
+    exampleBaseContent = content
+    updateSaveBtn()
+    btn.textContent = '✓ Saved'
+    setTimeout(() => { btn.textContent = '💾 Save'; btn.disabled = false }, 1500)
+  } catch {
+    btn.textContent = '💾 Save'
+    btn.disabled = false
+    setStatus('error', 'save failed')
+  }
+})
+
 document.getElementById('btn-reset').addEventListener('click', async () => {
   if (!confirm('Restore original file content?')) return
   await loadRendererFile(currentFile)
@@ -1704,6 +1444,13 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
 document.getElementById('mdart-source').addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); renderOnly() }
   if (e.key === 'Tab') { e.preventDefault(); const s = e.target; const v = s.value; const i = s.selectionStart; s.value = v.slice(0,i) + '  ' + v.slice(s.selectionEnd); s.setSelectionRange(i+2,i+2) }
+})
+// Auto-render mdart source in renderer mode (uses current built bundle, no rebuild)
+let sourceRenderTimer = null
+document.getElementById('mdart-source').addEventListener('input', () => {
+  if (mode !== 'renderer' || !autoRender) return
+  clearTimeout(sourceRenderTimer)
+  sourceRenderTimer = setTimeout(() => renderOnly(), 500)
 })
 
 // ── Mobile pane switching ─────────────────────────────────────────────────────
@@ -1850,11 +1597,13 @@ async function sendChat() {
           bodyEl.classList.remove('chat-typing')
           chatHistory.push({ role: 'assistant', content: accumulated })
           saveHistory(chatHistory)
-          // Reload renderer file if changed
+          // Reload renderer file and rebuild if in renderer mode
           if (mode === 'renderer') {
             await loadRendererFile(currentFile)
+            // Auto-apply: rebuild bundle and re-render preview so changes take effect immediately
+            await applyRenderer()
             const notice = document.createElement('div')
-            notice.className = 'chat-notice'; notice.textContent = '↻ File reloaded from disk'
+            notice.className = 'chat-notice'; notice.textContent = '↻ File reloaded · bundle rebuilt'
             document.getElementById('chat-messages').appendChild(notice)
           }
         }
@@ -1986,9 +1735,22 @@ document.addEventListener('keydown', e => {
 // ── Monaco init ───────────────────────────────────────────────────────────────
 
 require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min/vs' } })
-require(['vs/editor/editor.main'], function() {
+require(['vs/editor/editor.main'], async function() {
+  await examplesReady
+  // Disable semantic validation for TypeScript (imports can't resolve in browser)
+  monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+    target: monaco.languages.typescript.ScriptTarget.ES2022,
+    moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+    allowNonTsExtensions: true,
+    noLib: true,
+  })
+  monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+    noSemanticValidation: true,
+    noSyntaxValidation: false,
+  })
+
   monacoEditor = monaco.editor.create(document.getElementById('monaco-container'), {
-    value: EXAMPLES['Process — Build Pipeline'],
+    value: examples.mdart[0]?.content ?? '',
     language: 'plaintext',
     theme: 'vs-dark',
     fontSize: 13,
@@ -2018,7 +1780,9 @@ require(['vs/editor/editor.main'], function() {
       document.getElementById('btn-apply').disabled = !isDirty
       return
     }
+    if (!autoRender) return
     clearTimeout(renderTimer)
+    updateSaveBtn()
     renderTimer = setTimeout(() => dispatchRender(false), 500)
   })
 

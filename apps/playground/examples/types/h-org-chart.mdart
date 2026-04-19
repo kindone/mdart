@@ -1,0 +1,11 @@
+type: h-org-chart
+title: Decision Hierarchy
+
+- CEO
+  - CFO
+    - Controller
+  - CTO
+    - Engineering Lead
+  - CMO
+    - Brand
+    - Growth

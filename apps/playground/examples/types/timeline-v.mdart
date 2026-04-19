@@ -1,0 +1,8 @@
+type: timeline-v
+title: Release History
+
+- v1.0: Initial release
+- v1.2: Bug fixes & perf
+- v2.0: Major redesign
+- v2.5: API v2
+- v3.0: Enterprise tier

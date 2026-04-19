@@ -1,0 +1,9 @@
+type: hexagon-list
+title: DevOps Practices
+
+- Version control
+- CI/CD
+- Infrastructure as code
+- Monitoring
+- Incident response
+- Blameless post-mortems

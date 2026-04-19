@@ -1,0 +1,11 @@
+type: matrix-nxm
+title: Skills Matrix
+
+- Alice
+  - Expert
+  - Proficient
+  - Learning
+- Bob
+  - Proficient
+  - Expert
+  - Expert

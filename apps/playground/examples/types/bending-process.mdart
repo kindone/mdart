@@ -1,0 +1,13 @@
+type: bending-process
+title: Build Pipeline
+
+- Checkout
+- Install Deps
+- Lint
+- Unit Tests
+- Build
+- Integration Tests
+- Security Scan
+- Deploy Staging
+- E2E Tests
+- Deploy Prod

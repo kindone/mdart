@@ -1,0 +1,11 @@
+type: network
+title: Service Topology
+
+- Browser
+  → API Server
+  → CDN
+- API Server
+  → Worker
+  → SQLite
+- Worker
+  → Claude CLI

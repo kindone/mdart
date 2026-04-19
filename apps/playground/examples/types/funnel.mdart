@@ -1,0 +1,8 @@
+type: funnel
+title: Conversion Funnel
+
+- Visitors: 10000
+- Sign-ups: 2400
+- Activated: 960
+- Paying: 192
+- Champions: 38

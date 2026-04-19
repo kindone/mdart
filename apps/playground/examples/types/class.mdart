@@ -1,0 +1,11 @@
+type: class
+title: Domain Model
+
+- Animal [abstract]
+  - + name
+  - + species
+  - + speak() [abstract]
+- Dog
+  - - breed
+  - + speak()
+  - + fetch()

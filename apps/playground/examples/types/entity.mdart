@@ -1,0 +1,15 @@
+type: entity
+title: Core Data Model
+
+- users
+  - id [PK]
+  - email
+  - created_at
+- teams
+  - id [PK]
+  - name
+  - owner_id [FK→users]
+- projects
+  - id [PK]
+  - team_id [FK→teams]
+  - name

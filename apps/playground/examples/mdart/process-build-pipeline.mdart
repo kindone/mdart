@@ -1,0 +1,8 @@
+type: process
+title: Build Pipeline
+
+- Plan
+- Code
+- Review
+- Test
+- Deploy

@@ -1,0 +1,12 @@
+type: radial-tree
+title: Core Platform
+
+- Mobile
+  - iOS
+  - Android
+- Web
+  - React
+  - API
+- Data
+  - Analytics
+  - ML

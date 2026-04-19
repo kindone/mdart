@@ -1,0 +1,12 @@
+type: tab-list
+title: Environment Config
+
+- Development
+  - Debug logging enabled
+  - Hot reload active
+- Staging
+  - Production parity
+  - Alerts muted
+- Production
+  - Full observability
+  - Rate limiting enforced

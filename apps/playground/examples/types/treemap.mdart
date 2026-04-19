@@ -1,0 +1,9 @@
+type: treemap
+title: Code by Module
+
+- auth: 18
+- api: 32
+- ui: 25
+- db: 14
+- workers: 8
+- utils: 3

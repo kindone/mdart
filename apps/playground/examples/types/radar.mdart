@@ -1,0 +1,9 @@
+type: radar
+title: Team Capabilities
+
+- Frontend: 85
+- Backend: 90
+- DevOps: 70
+- Data: 65
+- Security: 55
+- Mobile: 40

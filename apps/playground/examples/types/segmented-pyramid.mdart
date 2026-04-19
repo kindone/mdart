@@ -1,0 +1,7 @@
+type: segmented-pyramid
+title: Investment Allocation
+
+- Speculative: 5%
+- Growth: 20%
+- Balanced: 35%
+- Conservative: 40%

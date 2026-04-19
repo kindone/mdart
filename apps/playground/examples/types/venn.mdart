@@ -1,0 +1,9 @@
+type: venn
+
+- Design
+  - UX Research
+  - Prototyping
+- Engineering
+  - Frontend
+  - Backend
+- Product ∩ Engineering

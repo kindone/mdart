@@ -1,0 +1,12 @@
+type: wbs
+title: Platform Launch
+
+- Frontend
+  - Components [done]
+  - State Mgmt [active]
+- Backend
+  - API Design [done]
+  - Auth [active]
+- QA
+  - Unit Tests
+  - E2E

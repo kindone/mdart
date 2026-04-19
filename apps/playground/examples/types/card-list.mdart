@@ -1,0 +1,9 @@
+type: card-list
+title: Team Norms
+
+- Async by default
+  - Prefer written communication
+  - Document decisions
+- Bias to action
+  - Decide with 70% info
+  - Unblock yourself

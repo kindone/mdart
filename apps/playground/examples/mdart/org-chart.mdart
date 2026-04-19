@@ -1,0 +1,12 @@
+type: org-chart
+title: Engineering
+
+- CTO
+  - Frontend Lead
+    - Alice
+    - Bob
+  - Backend Lead
+    - Carol
+    - Dave
+  - Platform Lead
+    - Eve

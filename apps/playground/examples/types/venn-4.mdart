@@ -1,0 +1,10 @@
+type: venn-4
+
+- Strategy
+  - OKRs
+- Design
+  - Brand
+- Engineering
+  - Frontend
+- Data
+  - Analytics

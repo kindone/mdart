@@ -1,0 +1,15 @@
+type: swimlane
+title: Feature Development
+
+- Product
+  - Write spec
+  - Prioritize
+  - Accept
+- Design
+  - Wireframes
+  - Mockups
+  - Handoff
+- Engineering
+  - Implementation
+  - Code review
+  - Deploy

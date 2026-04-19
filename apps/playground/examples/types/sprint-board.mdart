@@ -1,0 +1,11 @@
+type: sprint-board
+title: Sprint 24
+
+- Backlog
+  - Write migration guide: 3
+  - Add OpenAPI spec: 5
+- In Progress
+  - Pagination refactor: 5 [active]
+  - Token refresh logic: 3 [active]
+- Done
+  - Rate limiter: 5 [done]

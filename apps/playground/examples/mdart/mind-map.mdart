@@ -1,0 +1,15 @@
+type: mind-map
+title: Product Strategy
+
+- Growth
+  - Acquisition
+  - Activation
+  - Retention
+- Platform
+  - API
+  - Integrations
+  - SDKs
+- Revenue
+  - Pricing
+  - Enterprise
+  - Partnerships

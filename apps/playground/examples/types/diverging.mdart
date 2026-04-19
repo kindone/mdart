@@ -1,0 +1,8 @@
+type: diverging
+title: Platform APIs
+
+- Core Platform
+- Mobile SDK
+- Web Embed
+- Partner API
+- Webhooks

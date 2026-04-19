@@ -1,0 +1,12 @@
+type: hierarchy-list
+title: Knowledge Base
+
+- Getting Started
+  - Installation
+  - Quick start
+- Guides
+  - Authentication
+  - Webhooks
+- Reference
+  - REST API
+  - SDK docs

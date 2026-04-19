@@ -1,0 +1,8 @@
+type: multidirectional-cycle
+title: Data Flows
+
+- Ingest
+- Transform
+- Store
+- Serve
+- Monitor

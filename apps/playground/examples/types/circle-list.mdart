@@ -1,0 +1,7 @@
+type: circle-list
+title: Design Tokens
+
+- Color: Brand palette & semantic roles
+- Typography: Scale, weight, and line-height
+- Spacing: Consistent margin and padding
+- Elevation: Shadow and z-index system

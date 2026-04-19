@@ -48,9 +48,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const aFrom = (2 * Math.PI * i / n) - Math.PI / 2
     const aTo   = (2 * Math.PI * ((i + 1) % n) / n) - Math.PI / 2
 
-    // Angle offset to clear each box's silhouette + gap
-    const offFrom = (boxRadius(hw, hh, aFrom) + GAP) / R
-    const offTo   = (boxRadius(hw, hh, aTo)   + GAP) / R
+    // Angle offset to clear each box's silhouette + gap.
+    // The arrow travels tangentially along the arc, so we query boxRadius at
+    // the tangential direction (radial angle + π/2) rather than the radial angle.
+    const offFrom = (boxRadius(hw, hh, aFrom + Math.PI / 2) + GAP) / R
+    const offTo   = (boxRadius(hw, hh, aTo   + Math.PI / 2) + GAP) / R
 
     const sa = aFrom + offFrom
     const ea = aTo   - offTo

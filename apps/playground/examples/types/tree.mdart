@@ -1,0 +1,13 @@
+type: tree
+title: Project Structure
+
+- src
+  - components
+    - Button
+    - Modal
+  - hooks
+    - useAuth
+    - useData
+  - utils
+    - api
+    - format

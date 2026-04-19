@@ -1,0 +1,8 @@
+type: timeline-list
+title: Sprint Timeline
+
+- Mon: Planning & kickoff
+- Tue: Core implementation
+- Wed: Code review
+- Thu: Testing & fixes
+- Fri: Deploy & retro

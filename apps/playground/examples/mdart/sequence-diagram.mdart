@@ -1,0 +1,12 @@
+type: sequence
+title: OAuth Flow
+
+- Browser
+  - → Auth Server: GET /authorize?client_id=…
+  - → Auth Server: POST /token (code exchange)
+  - → API Server: GET /me (Bearer token)
+- Auth Server
+  - → Browser: 302 redirect + code
+  - → Browser: { access_token, refresh_token }
+- API Server
+  - → Browser: { id, email, name }

@@ -1,0 +1,8 @@
+type: bullet-list
+title: Engineering Principles
+
+- Design for testability first
+- Minimal scope per change
+- Read before editing
+- Verify your work
+- Update docs alongside code

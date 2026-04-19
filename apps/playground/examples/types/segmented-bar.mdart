@@ -1,0 +1,7 @@
+type: segmented-bar
+title: Time Allocation
+
+- Planning: 15
+- Development: 45
+- Testing: 25
+- Review: 15

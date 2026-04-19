@@ -1,0 +1,15 @@
+type: layered-arch
+title: Application Architecture
+
+- Presentation
+  - React SPA
+  - Mobile App
+- API Gateway
+  - Rate limiting
+  - Auth middleware
+- Services
+  - User service
+  - Order service
+- Data
+  - PostgreSQL
+  - Redis

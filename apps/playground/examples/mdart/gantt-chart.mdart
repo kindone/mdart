@@ -1,0 +1,9 @@
+type: gantt-lite
+title: Q1 Roadmap
+
+- Discovery [wk1–wk2]
+- Design [wk2–wk4]
+- Implementation [wk4–wk10]
+* Beta Launch [wk10]
+- QA & Polish [wk10–wk12]
+* GA Release [wk12]

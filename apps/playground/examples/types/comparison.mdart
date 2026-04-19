@@ -1,0 +1,11 @@
+type: comparison
+title: Database Options
+
+- Type
+  - PostgreSQL: Relational
+  - MongoDB: Document
+  - Redis: Key-value
+- ACID
+  - PostgreSQL: Full
+  - MongoDB: Multi-doc
+  - Redis: Single-key

@@ -1,0 +1,13 @@
+type: matrix-2x2
+title: Eisenhower Matrix
+
+- Quick Wins
+  - Fix login bug
+  - Add dark mode
+- Big Bets
+  - Mobile app
+  - AI features
+- Fill-ins
+  - Docs update
+- Avoid
+  - Legacy API

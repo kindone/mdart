@@ -1,0 +1,11 @@
+type: sequence
+title: Auth Flow
+
+- Browser
+  → API: POST /login
+- API
+  → DB: SELECT user
+- DB
+  → API: user row
+- API
+  → Browser: Set-Cookie

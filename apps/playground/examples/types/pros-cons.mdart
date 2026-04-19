@@ -1,0 +1,11 @@
+type: pros-cons
+title: Microservices vs Monolith
+
+- Pros
+  - Independent deployments
+  - Technology flexibility
+  - Fault isolation
+- Cons
+  - Operational complexity
+  - Network latency
+  - Higher infra cost

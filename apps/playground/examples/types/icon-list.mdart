@@ -1,0 +1,7 @@
+type: icon-list
+title: Platform Features
+
+- Encryption: End-to-end encrypted [🔒]
+- Performance: Sub-100ms API [⚡]
+- Analytics: Real-time insights [📊]
+- Multi-region: Global failover [🌍]

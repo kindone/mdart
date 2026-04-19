@@ -1,0 +1,9 @@
+type: milestone
+title: Launch Readiness
+
+- Security audit complete [done]
+- Load testing passed [done]
+- Docs site live [done]
+- Support runbook ready [active]
+- Status page configured
+- Rollback plan tested

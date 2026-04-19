@@ -1,0 +1,8 @@
+type: arrow-process
+title: Data Flow
+
+- Ingest
+- Validate
+- Transform
+- Enrich
+- Publish

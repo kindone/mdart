@@ -1,0 +1,8 @@
+type: two-column-list
+title: Tech Stack
+
+- Frontend: React + TypeScript
+- Backend: Node.js + Express
+- Database: SQLite
+- Auth: Passkeys
+- Deploy: PM2 + nginx

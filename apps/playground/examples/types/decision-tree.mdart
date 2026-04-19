@@ -1,0 +1,8 @@
+type: decision-tree
+title: Incident Severity
+
+- Urgent?
+  - SEV-1: Page on-call now
+  - Revenue impacted?
+    - SEV-2: Notify team lead
+    - SEV-3: File ticket

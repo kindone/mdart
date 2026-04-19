@@ -1,0 +1,12 @@
+type: state-machine
+title: Order Lifecycle
+
+- Pending
+  → Processing: payment ok
+  → Cancelled: timeout
+- Processing
+  → Shipped: packed
+- Shipped
+  → Delivered: confirmed
+- Delivered [final]
+- Cancelled [final]

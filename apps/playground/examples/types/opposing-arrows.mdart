@@ -1,0 +1,8 @@
+type: opposing-arrows
+
+- Supply
+  - Inventory
+  - Production
+- Demand
+  - Orders
+  - Forecast

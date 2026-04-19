@@ -1,0 +1,7 @@
+type: segmented-cycle
+title: Budget Allocation
+
+- Engineering
+- Marketing
+- Sales
+- G&A

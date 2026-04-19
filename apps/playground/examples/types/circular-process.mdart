@@ -1,0 +1,7 @@
+type: circular-process
+title: Product Lifecycle
+
+- Plan
+- Build
+- Test
+- Ship

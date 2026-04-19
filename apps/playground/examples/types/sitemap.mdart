@@ -1,0 +1,13 @@
+type: sitemap
+title: Marketing Site
+
+- Home
+- Product
+  - Features
+  - Pricing
+- Docs
+  - API Reference
+  - Guides
+- Company
+  - About
+  - Blog

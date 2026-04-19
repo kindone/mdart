@@ -1,0 +1,9 @@
+type: waterfall
+title: Project Phases
+
+- Requirements
+- Design
+- Implementation
+- Testing
+- Deployment
+- Maintenance

@@ -1,0 +1,8 @@
+type: process
+title: Deployment Pipeline
+
+- Code Review
+- CI Build
+- Staging Deploy
+- Smoke Test
+- Production Deploy

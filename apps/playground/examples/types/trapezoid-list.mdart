@@ -1,0 +1,8 @@
+type: trapezoid-list
+title: Abstraction Layers
+
+- Application
+- Framework
+- Runtime
+- OS
+- Hardware

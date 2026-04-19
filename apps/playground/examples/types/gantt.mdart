@@ -1,0 +1,9 @@
+type: gantt
+title: Q3 Project Plan
+
+- Discovery [wk1-wk2]
+- Design [wk2-wk4]
+- Backend API [wk3-wk8]
+- Frontend [wk5-wk10]
+- Testing [wk9-wk11]
+- Launch [wk12-wk13]

@@ -1,0 +1,15 @@
+type: heatmap
+title: Deploys by Day
+
+- Mon
+  - Morning: 5
+  - Midday: 8
+  - Afternoon: 3
+- Tue
+  - Morning: 7
+  - Midday: 12
+  - Afternoon: 6
+- Wed
+  - Morning: 4
+  - Midday: 9
+  - Afternoon: 8

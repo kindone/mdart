@@ -1,0 +1,9 @@
+type: step-down
+title: Incident Response
+
+- Detect
+- Alert
+- Triage
+- Mitigate
+- Resolve
+- Post-mortem

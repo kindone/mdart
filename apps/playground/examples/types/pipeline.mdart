@@ -1,0 +1,4 @@
+type: pipeline
+title: CI/CD Pipeline
+
+- Source → Lint → Test → Build → Deploy → Monitor

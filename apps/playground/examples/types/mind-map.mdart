@@ -1,0 +1,13 @@
+type: mind-map
+title: Product Strategy
+
+- Market
+  - SMB
+  - Enterprise
+  - Developer
+- Distribution
+  - PLG
+  - Sales-led
+- Moat
+  - Data network effects
+  - Brand

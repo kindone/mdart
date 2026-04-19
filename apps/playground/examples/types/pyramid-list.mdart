@@ -1,0 +1,7 @@
+type: pyramid-list
+title: Testing Trophy
+
+- E2E Tests
+- Integration Tests
+- Unit Tests
+- Static Analysis

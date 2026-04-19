@@ -1,0 +1,14 @@
+type: radial
+title: Platform
+
+- Mobile
+  - iOS
+  - Android
+- Web
+  - React
+  - API
+- Data
+  - Analytics
+- Design
+  - UI
+  - UX

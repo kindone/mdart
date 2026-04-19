@@ -1,0 +1,6 @@
+type: gauge
+title: Health Metrics
+
+- Uptime: 99
+- Error Rate: 52
+- Satisfaction: 84

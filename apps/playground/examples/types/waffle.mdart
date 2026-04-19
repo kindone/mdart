@@ -1,0 +1,8 @@
+type: waffle
+title: Budget Allocation
+
+- Engineering: 30
+- Marketing: 20
+- Sales: 10
+- Operations: 10
+- Other: 30

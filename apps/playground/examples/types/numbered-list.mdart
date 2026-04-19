@@ -1,0 +1,8 @@
+type: numbered-list
+title: Deploy Checklist
+
+- Run npm test
+- Build client
+- Build server
+- Restart service
+- Confirm health check
