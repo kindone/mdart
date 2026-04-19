@@ -475,7 +475,6 @@ pre.int-code {
         <option value="layouts/process/funnel.ts">funnel</option>
         <option value="layouts/process/roadmap.ts">roadmap</option>
         <option value="layouts/process/waterfall.ts">waterfall</option>
-        <option value="layouts/process/snake-process.ts">snake-process</option>
         <option value="layouts/process/step-up.ts">step-up</option>
         <option value="layouts/process/step-down.ts">step-down</option>
         <option value="layouts/process/circle-process.ts">circle-process</option>
@@ -533,7 +532,6 @@ pre.int-code {
         <option value="layouts/hierarchy/decision-tree.ts">decision-tree</option>
         <option value="layouts/hierarchy/sitemap.ts">sitemap</option>
         <option value="layouts/hierarchy/bracket.ts">bracket</option>
-        <option value="layouts/hierarchy/bracket-tree.ts">bracket-tree</option>
         <option value="layouts/hierarchy/mind-map.ts">mind-map</option>
       </optgroup>
       <optgroup label="— pyramid —">
@@ -549,7 +547,6 @@ pre.int-code {
         <option value="layouts/relationship/venn-4.ts">venn-4</option>
         <option value="layouts/relationship/concentric.ts">concentric</option>
         <option value="layouts/relationship/balance.ts">balance</option>
-        <option value="layouts/relationship/counterbalance.ts">counterbalance</option>
         <option value="layouts/relationship/opposing-arrows.ts">opposing-arrows</option>
         <option value="layouts/relationship/web.ts">web</option>
         <option value="layouts/relationship/cluster.ts">cluster</option>
@@ -573,7 +570,6 @@ pre.int-code {
       <optgroup label="— planning —">
         <option value="layouts/planning/kanban.ts">kanban</option>
         <option value="layouts/planning/gantt.ts">gantt</option>
-        <option value="layouts/planning/gantt-lite.ts">gantt-lite</option>
         <option value="layouts/planning/sprint-board.ts">sprint-board</option>
         <option value="layouts/planning/timeline.ts">timeline</option>
         <option value="layouts/planning/milestone.ts">milestone</option>
@@ -707,7 +703,7 @@ pre.int-code {
 
 const LAYOUT_TYPES = [
   'process','chevron-process','arrow-process','circular-process','funnel','roadmap',
-  'waterfall','snake-process','step-up','step-down','circle-process','equation',
+  'waterfall','step-up','step-down','circle-process','equation',
   'bending-process','segmented-bar','phase-process','timeline-h','timeline-v','swimlane',
   'bullet-list','numbered-list','checklist','two-column-list','timeline-list','block-list',
   'chevron-list','card-list','zigzag-list','ribbon-list','hexagon-list','trapezoid-list',
@@ -716,12 +712,12 @@ const LAYOUT_TYPES = [
   'nondirectional-cycle','multidirectional-cycle','loop',
   'swot','pros-cons','comparison','matrix-2x2','bcg','ansoff','matrix-nxm',
   'org-chart','tree','h-org-chart','hierarchy-list','radial-tree','decision-tree',
-  'sitemap','bracket','bracket-tree','mind-map',
+  'sitemap','bracket','mind-map',
   'pyramid','inverted-pyramid','pyramid-list','segmented-pyramid','diamond-pyramid',
-  'venn','venn-3','venn-4','concentric','balance','counterbalance','opposing-arrows',
+  'venn','venn-3','venn-4','concentric','balance','opposing-arrows',
   'web','cluster','target','radial','converging','diverging','plus',
   'progress-list','bullet-chart','scorecard','treemap','sankey','waffle','gauge','radar','heatmap',
-  'kanban','gantt','gantt-lite','sprint-board','timeline','milestone','wbs',
+  'kanban','gantt','sprint-board','timeline','milestone','wbs',
   'layered-arch','entity','network','pipeline','sequence','state-machine','class',
 ]
 
@@ -730,7 +726,7 @@ const LAYOUT_TYPES = [
 const TYPE_TO_FILE = {}
 const families = {
   process: ['process','chevron-process','arrow-process','circular-process','funnel','roadmap',
-    'waterfall','snake-process','step-up','step-down','circle-process','equation',
+    'waterfall','step-up','step-down','circle-process','equation',
     'bending-process','segmented-bar','phase-process','timeline-h','timeline-v','swimlane'],
   list: ['bullet-list','numbered-list','checklist','two-column-list','timeline-list','block-list',
     'chevron-list','card-list','zigzag-list','ribbon-list','hexagon-list','trapezoid-list',
@@ -739,12 +735,12 @@ const families = {
     'nondirectional-cycle','multidirectional-cycle','loop'],
   matrix: ['swot','pros-cons','comparison','matrix-2x2','bcg','ansoff','matrix-nxm'],
   hierarchy: ['org-chart','tree','h-org-chart','hierarchy-list','radial-tree','decision-tree',
-    'sitemap','bracket','bracket-tree','mind-map'],
+    'sitemap','bracket','mind-map'],
   pyramid: ['pyramid','inverted-pyramid','pyramid-list','segmented-pyramid','diamond-pyramid'],
-  relationship: ['venn','venn-3','venn-4','concentric','balance','counterbalance','opposing-arrows',
+  relationship: ['venn','venn-3','venn-4','concentric','balance','opposing-arrows',
     'web','cluster','target','radial','converging','diverging','plus'],
   statistical: ['progress-list','bullet-chart','scorecard','treemap','sankey','waffle','gauge','radar','heatmap'],
-  planning: ['kanban','gantt','gantt-lite','sprint-board','timeline','milestone','wbs'],
+  planning: ['kanban','gantt','sprint-board','timeline','milestone','wbs'],
   technical: ['layered-arch','entity','network','pipeline','sequence','state-machine','class'],
 }
 for (const [fam, types] of Object.entries(families)) {

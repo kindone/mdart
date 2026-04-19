@@ -1,9 +1,0 @@
-type: gantt-lite
-title: Sprint Timeline
-
-- API design [wk1–wk2]
-- Core implementation [wk2–wk5]
-* Alpha cut [wk5]
-- Testing & hardening [wk5–wk7]
-- Docs & examples [wk6–wk8]
-* GA release [wk8]
