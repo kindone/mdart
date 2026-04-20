@@ -312,6 +312,23 @@ pre.int-code {
   border-radius: 3px; font-size: 11px; height: 24px; padding: 0 8px; cursor: pointer;
 }
 .btn-chat-action:hover { background: #3c3c3c; color: #d4d4d4; }
+.chat-session-bar {
+  display: flex; align-items: center; gap: 4px;
+  height: 32px; padding: 0 8px;
+  background: #1e1e1e; border-bottom: 1px solid #3c3c3c; flex-shrink: 0;
+}
+.chat-session-bar select {
+  flex: 1; min-width: 0; height: 22px; border-radius: 3px; font-size: 11px; cursor: pointer;
+  background: #2d2d2d; color: #d4d4d4; border: 1px solid #3c3c3c; padding: 0 4px;
+}
+.chat-session-bar select:focus { border-color: #7c3aed; outline: none; }
+.btn-session {
+  flex-shrink: 0; background: transparent; color: #858585;
+  border: 1px solid #3c3c3c; border-radius: 3px; font-size: 12px;
+  height: 22px; width: 22px; padding: 0; cursor: pointer; line-height: 1;
+}
+.btn-session:hover { background: #3c3c3c; color: #d4d4d4; }
+.btn-session.danger:hover { background: #3c1a1a; color: #f44747; border-color: #5e3c3c; }
 .chat-messages {
   flex: 1; overflow-y: auto; padding: 12px;
   display: flex; flex-direction: column; gap: 10px; min-height: 0;
@@ -616,8 +633,14 @@ pre.int-code {
 <div id="chat-panel" class="chat-panel" role="complementary" aria-label="Claude chat">
   <div class="chat-header">
     <span class="chat-header-title">✦ Claude</span>
-    <button class="btn-chat-action" id="btn-chat-clear">↺ New chat</button>
     <button class="btn-chat-action" id="btn-chat-close">✕</button>
+  </div>
+  <div class="chat-session-bar">
+    <select id="session-select" title="Active session"></select>
+    <button class="btn-session" id="btn-session-new" title="New session">+</button>
+    <button class="btn-session" id="btn-session-rename" title="Rename session">✎</button>
+    <button class="btn-session danger" id="btn-session-clear" title="Clear history">↺</button>
+    <button class="btn-session danger" id="btn-session-delete" title="Delete session">🗑</button>
   </div>
   <div id="chat-messages" class="chat-messages">
     <div class="chat-empty" id="chat-empty">Ask Claude about mdart diagrams,<br>renderer code, or SVG layout math.</div>
@@ -872,7 +895,6 @@ let originalContent = ''
 let currentFile = 'layouts/process/circular-process.ts'
 let renderTimer = null
 let previewSubTab = 'preview'
-let chatSessionId = null
 let chatStreaming = false
 // Per-mode editor content saved on mode switch so switching back restores where you left off
 const savedContent = { mdart: '', markdown: '', renderer: '' }
@@ -1466,18 +1488,87 @@ window.addEventListener('resize', () => { if (!isMobile()) showMobPane('editor')
 
 // ── Chat panel ────────────────────────────────────────────────────────────────
 
-const CHAT_HISTORY_KEY = 'mdart-chat-history'
-const PENDING_JOB_KEY   = 'mdart-pending-job'
-const MAX_HISTORY = 60
+const ACTIVE_SESSION_KEY = 'mdart-active-session'
+const PENDING_JOB_KEY    = 'mdart-pending-job'
+let sessions = []        // [{ id, name, messageCount, updatedAt }]
+let activeSessionId = null
+let chatHistory = []
 
-function loadHistory() {
-  try { return JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || '[]') } catch { return [] }
-}
-function saveHistory(history) {
-  localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history.slice(-MAX_HISTORY)))
+async function fetchSessions() {
+  try {
+    const r = await fetch('/lab/sessions')
+    const d = await r.json()
+    sessions = d.sessions ?? []
+    return sessions
+  } catch { sessions = []; return [] }
 }
 
-let chatHistory = loadHistory()
+async function fetchHistory(sessionId) {
+  try {
+    const r = await fetch(`/lab/sessions/${sessionId}/history`)
+    if (!r.ok) return null
+    return await r.json()
+  } catch { return null }
+}
+
+async function createSession(name) {
+  const r = await fetch('/lab/sessions', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+  return (await r.json()).session
+}
+
+async function renameSession(id, name) {
+  await fetch(`/lab/sessions/${id}`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+}
+
+async function deleteSession(id) {
+  await fetch(`/lab/sessions/${id}`, { method: 'DELETE' })
+}
+
+async function clearSessionHistory(id) {
+  await fetch(`/lab/sessions/${id}/history`, { method: 'DELETE' })
+}
+
+function populateSessionSelect() {
+  const sel = document.getElementById('session-select')
+  while (sel.options.length) sel.remove(0)
+  for (const s of sessions) {
+    const opt = document.createElement('option')
+    opt.value = s.id
+    opt.textContent = s.name + (s.messageCount ? ` (${s.messageCount})` : '')
+    if (s.id === activeSessionId) opt.selected = true
+    sel.appendChild(opt)
+  }
+  // Disable delete if only one session
+  document.getElementById('btn-session-delete').disabled = sessions.length <= 1
+}
+
+async function switchToSession(id) {
+  activeSessionId = id
+  localStorage.setItem(ACTIVE_SESSION_KEY, id)
+  const data = await fetchHistory(id)
+  chatHistory = data?.history ?? []
+  renderHistory()
+  document.getElementById('session-select').value = id
+}
+
+async function initSessions() {
+  await fetchSessions()
+  if (sessions.length === 0) {
+    const s = await createSession('Chat 1')
+    sessions = [{ id: s.id, name: s.name, messageCount: 0, updatedAt: s.updatedAt }]
+  }
+  const saved = localStorage.getItem(ACTIVE_SESSION_KEY)
+  activeSessionId = sessions.find(s => s.id === saved) ? saved : sessions[0].id
+  populateSessionSelect()
+  await switchToSession(activeSessionId)
+  checkPendingJob()
+}
 
 function renderHistory() {
   const msgs = document.getElementById('chat-messages')
@@ -1560,24 +1651,10 @@ async function connectToStream(jobId, bodyEl) {
             bodyEl.classList.add('chat-typing')
             document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight
           }
-          if (parsed.type === 'system' && parsed.subtype === 'init') {
-            chatSessionId = parsed.session_id
-          }
         }
         if (evtName === 'done') {
           bodyEl.classList.remove('chat-typing')
           localStorage.removeItem(PENDING_JOB_KEY)
-          if (accumulated && (chatHistory.length === 0 || chatHistory[chatHistory.length - 1].role !== 'assistant' || chatHistory[chatHistory.length - 1].content !== accumulated)) {
-            chatHistory.push({ role: 'assistant', content: accumulated })
-            saveHistory(chatHistory)
-          }
-          if (mode === 'renderer') {
-            await loadRendererFile(currentFile)
-            await applyRenderer()
-            const notice = document.createElement('div')
-            notice.className = 'chat-notice'; notice.textContent = '↻ File reloaded · bundle rebuilt'
-            document.getElementById('chat-messages').appendChild(notice)
-          }
         }
         if (evtName === 'error') {
           bodyEl.innerHTML = `<span style="color:#f44747">Error: ${escHtml(parsed.message ?? 'Unknown error')}</span>`
@@ -1602,8 +1679,6 @@ async function sendChat() {
   input.value = ''
   input.style.height = ''
 
-  chatHistory.push({ role: 'user', content: message })
-  saveHistory(chatHistory)
   appendMessage('user', message)
 
   let context = ''
@@ -1621,16 +1696,32 @@ async function sendChat() {
 
   // Generate a stable jobId stored in localStorage so we can reconnect if the page closes
   const jobId = crypto.randomUUID()
-  localStorage.setItem(PENDING_JOB_KEY, JSON.stringify({ jobId, timestamp: Date.now() }))
+  localStorage.setItem(PENDING_JOB_KEY, JSON.stringify({ jobId, sessionId: activeSessionId, timestamp: Date.now() }))
 
   try {
     const startRes = await fetch('/lab/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, context, jobId }),
+      body: JSON.stringify({ message, context, jobId, sessionId: activeSessionId }),
     })
     if (!startRes.ok) throw new Error(`Start failed: ${startRes.status}`)
     await connectToStream(jobId, bodyEl)
+    // Refresh history from server after stream completes
+    const updated = await fetchHistory(activeSessionId)
+    if (updated) {
+      chatHistory = updated.history
+      renderHistory()
+      const s = sessions.find(s => s.id === activeSessionId)
+      if (s) { s.messageCount = chatHistory.length; populateSessionSelect() }
+    }
+    // Renderer mode: reload file and rebuild
+    if (mode === 'renderer') {
+      await loadRendererFile(currentFile)
+      await applyRenderer()
+      const notice = document.createElement('div')
+      notice.className = 'chat-notice'; notice.textContent = '↻ File reloaded · bundle rebuilt'
+      document.getElementById('chat-messages').appendChild(notice)
+    }
   } catch (err) {
     bodyEl.innerHTML = `<span style="color:#f44747">Connection error: ${escHtml(err.message)}</span>`
     bodyEl.classList.remove('chat-typing')
@@ -1660,18 +1751,48 @@ async function attemptReconnect(jobId) {
   }
 }
 
-function clearHistory() {
-  chatHistory = []
-  saveHistory(chatHistory)
-  chatSessionId = null
-  fetch('/lab/chat/session', { method: 'DELETE' })
-  const msgs = document.getElementById('chat-messages')
-  msgs.querySelectorAll('.chat-msg,.chat-notice').forEach(e => e.remove())
-  document.getElementById('chat-empty').style.display = ''
-}
 
 document.getElementById('btn-chat-send').addEventListener('click', sendChat)
-document.getElementById('btn-chat-clear').addEventListener('click', clearHistory)
+document.getElementById('session-select').addEventListener('change', async function() {
+  if (this.value && this.value !== activeSessionId) await switchToSession(this.value)
+})
+
+document.getElementById('btn-session-new').addEventListener('click', async () => {
+  const s = await createSession(`Chat ${sessions.length + 1}`)
+  sessions.unshift({ id: s.id, name: s.name, messageCount: 0, updatedAt: s.updatedAt })
+  populateSessionSelect()
+  await switchToSession(s.id)
+})
+
+document.getElementById('btn-session-rename').addEventListener('click', async () => {
+  const current = sessions.find(s => s.id === activeSessionId)
+  const name = prompt('Rename session:', current?.name ?? '')
+  if (!name?.trim()) return
+  await renameSession(activeSessionId, name.trim())
+  if (current) current.name = name.trim()
+  populateSessionSelect()
+})
+
+document.getElementById('btn-session-clear').addEventListener('click', async () => {
+  if (!confirm('Clear this session\'s history?')) return
+  await clearSessionHistory(activeSessionId)
+  chatHistory = []
+  renderHistory()
+  const s = sessions.find(s => s.id === activeSessionId)
+  if (s) { s.messageCount = 0; populateSessionSelect() }
+})
+
+document.getElementById('btn-session-delete').addEventListener('click', async () => {
+  if (sessions.length <= 1) { alert('Cannot delete the only session.'); return }
+  if (!confirm('Delete this session?')) return
+  await deleteSession(activeSessionId)
+  sessions = sessions.filter(s => s.id !== activeSessionId)
+  activeSessionId = sessions[0].id
+  localStorage.setItem(ACTIVE_SESSION_KEY, activeSessionId)
+  populateSessionSelect()
+  await switchToSession(activeSessionId)
+})
+
 document.getElementById('btn-chat-close').addEventListener('click', () => {
   document.getElementById('chat-panel').classList.remove('open')
   document.getElementById('btn-chat-toggle').classList.remove('active')
@@ -1681,22 +1802,26 @@ document.getElementById('btn-chat-toggle').addEventListener('click', () => {
   const btn = document.getElementById('btn-chat-toggle')
   const open = panel.classList.toggle('open')
   btn.classList.toggle('active', open)
+  if (open) {
+    fetchSessions().then(() => populateSessionSelect())
+  }
 })
 document.getElementById('chat-input').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() }
 })
 
-// Reconnect to an in-progress job if the page was closed while Claude was running
-;(function checkPendingJob() {
+function checkPendingJob() {
   const raw = localStorage.getItem(PENDING_JOB_KEY)
   if (!raw) return
   let pending
   try { pending = JSON.parse(raw) } catch { localStorage.removeItem(PENDING_JOB_KEY); return }
   if (!pending.jobId || (Date.now() - pending.timestamp) > 2 * 60 * 60 * 1000) {
-    localStorage.removeItem(PENDING_JOB_KEY)
-    return
+    localStorage.removeItem(PENDING_JOB_KEY); return
   }
-  // Show a pending badge on the chat button and auto-open when clicked
+  // Verify the session still exists
+  const sessionExists = sessions.find(s => s.id === pending.sessionId)
+  if (!sessionExists) { localStorage.removeItem(PENDING_JOB_KEY); return }
+
   const chatToggle = document.getElementById('btn-chat-toggle')
   chatToggle.style.position = 'relative'
   const badge = document.createElement('span')
@@ -1704,18 +1829,20 @@ document.getElementById('chat-input').addEventListener('keydown', e => {
   badge.style.cssText = 'position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#c084fc;display:block'
   chatToggle.appendChild(badge)
 
-  function onOpen() {
+  async function onOpen() {
     const b = document.getElementById('chat-pending-badge')
     if (b) b.remove()
+    if (pending.sessionId && pending.sessionId !== activeSessionId) {
+      await switchToSession(pending.sessionId)
+    }
     setTimeout(() => attemptReconnect(pending.jobId), 100)
   }
-  // If chat panel is already open, reconnect immediately; otherwise on next open
   if (document.getElementById('chat-panel').classList.contains('open')) {
     onOpen()
   } else {
     chatToggle.addEventListener('click', onOpen, { once: true })
   }
-})()
+}
 
 // Claude availability check
 fetch('/lab/chat/status').then(r => r.json()).then(data => {
@@ -1855,8 +1982,8 @@ require(['vs/editor/editor.main'], async function() {
     renderTimer = setTimeout(() => dispatchRender(false), 500)
   })
 
-  // Restore chat history
-  renderHistory()
+  // Init sessions (fetches from server, renders history)
+  await initSessions()
 
   // Hide loading overlay
   document.getElementById('loading-overlay').style.display = 'none'

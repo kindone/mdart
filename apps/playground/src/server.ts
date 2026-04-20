@@ -11,8 +11,13 @@
  *   GET  /lab/source        → { content } — read a layout source file
  *   POST /lab/apply         → { svg, buildMs } — write + rebuild + render
  *   POST /lab/render        → { svg } — render with current build (no rebuild)
- *   GET  /lab/chat/status   → { available: bool }
- *   DELETE /lab/chat/session → { ok: true }
+ *   GET  /lab/chat/status              → { available: bool }
+ *   GET  /lab/sessions                 → list sessions (no history)
+ *   POST /lab/sessions                 → create session
+ *   PATCH /lab/sessions/:id            → rename session
+ *   DELETE /lab/sessions/:id           → delete session
+ *   GET  /lab/sessions/:id/history     → full message history
+ *   DELETE /lab/sessions/:id/history   → clear history + reset Claude session
  *   POST /lab/chat          → { jobId } — start background job
  *   GET  /lab/chat/stream/:jobId → SSE replay + live stream
  *   GET  /health            → { ok: true }
@@ -26,7 +31,7 @@
 import express     from 'express'
 import path        from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { readFile, writeFile, readdir, copyFile, unlink } from 'node:fs/promises'
+import { readFile, writeFile, readdir, copyFile, unlink, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { exec as execCb, spawn as spawnProc } from 'node:child_process'
 import { createInterface } from 'node:readline'
@@ -64,6 +69,9 @@ const DIST_INDEX  = path.join(MDART_PKG, 'dist/index.js')
 const README_PATH = path.join(MDART_ROOT, 'README.md')
 const DOCS_DIR    = path.join(MDART_ROOT, 'docs')
 const EXAMPLES_DIR  = path.join(__dirname, '../examples')
+
+const DATA_DIR      = path.join(__dirname, '../data')
+const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json')
 
 /** Files the lab is allowed to read and write */
 const ALLOWED_LAB_FILES = new Set([
@@ -594,8 +602,46 @@ app.post('/lab/render', async (req, res) => {
 const CLAUDE_BIN = process.env.CLAUDE_PATH
   ?? `${process.env.HOME ?? '/usr/local'}/.local/bin/claude`
 
-// Single in-memory conversation session — resets on server restart.
-let chatSessionId: string | null = null
+// ── Session store ─────────────────────────────────────────────────────────────
+
+interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+  ts: number
+}
+
+interface ChatSession {
+  id: string
+  name: string
+  claudeSessionId: string | null
+  history: ChatMessage[]
+  createdAt: number
+  updatedAt: number
+}
+
+type SessionStore = Record<string, ChatSession>
+
+let sessions: SessionStore = {}
+
+async function loadSessions(): Promise<void> {
+  try {
+    const raw = await readFile(SESSIONS_FILE, 'utf8')
+    sessions = JSON.parse(raw) as SessionStore
+  } catch {
+    sessions = {}
+  }
+}
+
+function saveSessions(): void {
+  mkdir(DATA_DIR, { recursive: true })
+    .then(() => writeFile(SESSIONS_FILE, JSON.stringify(sessions, null, 2), 'utf8'))
+    .catch(err => console.error('[sessions] save error:', err))
+}
+
+function makeSession(name: string): ChatSession {
+  const now = Date.now()
+  return { id: randomUUID(), name, claudeSessionId: null, history: [], createdAt: now, updatedAt: now }
+}
 
 // ── Chat job store ────────────────────────────────────────────────────────────
 
@@ -636,12 +682,59 @@ app.get('/lab/chat/status', (_req, res) => {
   res.json({ available: existsSync(CLAUDE_BIN) })
 })
 
-/**
- * DELETE /lab/chat/session
- * Clears the stored Claude session so the next message starts fresh.
- */
-app.delete('/lab/chat/session', (_req, res) => {
-  chatSessionId = null
+/** GET /lab/sessions — list all sessions (no history payload) */
+app.get('/lab/sessions', (_req, res) => {
+  const list = Object.values(sessions)
+    .map(s => ({ id: s.id, name: s.name, createdAt: s.createdAt, updatedAt: s.updatedAt, messageCount: s.history.length }))
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+  res.json({ sessions: list })
+})
+
+/** POST /lab/sessions — create a new session */
+app.post('/lab/sessions', (req, res) => {
+  const count = Object.keys(sessions).length
+  const name = (req.body as { name?: string }).name?.trim() || `Chat ${count + 1}`
+  const s = makeSession(name)
+  sessions[s.id] = s
+  saveSessions()
+  res.json({ session: { id: s.id, name: s.name, createdAt: s.createdAt, updatedAt: s.updatedAt, messageCount: 0 } })
+})
+
+/** PATCH /lab/sessions/:id — rename a session */
+app.patch('/lab/sessions/:id', (req, res) => {
+  const s = sessions[req.params.id]
+  if (!s) { res.status(404).json({ error: 'session not found' }); return }
+  const name = (req.body as { name?: string }).name?.trim()
+  if (!name) { res.status(400).json({ error: 'name required' }); return }
+  s.name = name
+  s.updatedAt = Date.now()
+  saveSessions()
+  res.json({ session: { id: s.id, name: s.name, updatedAt: s.updatedAt } })
+})
+
+/** DELETE /lab/sessions/:id — delete a session */
+app.delete('/lab/sessions/:id', (req, res) => {
+  if (!sessions[req.params.id]) { res.status(404).json({ error: 'session not found' }); return }
+  delete sessions[req.params.id]
+  saveSessions()
+  res.json({ ok: true })
+})
+
+/** GET /lab/sessions/:id/history — get full message history */
+app.get('/lab/sessions/:id/history', (req, res) => {
+  const s = sessions[req.params.id]
+  if (!s) { res.status(404).json({ error: 'session not found' }); return }
+  res.json({ history: s.history })
+})
+
+/** DELETE /lab/sessions/:id/history — clear history and reset Claude session */
+app.delete('/lab/sessions/:id/history', (req, res) => {
+  const s = sessions[req.params.id]
+  if (!s) { res.status(404).json({ error: 'session not found' }); return }
+  s.history = []
+  s.claudeSessionId = null
+  s.updatedAt = Date.now()
+  saveSessions()
   res.json({ ok: true })
 })
 
@@ -654,10 +747,16 @@ app.delete('/lab/chat/session', (_req, res) => {
  * Use GET /lab/chat/stream/:jobId to receive the SSE stream.
  */
 app.post('/lab/chat', (req, res) => {
-  const { message, context, jobId: clientJobId } = req.body as {
-    message?: string; context?: string; jobId?: string
+  const { message, context, jobId: clientJobId, sessionId } = req.body as {
+    message?: string; context?: string; jobId?: string; sessionId?: string
   }
   if (!message?.trim()) { res.status(400).json({ error: 'message required' }); return }
+
+  if (!sessionId || !sessions[sessionId]) {
+    res.status(400).json({ error: 'sessionId required and must be valid' })
+    return
+  }
+  const session = sessions[sessionId]
 
   // If client already has a job running (reconnect), just return its id
   if (clientJobId && chatJobs.has(clientJobId)) {
@@ -678,12 +777,15 @@ app.post('/lab/chat', (req, res) => {
   }
   chatJobs.set(jobId, job)
 
+  let accumulated = ''
+
   // Respond immediately with jobId — Claude runs as a background job
   res.json({ jobId })
 
+  const bareUserMessage = message.trim()
   const fullMessage = context?.trim()
-    ? `${context.trim()}\n\n${message.trim()}`
-    : message.trim()
+    ? `${context.trim()}\n\n${bareUserMessage}`
+    : bareUserMessage
 
   const args = [
     '--print', fullMessage,
@@ -695,7 +797,7 @@ app.post('/lab/chat', (req, res) => {
     '--strict-mcp-config',
     '--system-prompt', LAB_SYSTEM_PROMPT,
   ]
-  if (chatSessionId) args.push('--resume', chatSessionId)
+  if (session.claudeSessionId) args.push('--resume', session.claudeSessionId)
 
   const cleanEnv: NodeJS.ProcessEnv = {}
   for (const [k, v] of Object.entries(process.env)) {
@@ -725,7 +827,9 @@ app.post('/lab/chat', (req, res) => {
     try { chunk = JSON.parse(line) as Record<string, unknown> } catch { return }
 
     if (chunk.type === 'system' && chunk.subtype === 'init') {
-      chatSessionId = chunk.session_id as string
+      session.claudeSessionId = chunk.session_id as string
+      session.updatedAt = Date.now()
+      saveSessions()
     }
 
     const ev = chunk.type === 'stream_event'
@@ -737,6 +841,11 @@ app.post('/lab/chat', (req, res) => {
     const isInit   = chunk.type === 'system' && chunk.subtype === 'init'
     if (isTextDelta || isResult || isInit) broadcastToJob(job, 'chunk', chunk)
 
+    if (isTextDelta) {
+      const delta = (ev!.delta as Record<string, unknown>).text as string
+      accumulated += delta
+    }
+
     if (isResult) {
       const isErr = chunk.is_error as boolean
       if (isErr) {
@@ -746,6 +855,16 @@ app.post('/lab/chat', (req, res) => {
       } else {
         broadcastToJob(job, 'done', { session_id: chunk.session_id })
         job.status = 'done'
+      }
+      if (!isErr && accumulated) {
+        session.history.push({ role: 'user', content: bareUserMessage, ts: job.createdAt })
+        session.history.push({ role: 'assistant', content: accumulated, ts: Date.now() })
+        session.updatedAt = Date.now()
+        saveSessions()
+      }
+      if (isErr) {
+        session.claudeSessionId = null  // reset stale session on error
+        saveSessions()
       }
       // Close all watcher connections
       for (const watcher of job.watchers) {
@@ -858,9 +977,12 @@ app.get('/health', (_req, res) => {
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 
-app.listen(port, () => {
-  console.log(`[mdart] listening on :${port}`)
-})
+;(async () => {
+  await loadSessions()
+  app.listen(port, () => {
+    console.log(`[mdart] listening on :${port}`)
+  })
+})()
 
 process.on('SIGTERM', () => process.exit(0))
 process.on('SIGINT',  () => process.exit(0))
