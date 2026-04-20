@@ -892,7 +892,7 @@ let monacoEditor = null
 let lastSVG = ''
 let isDirty = false
 let originalContent = ''
-let currentFile = 'layouts/process/circular-process.ts'
+let currentFile = localStorage.getItem('mdart-renderer-file') || 'layouts/process/circular-process.ts'
 let renderTimer = null
 let previewSubTab = 'preview'
 let chatStreaming = false
@@ -912,6 +912,7 @@ function setMode(newMode) {
     savedContent[mode] = monacoEditor.getValue()
   }
   mode = newMode
+  localStorage.setItem('mdart-mode', newMode)
   currentExample = null
   updateSaveBtn()
 
@@ -1085,6 +1086,7 @@ function loadTypeExample(type) {
 document.getElementById('file-select').addEventListener('change', function() {
   if (!this.value) return
   currentFile = this.value
+  localStorage.setItem('mdart-renderer-file', this.value)
   document.getElementById('editor-filename').textContent = this.value.split('/').pop()
   loadRendererFile(this.value)
   // Load matching type example into source pane
@@ -1170,10 +1172,10 @@ async function renderMarkdown(explicit = false) {
 }
 
 async function applyRenderer() {
-  if (!monacoEditor) return
+  if (!monacoEditor) return false
   const content = monacoEditor.getValue()
   const mdartSource = document.getElementById('mdart-source').value.trim()
-  if (!mdartSource) { setStatus('error', 'no source'); return }
+  if (!mdartSource) { setStatus('error', 'no source'); return false }
   document.getElementById('btn-apply').disabled = true
   setStatus('busy', 'building…')
   try {
@@ -1192,10 +1194,12 @@ async function applyRenderer() {
     document.getElementById('dirty-dot-header').classList.remove('visible')
     setStatus('ok', `built ${data.buildMs}ms`)
     if (isMobile()) showMobPane('preview')
+    return true
   } catch (err) {
     showError(err.message)
     setStatus('error', 'build error')
     document.getElementById('btn-apply').disabled = false
+    return false
   }
 }
 
@@ -1434,9 +1438,10 @@ document.getElementById('btn-download').addEventListener('click', () => {
   a.click(); URL.revokeObjectURL(url)
 })
 
-document.getElementById('adapter-select').addEventListener('change', () => {
+document.getElementById('adapter-select').addEventListener('change', function() {
+  localStorage.setItem('mdart-adapter', this.value)
   if (mode !== 'markdown') return
-  if (previewSubTab === 'code') showIntegration(document.getElementById('adapter-select').value)
+  if (previewSubTab === 'code') showIntegration(this.value)
   else renderMarkdown(true)
 })
 
@@ -1717,9 +1722,13 @@ async function sendChat() {
     // Renderer mode: reload file and rebuild
     if (mode === 'renderer') {
       await loadRendererFile(currentFile)
-      await applyRenderer()
+      // Re-enable apply after external file change — applyRenderer will disable it again on success
+      isDirty = true
+      document.getElementById('btn-apply').disabled = false
+      const built = await applyRenderer()
       const notice = document.createElement('div')
-      notice.className = 'chat-notice'; notice.textContent = '↻ File reloaded · bundle rebuilt'
+      notice.className = 'chat-notice'
+      notice.textContent = built ? '↻ File reloaded · bundle rebuilt' : '↻ File reloaded — click Apply to build'
       document.getElementById('chat-messages').appendChild(notice)
     }
   } catch (err) {
@@ -1988,9 +1997,21 @@ require(['vs/editor/editor.main'], async function() {
   // Hide loading overlay
   document.getElementById('loading-overlay').style.display = 'none'
 
-  // Set initial mode + render
-  setMode('mdart')
-  renderMdArt(false)
+  // Restore persisted selections before setMode
+  const savedAdapter = localStorage.getItem('mdart-adapter')
+  if (savedAdapter) document.getElementById('adapter-select').value = savedAdapter
+  const fileSelect = document.getElementById('file-select')
+  if (fileSelect.querySelector(`option[value="${currentFile}"]`)) {
+    fileSelect.value = currentFile
+    document.getElementById('editor-filename').textContent = currentFile.split('/').pop()
+  }
+
+  // Restore last-used mode (default mdart)
+  const savedMode = localStorage.getItem('mdart-mode') ?? 'mdart'
+  setMode(savedMode)
+  // mdart: setMode guard returns early (mode already === 'mdart'), trigger render manually
+  // markdown/renderer: setMode runs fully and triggers their own renders
+  if (savedMode === 'mdart') renderMdArt(false)
 
   // Populate example select for initial mode
   populateExampleSelect()
