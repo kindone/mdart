@@ -1,0 +1,21 @@
+<svg viewBox="0 0 500 144" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="500" height="144" fill="#ffffff" rx="8"/>
+    <g class="mdart-tab-root" data-text-muted="#6b7280">
+    <g class="mdart-tab-hit" data-tab="0" data-color="#374151" style="cursor:pointer"><rect class="mdart-tab-rect" x="4" y="8" width="110" height="28" rx="5" fill="#374151" /><text class="mdart-tab-label" x="59.0" y="26.0" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="700">Team</text></g>
+    <g class="mdart-tab-hit" data-tab="1" data-color="#2b3544" style="cursor:pointer"><rect class="mdart-tab-rect" x="116" y="8" width="110" height="28" rx="5" fill="#2b354422" stroke="#2b354455" stroke-width="1"/><text class="mdart-tab-label" x="171.0" y="26.0" text-anchor="middle" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="400">Process</text></g>
+    <g class="mdart-tab-hit" data-tab="2" data-color="#1f2937" style="cursor:pointer"><rect class="mdart-tab-rect" x="228" y="8" width="110" height="28" rx="5" fill="#1f293722" stroke="#1f293755" stroke-width="1"/><text class="mdart-tab-label" x="283.0" y="26.0" text-anchor="middle" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="400">Tools</text></g>
+    <rect class="mdart-tab-content-bg" x="0" y="36" width="500" height="100" rx="6" fill="#37415111" stroke="#37415144" stroke-width="1.2"/>
+    <g class="mdart-tab-panel" data-tab="0" visibility="visible">
+    <text x="250" y="62" text-anchor="middle" font-size="13" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Team</text>
+    <text x="250" y="98" text-anchor="middle" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Engineers  ·  Designers</text>
+    </g>
+    <g class="mdart-tab-panel" data-tab="1" visibility="hidden">
+    <text x="250" y="62" text-anchor="middle" font-size="13" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Process</text>
+    <text x="250" y="98" text-anchor="middle" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Planning  ·  Reviews</text>
+    </g>
+    <g class="mdart-tab-panel" data-tab="2" visibility="hidden">
+    <text x="250" y="62" text-anchor="middle" font-size="13" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Tools</text>
+    <text x="250" y="98" text-anchor="middle" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Figma  ·  GitHub</text>
+    </g>
+    </g>
+  </svg>

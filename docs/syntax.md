@@ -64,7 +64,10 @@ Value adds a sub-label inside each shape for: `circle-process`, `funnel` (counts
 Discovery -> Design -> Build -> Test -> Deploy
 ```
 
-![chevron-process](./examples/syntax/chevron-process-414c7ddbfd.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/chevron-process-414c7ddbfd.svg">
+  <img alt="chevron-process" src="./examples/syntax/chevron-process-414c7ddbfd-light.svg">
+</picture>
 
 
 ---
@@ -91,7 +94,10 @@ title: System Health
 - Error Rate: 22
 ```
 
-![gauge](./examples/syntax/gauge-02930132dc.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/gauge-02930132dc.svg">
+  <img alt="gauge" src="./examples/syntax/gauge-02930132dc-light.svg">
+</picture>
 
 
 ---
@@ -126,7 +132,10 @@ title: System Health
     - Billing
 ```
 
-![mind-map](./examples/syntax/mind-map-16a6aabe70.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/mind-map-16a6aabe70.svg">
+  <img alt="mind-map" src="./examples/syntax/mind-map-16a6aabe70-light.svg">
+</picture>
 
 
 ---
@@ -161,7 +170,10 @@ title: Login Flow
   -> Client: 200 OK + token
 ```
 
-![sequence](./examples/syntax/sequence-ff018d982a.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/sequence-ff018d982a.svg">
+  <img alt="sequence" src="./examples/syntax/sequence-ff018d982a-light.svg">
+</picture>
 
 
 ---
@@ -191,7 +203,10 @@ title: Market Entry
 ! Regulatory uncertainty
 ```
 
-![swot](./examples/syntax/swot-e06ce7ac0d.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/swot-e06ce7ac0d.svg">
+  <img alt="swot" src="./examples/syntax/swot-e06ce7ac0d-light.svg">
+</picture>
 
 
 #### `comparison`
@@ -221,7 +236,10 @@ title: Database Comparison
   - Redis: Caching / sessions
 ```
 
-![comparison](./examples/syntax/comparison-c46a60964a.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/comparison-c46a60964a.svg">
+  <img alt="comparison" src="./examples/syntax/comparison-c46a60964a-light.svg">
+</picture>
 
 
 #### `matrix-nxm`
@@ -251,7 +269,10 @@ title: Skills Matrix
   - Expert
 ```
 
-![matrix-nxm](./examples/syntax/matrix-nxm-6eb0c79587.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/matrix-nxm-6eb0c79587.svg">
+  <img alt="matrix-nxm" src="./examples/syntax/matrix-nxm-6eb0c79587-light.svg">
+</picture>
 
 
 #### `heatmap`
@@ -281,7 +302,10 @@ title: Support Tickets by Day & Shift
   - Evening: 6
 ```
 
-![heatmap](./examples/syntax/heatmap-5659bf31c7.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/heatmap-5659bf31c7.svg">
+  <img alt="heatmap" src="./examples/syntax/heatmap-5659bf31c7-light.svg">
+</picture>
 
 
 #### `sankey`
@@ -307,7 +331,10 @@ title: Traffic Sources
   - Pricing: 15
 ```
 
-![sankey](./examples/syntax/sankey-48921a334b.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/sankey-48921a334b.svg">
+  <img alt="sankey" src="./examples/syntax/sankey-48921a334b-light.svg">
+</picture>
 
 
 #### `gantt` · `gantt-lite`
@@ -330,7 +357,10 @@ title: Q2 Roadmap
 * GA Release [wk13]
 ```
 
-![gantt-lite](./examples/syntax/gantt-lite-925a9a40e3.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/gantt-lite-925a9a40e3.svg">
+  <img alt="gantt-lite" src="./examples/syntax/gantt-lite-925a9a40e3-light.svg">
+</picture>
 
 
 #### `pipeline`
@@ -343,7 +373,10 @@ Single item whose label is an inline arrow chain.
 - Checkout -> Lint -> Test -> Build -> Push -> Deploy
 ```
 
-![pipeline](./examples/syntax/pipeline-84b88be365.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/pipeline-84b88be365.svg">
+  <img alt="pipeline" src="./examples/syntax/pipeline-84b88be365-light.svg">
+</picture>
 
 
 #### `entity`
@@ -371,7 +404,10 @@ title: Blog Schema
   - body: text
 ```
 
-![entity](./examples/syntax/entity-aa8e8e129c.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/entity-aa8e8e129c.svg">
+  <img alt="entity" src="./examples/syntax/entity-aa8e8e129c-light.svg">
+</picture>
 
 
 #### `class`
@@ -404,7 +440,10 @@ title: Animals
   - + fetch()
 ```
 
-![class](./examples/syntax/class-26cd3f1253.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/class-26cd3f1253.svg">
+  <img alt="class" src="./examples/syntax/class-26cd3f1253-light.svg">
+</picture>
 
 
 #### `venn` · `venn-3`
@@ -433,7 +472,10 @@ title: Full-Stack Skills
 - Frontend ∩ DevOps
 ```
 
-![venn-3](./examples/syntax/venn-3-c6873fa332.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/venn-3-c6873fa332.svg">
+  <img alt="venn-3" src="./examples/syntax/venn-3-c6873fa332-light.svg">
+</picture>
 
 
 #### `ribbon-list` · `block-list`
@@ -451,7 +493,10 @@ title: Company Pillars
 - Values: Ship fast, own the outcome, default to open
 ```
 
-![ribbon-list](./examples/syntax/ribbon-list-ea62de7b33.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/ribbon-list-ea62de7b33.svg">
+  <img alt="ribbon-list" src="./examples/syntax/ribbon-list-ea62de7b33-light.svg">
+</picture>
 
 
 #### `icon-list`
@@ -469,7 +514,10 @@ title: Platform Features
 - Observability: Full trace, log, and metric pipeline [📊]
 ```
 
-![icon-list](./examples/syntax/icon-list-7133faa6cf.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/icon-list-7133faa6cf.svg">
+  <img alt="icon-list" src="./examples/syntax/icon-list-7133faa6cf-light.svg">
+</picture>
 
 
 #### `bullet-chart`
@@ -488,7 +536,10 @@ title: Sales vs Target
 - New Logos: 44 [60]
 ```
 
-![bullet-chart](./examples/syntax/bullet-chart-40e6ba2b2c.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/bullet-chart-40e6ba2b2c.svg">
+  <img alt="bullet-chart" src="./examples/syntax/bullet-chart-40e6ba2b2c-light.svg">
+</picture>
 
 
 #### `scorecard`
@@ -507,7 +558,10 @@ title: Monthly Metrics
 - NPS: 72 [+5]
 ```
 
-![scorecard](./examples/syntax/scorecard-dd3503bb17.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/scorecard-dd3503bb17.svg">
+  <img alt="scorecard" src="./examples/syntax/scorecard-dd3503bb17-light.svg">
+</picture>
 
 
 ---
@@ -625,7 +679,10 @@ border: #334155
 - CAC: $320 [-12%]
 ```
 
-![scorecard](./examples/syntax/scorecard-e1660ab86f.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/scorecard-e1660ab86f.svg">
+  <img alt="scorecard" src="./examples/syntax/scorecard-e1660ab86f-light.svg">
+</picture>
 
 
 **`primary` / `secondary` / `muted`** — control shape fills, gradients, and background tracks:
@@ -643,7 +700,10 @@ muted: #431407
 - Ship
 ```
 
-![cycle](./examples/syntax/cycle-084e6cc9cf.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/cycle-084e6cc9cf.svg">
+  <img alt="cycle" src="./examples/syntax/cycle-084e6cc9cf-light.svg">
+</picture>
 
 
 **`text` / `textMuted`** — override label and secondary text colors (useful when pairing with a light `bg`):
@@ -664,7 +724,10 @@ textMuted: #78716c
 - Leave the code better than you found it
 ```
 
-![bullet-list](./examples/syntax/bullet-list-eedf16198a.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/bullet-list-eedf16198a.svg">
+  <img alt="bullet-list" src="./examples/syntax/bullet-list-eedf16198a-light.svg">
+</picture>
 
 
 **`danger` / `warning` / `accent`** — override the three threshold colors used in gauges, progress bars, and bullet charts:
@@ -682,7 +745,10 @@ accent: #16a34a
 - Velocity: 74
 ```
 
-![progress-list](./examples/syntax/progress-list-2dd3734000.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/progress-list-2dd3734000.svg">
+  <img alt="progress-list" src="./examples/syntax/progress-list-2dd3734000-light.svg">
+</picture>
 
 
 **`palette`** — override the extended color set used in treemap, waffle, and sankey:
@@ -698,7 +764,10 @@ palette: #6366f1, #f43f5e, #14b8a6, #f59e0b
 - Other: 10
 ```
 
-![waffle](./examples/syntax/waffle-9a7f8776a9.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/waffle-9a7f8776a9.svg">
+  <img alt="waffle" src="./examples/syntax/waffle-9a7f8776a9-light.svg">
+</picture>
 
 
 ```mdart
@@ -713,7 +782,10 @@ palette: #7c3aed, #0891b2, #059669, #d97706, #be185d
 - Infra: 8%
 ```
 
-![treemap](./examples/syntax/treemap-098048cc3f.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/treemap-098048cc3f.svg">
+  <img alt="treemap" src="./examples/syntax/treemap-098048cc3f-light.svg">
+</picture>
 
 
 ---
@@ -746,7 +818,10 @@ title: Sprint 14
   - CI pipeline [done]
 ```
 
-![sprint-board](./examples/syntax/sprint-board-8503a8698f.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/sprint-board-8503a8698f.svg">
+  <img alt="sprint-board" src="./examples/syntax/sprint-board-8503a8698f-light.svg">
+</picture>
 
 
 **`[final]`** — marks terminal states in state machines with a double border:
@@ -764,7 +839,10 @@ title: Order Lifecycle
 - Cancelled [final]
 ```
 
-![state-machine](./examples/syntax/state-machine-10851a057b.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/state-machine-10851a057b.svg">
+  <img alt="state-machine" src="./examples/syntax/state-machine-10851a057b-light.svg">
+</picture>
 
 
 **`[abstract]` / `[interface]` / `[static]`** — class diagram modifiers:
@@ -788,7 +866,10 @@ title: Shape Hierarchy
   - + draw()
 ```
 
-![class](./examples/syntax/class-cfb8905c92.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/class-cfb8905c92.svg">
+  <img alt="class" src="./examples/syntax/class-cfb8905c92-light.svg">
+</picture>
 
 
 **`[PK]` / `[FK->table]`** — mark primary and foreign keys in entity diagrams:
@@ -810,5 +891,8 @@ title: E-Commerce Schema
   - price: decimal
 ```
 
-![entity](./examples/syntax/entity-be98f56ce5.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/entity-be98f56ce5.svg">
+  <img alt="entity" src="./examples/syntax/entity-be98f56ce5-light.svg">
+</picture>
 

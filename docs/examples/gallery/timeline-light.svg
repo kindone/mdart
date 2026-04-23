@@ -1,0 +1,26 @@
+<svg viewBox="0 0 720 174" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
+  <text x="360" y="20" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Product Roadmap</text>
+  <line x1="40" y1="92" x2="680" y2="92" stroke="#6b728066" stroke-width="2.5"/>
+  <line x1="40.0" y1="86.0" x2="40.0" y2="70.0" stroke="#e5e7eb" stroke-width="1"/>
+  <circle cx="40.0" cy="92" r="6" fill="#6b728077" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="40.0" y="96.0" text-anchor="middle" font-size="8" fill="#6b7280" font-family="system-ui,sans-serif">✓</text>
+  <text x="40.0" y="52.0" text-anchor="start" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Q1 '23</text>
+  <text x="40.0" y="65.0" text-anchor="start" font-size="11" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="400">Kickoff</text>
+  <line x1="200.0" y1="98.0" x2="200.0" y2="114.0" stroke="#e5e7eb" stroke-width="1"/>
+  <circle cx="200.0" cy="92" r="6" fill="#6b728077" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="200.0" y="96.0" text-anchor="middle" font-size="8" fill="#6b7280" font-family="system-ui,sans-serif">✓</text>
+  <text x="200.0" y="128.0" text-anchor="middle" font-size="11" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="400">Alpha</text>
+  <text x="200.0" y="141.0" text-anchor="middle" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Q2 '23</text>
+  <line x1="360.0" y1="84.0" x2="360.0" y2="68.0" stroke="#e5e7eb" stroke-width="1"/>
+  <circle cx="360.0" cy="92" r="8" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+  <text x="360.0" y="50.0" text-anchor="middle" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Q3 '23</text>
+  <text x="360.0" y="63.0" text-anchor="middle" font-size="11" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Beta</text>
+  <line x1="520.0" y1="98.0" x2="520.0" y2="114.0" stroke="#e5e7eb" stroke-width="1"/>
+  <circle cx="520.0" cy="92" r="6" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1.5"/>
+  <text x="520.0" y="128.0" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="400">Launch</text>
+  <text x="520.0" y="141.0" text-anchor="middle" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Q4 '23</text>
+  <line x1="680.0" y1="86.0" x2="680.0" y2="70.0" stroke="#e5e7eb" stroke-width="1"/>
+  <circle cx="680.0" cy="92" r="6" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1.5"/>
+  <text x="680.0" y="52.0" text-anchor="end" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Q1 '24</text>
+  <text x="680.0" y="65.0" text-anchor="end" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="400">v2.0</text>
+</svg>

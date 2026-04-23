@@ -1,0 +1,16 @@
+<svg viewBox="0 0 520 248" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
+  <text x="260" y="20" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Product Success</text>
+  <defs><marker id="arr-c" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 Z" fill="#6b7280cc"/></marker></defs>
+  <rect x="390" y="106.0" width="116" height="64" rx="6" fill="#6b728028" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="448.0" y="136.0" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="700">Business</text>
+  <text x="448.0" y="150.0" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="700">Viability</text>
+  <rect x="10" y="32.0" width="112" height="32" rx="5" fill="#f9fafb" stroke="#37415166" stroke-width="1.2"/>
+  <text x="66.0" y="53.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">User Research</text>
+  <path d="M122,48.0 C254,48.0 254,138.0 386,138.0" fill="none" stroke="#37415166" stroke-width="1.5" marker-end="url(#arr-c)"/>
+  <rect x="10" y="122.0" width="112" height="32" rx="5" fill="#f9fafb" stroke="#37415166" stroke-width="1.2"/>
+  <text x="66.0" y="143.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif"><title>Market Analysis</title>Market Analy…</text>
+  <path d="M122,138.0 C254,138.0 254,138.0 386,138.0" fill="none" stroke="#37415166" stroke-width="1.5" marker-end="url(#arr-c)"/>
+  <rect x="10" y="212.0" width="112" height="32" rx="5" fill="#f9fafb" stroke="#37415166" stroke-width="1.2"/>
+  <text x="66.0" y="233.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif"><title>Technical Feasibility</title>Technical Fe…</text>
+  <path d="M122,228.0 C254,228.0 254,138.0 386,138.0" fill="none" stroke="#37415166" stroke-width="1.5" marker-end="url(#arr-c)"/>
+</svg>

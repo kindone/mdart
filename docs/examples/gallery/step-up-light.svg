@@ -1,0 +1,15 @@
+<svg viewBox="0 0 560 186" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="560" height="186" fill="#ffffff" rx="8"/>
+    <defs><marker id="step-arr" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto"><polygon points="0,0 5,2.5 0,5" fill="#6b7280"/></marker></defs>
+    <rect x="8.0" y="138.0" width="110" height="36" rx="5" fill="#37415133" stroke="#374151" stroke-width="1.2"/>
+    <text x="63.0" y="160.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Awareness</text>
+    <line x1="118.0" y1="138.0" x2="124.0" y2="132.0" stroke="#6b7280cc" stroke-width="2.5" marker-end="url(#step-arr)"/>
+    <rect x="124.0" y="96.0" width="110" height="36" rx="5" fill="#2f394833" stroke="#2f3948" stroke-width="1.2"/>
+    <text x="179.0" y="118.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Consideration</text>
+    <line x1="234.0" y1="96.0" x2="240.0" y2="90.0" stroke="#6b7280cc" stroke-width="2.5" marker-end="url(#step-arr)"/>
+    <rect x="240.0" y="54.0" width="110" height="36" rx="5" fill="#27314033" stroke="#273140" stroke-width="1.2"/>
+    <text x="295.0" y="76.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Evaluation</text>
+    <line x1="350.0" y1="54.0" x2="356.0" y2="48.0" stroke="#6b7280cc" stroke-width="2.5" marker-end="url(#step-arr)"/>
+    <rect x="356.0" y="12.0" width="110" height="36" rx="5" fill="#1f293733" stroke="#1f2937" stroke-width="1.2"/>
+    <text x="411.0" y="34.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Purchase</text>
+  </svg>

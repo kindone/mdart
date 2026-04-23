@@ -13,7 +13,10 @@ Discovery → Design → Build → Test → Deploy
 ```
 ````
 
-![Process](./docs/examples/process.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/process.svg">
+  <img alt="Process" src="./docs/examples/process-light.svg">
+</picture>
 
 ---
 
@@ -29,7 +32,10 @@ title: Engineering Team
 ```
 ````
 
-![Org chart](./docs/examples/org-chart.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/org-chart.svg">
+  <img alt="Org chart" src="./docs/examples/org-chart-light.svg">
+</picture>
 
 ---
 
@@ -48,7 +54,10 @@ title: Sprint Board
 ```
 ````
 
-![Kanban](./docs/examples/kanban.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/kanban.svg">
+  <img alt="Kanban" src="./docs/examples/kanban-light.svg">
+</picture>
 
 ---
 
@@ -68,7 +77,10 @@ title: Product Analysis
 ```
 ````
 
-![SWOT](./docs/examples/swot.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/swot.svg">
+  <img alt="SWOT" src="./docs/examples/swot-light.svg">
+</picture>
 
 ---
 
@@ -88,7 +100,10 @@ title: Auth Flow
 ```
 ````
 
-![Sequence](./docs/examples/sequence.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/sequence.svg">
+  <img alt="Sequence" src="./docs/examples/sequence-light.svg">
+</picture>
 
 ---
 
@@ -105,7 +120,10 @@ title: Q3 Roadmap
 ```
 ````
 
-![Gantt](./docs/examples/gantt.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/gantt.svg">
+  <img alt="Gantt" src="./docs/examples/gantt-light.svg">
+</picture>
 
 ## Packages
 

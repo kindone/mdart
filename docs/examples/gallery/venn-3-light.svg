@@ -1,0 +1,10 @@
+<svg viewBox="0 0 560 388" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
+  
+  <circle cx="218.0" cy="157.7" r="105" fill="#37415122" stroke="#37415177" stroke-width="1.5"/>
+  <circle cx="342.0" cy="157.7" r="105" fill="#1f293722" stroke="#1f293777" stroke-width="1.5"/>
+  <circle cx="280.0" cy="253.8" r="105" fill="#6b728022" stroke="#6b728077" stroke-width="1.5"/>
+  <text x="168.0" y="99.9" text-anchor="middle" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Marketing</text>
+  <text x="392.0" y="99.9" text-anchor="middle" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Sales</text>
+  <text x="280.0" y="316.8" text-anchor="middle" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Product</text>
+  <text x="280.0" y="192.7" text-anchor="middle" font-size="9" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">All Three ∩</text>
+</svg>

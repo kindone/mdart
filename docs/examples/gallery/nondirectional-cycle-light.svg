@@ -1,0 +1,12 @@
+<svg viewBox="0 0 440 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="440" height="400" fill="#ffffff" rx="8"/>
+    <circle cx="220" cy="200" r="145" fill="none" stroke="#e5e7eb" stroke-width="14" opacity="0.4"/>
+    <circle cx="220.0" cy="55.0" r="22" fill="#374151"/>
+    <text x="220.0" y="59.0" text-anchor="middle" font-size="9" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Brand</text>
+    <circle cx="365.0" cy="200.0" r="22" fill="#2f3948"/>
+    <text x="365.0" y="204.0" text-anchor="middle" font-size="9" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Product</text>
+    <circle cx="220.0" cy="345.0" r="22" fill="#273140"/>
+    <text x="220.0" y="349.0" text-anchor="middle" font-size="9" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Sales</text>
+    <circle cx="75.0" cy="200.0" r="22" fill="#1f2937"/>
+    <text x="75.0" y="204.0" text-anchor="middle" font-size="9" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Support</text>
+  </svg>

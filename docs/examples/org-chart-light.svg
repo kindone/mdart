@@ -1,0 +1,14 @@
+<svg viewBox="0 0 640 230" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
+  <text x="320.0" y="18" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Engineering Team</text>
+  <path d="M320.0,58.0 C320.0,86.0 146.0,86.0 146.0,114.0" fill="none" stroke="#e5e7eb" stroke-width="1.5"/>
+  <path d="M320.0,58.0 C320.0,86.0 320.0,86.0 320.0,114.0" fill="none" stroke="#e5e7eb" stroke-width="1.5"/>
+  <path d="M320.0,58.0 C320.0,86.0 494.0,86.0 494.0,114.0" fill="none" stroke="#e5e7eb" stroke-width="1.5"/>
+  <rect x="265.0" y="28.0" width="110" height="30" rx="6" fill="#f9fafb" stroke="#6b728088" stroke-width="1.2"/>
+  <text x="320.0" y="47.0" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif">CTO</text>
+  <rect x="91.0" y="114.0" width="110" height="30" rx="6" fill="#f9fafb" stroke="#6b728088" stroke-width="1.2"/>
+  <text x="146.0" y="133.0" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif">Frontend</text>
+  <rect x="265.0" y="114.0" width="110" height="30" rx="6" fill="#f9fafb" stroke="#6b728088" stroke-width="1.2"/>
+  <text x="320.0" y="133.0" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif">Backend</text>
+  <rect x="439.0" y="114.0" width="110" height="30" rx="6" fill="#f9fafb" stroke="#6b728088" stroke-width="1.2"/>
+  <text x="494.0" y="133.0" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif">Platform</text>
+</svg>

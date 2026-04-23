@@ -1,0 +1,35 @@
+<svg viewBox="0 0 600 318" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
+  <text x="300" y="20" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">System Architecture</text>
+  <defs><marker id="la-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#d1d5db"/></marker></defs>
+  <rect x="8" y="38.0" width="584" height="62" rx="8" fill="#37415122" stroke="#37415166" stroke-width="1.2"/>
+  <text x="24" y="73.0" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Presentation</text>
+  <line x1="128" y1="48.0" x2="128" y2="90.0" stroke="#37415155" stroke-width="1"/>
+  <rect x="140.0" y="56.0" width="81" height="26" rx="5" fill="#f9fafb" stroke="#37415166" stroke-width="1"/>
+  <text x="180.5" y="72.0" text-anchor="middle" font-size="11" fill="#6b7280" font-family="system-ui,sans-serif">React SPA</text>
+  <rect x="229.0" y="56.0" width="74" height="26" rx="5" fill="#f9fafb" stroke="#37415166" stroke-width="1"/>
+  <text x="266.0" y="72.0" text-anchor="middle" font-size="11" fill="#6b7280" font-family="system-ui,sans-serif">Vite HMR</text>
+  <line x1="300" y1="100.0" x2="300" y2="106.0" stroke="#d1d5db" stroke-width="1.5" marker-end="url(#la-arr)"/>
+  <rect x="8" y="106.0" width="584" height="62" rx="8" fill="#2f394822" stroke="#2f394866" stroke-width="1.2"/>
+  <text x="24" y="141.0" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">API Gateway</text>
+  <line x1="128" y1="116.0" x2="128" y2="158.0" stroke="#2f394855" stroke-width="1"/>
+  <rect x="140.0" y="124.0" width="109" height="26" rx="5" fill="#f9fafb" stroke="#2f394866" stroke-width="1"/>
+  <text x="194.5" y="140.0" text-anchor="middle" font-size="11" fill="#6b7280" font-family="system-ui,sans-serif">Express rout…</text>
+  <rect x="257.0" y="124.0" width="109" height="26" rx="5" fill="#f9fafb" stroke="#2f394866" stroke-width="1"/>
+  <text x="311.5" y="140.0" text-anchor="middle" font-size="11" fill="#6b7280" font-family="system-ui,sans-serif">Auth middlew…</text>
+  <line x1="300" y1="168.0" x2="300" y2="174.0" stroke="#d1d5db" stroke-width="1.5" marker-end="url(#la-arr)"/>
+  <rect x="8" y="174.0" width="584" height="62" rx="8" fill="#27314022" stroke="#27314066" stroke-width="1.2"/>
+  <text x="24" y="209.0" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Business Logic</text>
+  <line x1="128" y1="184.0" x2="128" y2="226.0" stroke="#27314055" stroke-width="1"/>
+  <rect x="140.0" y="192.0" width="109" height="26" rx="5" fill="#f9fafb" stroke="#27314066" stroke-width="1"/>
+  <text x="194.5" y="208.0" text-anchor="middle" font-size="11" fill="#6b7280" font-family="system-ui,sans-serif">Claude worker</text>
+  <rect x="257.0" y="192.0" width="81" height="26" rx="5" fill="#f9fafb" stroke="#27314066" stroke-width="1"/>
+  <text x="297.5" y="208.0" text-anchor="middle" font-size="11" fill="#6b7280" font-family="system-ui,sans-serif">Scheduler</text>
+  <line x1="300" y1="236.0" x2="300" y2="242.0" stroke="#d1d5db" stroke-width="1.5" marker-end="url(#la-arr)"/>
+  <rect x="8" y="242.0" width="584" height="62" rx="8" fill="#1f293722" stroke="#1f293766" stroke-width="1.2"/>
+  <text x="24" y="277.0" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Data</text>
+  <line x1="128" y1="252.0" x2="128" y2="294.0" stroke="#1f293755" stroke-width="1"/>
+  <rect x="140.0" y="260.0" width="60" height="26" rx="5" fill="#f9fafb" stroke="#1f293766" stroke-width="1"/>
+  <text x="170.0" y="276.0" text-anchor="middle" font-size="11" fill="#6b7280" font-family="system-ui,sans-serif">SQLite</text>
+  <rect x="208.0" y="260.0" width="95" height="26" rx="5" fill="#f9fafb" stroke="#1f293766" stroke-width="1"/>
+  <text x="255.5" y="276.0" text-anchor="middle" font-size="11" fill="#6b7280" font-family="system-ui,sans-serif">File system</text>
+</svg>

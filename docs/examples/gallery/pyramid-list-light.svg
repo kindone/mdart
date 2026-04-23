@@ -1,0 +1,18 @@
+<svg viewBox="0 0 600 194" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
+  <rect x="227.2" y="12" width="145.6" height="36" rx="5" fill="#374151"/>
+  <circle cx="211.2" cy="30.0" r="11" fill="#374151"/>
+  <text x="211.2" y="34.0" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff" font-family="system-ui,sans-serif">1</text>
+  <text x="300.0" y="34.0" text-anchor="middle" font-size="12" font-weight="600" fill="#ffffff" font-family="system-ui,sans-serif">Vision</text>
+  <rect x="164.8" y="54" width="270.4" height="36" rx="5" fill="#58616f"/>
+  <circle cx="148.8" cy="72.0" r="11" fill="#58616f"/>
+  <text x="148.8" y="76.0" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff" font-family="system-ui,sans-serif">2</text>
+  <text x="300.0" y="76.0" text-anchor="middle" font-size="12" font-weight="600" fill="#ffffff" font-family="system-ui,sans-serif">Strategy</text>
+  <rect x="102.4" y="96" width="395.2" height="36" rx="5" fill="#7a818d"/>
+  <circle cx="86.4" cy="114.0" r="11" fill="#7a818d"/>
+  <text x="86.4" y="118.0" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff" font-family="system-ui,sans-serif">3</text>
+  <text x="300.0" y="118.0" text-anchor="middle" font-size="12" font-weight="600" fill="#ffffff" font-family="system-ui,sans-serif">Tactics</text>
+  <rect x="40.0" y="138" width="520.0" height="36" rx="5" fill="#9ba1ab"/>
+  <circle cx="24.0" cy="156.0" r="11" fill="#9ba1ab"/>
+  <text x="24.0" y="160.0" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff" font-family="system-ui,sans-serif">4</text>
+  <text x="300.0" y="160.0" text-anchor="middle" font-size="12" font-weight="600" fill="#ffffff" font-family="system-ui,sans-serif">Actions</text>
+</svg>

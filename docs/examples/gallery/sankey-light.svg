@@ -1,0 +1,25 @@
+<svg viewBox="0 0 520 326" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
+  <text x="260" y="20" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Traffic Sources</text>
+  <path d="M112,38.0 C260,38.0 260,38.0 408,38.0 L408,75.2 C260,75.2 260,77.6 112,77.6 Z" fill="#3741513a" stroke="#37415177" stroke-width="0.5"/>
+  <path d="M112,77.6 C260,77.6 260,120.4 408,120.4 L408,157.6 C260,157.6 260,117.2 112,117.2 Z" fill="#3741513a" stroke="#37415177" stroke-width="0.5"/>
+  <path d="M112,117.2 C260,117.2 260,165.6 408,165.6 L408,202.8 C260,202.8 260,156.8 112,156.8 Z" fill="#3741513a" stroke="#37415177" stroke-width="0.5"/>
+  <path d="M112,164.8 C260,164.8 260,75.2 408,75.2 L408,112.4 C260,112.4 260,204.4 112,204.4 Z" fill="#1f29373a" stroke="#1f293777" stroke-width="0.5"/>
+  <path d="M112,204.4 C260,204.4 260,210.8 408,210.8 L408,248.0 C260,248.0 260,244.0 112,244.0 Z" fill="#1f29373a" stroke="#1f293777" stroke-width="0.5"/>
+  <path d="M112,252.0 C260,252.0 260,256.0 408,256.0 L408,318.0 C260,318.0 260,318.0 112,318.0 Z" fill="#6b72803a" stroke="#6b728077" stroke-width="0.5"/>
+  <rect x="0" y="38.0" width="104" height="118.8" rx="4" fill="#37415144" stroke="#37415199" stroke-width="1"/>
+  <text x="52" y="101.4" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">Organic</text>
+  <rect x="0" y="164.8" width="104" height="79.2" rx="4" fill="#1f293744" stroke="#1f293799" stroke-width="1"/>
+  <text x="52" y="208.4" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">Paid</text>
+  <rect x="0" y="252.0" width="104" height="66.0" rx="4" fill="#6b728044" stroke="#6b728099" stroke-width="1"/>
+  <text x="52" y="289.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">Direct</text>
+  <rect x="416" y="38.0" width="104" height="74.4" rx="4" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="468" y="79.2" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">Landing Page</text>
+  <rect x="416" y="120.4" width="104" height="37.2" rx="4" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="468" y="143.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">Blog</text>
+  <rect x="416" y="165.6" width="104" height="37.2" rx="4" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="468" y="188.2" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">Docs</text>
+  <rect x="416" y="210.8" width="104" height="37.2" rx="4" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="468" y="233.4" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">Pricing</text>
+  <rect x="416" y="256.0" width="104" height="62.0" rx="4" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="468" y="291.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">Dashboard</text>
+</svg>

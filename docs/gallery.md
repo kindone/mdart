@@ -34,7 +34,10 @@ type: process
 - Deploy
 ```
 
-![process](./examples/gallery/process.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/process.svg">
+  <img alt="process" src="./examples/gallery/process-light.svg">
+</picture>
 
 ### `chevron-process`
 
@@ -47,7 +50,10 @@ type: chevron-process
 - Deploy
 ```
 
-![chevron-process](./examples/gallery/chevron-process.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/chevron-process.svg">
+  <img alt="chevron-process" src="./examples/gallery/chevron-process-light.svg">
+</picture>
 
 ### `arrow-process`
 
@@ -59,7 +65,10 @@ type: arrow-process
 - Launch
 ```
 
-![arrow-process](./examples/gallery/arrow-process.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/arrow-process.svg">
+  <img alt="arrow-process" src="./examples/gallery/arrow-process-light.svg">
+</picture>
 
 ### `circular-process`
 
@@ -71,7 +80,10 @@ type: circular-process
 - Ship
 ```
 
-![circular-process](./examples/gallery/circular-process.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/circular-process.svg">
+  <img alt="circular-process" src="./examples/gallery/circular-process-light.svg">
+</picture>
 
 ### `funnel`
 
@@ -83,7 +95,10 @@ type: funnel
 - Purchase
 ```
 
-![funnel](./examples/gallery/funnel.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/funnel.svg">
+  <img alt="funnel" src="./examples/gallery/funnel-light.svg">
+</picture>
 
 ### `roadmap`
 
@@ -95,7 +110,10 @@ type: roadmap
 - Q4: Scale
 ```
 
-![roadmap](./examples/gallery/roadmap.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/roadmap.svg">
+  <img alt="roadmap" src="./examples/gallery/roadmap-light.svg">
+</picture>
 
 ### `waterfall`
 
@@ -108,7 +126,10 @@ type: waterfall
 - Deployment
 ```
 
-![waterfall](./examples/gallery/waterfall.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/waterfall.svg">
+  <img alt="waterfall" src="./examples/gallery/waterfall-light.svg">
+</picture>
 
 ### `step-up`
 
@@ -120,7 +141,10 @@ type: step-up
 - Purchase
 ```
 
-![step-up](./examples/gallery/step-up.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/step-up.svg">
+  <img alt="step-up" src="./examples/gallery/step-up-light.svg">
+</picture>
 
 ### `step-down`
 
@@ -132,7 +156,10 @@ type: step-down
 - Release
 ```
 
-![step-down](./examples/gallery/step-down.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/step-down.svg">
+  <img alt="step-down" src="./examples/gallery/step-down-light.svg">
+</picture>
 
 ### `circle-process`
 
@@ -144,7 +171,10 @@ type: circle-process
 - Ship: Launch
 ```
 
-![circle-process](./examples/gallery/circle-process.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/circle-process.svg">
+  <img alt="circle-process" src="./examples/gallery/circle-process-light.svg">
+</picture>
 
 ### `equation`
 
@@ -161,7 +191,10 @@ type: equation
   - Impact
 ```
 
-![equation](./examples/gallery/equation.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/equation.svg">
+  <img alt="equation" src="./examples/gallery/equation-light.svg">
+</picture>
 
 ### `bending-process`
 
@@ -175,7 +208,10 @@ type: bending-process
 - Launch
 ```
 
-![bending-process](./examples/gallery/bending-process.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/bending-process.svg">
+  <img alt="bending-process" src="./examples/gallery/bending-process-light.svg">
+</picture>
 
 ### `segmented-bar`
 
@@ -188,7 +224,10 @@ title: Project Timeline · 12 weeks
 - Launch: 15%
 ```
 
-![segmented-bar](./examples/gallery/segmented-bar.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/segmented-bar.svg">
+  <img alt="segmented-bar" src="./examples/gallery/segmented-bar-light.svg">
+</picture>
 
 ### `phase-process`
 
@@ -205,7 +244,10 @@ type: phase-process
   - Sprint 2
 ```
 
-![phase-process](./examples/gallery/phase-process.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/phase-process.svg">
+  <img alt="phase-process" src="./examples/gallery/phase-process-light.svg">
+</picture>
 
 ### `timeline-h`
 
@@ -218,7 +260,10 @@ type: timeline-h
 - Ship: Dec
 ```
 
-![timeline-h](./examples/gallery/timeline-h.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/timeline-h.svg">
+  <img alt="timeline-h" src="./examples/gallery/timeline-h-light.svg">
+</picture>
 
 ### `timeline-v`
 
@@ -233,7 +278,10 @@ type: timeline-v
 - GA Release: Dec '24
 ```
 
-![timeline-v](./examples/gallery/timeline-v.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/timeline-v.svg">
+  <img alt="timeline-v" src="./examples/gallery/timeline-v-light.svg">
+</picture>
 
 ### `swimlane`
 
@@ -250,7 +298,10 @@ type: swimlane
   - Onboard
 ```
 
-![swimlane](./examples/gallery/swimlane.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/swimlane.svg">
+  <img alt="swimlane" src="./examples/gallery/swimlane-light.svg">
+</picture>
 
 ---
 
@@ -268,7 +319,10 @@ type: bullet-list
 - Data-driven decisions
 ```
 
-![bullet-list](./examples/gallery/bullet-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/bullet-list.svg">
+  <img alt="bullet-list" src="./examples/gallery/bullet-list-light.svg">
+</picture>
 
 ### `numbered-list`
 
@@ -281,7 +335,10 @@ type: numbered-list
 - Ship and iterate
 ```
 
-![numbered-list](./examples/gallery/numbered-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/numbered-list.svg">
+  <img alt="numbered-list" src="./examples/gallery/numbered-list-light.svg">
+</picture>
 
 ### `checklist`
 
@@ -294,7 +351,10 @@ type: checklist
 - Security audit
 ```
 
-![checklist](./examples/gallery/checklist.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/checklist.svg">
+  <img alt="checklist" src="./examples/gallery/checklist-light.svg">
+</picture>
 
 ### `two-column-list`
 
@@ -307,7 +367,10 @@ type: two-column-list
 - Review: Demo to stakeholders
 ```
 
-![two-column-list](./examples/gallery/two-column-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/two-column-list.svg">
+  <img alt="two-column-list" src="./examples/gallery/two-column-list-light.svg">
+</picture>
 
 ### `timeline-list`
 
@@ -320,7 +383,10 @@ type: timeline-list
 - 2026: Expansion
 ```
 
-![timeline-list](./examples/gallery/timeline-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/timeline-list.svg">
+  <img alt="timeline-list" src="./examples/gallery/timeline-list-light.svg">
+</picture>
 
 ### `block-list`
 
@@ -332,7 +398,10 @@ type: block-list
 - Launch: Ship to the world
 ```
 
-![block-list](./examples/gallery/block-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/block-list.svg">
+  <img alt="block-list" src="./examples/gallery/block-list-light.svg">
+</picture>
 
 ### `chevron-list`
 
@@ -344,7 +413,10 @@ type: chevron-list
 - Action
 ```
 
-![chevron-list](./examples/gallery/chevron-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/chevron-list.svg">
+  <img alt="chevron-list" src="./examples/gallery/chevron-list-light.svg">
+</picture>
 
 ### `card-list`
 
@@ -361,7 +433,10 @@ type: card-list
   - Sales
 ```
 
-![card-list](./examples/gallery/card-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/card-list.svg">
+  <img alt="card-list" src="./examples/gallery/card-list-light.svg">
+</picture>
 
 ### `zigzag-list`
 
@@ -373,7 +448,10 @@ type: zigzag-list
 - Launch
 ```
 
-![zigzag-list](./examples/gallery/zigzag-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/zigzag-list.svg">
+  <img alt="zigzag-list" src="./examples/gallery/zigzag-list-light.svg">
+</picture>
 
 ### `ribbon-list`
 
@@ -384,7 +462,10 @@ type: ribbon-list
 - Values: Principles that guide every decision
 ```
 
-![ribbon-list](./examples/gallery/ribbon-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/ribbon-list.svg">
+  <img alt="ribbon-list" src="./examples/gallery/ribbon-list-light.svg">
+</picture>
 
 ### `hexagon-list`
 
@@ -397,7 +478,10 @@ type: hexagon-list
 - Impact
 ```
 
-![hexagon-list](./examples/gallery/hexagon-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/hexagon-list.svg">
+  <img alt="hexagon-list" src="./examples/gallery/hexagon-list-light.svg">
+</picture>
 
 ### `trapezoid-list`
 
@@ -409,7 +493,10 @@ type: trapezoid-list
 - Foundation
 ```
 
-![trapezoid-list](./examples/gallery/trapezoid-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/trapezoid-list.svg">
+  <img alt="trapezoid-list" src="./examples/gallery/trapezoid-list-light.svg">
+</picture>
 
 ### `tab-list`
 
@@ -426,7 +513,10 @@ type: tab-list
   - GitHub
 ```
 
-![tab-list](./examples/gallery/tab-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/tab-list.svg">
+  <img alt="tab-list" src="./examples/gallery/tab-list-light.svg">
+</picture>
 
 ### `circle-list`
 
@@ -438,7 +528,10 @@ type: circle-list
 - Launch: Monitor & optimize
 ```
 
-![circle-list](./examples/gallery/circle-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/circle-list.svg">
+  <img alt="circle-list" src="./examples/gallery/circle-list-light.svg">
+</picture>
 
 ### `icon-list`
 
@@ -450,7 +543,10 @@ type: icon-list
 - Collaboration: Shared workspaces [🤝]
 ```
 
-![icon-list](./examples/gallery/icon-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/icon-list.svg">
+  <img alt="icon-list" src="./examples/gallery/icon-list-light.svg">
+</picture>
 
 ---
 
@@ -468,7 +564,10 @@ type: cycle
 - Learn
 ```
 
-![cycle](./examples/gallery/cycle.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/cycle.svg">
+  <img alt="cycle" src="./examples/gallery/cycle-light.svg">
+</picture>
 
 ### `donut-cycle`
 
@@ -480,7 +579,10 @@ type: donut-cycle
 - Refine
 ```
 
-![donut-cycle](./examples/gallery/donut-cycle.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/donut-cycle.svg">
+  <img alt="donut-cycle" src="./examples/gallery/donut-cycle-light.svg">
+</picture>
 
 ### `gear-cycle`
 
@@ -492,7 +594,10 @@ type: gear-cycle
 - Review
 ```
 
-![gear-cycle](./examples/gallery/gear-cycle.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/gear-cycle.svg">
+  <img alt="gear-cycle" src="./examples/gallery/gear-cycle-light.svg">
+</picture>
 
 ### `spiral`
 
@@ -505,7 +610,10 @@ type: spiral
 - v3.0
 ```
 
-![spiral](./examples/gallery/spiral.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/spiral.svg">
+  <img alt="spiral" src="./examples/gallery/spiral-light.svg">
+</picture>
 
 ### `block-cycle`
 
@@ -517,7 +625,10 @@ type: block-cycle
 - Launch
 ```
 
-![block-cycle](./examples/gallery/block-cycle.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/block-cycle.svg">
+  <img alt="block-cycle" src="./examples/gallery/block-cycle-light.svg">
+</picture>
 
 ### `segmented-cycle`
 
@@ -530,7 +641,10 @@ type: segmented-cycle
 - Retrospective
 ```
 
-![segmented-cycle](./examples/gallery/segmented-cycle.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/segmented-cycle.svg">
+  <img alt="segmented-cycle" src="./examples/gallery/segmented-cycle-light.svg">
+</picture>
 
 ### `nondirectional-cycle`
 
@@ -542,7 +656,10 @@ type: nondirectional-cycle
 - Support
 ```
 
-![nondirectional-cycle](./examples/gallery/nondirectional-cycle.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/nondirectional-cycle.svg">
+  <img alt="nondirectional-cycle" src="./examples/gallery/nondirectional-cycle-light.svg">
+</picture>
 
 ### `multidirectional-cycle`
 
@@ -554,7 +671,10 @@ type: multidirectional-cycle
 - Data
 ```
 
-![multidirectional-cycle](./examples/gallery/multidirectional-cycle.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/multidirectional-cycle.svg">
+  <img alt="multidirectional-cycle" src="./examples/gallery/multidirectional-cycle-light.svg">
+</picture>
 
 ### `loop`
 
@@ -566,7 +686,10 @@ type: loop
 - Monitor
 ```
 
-![loop](./examples/gallery/loop.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/loop.svg">
+  <img alt="loop" src="./examples/gallery/loop-light.svg">
+</picture>
 
 ---
 
@@ -589,7 +712,10 @@ type: org-chart
     - Growth
 ```
 
-![org-chart](./examples/gallery/org-chart.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/org-chart.svg">
+  <img alt="org-chart" src="./examples/gallery/org-chart-light.svg">
+</picture>
 
 ### `h-org-chart`
 
@@ -605,7 +731,10 @@ type: h-org-chart
   - Operations
 ```
 
-![h-org-chart](./examples/gallery/h-org-chart.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/h-org-chart.svg">
+  <img alt="h-org-chart" src="./examples/gallery/h-org-chart-light.svg">
+</picture>
 
 ### `tree`
 
@@ -623,7 +752,10 @@ type: tree
   - Database
 ```
 
-![tree](./examples/gallery/tree.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/tree.svg">
+  <img alt="tree" src="./examples/gallery/tree-light.svg">
+</picture>
 
 ### `hierarchy-list`
 
@@ -639,7 +771,10 @@ type: hierarchy-list
     - nginx
 ```
 
-![hierarchy-list](./examples/gallery/hierarchy-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/hierarchy-list.svg">
+  <img alt="hierarchy-list" src="./examples/gallery/hierarchy-list-light.svg">
+</picture>
 
 ### `radial-tree`
 
@@ -657,7 +792,10 @@ title: Product Platform
   - ML
 ```
 
-![radial-tree](./examples/gallery/radial-tree.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/radial-tree.svg">
+  <img alt="radial-tree" src="./examples/gallery/radial-tree-light.svg">
+</picture>
 
 ### `decision-tree`
 
@@ -670,7 +808,10 @@ type: decision-tree
     - Eliminate
 ```
 
-![decision-tree](./examples/gallery/decision-tree.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/decision-tree.svg">
+  <img alt="decision-tree" src="./examples/gallery/decision-tree-light.svg">
+</picture>
 
 ### `sitemap`
 
@@ -687,7 +828,10 @@ type: sitemap
   - About
 ```
 
-![sitemap](./examples/gallery/sitemap.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/sitemap.svg">
+  <img alt="sitemap" src="./examples/gallery/sitemap-light.svg">
+</picture>
 
 ### `bracket`
 
@@ -699,7 +843,10 @@ type: bracket
 - Q4 Winner
 ```
 
-![bracket](./examples/gallery/bracket.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/bracket.svg">
+  <img alt="bracket" src="./examples/gallery/bracket-light.svg">
+</picture>
 
 ### `mind-map`
 
@@ -718,7 +865,10 @@ title: Product Strategy
   - Subscriptions
 ```
 
-![mind-map](./examples/gallery/mind-map.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/mind-map.svg">
+  <img alt="mind-map" src="./examples/gallery/mind-map-light.svg">
+</picture>
 
 ---
 
@@ -741,7 +891,10 @@ title: Product Launch
 ! Regulatory changes
 ```
 
-![swot](./examples/gallery/swot.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/swot.svg">
+  <img alt="swot" src="./examples/gallery/swot-light.svg">
+</picture>
 
 ### `pros-cons`
 
@@ -757,7 +910,10 @@ type: pros-cons
   - Ongoing SaaS fees
 ```
 
-![pros-cons](./examples/gallery/pros-cons.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/pros-cons.svg">
+  <img alt="pros-cons" src="./examples/gallery/pros-cons-light.svg">
+</picture>
 
 ### `comparison`
 
@@ -777,7 +933,10 @@ type: comparison
   - Enterprise: Dedicated
 ```
 
-![comparison](./examples/gallery/comparison.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/comparison.svg">
+  <img alt="comparison" src="./examples/gallery/comparison-light.svg">
+</picture>
 
 ### `matrix-2x2`
 
@@ -796,7 +955,10 @@ title: Prioritization Matrix
   - Legacy API
 ```
 
-![matrix-2x2](./examples/gallery/matrix-2x2.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/matrix-2x2.svg">
+  <img alt="matrix-2x2" src="./examples/gallery/matrix-2x2-light.svg">
+</picture>
 
 ### `bcg`
 
@@ -815,7 +977,10 @@ title: Product Portfolio
   - Legacy Export
 ```
 
-![bcg](./examples/gallery/bcg.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/bcg.svg">
+  <img alt="bcg" src="./examples/gallery/bcg-light.svg">
+</picture>
 
 ### `ansoff`
 
@@ -834,7 +999,10 @@ title: Growth Strategy
   - Marketplace
 ```
 
-![ansoff](./examples/gallery/ansoff.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/ansoff.svg">
+  <img alt="ansoff" src="./examples/gallery/ansoff-light.svg">
+</picture>
 
 ### `matrix-nxm`
 
@@ -855,7 +1023,10 @@ title: Skills Matrix
   - Expert
 ```
 
-![matrix-nxm](./examples/gallery/matrix-nxm.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/matrix-nxm.svg">
+  <img alt="matrix-nxm" src="./examples/gallery/matrix-nxm-light.svg">
+</picture>
 
 ---
 
@@ -875,7 +1046,10 @@ title: Maslow's Hierarchy
 - Physiological
 ```
 
-![pyramid](./examples/gallery/pyramid.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/pyramid.svg">
+  <img alt="pyramid" src="./examples/gallery/pyramid-light.svg">
+</picture>
 
 ### `inverted-pyramid`
 
@@ -889,7 +1063,10 @@ title: Acquisition Funnel
 - Purchase
 ```
 
-![inverted-pyramid](./examples/gallery/inverted-pyramid.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/inverted-pyramid.svg">
+  <img alt="inverted-pyramid" src="./examples/gallery/inverted-pyramid-light.svg">
+</picture>
 
 ### `pyramid-list`
 
@@ -901,7 +1078,10 @@ type: pyramid-list
 - Actions
 ```
 
-![pyramid-list](./examples/gallery/pyramid-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/pyramid-list.svg">
+  <img alt="pyramid-list" src="./examples/gallery/pyramid-list-light.svg">
+</picture>
 
 ### `segmented-pyramid`
 
@@ -914,7 +1094,10 @@ title: Investment Allocation
 - Conservative: 40%
 ```
 
-![segmented-pyramid](./examples/gallery/segmented-pyramid.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/segmented-pyramid.svg">
+  <img alt="segmented-pyramid" src="./examples/gallery/segmented-pyramid-light.svg">
+</picture>
 
 ### `diamond-pyramid`
 
@@ -927,7 +1110,10 @@ type: diamond-pyramid
 - Laggards
 ```
 
-![diamond-pyramid](./examples/gallery/diamond-pyramid.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/diamond-pyramid.svg">
+  <img alt="diamond-pyramid" src="./examples/gallery/diamond-pyramid-light.svg">
+</picture>
 
 ---
 
@@ -948,7 +1134,10 @@ type: venn
 - Product ∩ Engineering
 ```
 
-![venn](./examples/gallery/venn.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/venn.svg">
+  <img alt="venn" src="./examples/gallery/venn-light.svg">
+</picture>
 
 ### `venn-3`
 
@@ -960,7 +1149,10 @@ type: venn-3
 - All Three ∩
 ```
 
-![venn-3](./examples/gallery/venn-3.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/venn-3.svg">
+  <img alt="venn-3" src="./examples/gallery/venn-3-light.svg">
+</picture>
 
 ### `venn-4`
 
@@ -976,7 +1168,10 @@ type: venn-4
   - Analytics
 ```
 
-![venn-4](./examples/gallery/venn-4.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/venn-4.svg">
+  <img alt="venn-4" src="./examples/gallery/venn-4-light.svg">
+</picture>
 
 ### `concentric`
 
@@ -989,7 +1184,10 @@ title: Organizational Layers
 - Individual
 ```
 
-![concentric](./examples/gallery/concentric.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/concentric.svg">
+  <img alt="concentric" src="./examples/gallery/concentric-light.svg">
+</picture>
 
 ### `balance`
 
@@ -1005,7 +1203,10 @@ type: balance
   - Maintenance
 ```
 
-![balance](./examples/gallery/balance.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/balance.svg">
+  <img alt="balance" src="./examples/gallery/balance-light.svg">
+</picture>
 
 ### `opposing-arrows`
 
@@ -1021,7 +1222,10 @@ type: opposing-arrows
   - Trends
 ```
 
-![opposing-arrows](./examples/gallery/opposing-arrows.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/opposing-arrows.svg">
+  <img alt="opposing-arrows" src="./examples/gallery/opposing-arrows-light.svg">
+</picture>
 
 ### `web`
 
@@ -1036,7 +1240,10 @@ title: Team Dependencies
 - QA
 ```
 
-![web](./examples/gallery/web.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/web.svg">
+  <img alt="web" src="./examples/gallery/web-light.svg">
+</picture>
 
 ### `cluster`
 
@@ -1054,7 +1261,10 @@ title: Engineering Org
   - Storage
 ```
 
-![cluster](./examples/gallery/cluster.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/cluster.svg">
+  <img alt="cluster" src="./examples/gallery/cluster-light.svg">
+</picture>
 
 ### `target`
 
@@ -1067,7 +1277,10 @@ title: Focus Areas
 - Nice to Have
 ```
 
-![target](./examples/gallery/target.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/target.svg">
+  <img alt="target" src="./examples/gallery/target-light.svg">
+</picture>
 
 ### `radial`
 
@@ -1087,7 +1300,10 @@ title: Platform
 - Security
 ```
 
-![radial](./examples/gallery/radial.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/radial.svg">
+  <img alt="radial" src="./examples/gallery/radial-light.svg">
+</picture>
 
 ### `converging`
 
@@ -1100,7 +1316,10 @@ title: Product Success
 - Business Viability
 ```
 
-![converging](./examples/gallery/converging.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/converging.svg">
+  <img alt="converging" src="./examples/gallery/converging-light.svg">
+</picture>
 
 ### `diverging`
 
@@ -1114,7 +1333,10 @@ title: Platform APIs
 - Webhooks
 ```
 
-![diverging](./examples/gallery/diverging.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/diverging.svg">
+  <img alt="diverging" src="./examples/gallery/diverging-light.svg">
+</picture>
 
 ### `plus`
 
@@ -1128,7 +1350,10 @@ title: Growth Framework
 - Referral
 ```
 
-![plus](./examples/gallery/plus.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/plus.svg">
+  <img alt="plus" src="./examples/gallery/plus-light.svg">
+</picture>
 
 ---
 
@@ -1148,7 +1373,10 @@ title: Q4 KPIs
 - Feature Delivery: 73%
 ```
 
-![progress-list](./examples/gallery/progress-list.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/progress-list.svg">
+  <img alt="progress-list" src="./examples/gallery/progress-list-light.svg">
+</picture>
 
 ### `bullet-chart`
 
@@ -1161,7 +1389,10 @@ title: Sales vs Target
 - Retention: 88 [90]
 ```
 
-![bullet-chart](./examples/gallery/bullet-chart.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/bullet-chart.svg">
+  <img alt="bullet-chart" src="./examples/gallery/bullet-chart-light.svg">
+</picture>
 
 ### `scorecard`
 
@@ -1174,7 +1405,10 @@ title: Monthly Metrics
 - ARPU: $2.65 [+4%]
 ```
 
-![scorecard](./examples/gallery/scorecard.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/scorecard.svg">
+  <img alt="scorecard" src="./examples/gallery/scorecard-light.svg">
+</picture>
 
 ### `treemap`
 
@@ -1189,7 +1423,10 @@ title: Time Allocation
 - Docs: 5%
 ```
 
-![treemap](./examples/gallery/treemap.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/treemap.svg">
+  <img alt="treemap" src="./examples/gallery/treemap-light.svg">
+</picture>
 
 ### `sankey`
 
@@ -1207,7 +1444,10 @@ title: Traffic Sources
   - Dashboard
 ```
 
-![sankey](./examples/gallery/sankey.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/sankey.svg">
+  <img alt="sankey" src="./examples/gallery/sankey-light.svg">
+</picture>
 
 ### `waffle`
 
@@ -1221,7 +1461,10 @@ title: Budget Allocation
 - Other: 30%
 ```
 
-![waffle](./examples/gallery/waffle.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/waffle.svg">
+  <img alt="waffle" src="./examples/gallery/waffle-light.svg">
+</picture>
 
 ### `gauge`
 
@@ -1233,7 +1476,10 @@ title: Health Metrics
 - Satisfaction: 84%
 ```
 
-![gauge](./examples/gallery/gauge.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/gauge.svg">
+  <img alt="gauge" src="./examples/gallery/gauge-light.svg">
+</picture>
 
 ### `radar`
 
@@ -1248,7 +1494,10 @@ title: Team Skills
 - Testing: 78
 ```
 
-![radar](./examples/gallery/radar.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/radar.svg">
+  <img alt="radar" src="./examples/gallery/radar-light.svg">
+</picture>
 
 ### `heatmap`
 
@@ -1272,7 +1521,10 @@ title: Response Time by Hour & Day
   - 72ms
 ```
 
-![heatmap](./examples/gallery/heatmap.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/heatmap.svg">
+  <img alt="heatmap" src="./examples/gallery/heatmap-light.svg">
+</picture>
 
 ---
 
@@ -1297,7 +1549,10 @@ title: Sprint 14
   - Error console [done]
 ```
 
-![kanban](./examples/gallery/kanban.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/kanban.svg">
+  <img alt="kanban" src="./examples/gallery/kanban-light.svg">
+</picture>
 
 ### `gantt`
 
@@ -1311,7 +1566,10 @@ title: Q2 Roadmap
 - Launch [wk12-wk13]
 ```
 
-![gantt](./examples/gallery/gantt.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/gantt.svg">
+  <img alt="gantt" src="./examples/gallery/gantt-light.svg">
+</picture>
 
 ### `sprint-board`
 
@@ -1329,7 +1587,10 @@ title: Sprint 14
   - Unit tests: 4 [done]
 ```
 
-![sprint-board](./examples/gallery/sprint-board.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/sprint-board.svg">
+  <img alt="sprint-board" src="./examples/gallery/sprint-board-light.svg">
+</picture>
 
 ### `timeline`
 
@@ -1343,7 +1604,10 @@ title: Product Roadmap
 - Q1 '24: v2.0
 ```
 
-![timeline](./examples/gallery/timeline.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/timeline.svg">
+  <img alt="timeline" src="./examples/gallery/timeline-light.svg">
+</picture>
 
 ### `milestone`
 
@@ -1357,7 +1621,10 @@ title: Project Alpha
 - Launch
 ```
 
-![milestone](./examples/gallery/milestone.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/milestone.svg">
+  <img alt="milestone" src="./examples/gallery/milestone-light.svg">
+</picture>
 
 ### `wbs`
 
@@ -1375,7 +1642,10 @@ title: Platform v2
   - E2E
 ```
 
-![wbs](./examples/gallery/wbs.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/wbs.svg">
+  <img alt="wbs" src="./examples/gallery/wbs-light.svg">
+</picture>
 
 ---
 
@@ -1402,7 +1672,10 @@ title: System Architecture
   - File system
 ```
 
-![layered-arch](./examples/gallery/layered-arch.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/layered-arch.svg">
+  <img alt="layered-arch" src="./examples/gallery/layered-arch-light.svg">
+</picture>
 
 ### `entity`
 
@@ -1424,7 +1697,10 @@ title: Core Schema
   - type
 ```
 
-![entity](./examples/gallery/entity.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/entity.svg">
+  <img alt="entity" src="./examples/gallery/entity-light.svg">
+</picture>
 
 ### `network`
 
@@ -1442,7 +1718,10 @@ title: Service Topology
   → MCP Server
 ```
 
-![network](./examples/gallery/network.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/network.svg">
+  <img alt="network" src="./examples/gallery/network-light.svg">
+</picture>
 
 ### `pipeline`
 
@@ -1452,7 +1731,10 @@ title: CI/CD Pipeline
 - Source → Lint → Test → Build → Deploy → Monitor
 ```
 
-![pipeline](./examples/gallery/pipeline.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/pipeline.svg">
+  <img alt="pipeline" src="./examples/gallery/pipeline-light.svg">
+</picture>
 
 ### `sequence`
 
@@ -1469,7 +1751,10 @@ title: Auth Flow
   → Browser: Set-Cookie
 ```
 
-![sequence](./examples/gallery/sequence.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/sequence.svg">
+  <img alt="sequence" src="./examples/gallery/sequence-light.svg">
+</picture>
 
 ### `state-machine`
 
@@ -1488,7 +1773,10 @@ title: Order Lifecycle
 - Cancelled [final]
 ```
 
-![state-machine](./examples/gallery/state-machine.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/state-machine.svg">
+  <img alt="state-machine" src="./examples/gallery/state-machine-light.svg">
+</picture>
 
 ### `class`
 
@@ -1508,4 +1796,7 @@ title: Domain Model
   - + scratch()
 ```
 
-![class](./examples/gallery/class.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/class.svg">
+  <img alt="class" src="./examples/gallery/class-light.svg">
+</picture>

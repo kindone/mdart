@@ -1,0 +1,22 @@
+<svg viewBox="0 0 500 192" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="500" height="192" fill="#ffffff" rx="8"/>
+    <circle cx="24" cy="30" r="18" fill="#374151"/>
+    <text x="24" y="35.0" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">⚡</text>
+    <text x="52" y="26.0" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Performance</text>
+    <text x="52" y="42.0" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Sub-100ms response</text>
+    <line x1="52" y1="52" x2="484" y2="52" stroke="#e5e7eb" stroke-width="0.5"/>
+    <circle cx="24" cy="74" r="18" fill="#2f3948"/>
+    <text x="24" y="79.0" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">🔒</text>
+    <text x="52" y="70.0" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Security</text>
+    <text x="52" y="86.0" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">End-to-end encrypted</text>
+    <line x1="52" y1="96" x2="484" y2="96" stroke="#e5e7eb" stroke-width="0.5"/>
+    <circle cx="24" cy="118" r="18" fill="#273140"/>
+    <text x="24" y="123.0" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">📊</text>
+    <text x="52" y="114.0" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Analytics</text>
+    <text x="52" y="130.0" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Real-time insights</text>
+    <line x1="52" y1="140" x2="484" y2="140" stroke="#e5e7eb" stroke-width="0.5"/>
+    <circle cx="24" cy="162" r="18" fill="#1f2937"/>
+    <text x="24" y="167.0" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">🤝</text>
+    <text x="52" y="158.0" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Collaboration</text>
+    <text x="52" y="174.0" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Shared workspaces</text>
+  </svg>

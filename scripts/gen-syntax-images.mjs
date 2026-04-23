@@ -73,12 +73,21 @@ while (i < lines.length) {
   for (let k = i; k <= j; k++) out.push(lines[k])
   i = j + 1
 
-  // If a previously-injected image follows, strip it (plus surrounding blanks)
+  // If a previously-injected image follows, strip it (plus surrounding blanks).
+  // Older runs used ![](...) bare image syntax; current runs use <picture>.
   let p = i
   while (p < lines.length && lines[p].trim() === '') p++
   if (p < lines.length && /^!\[.*?\]\(\.\/examples\/syntax\/.+\.svg\)\s*$/.test(lines[p])) {
     i = p + 1
     if (i < lines.length && lines[i].trim() === '') i++
+  } else if (p < lines.length && lines[p].trim() === '<picture>') {
+    // Skip until we find </picture>
+    let q = p + 1
+    while (q < lines.length && lines[q].trim() !== '</picture>') q++
+    if (q < lines.length) {
+      i = q + 1
+      if (i < lines.length && lines[i].trim() === '') i++
+    }
   }
 
   if (!source.trim()) continue
@@ -87,9 +96,10 @@ while (i < lines.length) {
     ? `type: ${inlineType}\n${source}`
     : source
 
-  let svg
+  let svgDark, svgLight
   try {
-    svg = renderMdArt(renderable)
+    svgDark  = renderMdArt(renderable)
+    svgLight = renderMdArt(renderable, undefined, { theme: 'mono-light' })
   } catch (err) {
     console.warn(`[syntax-img] render failed near line ${j + 1}: ${err.message}`)
     failed++
@@ -101,11 +111,16 @@ while (i < lines.length) {
     || renderable.match(/^\s*type\s*:\s*([a-z0-9-]+)/im)?.[1]
     || 'mdart'
   const hash = createHash('sha256').update(renderable).digest('hex').slice(0, 10)
-  const fname = `${typeSlug}-${hash}.svg`
-  await writeFile(join(IMG_DIR_ABS, fname), svg, 'utf8')
+  const fnameDark  = `${typeSlug}-${hash}.svg`
+  const fnameLight = `${typeSlug}-${hash}-light.svg`
+  await writeFile(join(IMG_DIR_ABS, fnameDark),  svgDark,  'utf8')
+  await writeFile(join(IMG_DIR_ABS, fnameLight), svgLight, 'utf8')
 
   out.push('')
-  out.push(`![${typeSlug}](${IMG_PREFIX}${fname})`)
+  out.push('<picture>')
+  out.push(`  <source media="(prefers-color-scheme: dark)" srcset="${IMG_PREFIX}${fnameDark}">`)
+  out.push(`  <img alt="${typeSlug}" src="${IMG_PREFIX}${fnameLight}">`)
+  out.push('</picture>')
   out.push('')
   count++
 }

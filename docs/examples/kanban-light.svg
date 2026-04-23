@@ -1,0 +1,29 @@
+<svg viewBox="0 0 600 168" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
+  <text x="300" y="20" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Sprint Board</text>
+  <rect x="10.0" y="38.0" width="186.7" height="118" rx="8" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+  <path d="M18.0,38.0 Q10.0,38.0 10.0,46.0 L10.0,72.0 L196.7,72.0 L196.7,46.0 Q196.7,38.0 188.7,38.0 Z" fill="#6b728022"/>
+  <text x="103.3" y="59.0" text-anchor="middle" font-size="12" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Backlog</text>
+  <circle cx="178.7" cy="55.0" r="9" fill="#6b728044"/>
+  <text x="178.7" y="59.0" text-anchor="middle" font-size="9" fill="#111827" font-family="system-ui,sans-serif">2</text>
+  <line x1="10" y1="72.0" x2="196.7" y2="72.0" stroke="#e5e7eb" stroke-width="1"/>
+  <rect x="18.0" y="80.0" width="170.7" height="28" rx="5" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="28.0" y="97.0" font-size="11" fill="#111827" font-family="system-ui,sans-serif" >Write docs</text>
+  <rect x="18.0" y="114.0" width="170.7" height="28" rx="5" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="28.0" y="131.0" font-size="11" fill="#111827" font-family="system-ui,sans-serif" >Fix bug #42</text>
+  <rect x="206.7" y="38.0" width="186.7" height="118" rx="8" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+  <path d="M214.7,38.0 Q206.7,38.0 206.7,46.0 L206.7,72.0 L393.3,72.0 L393.3,46.0 Q393.3,38.0 385.3,38.0 Z" fill="#6b728022"/>
+  <text x="300.0" y="59.0" text-anchor="middle" font-size="12" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">In Progress</text>
+  <circle cx="375.3" cy="55.0" r="9" fill="#6b728044"/>
+  <text x="375.3" y="59.0" text-anchor="middle" font-size="9" fill="#111827" font-family="system-ui,sans-serif">1</text>
+  <line x1="206.66666666666666" y1="72.0" x2="393.3" y2="72.0" stroke="#e5e7eb" stroke-width="1"/>
+  <rect x="214.7" y="80.0" width="170.7" height="28" rx="5" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="224.7" y="97.0" font-size="11" fill="#111827" font-family="system-ui,sans-serif" >Add tests</text>
+  <rect x="403.3" y="38.0" width="186.7" height="118" rx="8" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+  <path d="M411.3,38.0 Q403.3,38.0 403.3,46.0 L403.3,72.0 L590.0,72.0 L590.0,46.0 Q590.0,38.0 582.0,38.0 Z" fill="#6b728022"/>
+  <text x="496.7" y="59.0" text-anchor="middle" font-size="12" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Done</text>
+  <circle cx="572.0" cy="55.0" r="9" fill="#6b728044"/>
+  <text x="572.0" y="59.0" text-anchor="middle" font-size="9" fill="#111827" font-family="system-ui,sans-serif">1</text>
+  <line x1="403.3333333333333" y1="72.0" x2="590.0" y2="72.0" stroke="#e5e7eb" stroke-width="1"/>
+  <rect x="411.3" y="80.0" width="170.7" height="28" rx="5" fill="#ffffff" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="421.3" y="97.0" font-size="11" fill="#111827" font-family="system-ui,sans-serif" >Initial release</text>
+</svg>

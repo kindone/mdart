@@ -107,14 +107,17 @@ title: Maslow's Hierarchy
 let ok = 0
 for (const { file, source } of examples) {
   try {
-    const svg  = renderMdArt(source)
-    const path = join(out, file)
-    await writeFile(path, svg, 'utf8')
-    console.log(`✓  docs/examples/${file}`)
+    const svgDark  = renderMdArt(source)
+    const svgLight = renderMdArt(source, undefined, { theme: 'mono-light' })
+    const darkPath  = join(out, file)
+    const lightPath = join(out, file.replace(/\.svg$/, '-light.svg'))
+    await writeFile(darkPath,  svgDark,  'utf8')
+    await writeFile(lightPath, svgLight, 'utf8')
+    console.log(`✓  docs/examples/${file} (+ -light variant)`)
     ok++
   } catch (err) {
     console.error(`✗  ${file}: ${err.message}`)
   }
 }
 
-console.log(`\n${ok}/${examples.length} examples generated → docs/examples/`)
+console.log(`\n${ok}/${examples.length} examples generated → docs/examples/ (dark + light)`)

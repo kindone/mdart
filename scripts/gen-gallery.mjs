@@ -4,7 +4,7 @@
  */
 
 import { renderMdArt } from '../packages/mdart/dist/index.js'
-import { writeFile, mkdir } from 'node:fs/promises'
+import { writeFile, mkdir, readdir, unlink } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -189,10 +189,12 @@ let total = 0, failed = 0
 for (const family of FAMILIES) {
   for (const layout of family.layouts) {
     try {
-      layout.svg = renderMdArt(layout.source)
+      layout.svgDark  = renderMdArt(layout.source)
+      layout.svgLight = renderMdArt(layout.source, undefined, { theme: 'mono-light' })
       total++
     } catch (err) {
-      layout.svg = `<div class="render-error">${layout.name}: ${err.message}</div>`
+      const errHtml = `<div class="render-error">${layout.name}: ${err.message}</div>`
+      layout.svgDark = layout.svgLight = errHtml
       failed++
     }
   }
@@ -212,7 +214,12 @@ function layoutCard(layout) {
       </div>
       <div class="card-body">
         <div class="card-code"><pre>${esc(layout.source)}</pre></div>
-        <div class="card-svg">${layout.svg}</div>
+        <div class="card-svg">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/${layout.name}.svg">
+            <img alt="${layout.name}" src="./examples/gallery/${layout.name}-light.svg">
+          </picture>
+        </div>
       </div>
     </div>`
 }
@@ -246,14 +253,26 @@ const html = `<!DOCTYPE html>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:      #0d1117;
-  --surface: #161b22;
-  --border:  #21262d;
-  --text:    #e6edf3;
-  --muted:   #8b949e;
-  --accent:  #58a6ff;
-  --code-bg: #0d1117;
+  /* Light mode (default) */
+  --bg:      #ffffff;
+  --surface: #f6f8fa;
+  --border:  #d0d7de;
+  --text:    #1f2328;
+  --muted:   #656d76;
+  --accent:  #0969da;
+  --code-bg: #f6f8fa;
   --nav-w:   220px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:      #0d1117;
+    --surface: #161b22;
+    --border:  #21262d;
+    --text:    #e6edf3;
+    --muted:   #8b949e;
+    --accent:  #58a6ff;
+    --code-bg: #0d1117;
+  }
 }
 
 body {
@@ -298,7 +317,7 @@ nav {
   border-radius: 0;
   transition: color .15s, background .15s;
 }
-.nav-link:hover { color: var(--text); background: #ffffff08; }
+.nav-link:hover { color: var(--text); background: color-mix(in srgb, var(--text) 5%, transparent); }
 .nav-link.active { color: var(--accent); }
 .nav-count {
   font-size: .7rem;
@@ -382,7 +401,8 @@ section { margin-bottom: 3.5rem; }
   justify-content: center;
   background: var(--surface);
 }
-.card-svg svg { width: 100%; height: auto; }
+.card-svg svg,
+.card-svg img { width: 100%; height: auto; display: block; }
 .render-error {
   color: #ff7b72;
   font-size: .8rem;
@@ -429,15 +449,22 @@ section { margin-bottom: 3.5rem; }
 
 // ── Markdown gallery (GitHub-friendly) ────────────────────────────────────────
 
-// Write each SVG to docs/examples/gallery/<name>.svg so gallery.md can embed them
+// Write each SVG pair (dark + light) to docs/examples/gallery/ so gallery.md
+// and gallery.html can reference them via <picture> elements.
 const galleryImgDir = join(root, 'docs', 'examples', 'gallery')
 await mkdir(galleryImgDir, { recursive: true })
 
+// Clear stale SVGs so removed layouts don't leave orphans
+for (const f of await readdir(galleryImgDir)) {
+  if (f.endsWith('.svg')) await unlink(join(galleryImgDir, f))
+}
+
 for (const family of FAMILIES) {
   for (const layout of family.layouts) {
-    if (layout.svg && !layout.svg.startsWith('<div class="render-error"')) {
-      await writeFile(join(galleryImgDir, `${layout.name}.svg`), layout.svg, 'utf8')
-    }
+    const ok = layout.svgDark && !layout.svgDark.startsWith('<div class="render-error"')
+    if (!ok) continue
+    await writeFile(join(galleryImgDir, `${layout.name}.svg`),       layout.svgDark,  'utf8')
+    await writeFile(join(galleryImgDir, `${layout.name}-light.svg`), layout.svgLight, 'utf8')
   }
 }
 
@@ -445,7 +472,15 @@ const tocLines = FAMILIES.map(f => `- [${f.name} (${f.layouts.length})](#${f.slu
 
 const mdSections = FAMILIES.map(f => {
   const cards = f.layouts.map(l => {
-    const hasSvg = l.svg && !l.svg.startsWith('<div class="render-error"')
+    const hasSvg = l.svgDark && !l.svgDark.startsWith('<div class="render-error"')
+    const picture = hasSvg
+      ? [
+          '<picture>',
+          `  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/${l.name}.svg">`,
+          `  <img alt="${l.name}" src="./examples/gallery/${l.name}-light.svg">`,
+          '</picture>',
+        ].join('\n')
+      : `> *(render error)*`
     return [
       `### \`${l.name}\``,
       '',
@@ -453,9 +488,7 @@ const mdSections = FAMILIES.map(f => {
       l.source,
       '```',
       '',
-      hasSvg
-        ? `![${l.name}](./examples/gallery/${l.name}.svg)`
-        : `> *(render error)*`,
+      picture,
       '',
     ].join('\n')
   }).join('\n')
