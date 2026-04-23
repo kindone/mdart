@@ -22,10 +22,10 @@
  *   GET  /lab/chat/stream/:jobId → SSE replay + live stream
  *   GET  /health            → { ok: true }
  *
- * Command template (register in steward app configs):
- *   /home/ubuntu/claude-steward/node_modules/.bin/tsx /home/ubuntu/mdart/apps/playground/src/server.ts {port}
+ * Run:
+ *   npx tsx src/server.ts <port>
  *
- * work_dir: /home/ubuntu/mdart/apps/playground
+ * Working directory should be `apps/playground/` (the package root).
  */
 
 import express     from 'express'
