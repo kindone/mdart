@@ -11,9 +11,12 @@ Plan → Build → Measure → Learn
 ```
 ````
 
-![Cycle](../../docs/examples/cycle.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kindone/mdart/main/docs/examples/cycle.svg">
+  <img alt="Cycle" src="https://raw.githubusercontent.com/kindone/mdart/main/docs/examples/cycle-light.svg">
+</picture>
 
-Full syntax reference with rendered examples: **[docs/syntax.md](../../docs/syntax.md)**
+Full syntax reference with rendered examples: **[docs/syntax.md](https://github.com/kindone/mdart/blob/main/docs/syntax.md)**
 
 ## Install
 

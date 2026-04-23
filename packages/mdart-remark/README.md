@@ -18,9 +18,12 @@ title: Auth Flow
 ```
 ````
 
-![Sequence](../../docs/examples/sequence.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kindone/mdart/main/docs/examples/sequence.svg">
+  <img alt="Sequence" src="https://raw.githubusercontent.com/kindone/mdart/main/docs/examples/sequence-light.svg">
+</picture>
 
-Full syntax reference with rendered examples: **[docs/syntax.md](../../docs/syntax.md)**
+Full syntax reference with rendered examples: **[docs/syntax.md](https://github.com/kindone/mdart/blob/main/docs/syntax.md)**
 
 ## Install
 

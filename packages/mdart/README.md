@@ -14,9 +14,12 @@ title: Engineering Team
 ```
 ````
 
-![Org chart](../../docs/examples/org-chart.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kindone/mdart/main/docs/examples/org-chart.svg">
+  <img alt="Org chart" src="https://raw.githubusercontent.com/kindone/mdart/main/docs/examples/org-chart-light.svg">
+</picture>
 
-Full syntax documentation with rendered examples for all 101 layout types, color overrides, and modifier attrs: **[docs/syntax.md](../../docs/syntax.md)**
+Full syntax documentation with rendered examples for all 97 layout types, color overrides, and modifier attrs: **[docs/syntax.md](https://github.com/kindone/mdart/blob/main/docs/syntax.md)**
 
 ## Install
 
