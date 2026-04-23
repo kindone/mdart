@@ -1,0 +1,23 @@
+<svg viewBox="0 0 500 214" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="500" height="214" fill="#080f18" rx="8"/>
+    <text x="250" y="22" text-anchor="middle" font-size="13" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Platform Features</text>
+    <circle cx="24" cy="52" r="18" fill="#06b6d4"/>
+    <text x="24" y="57.0" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">🔒</text>
+    <text x="52" y="48.0" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Security</text>
+    <text x="52" y="64.0" font-size="10" fill="#67e8f9" font-family="system-ui,sans-serif">Zero-trust, encrypted at rest and in transit</text>
+    <line x1="52" y1="74" x2="484" y2="74" stroke="#0e3040" stroke-width="0.5"/>
+    <circle cx="24" cy="96" r="18" fill="#07aac9"/>
+    <text x="24" y="101.0" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">⚡</text>
+    <text x="52" y="92.0" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Performance</text>
+    <text x="52" y="108.0" font-size="10" fill="#67e8f9" font-family="system-ui,sans-serif">Sub-50ms p99 response time</text>
+    <line x1="52" y1="118" x2="484" y2="118" stroke="#0e3040" stroke-width="0.5"/>
+    <circle cx="24" cy="140" r="18" fill="#079dbd"/>
+    <text x="24" y="145.0" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">🛡️</text>
+    <text x="52" y="136.0" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Reliability</text>
+    <text x="52" y="152.0" font-size="10" fill="#67e8f9" font-family="system-ui,sans-serif">99.99% uptime SLA</text>
+    <line x1="52" y1="162" x2="484" y2="162" stroke="#0e3040" stroke-width="0.5"/>
+    <circle cx="24" cy="184" r="18" fill="#0891b2"/>
+    <text x="24" y="189.0" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">📊</text>
+    <text x="52" y="180.0" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Observability</text>
+    <text x="52" y="196.0" font-size="10" fill="#67e8f9" font-family="system-ui,sans-serif">Full trace, log, and metric pipeline</text>
+  </svg>

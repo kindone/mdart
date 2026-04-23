@@ -1,0 +1,20 @@
+<svg viewBox="0 0 600 108" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#080f18;border-radius:8px">
+  
+  <rect x="12.0" y="33.0" width="81.0" height="50" rx="6" fill="#0ea5e933" stroke="#0ea5e999" stroke-width="1.5"/>
+  <text x="52.5" y="62.0" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif">Checkout</text>
+  <path d="M97.0,52.0 L111.0,58.0 L97.0,64.0" fill="#0c4a6e99" stroke="none"/>
+  <rect x="111.0" y="33.0" width="81.0" height="50" rx="6" fill="#0c9ee233" stroke="#0c9ee299" stroke-width="1.5"/>
+  <text x="151.5" y="62.0" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif">Lint</text>
+  <path d="M196.0,52.0 L210.0,58.0 L196.0,64.0" fill="#0c4a6e99" stroke="none"/>
+  <rect x="210.0" y="33.0" width="81.0" height="50" rx="6" fill="#0998db33" stroke="#0998db99" stroke-width="1.5"/>
+  <text x="250.5" y="62.0" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif">Test</text>
+  <path d="M295.0,52.0 L309.0,58.0 L295.0,64.0" fill="#0c4a6e99" stroke="none"/>
+  <rect x="309.0" y="33.0" width="81.0" height="50" rx="6" fill="#0791d533" stroke="#0791d599" stroke-width="1.5"/>
+  <text x="349.5" y="62.0" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif">Build</text>
+  <path d="M394.0,52.0 L408.0,58.0 L394.0,64.0" fill="#0c4a6e99" stroke="none"/>
+  <rect x="408.0" y="33.0" width="81.0" height="50" rx="6" fill="#048bce33" stroke="#048bce99" stroke-width="1.5"/>
+  <text x="448.5" y="62.0" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif">Push</text>
+  <path d="M493.0,52.0 L507.0,58.0 L493.0,64.0" fill="#0c4a6e99" stroke="none"/>
+  <rect x="507.0" y="33.0" width="81.0" height="50" rx="6" fill="#0284c733" stroke="#0284c799" stroke-width="1.5"/>
+  <text x="547.5" y="62.0" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif">Deploy</text>
+</svg>

@@ -64,6 +64,9 @@ Value adds a sub-label inside each shape for: `circle-process`, `funnel` (counts
 Discovery -> Design -> Build -> Test -> Deploy
 ```
 
+![chevron-process](./examples/syntax/chevron-process-414c7ddbfd.svg)
+
+
 ---
 
 ### 2 · Flat list with percentage value
@@ -87,6 +90,9 @@ title: System Health
 - Coverage: 64
 - Error Rate: 22
 ```
+
+![gauge](./examples/syntax/gauge-02930132dc.svg)
+
 
 ---
 
@@ -120,6 +126,9 @@ title: System Health
     - Billing
 ```
 
+![mind-map](./examples/syntax/mind-map-16a6aabe70.svg)
+
+
 ---
 
 ### 4 · Flow children
@@ -152,6 +161,9 @@ title: Login Flow
   -> Client: 200 OK + token
 ```
 
+![sequence](./examples/syntax/sequence-ff018d982a.svg)
+
+
 ---
 
 ### 5 · Special syntax
@@ -178,6 +190,9 @@ title: Market Entry
 ! Established incumbents
 ! Regulatory uncertainty
 ```
+
+![swot](./examples/syntax/swot-e06ce7ac0d.svg)
+
 
 #### `comparison`
 Top-level items = **rows** (attributes); children = `Column: value` pairs.
@@ -206,6 +221,9 @@ title: Database Comparison
   - Redis: Caching / sessions
 ```
 
+![comparison](./examples/syntax/comparison-c46a60964a.svg)
+
+
 #### `matrix-nxm`
 Top-level items = rows; children = cell values in column order.
 ```
@@ -232,6 +250,9 @@ title: Skills Matrix
   - Proficient
   - Expert
 ```
+
+![matrix-nxm](./examples/syntax/matrix-nxm-6eb0c79587.svg)
+
 
 #### `heatmap`
 Top-level items = rows; children = cells. Value sets colour intensity.
@@ -260,6 +281,9 @@ title: Support Tickets by Day & Shift
   - Evening: 6
 ```
 
+![heatmap](./examples/syntax/heatmap-5659bf31c7.svg)
+
+
 #### `sankey`
 Top-level items = sources with `value` = source flow weight; children = destination names, with optional target flow weights.
 ```
@@ -283,6 +307,9 @@ title: Traffic Sources
   - Pricing: 15
 ```
 
+![sankey](./examples/syntax/sankey-48921a334b.svg)
+
+
 #### `gantt` · `gantt-lite`
 Range in `[wkN–wkN]` attr. Milestones use `*` prefix with a single week.
 ```
@@ -303,6 +330,9 @@ title: Q2 Roadmap
 * GA Release [wk13]
 ```
 
+![gantt-lite](./examples/syntax/gantt-lite-925a9a40e3.svg)
+
+
 #### `pipeline`
 Single item whose label is an inline arrow chain.
 ```
@@ -312,6 +342,9 @@ Single item whose label is an inline arrow chain.
 ```mdart pipeline
 - Checkout -> Lint -> Test -> Build -> Push -> Deploy
 ```
+
+![pipeline](./examples/syntax/pipeline-84b88be365.svg)
+
 
 #### `entity`
 Top-level = tables; children = fields. Attrs: `[PK]`, `[FK->table]`.
@@ -337,6 +370,9 @@ title: Blog Schema
   - post_id: int [FK->posts]
   - body: text
 ```
+
+![entity](./examples/syntax/entity-aa8e8e129c.svg)
+
 
 #### `class`
 Top-level = classes (`[abstract]`, `[interface]`). Children = members.
@@ -368,6 +404,9 @@ title: Animals
   - + fetch()
 ```
 
+![class](./examples/syntax/class-26cd3f1253.svg)
+
+
 #### `venn` · `venn-3`
 Children inside each circle; a peer item containing `∩` labels the intersection.
 ```
@@ -394,6 +433,9 @@ title: Full-Stack Skills
 - Frontend ∩ DevOps
 ```
 
+![venn-3](./examples/syntax/venn-3-c6873fa332.svg)
+
+
 #### `ribbon-list` · `block-list`
 `- Label: description` — label rendered as header, description as body text.
 ```
@@ -409,6 +451,9 @@ title: Company Pillars
 - Values: Ship fast, own the outcome, default to open
 ```
 
+![ribbon-list](./examples/syntax/ribbon-list-ea62de7b33.svg)
+
+
 #### `icon-list`
 `- Label: description [emoji]` — emoji or icon in brackets at end.
 ```
@@ -423,6 +468,9 @@ title: Platform Features
 - Reliability: 99.99% uptime SLA [🛡️]
 - Observability: Full trace, log, and metric pipeline [📊]
 ```
+
+![icon-list](./examples/syntax/icon-list-7133faa6cf.svg)
+
 
 #### `bullet-chart`
 `- Label: actual [target]` — actual value bar plotted against a target marker, over danger/warning/good bands.
@@ -440,6 +488,9 @@ title: Sales vs Target
 - New Logos: 44 [60]
 ```
 
+![bullet-chart](./examples/syntax/bullet-chart-40e6ba2b2c.svg)
+
+
 #### `scorecard`
 `- Label: value [trend]` — value displayed prominently, trend shown as a muted badge.
 ```
@@ -455,6 +506,9 @@ title: Monthly Metrics
 - MAU: 48,200 [+8%]
 - NPS: 72 [+5]
 ```
+
+![scorecard](./examples/syntax/scorecard-dd3503bb17.svg)
+
 
 ---
 
@@ -571,6 +625,9 @@ border: #334155
 - CAC: $320 [-12%]
 ```
 
+![scorecard](./examples/syntax/scorecard-e1660ab86f.svg)
+
+
 **`primary` / `secondary` / `muted`** — control shape fills, gradients, and background tracks:
 
 ```mdart
@@ -585,6 +642,9 @@ muted: #431407
 - Test
 - Ship
 ```
+
+![cycle](./examples/syntax/cycle-084e6cc9cf.svg)
+
 
 **`text` / `textMuted`** — override label and secondary text colors (useful when pairing with a light `bg`):
 
@@ -604,6 +664,9 @@ textMuted: #78716c
 - Leave the code better than you found it
 ```
 
+![bullet-list](./examples/syntax/bullet-list-eedf16198a.svg)
+
+
 **`danger` / `warning` / `accent`** — override the three threshold colors used in gauges, progress bars, and bullet charts:
 
 ```mdart
@@ -619,6 +682,9 @@ accent: #16a34a
 - Velocity: 74
 ```
 
+![progress-list](./examples/syntax/progress-list-2dd3734000.svg)
+
+
 **`palette`** — override the extended color set used in treemap, waffle, and sankey:
 
 ```mdart
@@ -632,6 +698,9 @@ palette: #6366f1, #f43f5e, #14b8a6, #f59e0b
 - Other: 10
 ```
 
+![waffle](./examples/syntax/waffle-9a7f8776a9.svg)
+
+
 ```mdart
 type: treemap
 title: Codebase Breakdown
@@ -643,6 +712,9 @@ palette: #7c3aed, #0891b2, #059669, #d97706, #be185d
 - Tests: 14%
 - Infra: 8%
 ```
+
+![treemap](./examples/syntax/treemap-098048cc3f.svg)
+
 
 ---
 
@@ -674,6 +746,9 @@ title: Sprint 14
   - CI pipeline [done]
 ```
 
+![sprint-board](./examples/syntax/sprint-board-8503a8698f.svg)
+
+
 **`[final]`** — marks terminal states in state machines with a double border:
 
 ```mdart state-machine
@@ -688,6 +763,9 @@ title: Order Lifecycle
 - Delivered [final]
 - Cancelled [final]
 ```
+
+![state-machine](./examples/syntax/state-machine-10851a057b.svg)
+
 
 **`[abstract]` / `[interface]` / `[static]`** — class diagram modifiers:
 
@@ -710,6 +788,9 @@ title: Shape Hierarchy
   - + draw()
 ```
 
+![class](./examples/syntax/class-cfb8905c92.svg)
+
+
 **`[PK]` / `[FK->table]`** — mark primary and foreign keys in entity diagrams:
 
 ```mdart entity
@@ -728,3 +809,6 @@ title: E-Commerce Schema
   - sku: varchar
   - price: decimal
 ```
+
+![entity](./examples/syntax/entity-be98f56ce5.svg)
+

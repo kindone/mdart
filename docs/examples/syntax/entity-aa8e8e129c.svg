@@ -1,0 +1,30 @@
+<svg viewBox="0 0 600 166" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#080f18;border-radius:8px">
+  <text x="300" y="20" text-anchor="middle" font-size="13" fill="#7dd3fc" font-family="system-ui,sans-serif" font-weight="600">Blog Schema</text>
+  <rect x="31.0" y="42.0" width="170" height="104" rx="6" fill="#091520" stroke="#38bdf888" stroke-width="1.5"/>
+  <path d="M37.0,42.0 Q31.0,42.0 31.0,48.0 L31.0,72.0 L201.0,72.0 L201.0,48.0 Q201.0,42.0 195.0,42.0 Z" fill="#38bdf833"/>
+  <text x="116.0" y="61.0" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">posts</text>
+  <line x1="31.0" y1="72.0" x2="201.0" y2="72.0" stroke="#38bdf844" stroke-width="1"/>
+  <text x="41.0" y="86.0" font-size="10" fill="#38bdf8" font-family="ui-monospace,monospace">id</text>
+  <rect x="173.0" y="75.0" width="24" height="13" rx="3" fill="#38bdf822" stroke="#38bdf866" stroke-width="0.5"/>
+  <text x="185.0" y="85.0" text-anchor="middle" font-size="8" fill="#38bdf8" font-family="system-ui,sans-serif" font-weight="600">PK</text>
+  <text x="41.0" y="108.0" font-size="10" fill="#7dd3fc" font-family="ui-monospace,monospace">title</text>
+  <text x="41.0" y="130.0" font-size="10" fill="#7dd3fc" font-family="ui-monospace,monospace">author_id</text>
+  <rect x="215.0" y="42.0" width="170" height="104" rx="6" fill="#091520" stroke="#38bdf888" stroke-width="1.5"/>
+  <path d="M221.0,42.0 Q215.0,42.0 215.0,48.0 L215.0,72.0 L385.0,72.0 L385.0,48.0 Q385.0,42.0 379.0,42.0 Z" fill="#38bdf833"/>
+  <text x="300.0" y="61.0" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">users</text>
+  <line x1="215.0" y1="72.0" x2="385.0" y2="72.0" stroke="#38bdf844" stroke-width="1"/>
+  <text x="225.0" y="86.0" font-size="10" fill="#38bdf8" font-family="ui-monospace,monospace">id</text>
+  <rect x="357.0" y="75.0" width="24" height="13" rx="3" fill="#38bdf822" stroke="#38bdf866" stroke-width="0.5"/>
+  <text x="369.0" y="85.0" text-anchor="middle" font-size="8" fill="#38bdf8" font-family="system-ui,sans-serif" font-weight="600">PK</text>
+  <text x="225.0" y="108.0" font-size="10" fill="#7dd3fc" font-family="ui-monospace,monospace">name</text>
+  <text x="225.0" y="130.0" font-size="10" fill="#7dd3fc" font-family="ui-monospace,monospace">email</text>
+  <rect x="399.0" y="42.0" width="170" height="104" rx="6" fill="#091520" stroke="#38bdf888" stroke-width="1.5"/>
+  <path d="M405.0,42.0 Q399.0,42.0 399.0,48.0 L399.0,72.0 L569.0,72.0 L569.0,48.0 Q569.0,42.0 563.0,42.0 Z" fill="#38bdf833"/>
+  <text x="484.0" y="61.0" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">comments</text>
+  <line x1="399.0" y1="72.0" x2="569.0" y2="72.0" stroke="#38bdf844" stroke-width="1"/>
+  <text x="409.0" y="86.0" font-size="10" fill="#38bdf8" font-family="ui-monospace,monospace">id</text>
+  <rect x="541.0" y="75.0" width="24" height="13" rx="3" fill="#38bdf822" stroke="#38bdf866" stroke-width="0.5"/>
+  <text x="553.0" y="85.0" text-anchor="middle" font-size="8" fill="#38bdf8" font-family="system-ui,sans-serif" font-weight="600">PK</text>
+  <text x="409.0" y="108.0" font-size="10" fill="#7dd3fc" font-family="ui-monospace,monospace">post_id</text>
+  <text x="409.0" y="130.0" font-size="10" fill="#7dd3fc" font-family="ui-monospace,monospace">body</text>
+</svg>
