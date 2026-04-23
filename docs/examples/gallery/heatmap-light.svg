@@ -1,42 +1,42 @@
-<svg viewBox="0 0 452 186" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
-  <text x="226" y="20" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Response Time by Hour &amp; Day</text>
-  <rect x="0" y="30" width="100" height="28" fill="#f9fafb" stroke="#e5e7eb" stroke-width="0.5"/>
-  <rect x="100" y="30" width="88" height="28" fill="#f9fafb" stroke="#e5e7eb" stroke-width="0.5"/>
-  <text x="144.0" y="49.0" text-anchor="middle" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">A</text>
-  <rect x="188" y="30" width="88" height="28" fill="#f9fafb" stroke="#e5e7eb" stroke-width="0.5"/>
-  <text x="232.0" y="49.0" text-anchor="middle" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">B</text>
-  <rect x="276" y="30" width="88" height="28" fill="#f9fafb" stroke="#e5e7eb" stroke-width="0.5"/>
-  <text x="320.0" y="49.0" text-anchor="middle" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">C</text>
-  <rect x="364" y="30" width="88" height="28" fill="#f9fafb" stroke="#e5e7eb" stroke-width="0.5"/>
-  <text x="408.0" y="49.0" text-anchor="middle" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">D</text>
-  <rect x="0" y="58" width="100" height="40" fill="#f9fafb" stroke="#e5e7eb" stroke-width="0.5"/>
-  <text x="8" y="83.0" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Mon</text>
-  <rect x="100" y="58" width="88" height="40" fill="#37415156" stroke="#e5e7eb55" stroke-width="0.5"/>
-  <text x="144.0" y="83.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">45ms</text>
-  <rect x="188" y="58" width="88" height="40" fill="#3741518d" stroke="#e5e7eb55" stroke-width="0.5"/>
-  <text x="232.0" y="83.0" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif">82ms</text>
-  <rect x="276" y="58" width="88" height="40" fill="#374151c6" stroke="#e5e7eb55" stroke-width="0.5"/>
-  <text x="320.0" y="83.0" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif">120ms</text>
-  <rect x="364" y="58" width="88" height="40" fill="#374151a1" stroke="#e5e7eb55" stroke-width="0.5"/>
-  <text x="408.0" y="83.0" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif">95ms</text>
-  <rect x="0" y="98" width="100" height="40" fill="#f9fafb" stroke="#e5e7eb" stroke-width="0.5"/>
-  <text x="8" y="123.0" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Wed</text>
-  <rect x="100" y="98" width="88" height="40" fill="#3741514b" stroke="#e5e7eb55" stroke-width="0.5"/>
-  <text x="144.0" y="123.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">38ms</text>
-  <rect x="188" y="98" width="88" height="40" fill="#37415186" stroke="#e5e7eb55" stroke-width="0.5"/>
-  <text x="232.0" y="123.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">77ms</text>
-  <rect x="276" y="98" width="88" height="40" fill="#374151e4" stroke="#e5e7eb55" stroke-width="0.5"/>
-  <text x="320.0" y="123.0" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif">140ms</text>
-  <rect x="364" y="98" width="88" height="40" fill="#37415196" stroke="#e5e7eb55" stroke-width="0.5"/>
-  <text x="408.0" y="123.0" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif">88ms</text>
-  <rect x="0" y="138" width="100" height="40" fill="#f9fafb" stroke="#e5e7eb" stroke-width="0.5"/>
-  <text x="8" y="163.0" font-size="10" fill="#6b7280" font-family="system-ui,sans-serif">Fri</text>
-  <rect x="100" y="138" width="88" height="40" fill="#37415160" stroke="#e5e7eb55" stroke-width="0.5"/>
-  <text x="144.0" y="163.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">52ms</text>
-  <rect x="188" y="138" width="88" height="40" fill="#3741519b" stroke="#e5e7eb55" stroke-width="0.5"/>
-  <text x="232.0" y="163.0" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif">91ms</text>
-  <rect x="276" y="138" width="88" height="40" fill="#374151b4" stroke="#e5e7eb55" stroke-width="0.5"/>
-  <text x="320.0" y="163.0" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif">108ms</text>
-  <rect x="364" y="138" width="88" height="40" fill="#3741517e" stroke="#e5e7eb55" stroke-width="0.5"/>
-  <text x="408.0" y="163.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">72ms</text>
+<svg viewBox="0 0 452 186" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#f0fdf4;border-radius:8px">
+  <text x="226" y="20" text-anchor="middle" font-size="13" fill="#059669" font-family="system-ui,sans-serif" font-weight="600">Response Time by Hour &amp; Day</text>
+  <rect x="0" y="30" width="100" height="28" fill="#ffffff" stroke="#bbf7d0" stroke-width="0.5"/>
+  <rect x="100" y="30" width="88" height="28" fill="#ffffff" stroke="#bbf7d0" stroke-width="0.5"/>
+  <text x="144.0" y="49.0" text-anchor="middle" font-size="10" fill="#059669" font-family="system-ui,sans-serif" font-weight="600">A</text>
+  <rect x="188" y="30" width="88" height="28" fill="#ffffff" stroke="#bbf7d0" stroke-width="0.5"/>
+  <text x="232.0" y="49.0" text-anchor="middle" font-size="10" fill="#059669" font-family="system-ui,sans-serif" font-weight="600">B</text>
+  <rect x="276" y="30" width="88" height="28" fill="#ffffff" stroke="#bbf7d0" stroke-width="0.5"/>
+  <text x="320.0" y="49.0" text-anchor="middle" font-size="10" fill="#059669" font-family="system-ui,sans-serif" font-weight="600">C</text>
+  <rect x="364" y="30" width="88" height="28" fill="#ffffff" stroke="#bbf7d0" stroke-width="0.5"/>
+  <text x="408.0" y="49.0" text-anchor="middle" font-size="10" fill="#059669" font-family="system-ui,sans-serif" font-weight="600">D</text>
+  <rect x="0" y="58" width="100" height="40" fill="#ffffff" stroke="#bbf7d0" stroke-width="0.5"/>
+  <text x="8" y="83.0" font-size="10" fill="#059669" font-family="system-ui,sans-serif">Mon</text>
+  <rect x="100" y="58" width="88" height="40" fill="#05966956" stroke="#bbf7d055" stroke-width="0.5"/>
+  <text x="144.0" y="83.0" text-anchor="middle" font-size="10" fill="#052e16" font-family="system-ui,sans-serif">45ms</text>
+  <rect x="188" y="58" width="88" height="40" fill="#0596698d" stroke="#bbf7d055" stroke-width="0.5"/>
+  <text x="232.0" y="83.0" text-anchor="middle" font-size="10" fill="#f0fdf4" font-family="system-ui,sans-serif">82ms</text>
+  <rect x="276" y="58" width="88" height="40" fill="#059669c6" stroke="#bbf7d055" stroke-width="0.5"/>
+  <text x="320.0" y="83.0" text-anchor="middle" font-size="10" fill="#f0fdf4" font-family="system-ui,sans-serif">120ms</text>
+  <rect x="364" y="58" width="88" height="40" fill="#059669a1" stroke="#bbf7d055" stroke-width="0.5"/>
+  <text x="408.0" y="83.0" text-anchor="middle" font-size="10" fill="#f0fdf4" font-family="system-ui,sans-serif">95ms</text>
+  <rect x="0" y="98" width="100" height="40" fill="#ffffff" stroke="#bbf7d0" stroke-width="0.5"/>
+  <text x="8" y="123.0" font-size="10" fill="#059669" font-family="system-ui,sans-serif">Wed</text>
+  <rect x="100" y="98" width="88" height="40" fill="#0596694b" stroke="#bbf7d055" stroke-width="0.5"/>
+  <text x="144.0" y="123.0" text-anchor="middle" font-size="10" fill="#052e16" font-family="system-ui,sans-serif">38ms</text>
+  <rect x="188" y="98" width="88" height="40" fill="#05966986" stroke="#bbf7d055" stroke-width="0.5"/>
+  <text x="232.0" y="123.0" text-anchor="middle" font-size="10" fill="#052e16" font-family="system-ui,sans-serif">77ms</text>
+  <rect x="276" y="98" width="88" height="40" fill="#059669e4" stroke="#bbf7d055" stroke-width="0.5"/>
+  <text x="320.0" y="123.0" text-anchor="middle" font-size="10" fill="#f0fdf4" font-family="system-ui,sans-serif">140ms</text>
+  <rect x="364" y="98" width="88" height="40" fill="#05966996" stroke="#bbf7d055" stroke-width="0.5"/>
+  <text x="408.0" y="123.0" text-anchor="middle" font-size="10" fill="#f0fdf4" font-family="system-ui,sans-serif">88ms</text>
+  <rect x="0" y="138" width="100" height="40" fill="#ffffff" stroke="#bbf7d0" stroke-width="0.5"/>
+  <text x="8" y="163.0" font-size="10" fill="#059669" font-family="system-ui,sans-serif">Fri</text>
+  <rect x="100" y="138" width="88" height="40" fill="#05966960" stroke="#bbf7d055" stroke-width="0.5"/>
+  <text x="144.0" y="163.0" text-anchor="middle" font-size="10" fill="#052e16" font-family="system-ui,sans-serif">52ms</text>
+  <rect x="188" y="138" width="88" height="40" fill="#0596699b" stroke="#bbf7d055" stroke-width="0.5"/>
+  <text x="232.0" y="163.0" text-anchor="middle" font-size="10" fill="#f0fdf4" font-family="system-ui,sans-serif">91ms</text>
+  <rect x="276" y="138" width="88" height="40" fill="#059669b4" stroke="#bbf7d055" stroke-width="0.5"/>
+  <text x="320.0" y="163.0" text-anchor="middle" font-size="10" fill="#f0fdf4" font-family="system-ui,sans-serif">108ms</text>
+  <rect x="364" y="138" width="88" height="40" fill="#0596697e" stroke="#bbf7d055" stroke-width="0.5"/>
+  <text x="408.0" y="163.0" text-anchor="middle" font-size="10" fill="#052e16" font-family="system-ui,sans-serif">72ms</text>
 </svg>

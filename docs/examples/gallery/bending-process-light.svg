@@ -1,23 +1,23 @@
 <svg viewBox="0 0 624 136" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="624" height="136" fill="#ffffff" rx="8"/>
+    <rect width="624" height="136" fill="#f0fdf4" rx="8"/>
     <defs>
-    <marker id="bp-r" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#6b7280"/></marker>
+    <marker id="bp-r" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#10b981"/></marker>
   </defs>
-    <rect x="40.0" y="12.0" width="175.3" height="36" rx="5" fill="#37415133" stroke="#374151" stroke-width="1.2"/>
-    <text x="127.7" y="34.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Research</text>
-    <line x1="216.3" y1="30.0" x2="220.3" y2="30.0" stroke="#6b728099" stroke-width="1.5" marker-end="url(#bp-r)"/>
-    <rect x="221.3" y="12.0" width="175.3" height="36" rx="5" fill="#323c4c33" stroke="#323c4c" stroke-width="1.2"/>
-    <text x="309.0" y="34.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Design</text>
-    <line x1="397.7" y1="30.0" x2="401.7" y2="30.0" stroke="#6b728099" stroke-width="1.5" marker-end="url(#bp-r)"/>
-    <rect x="402.7" y="12.0" width="175.3" height="36" rx="5" fill="#2d374733" stroke="#2d3747" stroke-width="1.2"/>
-    <text x="490.3" y="34.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Prototype</text>
-    <path d="M578,30.0 H594 A8,8 0 0,1 602,38.0 V82.0 A8,8 0 0,1 594,90.0 H578" fill="none" stroke="#6b728088" stroke-width="2" marker-end="url(#bp-r)"/>
-    <rect x="402.7" y="72.0" width="175.3" height="36" rx="5" fill="#29334133" stroke="#293341" stroke-width="1.2"/>
-    <text x="490.3" y="94.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Test</text>
-    <line x1="401.7" y1="90.0" x2="397.7" y2="90.0" stroke="#6b728099" stroke-width="1.5" marker-end="url(#bp-r)"/>
-    <rect x="221.3" y="72.0" width="175.3" height="36" rx="5" fill="#242e3c33" stroke="#242e3c" stroke-width="1.2"/>
-    <text x="309.0" y="94.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Review</text>
-    <line x1="220.3" y1="90.0" x2="216.3" y2="90.0" stroke="#6b728099" stroke-width="1.5" marker-end="url(#bp-r)"/>
-    <rect x="40.0" y="72.0" width="175.3" height="36" rx="5" fill="#6b728033" stroke="#6b7280" stroke-width="1.2"/>
-    <text x="127.7" y="94.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Launch</text>
+    <rect x="40.0" y="12.0" width="175.3" height="36" rx="5" fill="#05966933" stroke="#059669" stroke-width="1.2"/>
+    <text x="127.7" y="34.0" text-anchor="middle" font-size="10" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Research</text>
+    <line x1="216.3" y1="30.0" x2="220.3" y2="30.0" stroke="#10b98199" stroke-width="1.5" marker-end="url(#bp-r)"/>
+    <rect x="221.3" y="12.0" width="175.3" height="36" rx="5" fill="#05906533" stroke="#059065" stroke-width="1.2"/>
+    <text x="309.0" y="34.0" text-anchor="middle" font-size="10" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Design</text>
+    <line x1="397.7" y1="30.0" x2="401.7" y2="30.0" stroke="#10b98199" stroke-width="1.5" marker-end="url(#bp-r)"/>
+    <rect x="402.7" y="12.0" width="175.3" height="36" rx="5" fill="#058a6233" stroke="#058a62" stroke-width="1.2"/>
+    <text x="490.3" y="34.0" text-anchor="middle" font-size="10" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Prototype</text>
+    <path d="M578,30.0 H594 A8,8 0 0,1 602,38.0 V82.0 A8,8 0 0,1 594,90.0 H578" fill="none" stroke="#10b98188" stroke-width="2" marker-end="url(#bp-r)"/>
+    <rect x="402.7" y="72.0" width="175.3" height="36" rx="5" fill="#04845e33" stroke="#04845e" stroke-width="1.2"/>
+    <text x="490.3" y="94.0" text-anchor="middle" font-size="10" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Test</text>
+    <line x1="401.7" y1="90.0" x2="397.7" y2="90.0" stroke="#10b98199" stroke-width="1.5" marker-end="url(#bp-r)"/>
+    <rect x="221.3" y="72.0" width="175.3" height="36" rx="5" fill="#047e5b33" stroke="#047e5b" stroke-width="1.2"/>
+    <text x="309.0" y="94.0" text-anchor="middle" font-size="10" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Review</text>
+    <line x1="220.3" y1="90.0" x2="216.3" y2="90.0" stroke="#10b98199" stroke-width="1.5" marker-end="url(#bp-r)"/>
+    <rect x="40.0" y="72.0" width="175.3" height="36" rx="5" fill="#10b98133" stroke="#10b981" stroke-width="1.2"/>
+    <text x="127.7" y="94.0" text-anchor="middle" font-size="10" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Launch</text>
   </svg>

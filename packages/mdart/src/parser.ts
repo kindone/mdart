@@ -12,6 +12,7 @@ export interface MdArtItem {
 export interface MdArtSpec {
   type: string
   theme?: string
+  mode?: 'dark' | 'light'
   title?: string
   direction?: 'LR' | 'TB'
   width?: number
@@ -122,6 +123,10 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
       const val = trimmed.slice(colonIdx + 1).trim()
       if (key === 'type') spec.type = val
       else if (key === 'theme') spec.theme = val
+      else if (key === 'mode') {
+        const m = val.toLowerCase()
+        if (m === 'dark' || m === 'light') spec.mode = m
+      }
       else if (key === 'title') spec.title = val
       else if (key === 'direction') spec.direction = val as 'LR' | 'TB'
       else if (key === 'width') spec.width = parseInt(val, 10) || undefined

@@ -1,25 +1,25 @@
 <svg viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="560" height="180" fill="#ffffff" rx="8"/>
-    <line x1="118.5" y1="42.0" x2="122.5" y2="42.0" stroke="#37415199" stroke-width="1.5"/>
-    <line x1="122.5" y1="42.0" x2="122.5" y2="66.0" stroke="#37415155" stroke-width="1.5" stroke-dasharray="3,3"/>
-    <line x1="122.5" y1="66.0" x2="126.5" y2="66.0" stroke="#37415199" stroke-width="1.5"/>
-    <line x1="223.5" y1="66.0" x2="227.5" y2="66.0" stroke="#313b4b99" stroke-width="1.5"/>
-    <line x1="227.5" y1="66.0" x2="227.5" y2="90.0" stroke="#313b4b55" stroke-width="1.5" stroke-dasharray="3,3"/>
-    <line x1="227.5" y1="90.0" x2="231.5" y2="90.0" stroke="#313b4b99" stroke-width="1.5"/>
-    <line x1="328.5" y1="90.0" x2="332.5" y2="90.0" stroke="#2b354499" stroke-width="1.5"/>
-    <line x1="332.5" y1="90.0" x2="332.5" y2="114.0" stroke="#2b354455" stroke-width="1.5" stroke-dasharray="3,3"/>
-    <line x1="332.5" y1="114.0" x2="336.5" y2="114.0" stroke="#2b354499" stroke-width="1.5"/>
-    <line x1="433.5" y1="114.0" x2="437.5" y2="114.0" stroke="#252f3e99" stroke-width="1.5"/>
-    <line x1="437.5" y1="114.0" x2="437.5" y2="138.0" stroke="#252f3e55" stroke-width="1.5" stroke-dasharray="3,3"/>
-    <line x1="437.5" y1="138.0" x2="441.5" y2="138.0" stroke="#252f3e99" stroke-width="1.5"/>
-    <rect x="21.5" y="22.0" width="97" height="40" rx="5" fill="#37415133" stroke="#374151" stroke-width="1.5"/>
-    <text x="70.0" y="46.0" text-anchor="middle" font-size="10.5" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Requirements</text>
-    <rect x="126.5" y="46.0" width="97" height="40" rx="5" fill="#313b4b33" stroke="#313b4b" stroke-width="1.5"/>
-    <text x="175.0" y="70.0" text-anchor="middle" font-size="10.5" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Design</text>
-    <rect x="231.5" y="70.0" width="97" height="40" rx="5" fill="#2b354433" stroke="#2b3544" stroke-width="1.5"/>
-    <text x="280.0" y="94.0" text-anchor="middle" font-size="10.5" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Development</text>
-    <rect x="336.5" y="94.0" width="97" height="40" rx="5" fill="#252f3e33" stroke="#252f3e" stroke-width="1.5"/>
-    <text x="385.0" y="118.0" text-anchor="middle" font-size="10.5" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Testing</text>
-    <rect x="441.5" y="118.0" width="97" height="40" rx="5" fill="#1f293733" stroke="#1f2937" stroke-width="1.5"/>
-    <text x="490.0" y="142.0" text-anchor="middle" font-size="10.5" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Deployment</text>
+    <rect width="560" height="180" fill="#f0fdf4" rx="8"/>
+    <line x1="118.5" y1="42.0" x2="122.5" y2="42.0" stroke="#05966999" stroke-width="1.5"/>
+    <line x1="122.5" y1="42.0" x2="122.5" y2="66.0" stroke="#05966955" stroke-width="1.5" stroke-dasharray="3,3"/>
+    <line x1="122.5" y1="66.0" x2="126.5" y2="66.0" stroke="#05966999" stroke-width="1.5"/>
+    <line x1="223.5" y1="66.0" x2="227.5" y2="66.0" stroke="#058f6599" stroke-width="1.5"/>
+    <line x1="227.5" y1="66.0" x2="227.5" y2="90.0" stroke="#058f6555" stroke-width="1.5" stroke-dasharray="3,3"/>
+    <line x1="227.5" y1="90.0" x2="231.5" y2="90.0" stroke="#058f6599" stroke-width="1.5"/>
+    <line x1="328.5" y1="90.0" x2="332.5" y2="90.0" stroke="#05876099" stroke-width="1.5"/>
+    <line x1="332.5" y1="90.0" x2="332.5" y2="114.0" stroke="#05876055" stroke-width="1.5" stroke-dasharray="3,3"/>
+    <line x1="332.5" y1="114.0" x2="336.5" y2="114.0" stroke="#05876099" stroke-width="1.5"/>
+    <line x1="433.5" y1="114.0" x2="437.5" y2="114.0" stroke="#04805c99" stroke-width="1.5"/>
+    <line x1="437.5" y1="114.0" x2="437.5" y2="138.0" stroke="#04805c55" stroke-width="1.5" stroke-dasharray="3,3"/>
+    <line x1="437.5" y1="138.0" x2="441.5" y2="138.0" stroke="#04805c99" stroke-width="1.5"/>
+    <rect x="21.5" y="22.0" width="97" height="40" rx="5" fill="#05966933" stroke="#059669" stroke-width="1.5"/>
+    <text x="70.0" y="46.0" text-anchor="middle" font-size="10.5" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Requirements</text>
+    <rect x="126.5" y="46.0" width="97" height="40" rx="5" fill="#058f6533" stroke="#058f65" stroke-width="1.5"/>
+    <text x="175.0" y="70.0" text-anchor="middle" font-size="10.5" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Design</text>
+    <rect x="231.5" y="70.0" width="97" height="40" rx="5" fill="#05876033" stroke="#058760" stroke-width="1.5"/>
+    <text x="280.0" y="94.0" text-anchor="middle" font-size="10.5" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Development</text>
+    <rect x="336.5" y="94.0" width="97" height="40" rx="5" fill="#04805c33" stroke="#04805c" stroke-width="1.5"/>
+    <text x="385.0" y="118.0" text-anchor="middle" font-size="10.5" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Testing</text>
+    <rect x="441.5" y="118.0" width="97" height="40" rx="5" fill="#04785733" stroke="#047857" stroke-width="1.5"/>
+    <text x="490.0" y="142.0" text-anchor="middle" font-size="10.5" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Deployment</text>
   </svg>

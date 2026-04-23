@@ -1,20 +1,20 @@
-<svg viewBox="0 0 600 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
-  <text x="300" y="20" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">CI/CD Pipeline</text>
-  <rect x="12.0" y="55.0" width="81.0" height="50" rx="6" fill="#37415133" stroke="#37415199" stroke-width="1.5"/>
-  <text x="52.5" y="84.0" text-anchor="middle" font-size="12" fill="#111827" font-family="system-ui,sans-serif">Source</text>
-  <path d="M97.0,74.0 L111.0,80.0 L97.0,86.0" fill="#d1d5db99" stroke="none"/>
-  <rect x="111.0" y="55.0" width="81.0" height="50" rx="6" fill="#323c4c33" stroke="#323c4c99" stroke-width="1.5"/>
-  <text x="151.5" y="84.0" text-anchor="middle" font-size="12" fill="#111827" font-family="system-ui,sans-serif">Lint</text>
-  <path d="M196.0,74.0 L210.0,80.0 L196.0,86.0" fill="#d1d5db99" stroke="none"/>
-  <rect x="210.0" y="55.0" width="81.0" height="50" rx="6" fill="#2d374733" stroke="#2d374799" stroke-width="1.5"/>
-  <text x="250.5" y="84.0" text-anchor="middle" font-size="12" fill="#111827" font-family="system-ui,sans-serif">Test</text>
-  <path d="M295.0,74.0 L309.0,80.0 L295.0,86.0" fill="#d1d5db99" stroke="none"/>
-  <rect x="309.0" y="55.0" width="81.0" height="50" rx="6" fill="#29334133" stroke="#29334199" stroke-width="1.5"/>
-  <text x="349.5" y="84.0" text-anchor="middle" font-size="12" fill="#111827" font-family="system-ui,sans-serif">Build</text>
-  <path d="M394.0,74.0 L408.0,80.0 L394.0,86.0" fill="#d1d5db99" stroke="none"/>
-  <rect x="408.0" y="55.0" width="81.0" height="50" rx="6" fill="#242e3c33" stroke="#242e3c99" stroke-width="1.5"/>
-  <text x="448.5" y="84.0" text-anchor="middle" font-size="12" fill="#111827" font-family="system-ui,sans-serif">Deploy</text>
-  <path d="M493.0,74.0 L507.0,80.0 L493.0,86.0" fill="#d1d5db99" stroke="none"/>
-  <rect x="507.0" y="55.0" width="81.0" height="50" rx="6" fill="#1f293733" stroke="#1f293799" stroke-width="1.5"/>
-  <text x="547.5" y="84.0" text-anchor="middle" font-size="12" fill="#111827" font-family="system-ui,sans-serif">Monitor</text>
+<svg viewBox="0 0 600 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#f0f9ff;border-radius:8px">
+  <text x="300" y="20" text-anchor="middle" font-size="13" fill="#0369a1" font-family="system-ui,sans-serif" font-weight="600">CI/CD Pipeline</text>
+  <rect x="12.0" y="55.0" width="81.0" height="50" rx="6" fill="#0284c733" stroke="#0284c799" stroke-width="1.5"/>
+  <text x="52.5" y="84.0" text-anchor="middle" font-size="12" fill="#082f49" font-family="system-ui,sans-serif">Source</text>
+  <path d="M97.0,74.0 L111.0,80.0 L97.0,86.0" fill="#e0f2fe99" stroke="none"/>
+  <rect x="111.0" y="55.0" width="81.0" height="50" rx="6" fill="#027fbf33" stroke="#027fbf99" stroke-width="1.5"/>
+  <text x="151.5" y="84.0" text-anchor="middle" font-size="12" fill="#082f49" font-family="system-ui,sans-serif">Lint</text>
+  <path d="M196.0,74.0 L210.0,80.0 L196.0,86.0" fill="#e0f2fe99" stroke="none"/>
+  <rect x="210.0" y="55.0" width="81.0" height="50" rx="6" fill="#0279b833" stroke="#0279b899" stroke-width="1.5"/>
+  <text x="250.5" y="84.0" text-anchor="middle" font-size="12" fill="#082f49" font-family="system-ui,sans-serif">Test</text>
+  <path d="M295.0,74.0 L309.0,80.0 L295.0,86.0" fill="#e0f2fe99" stroke="none"/>
+  <rect x="309.0" y="55.0" width="81.0" height="50" rx="6" fill="#0374b033" stroke="#0374b099" stroke-width="1.5"/>
+  <text x="349.5" y="84.0" text-anchor="middle" font-size="12" fill="#082f49" font-family="system-ui,sans-serif">Build</text>
+  <path d="M394.0,74.0 L408.0,80.0 L394.0,86.0" fill="#e0f2fe99" stroke="none"/>
+  <rect x="408.0" y="55.0" width="81.0" height="50" rx="6" fill="#036ea933" stroke="#036ea999" stroke-width="1.5"/>
+  <text x="448.5" y="84.0" text-anchor="middle" font-size="12" fill="#082f49" font-family="system-ui,sans-serif">Deploy</text>
+  <path d="M493.0,74.0 L507.0,80.0 L493.0,86.0" fill="#e0f2fe99" stroke="none"/>
+  <rect x="507.0" y="55.0" width="81.0" height="50" rx="6" fill="#0369a133" stroke="#0369a199" stroke-width="1.5"/>
+  <text x="547.5" y="84.0" text-anchor="middle" font-size="12" fill="#082f49" font-family="system-ui,sans-serif">Monitor</text>
 </svg>

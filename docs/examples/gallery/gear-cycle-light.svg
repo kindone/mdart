@@ -1,20 +1,20 @@
-<svg viewBox="0 0 500 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
+<svg viewBox="0 0 500 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#faf5ff;border-radius:8px">
   
-  <defs><marker id="gear-arr" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#d1d5dbdd"/></marker></defs>
-  <path d="M296.2,42.9 A154.2,154.2 0 0,1 397.1,143.8" fill="none" stroke="#d1d5dbbb" stroke-width="1.8" marker-end="url(#gear-arr)"/>
-  <path d="M397.1,236.2 A154.2,154.2 0 0,1 296.2,337.1" fill="none" stroke="#d1d5dbbb" stroke-width="1.8" marker-end="url(#gear-arr)"/>
-  <path d="M203.8,337.1 A154.2,154.2 0 0,1 102.9,236.2" fill="none" stroke="#d1d5dbbb" stroke-width="1.8" marker-end="url(#gear-arr)"/>
-  <path d="M102.9,143.8 A154.2,154.2 0 0,1 203.8,42.9" fill="none" stroke="#d1d5dbbb" stroke-width="1.8" marker-end="url(#gear-arr)"/>
-  <path d="M 294.0,60.0 L 279.6,72.2 L 281.1,91.1 L 262.2,89.6 L 250.0,104.0 L 237.8,89.6 L 218.9,91.1 L 220.4,72.2 L 206.0,60.0 L 220.4,47.8 L 218.9,28.9 L 237.8,30.4 L 250.0,16.0 L 262.2,30.4 L 281.1,28.9 L 279.6,47.8 Z" fill="#374151" opacity="0.8"/>
-  <circle cx="250" cy="60" r="24" fill="#ffffff"/>
-  <text x="250.0" y="62.4" text-anchor="middle" font-size="9" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Intake</text>
-  <path d="M 423.8,194.3 L 408.2,205.1 L 407.9,224.0 L 389.3,220.6 L 375.7,233.8 L 364.9,218.2 L 346.0,217.9 L 349.4,199.3 L 336.2,185.7 L 351.8,174.9 L 352.1,156.0 L 370.7,159.4 L 384.3,146.2 L 395.1,161.8 L 414.0,162.1 L 410.6,180.7 Z" fill="#2f3948" opacity="0.8"/>
-  <circle cx="380" cy="190" r="24" fill="#ffffff"/>
-  <text x="380.0" y="192.4" text-anchor="middle" font-size="9" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Process</text>
-  <path d="M 293.2,328.6 L 276.6,337.8 L 274.4,356.6 L 256.2,351.4 L 241.4,363.2 L 232.2,346.6 L 213.4,344.4 L 218.6,326.2 L 206.8,311.4 L 223.4,302.2 L 225.6,283.4 L 243.8,288.6 L 258.6,276.8 L 267.8,293.4 L 286.6,295.6 L 281.4,313.8 Z" fill="#273140" opacity="0.8"/>
-  <circle cx="250" cy="320" r="24" fill="#ffffff"/>
-  <text x="250.0" y="322.4" text-anchor="middle" font-size="9" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Output</text>
-  <path d="M 162.1,202.8 L 144.7,210.3 L 140.7,228.8 L 123.1,221.8 L 107.2,232.1 L 99.7,214.7 L 81.2,210.7 L 88.2,193.1 L 77.9,177.2 L 95.3,169.7 L 99.3,151.2 L 116.9,158.2 L 132.8,147.9 L 140.3,165.3 L 158.8,169.3 L 151.8,186.9 Z" fill="#1f2937" opacity="0.8"/>
-  <circle cx="120" cy="190.00000000000003" r="24" fill="#ffffff"/>
-  <text x="120.0" y="192.4" text-anchor="middle" font-size="9" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Review</text>
+  <defs><marker id="gear-arr" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="#ede9fedd"/></marker></defs>
+  <path d="M296.2,42.9 A154.2,154.2 0 0,1 397.1,143.8" fill="none" stroke="#ede9febb" stroke-width="1.8" marker-end="url(#gear-arr)"/>
+  <path d="M397.1,236.2 A154.2,154.2 0 0,1 296.2,337.1" fill="none" stroke="#ede9febb" stroke-width="1.8" marker-end="url(#gear-arr)"/>
+  <path d="M203.8,337.1 A154.2,154.2 0 0,1 102.9,236.2" fill="none" stroke="#ede9febb" stroke-width="1.8" marker-end="url(#gear-arr)"/>
+  <path d="M102.9,143.8 A154.2,154.2 0 0,1 203.8,42.9" fill="none" stroke="#ede9febb" stroke-width="1.8" marker-end="url(#gear-arr)"/>
+  <path d="M 294.0,60.0 L 279.6,72.2 L 281.1,91.1 L 262.2,89.6 L 250.0,104.0 L 237.8,89.6 L 218.9,91.1 L 220.4,72.2 L 206.0,60.0 L 220.4,47.8 L 218.9,28.9 L 237.8,30.4 L 250.0,16.0 L 262.2,30.4 L 281.1,28.9 L 279.6,47.8 Z" fill="#7c3aed" opacity="0.8"/>
+  <circle cx="250" cy="60" r="24" fill="#faf5ff"/>
+  <text x="250.0" y="62.4" text-anchor="middle" font-size="9" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600">Intake</text>
+  <path d="M 423.8,194.3 L 408.2,205.1 L 407.9,224.0 L 389.3,220.6 L 375.7,233.8 L 364.9,218.2 L 346.0,217.9 L 349.4,199.3 L 336.2,185.7 L 351.8,174.9 L 352.1,156.0 L 370.7,159.4 L 384.3,146.2 L 395.1,161.8 L 414.0,162.1 L 410.6,180.7 Z" fill="#7734e6" opacity="0.8"/>
+  <circle cx="380" cy="190" r="24" fill="#faf5ff"/>
+  <text x="380.0" y="192.4" text-anchor="middle" font-size="9" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600">Process</text>
+  <path d="M 293.2,328.6 L 276.6,337.8 L 274.4,356.6 L 256.2,351.4 L 241.4,363.2 L 232.2,346.6 L 213.4,344.4 L 218.6,326.2 L 206.8,311.4 L 223.4,302.2 L 225.6,283.4 L 243.8,288.6 L 258.6,276.8 L 267.8,293.4 L 286.6,295.6 L 281.4,313.8 Z" fill="#722ee0" opacity="0.8"/>
+  <circle cx="250" cy="320" r="24" fill="#faf5ff"/>
+  <text x="250.0" y="322.4" text-anchor="middle" font-size="9" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600">Output</text>
+  <path d="M 162.1,202.8 L 144.7,210.3 L 140.7,228.8 L 123.1,221.8 L 107.2,232.1 L 99.7,214.7 L 81.2,210.7 L 88.2,193.1 L 77.9,177.2 L 95.3,169.7 L 99.3,151.2 L 116.9,158.2 L 132.8,147.9 L 140.3,165.3 L 158.8,169.3 L 151.8,186.9 Z" fill="#6d28d9" opacity="0.8"/>
+  <circle cx="120" cy="190.00000000000003" r="24" fill="#faf5ff"/>
+  <text x="120.0" y="192.4" text-anchor="middle" font-size="9" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600">Review</text>
 </svg>

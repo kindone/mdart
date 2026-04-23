@@ -99,7 +99,7 @@ while (i < lines.length) {
   let svgDark, svgLight
   try {
     svgDark  = renderMdArt(renderable)
-    svgLight = renderMdArt(renderable, undefined, { theme: 'mono-light' })
+    svgLight = renderMdArt(renderable, undefined, { mode: 'light' })
   } catch (err) {
     console.warn(`[syntax-img] render failed near line ${j + 1}: ${err.message}`)
     failed++

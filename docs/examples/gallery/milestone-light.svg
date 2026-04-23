@@ -1,21 +1,21 @@
-<svg viewBox="0 0 460 270" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
-  <text x="230" y="20" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Project Alpha</text>
-  <line x1="36" y1="64.0" x2="36" y2="240.0" stroke="#e5e7eb" stroke-width="2"/>
-  <rect x="28.0" y="56.0" width="16.0" height="16.0" rx="2" fill="#6b7280" stroke="#6b7280" stroke-width="1.5" transform="rotate(45 36 64)"/>
-  <text x="36" y="68.0" text-anchor="middle" font-size="9" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="700">✓</text>
-  <text x="58.0" y="69.0" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="400">Requirements</text>
-  <text x="450" y="69.0" text-anchor="end" font-size="9" fill="#6b7280" font-family="system-ui,sans-serif">Done</text>
-  <rect x="28.0" y="100.0" width="16.0" height="16.0" rx="2" fill="#6b7280" stroke="#6b7280" stroke-width="1.5" transform="rotate(45 36 108)"/>
-  <text x="36" y="112.0" text-anchor="middle" font-size="9" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="700">✓</text>
-  <text x="58.0" y="113.0" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="400">Design</text>
-  <text x="450" y="113.0" text-anchor="end" font-size="9" fill="#6b7280" font-family="system-ui,sans-serif">Done</text>
-  <rect x="26.0" y="142.0" width="20.0" height="20.0" rx="2" fill="#6b7280" stroke="#6b7280" stroke-width="2.5" transform="rotate(45 36 152)"/>
-  <text x="58.0" y="157.0" font-size="12" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Development</text>
+<svg viewBox="0 0 460 270" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#f5f3ff;border-radius:8px">
+  <text x="230" y="20" text-anchor="middle" font-size="13" fill="#7c3aed" font-family="system-ui,sans-serif" font-weight="600">Project Alpha</text>
+  <line x1="36" y1="64.0" x2="36" y2="240.0" stroke="#ddd6fe" stroke-width="2"/>
+  <rect x="28.0" y="56.0" width="16.0" height="16.0" rx="2" fill="#a78bfa" stroke="#a78bfa" stroke-width="1.5" transform="rotate(45 36 64)"/>
+  <text x="36" y="68.0" text-anchor="middle" font-size="9" fill="#f5f3ff" font-family="system-ui,sans-serif" font-weight="700">✓</text>
+  <text x="58.0" y="69.0" font-size="12" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="400">Requirements</text>
+  <text x="450" y="69.0" text-anchor="end" font-size="9" fill="#a78bfa" font-family="system-ui,sans-serif">Done</text>
+  <rect x="28.0" y="100.0" width="16.0" height="16.0" rx="2" fill="#a78bfa" stroke="#a78bfa" stroke-width="1.5" transform="rotate(45 36 108)"/>
+  <text x="36" y="112.0" text-anchor="middle" font-size="9" fill="#f5f3ff" font-family="system-ui,sans-serif" font-weight="700">✓</text>
+  <text x="58.0" y="113.0" font-size="12" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="400">Design</text>
+  <text x="450" y="113.0" text-anchor="end" font-size="9" fill="#a78bfa" font-family="system-ui,sans-serif">Done</text>
+  <rect x="26.0" y="142.0" width="20.0" height="20.0" rx="2" fill="#a78bfa" stroke="#a78bfa" stroke-width="2.5" transform="rotate(45 36 152)"/>
+  <text x="58.0" y="157.0" font-size="12" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600">Development</text>
   <text x="450" y="157.0" text-anchor="end" font-size="9" fill="#fbbf24" font-family="system-ui,sans-serif">In Progress</text>
-  <rect x="28.0" y="188.0" width="16.0" height="16.0" rx="2" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1.5" transform="rotate(45 36 196)"/>
-  <text x="58.0" y="201.0" font-size="12" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="400">Testing</text>
-  <text x="450" y="201.0" text-anchor="end" font-size="9" fill="#6b7280" font-family="system-ui,sans-serif">Upcoming</text>
-  <rect x="28.0" y="232.0" width="16.0" height="16.0" rx="2" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1.5" transform="rotate(45 36 240)"/>
-  <text x="58.0" y="245.0" font-size="12" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="400">Launch</text>
-  <text x="450" y="245.0" text-anchor="end" font-size="9" fill="#6b7280" font-family="system-ui,sans-serif">Upcoming</text>
+  <rect x="28.0" y="188.0" width="16.0" height="16.0" rx="2" fill="#ffffff" stroke="#ddd6fe" stroke-width="1.5" transform="rotate(45 36 196)"/>
+  <text x="58.0" y="201.0" font-size="12" fill="#7c3aed" font-family="system-ui,sans-serif" font-weight="400">Testing</text>
+  <text x="450" y="201.0" text-anchor="end" font-size="9" fill="#7c3aed" font-family="system-ui,sans-serif">Upcoming</text>
+  <rect x="28.0" y="232.0" width="16.0" height="16.0" rx="2" fill="#ffffff" stroke="#ddd6fe" stroke-width="1.5" transform="rotate(45 36 240)"/>
+  <text x="58.0" y="245.0" font-size="12" fill="#7c3aed" font-family="system-ui,sans-serif" font-weight="400">Launch</text>
+  <text x="450" y="245.0" text-anchor="end" font-size="9" fill="#7c3aed" font-family="system-ui,sans-serif">Upcoming</text>
 </svg>

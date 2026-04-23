@@ -1,15 +1,15 @@
-<svg viewBox="0 0 560 388" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
+<svg viewBox="0 0 560 388" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#fff1f2;border-radius:8px">
   
-  <circle cx="220.0" cy="154.0" r="105" fill="#37415120" stroke="#37415166" stroke-width="1.5"/>
-  <circle cx="340.0" cy="154.0" r="105" fill="#1f293720" stroke="#1f293766" stroke-width="1.5"/>
-  <circle cx="220.0" cy="242.0" r="105" fill="#6b728020" stroke="#6b728066" stroke-width="1.5"/>
-  <circle cx="340.0" cy="242.0" r="105" fill="#37415120" stroke="#37415166" stroke-width="1.5"/>
-  <text x="159.1" y="99.4" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Strategy</text>
-  <text x="159.1" y="113.4" text-anchor="middle" font-size="8.5" fill="#6b7280" font-family="system-ui,sans-serif">OKRs</text>
-  <text x="400.9" y="99.4" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Design</text>
-  <text x="400.9" y="113.4" text-anchor="middle" font-size="8.5" fill="#6b7280" font-family="system-ui,sans-serif">Brand</text>
-  <text x="159.1" y="296.6" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Engineering</text>
-  <text x="159.1" y="310.6" text-anchor="middle" font-size="8.5" fill="#6b7280" font-family="system-ui,sans-serif">Frontend</text>
-  <text x="400.9" y="296.6" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Data</text>
-  <text x="400.9" y="310.6" text-anchor="middle" font-size="8.5" fill="#6b7280" font-family="system-ui,sans-serif">Analytics</text>
+  <circle cx="220.0" cy="154.0" r="105" fill="#e11d4820" stroke="#e11d4866" stroke-width="1.5"/>
+  <circle cx="340.0" cy="154.0" r="105" fill="#be123c20" stroke="#be123c66" stroke-width="1.5"/>
+  <circle cx="220.0" cy="242.0" r="105" fill="#f43f5e20" stroke="#f43f5e66" stroke-width="1.5"/>
+  <circle cx="340.0" cy="242.0" r="105" fill="#e11d4820" stroke="#e11d4866" stroke-width="1.5"/>
+  <text x="159.1" y="99.4" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="600">Strategy</text>
+  <text x="159.1" y="113.4" text-anchor="middle" font-size="8.5" fill="#be123c" font-family="system-ui,sans-serif">OKRs</text>
+  <text x="400.9" y="99.4" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="600">Design</text>
+  <text x="400.9" y="113.4" text-anchor="middle" font-size="8.5" fill="#be123c" font-family="system-ui,sans-serif">Brand</text>
+  <text x="159.1" y="296.6" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="600">Engineering</text>
+  <text x="159.1" y="310.6" text-anchor="middle" font-size="8.5" fill="#be123c" font-family="system-ui,sans-serif">Frontend</text>
+  <text x="400.9" y="296.6" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="600">Data</text>
+  <text x="400.9" y="310.6" text-anchor="middle" font-size="8.5" fill="#be123c" font-family="system-ui,sans-serif">Analytics</text>
 </svg>

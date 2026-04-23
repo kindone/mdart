@@ -1,4 +1,4 @@
-import type { MdArtTheme } from './theme'
+import type { MdArtTheme, ThemeMode } from './theme'
 
 /**
  * Global configuration for MdArt.
@@ -16,6 +16,13 @@ export interface MdArtConfig {
    * ('process', 'hierarchy', …).
    */
   theme?: string
+
+  /**
+   * Default colour mode. 'dark' (default) uses the saturated dark category
+   * palettes; 'light' uses their light-mode counterparts with the same hues
+   * on off-white backgrounds. Per-fence `mode:` front-matter overrides this.
+   */
+  mode?: ThemeMode
 
   /**
    * Default color overrides applied to every diagram.

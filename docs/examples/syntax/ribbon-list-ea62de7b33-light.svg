@@ -1,22 +1,22 @@
 <svg viewBox="0 0 500 170" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="500" height="170" fill="#ffffff" rx="8"/>
-    <text x="250" y="22" text-anchor="middle" font-size="13" fill="#111827" font-family="system-ui,sans-serif" font-weight="700">Company Pillars</text>
-    <polygon points="0,30 10,43 0,56" fill="#333d4d"/>
-    <rect x="10" y="30" width="476" height="26" fill="#374151"/>
-    <polygon points="486,30 500,30 493,43 500,56 486,56" fill="#374151"/>
-    <polygon points="493,43 500,30 500,56" fill="#333d4d"/>
+    <rect width="500" height="170" fill="#f0fdf4" rx="8"/>
+    <text x="250" y="22" text-anchor="middle" font-size="13" fill="#052e16" font-family="system-ui,sans-serif" font-weight="700">Company Pillars</text>
+    <polygon points="0,30 10,43 0,56" fill="#059266"/>
+    <rect x="10" y="30" width="476" height="26" fill="#059669"/>
+    <polygon points="486,30 500,30 493,43 500,56 486,56" fill="#059669"/>
+    <polygon points="493,43 500,30 500,56" fill="#059266"/>
     <text x="20" y="47.0" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700" letter-spacing="0.06em">VISION</text>
-    <text x="250" y="68.0" text-anchor="middle" font-size="9" fill="#6b7280" font-family="system-ui,sans-serif">Build tools that make developers 10x more productive</text>
-    <polygon points="0,74 10,87 0,100" fill="#273140"/>
-    <rect x="10" y="74" width="476" height="26" fill="#2b3544"/>
-    <polygon points="486,74 500,74 493,87 500,100 486,100" fill="#2b3544"/>
-    <polygon points="493,87 500,74 500,100" fill="#273140"/>
+    <text x="250" y="68.0" text-anchor="middle" font-size="9" fill="#059669" font-family="system-ui,sans-serif">Build tools that make developers 10x more productive</text>
+    <polygon points="0,74 10,87 0,100" fill="#04835d"/>
+    <rect x="10" y="74" width="476" height="26" fill="#058760"/>
+    <polygon points="486,74 500,74 493,87 500,100 486,100" fill="#058760"/>
+    <polygon points="493,87 500,74 500,100" fill="#04835d"/>
     <text x="20" y="91.0" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700" letter-spacing="0.06em">MISSION</text>
-    <text x="250" y="112.0" text-anchor="middle" font-size="9" fill="#6b7280" font-family="system-ui,sans-serif">Reduce friction between idea and deployed software</text>
-    <polygon points="0,118 10,131 0,144" fill="#1f2937"/>
-    <rect x="10" y="118" width="476" height="26" fill="#1f2937"/>
-    <polygon points="486,118 500,118 493,131 500,144 486,144" fill="#1f2937"/>
-    <polygon points="493,131 500,118 500,144" fill="#1f2937"/>
+    <text x="250" y="112.0" text-anchor="middle" font-size="9" fill="#059669" font-family="system-ui,sans-serif">Reduce friction between idea and deployed software</text>
+    <polygon points="0,118 10,131 0,144" fill="#047857"/>
+    <rect x="10" y="118" width="476" height="26" fill="#047857"/>
+    <polygon points="486,118 500,118 493,131 500,144 486,144" fill="#047857"/>
+    <polygon points="493,131 500,118 500,144" fill="#047857"/>
     <text x="20" y="135.0" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700" letter-spacing="0.06em">VALUES</text>
-    <text x="250" y="156.0" text-anchor="middle" font-size="9" fill="#6b7280" font-family="system-ui,sans-serif">Ship fast, own the outcome, default to open</text>
+    <text x="250" y="156.0" text-anchor="middle" font-size="9" fill="#059669" font-family="system-ui,sans-serif">Ship fast, own the outcome, default to open</text>
   </svg>

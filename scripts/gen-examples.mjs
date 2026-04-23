@@ -108,7 +108,7 @@ let ok = 0
 for (const { file, source } of examples) {
   try {
     const svgDark  = renderMdArt(source)
-    const svgLight = renderMdArt(source, undefined, { theme: 'mono-light' })
+    const svgLight = renderMdArt(source, undefined, { mode: 'light' })
     const darkPath  = join(out, file)
     const lightPath = join(out, file.replace(/\.svg$/, '-light.svg'))
     await writeFile(darkPath,  svgDark,  'utf8')

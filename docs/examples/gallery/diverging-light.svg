@@ -1,19 +1,19 @@
-<svg viewBox="0 0 520 308" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
-  <text x="260" y="20" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Platform APIs</text>
-  <defs><marker id="arr-d" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 Z" fill="#374151cc"/></marker></defs>
-  <rect x="10" y="136.0" width="116" height="64" rx="6" fill="#37415128" stroke="#374151" stroke-width="1.5"/>
-  <text x="68.0" y="166.0" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="700">Core</text>
-  <text x="68.0" y="180.0" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="700">Platform</text>
-  <rect x="398" y="32.0" width="112" height="32" rx="5" fill="#f9fafb" stroke="#1f293766" stroke-width="1.2"/>
-  <text x="454.0" y="53.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">Mobile SDK</text>
-  <path d="M130,168.0 C264,168.0 264,48.0 398,48.0" fill="none" stroke="#1f293766" stroke-width="1.5" marker-end="url(#arr-d)"/>
-  <rect x="398" y="112.0" width="112" height="32" rx="5" fill="#f9fafb" stroke="#1f293766" stroke-width="1.2"/>
-  <text x="454.0" y="133.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">Web Embed</text>
-  <path d="M130,168.0 C264,168.0 264,128.0 398,128.0" fill="none" stroke="#1f293766" stroke-width="1.5" marker-end="url(#arr-d)"/>
-  <rect x="398" y="192.0" width="112" height="32" rx="5" fill="#f9fafb" stroke="#1f293766" stroke-width="1.2"/>
-  <text x="454.0" y="213.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">Partner API</text>
-  <path d="M130,168.0 C264,168.0 264,208.0 398,208.0" fill="none" stroke="#1f293766" stroke-width="1.5" marker-end="url(#arr-d)"/>
-  <rect x="398" y="272.0" width="112" height="32" rx="5" fill="#f9fafb" stroke="#1f293766" stroke-width="1.2"/>
-  <text x="454.0" y="293.0" text-anchor="middle" font-size="10" fill="#111827" font-family="system-ui,sans-serif">Webhooks</text>
-  <path d="M130,168.0 C264,168.0 264,288.0 398,288.0" fill="none" stroke="#1f293766" stroke-width="1.5" marker-end="url(#arr-d)"/>
+<svg viewBox="0 0 520 308" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#fff1f2;border-radius:8px">
+  <text x="260" y="20" text-anchor="middle" font-size="13" fill="#be123c" font-family="system-ui,sans-serif" font-weight="600">Platform APIs</text>
+  <defs><marker id="arr-d" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 Z" fill="#e11d48cc"/></marker></defs>
+  <rect x="10" y="136.0" width="116" height="64" rx="6" fill="#e11d4828" stroke="#e11d48" stroke-width="1.5"/>
+  <text x="68.0" y="166.0" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="700">Core</text>
+  <text x="68.0" y="180.0" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="700">Platform</text>
+  <rect x="398" y="32.0" width="112" height="32" rx="5" fill="#ffffff" stroke="#be123c66" stroke-width="1.2"/>
+  <text x="454.0" y="53.0" text-anchor="middle" font-size="10" fill="#4c0519" font-family="system-ui,sans-serif">Mobile SDK</text>
+  <path d="M130,168.0 C264,168.0 264,48.0 398,48.0" fill="none" stroke="#be123c66" stroke-width="1.5" marker-end="url(#arr-d)"/>
+  <rect x="398" y="112.0" width="112" height="32" rx="5" fill="#ffffff" stroke="#be123c66" stroke-width="1.2"/>
+  <text x="454.0" y="133.0" text-anchor="middle" font-size="10" fill="#4c0519" font-family="system-ui,sans-serif">Web Embed</text>
+  <path d="M130,168.0 C264,168.0 264,128.0 398,128.0" fill="none" stroke="#be123c66" stroke-width="1.5" marker-end="url(#arr-d)"/>
+  <rect x="398" y="192.0" width="112" height="32" rx="5" fill="#ffffff" stroke="#be123c66" stroke-width="1.2"/>
+  <text x="454.0" y="213.0" text-anchor="middle" font-size="10" fill="#4c0519" font-family="system-ui,sans-serif">Partner API</text>
+  <path d="M130,168.0 C264,168.0 264,208.0 398,208.0" fill="none" stroke="#be123c66" stroke-width="1.5" marker-end="url(#arr-d)"/>
+  <rect x="398" y="272.0" width="112" height="32" rx="5" fill="#ffffff" stroke="#be123c66" stroke-width="1.2"/>
+  <text x="454.0" y="293.0" text-anchor="middle" font-size="10" fill="#4c0519" font-family="system-ui,sans-serif">Webhooks</text>
+  <path d="M130,168.0 C264,168.0 264,288.0 398,288.0" fill="none" stroke="#be123c66" stroke-width="1.5" marker-end="url(#arr-d)"/>
 </svg>

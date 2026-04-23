@@ -266,7 +266,8 @@ export function renderMdArt(raw: string, hintType?: string, pluginConfig?: MdArt
 
     // Theme resolution: per-fence > plugin > global > category default
     const themeKey = spec.theme ?? pluginConfig?.theme ?? globalCfg.theme
-    let theme = getTheme(spec.type, themeKey)
+    const mode     = spec.mode  ?? pluginConfig?.mode  ?? globalCfg.mode  ?? 'dark'
+    let theme = getTheme(spec.type, themeKey, mode)
 
     // Color overrides: global < plugin < per-fence (each layer spreads on top)
     if (globalCfg.colors)                          theme = { ...theme, ...globalCfg.colors }

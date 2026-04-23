@@ -190,7 +190,7 @@ for (const family of FAMILIES) {
   for (const layout of family.layouts) {
     try {
       layout.svgDark  = renderMdArt(layout.source)
-      layout.svgLight = renderMdArt(layout.source, undefined, { theme: 'mono-light' })
+      layout.svgLight = renderMdArt(layout.source, undefined, { mode: 'light' })
       total++
     } catch (err) {
       const errHtml = `<div class="render-error">${layout.name}: ${err.message}</div>`

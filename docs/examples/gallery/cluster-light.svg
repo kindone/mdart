@@ -1,21 +1,21 @@
-<svg viewBox="0 0 560 408" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
-  <text x="280" y="20" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Engineering Org</text>
-  <ellipse cx="140.0" cy="122.0" rx="130.0" ry="84.0" fill="#37415114" stroke="#37415155" stroke-width="1.5"/>
-  <text x="140.0" y="54.0" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="700">Platform</text>
-  <circle cx="75.0" cy="131.0" r="22" fill="#3741512a" stroke="#37415166" stroke-width="1"/>
-  <text x="75.0" y="135.0" text-anchor="middle" font-size="8" fill="#111827" font-family="system-ui,sans-serif">Core API</text>
-  <circle cx="140.0" cy="131.0" r="22" fill="#3741512a" stroke="#37415166" stroke-width="1"/>
-  <text x="140.0" y="135.0" text-anchor="middle" font-size="8" fill="#111827" font-family="system-ui,sans-serif">Auth</text>
-  <ellipse cx="410.0" cy="122.0" rx="130.0" ry="84.0" fill="#1f293714" stroke="#1f293755" stroke-width="1.5"/>
-  <text x="410.0" y="54.0" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="700">Product</text>
-  <circle cx="345.0" cy="131.0" r="22" fill="#1f29372a" stroke="#1f293766" stroke-width="1"/>
-  <text x="345.0" y="135.0" text-anchor="middle" font-size="8" fill="#111827" font-family="system-ui,sans-serif">Search</text>
-  <circle cx="410.0" cy="131.0" r="22" fill="#1f29372a" stroke="#1f293766" stroke-width="1"/>
-  <text x="410.0" y="135.0" text-anchor="middle" font-size="8" fill="#111827" font-family="system-ui,sans-serif">Feed</text>
-  <ellipse cx="140.0" cy="300.0" rx="130.0" ry="84.0" fill="#6b728014" stroke="#6b728055" stroke-width="1.5"/>
-  <text x="140.0" y="232.0" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif" font-weight="700">Infrastructure</text>
-  <circle cx="75.0" cy="309.0" r="22" fill="#6b72802a" stroke="#6b728066" stroke-width="1"/>
-  <text x="75.0" y="313.0" text-anchor="middle" font-size="8" fill="#111827" font-family="system-ui,sans-serif">Compute</text>
-  <circle cx="140.0" cy="309.0" r="22" fill="#6b72802a" stroke="#6b728066" stroke-width="1"/>
-  <text x="140.0" y="313.0" text-anchor="middle" font-size="8" fill="#111827" font-family="system-ui,sans-serif">Storage</text>
+<svg viewBox="0 0 560 408" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#fff1f2;border-radius:8px">
+  <text x="280" y="20" text-anchor="middle" font-size="13" fill="#be123c" font-family="system-ui,sans-serif" font-weight="600">Engineering Org</text>
+  <ellipse cx="140.0" cy="122.0" rx="130.0" ry="84.0" fill="#e11d4814" stroke="#e11d4855" stroke-width="1.5"/>
+  <text x="140.0" y="54.0" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="700">Platform</text>
+  <circle cx="75.0" cy="131.0" r="22" fill="#e11d482a" stroke="#e11d4866" stroke-width="1"/>
+  <text x="75.0" y="135.0" text-anchor="middle" font-size="8" fill="#4c0519" font-family="system-ui,sans-serif">Core API</text>
+  <circle cx="140.0" cy="131.0" r="22" fill="#e11d482a" stroke="#e11d4866" stroke-width="1"/>
+  <text x="140.0" y="135.0" text-anchor="middle" font-size="8" fill="#4c0519" font-family="system-ui,sans-serif">Auth</text>
+  <ellipse cx="410.0" cy="122.0" rx="130.0" ry="84.0" fill="#be123c14" stroke="#be123c55" stroke-width="1.5"/>
+  <text x="410.0" y="54.0" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="700">Product</text>
+  <circle cx="345.0" cy="131.0" r="22" fill="#be123c2a" stroke="#be123c66" stroke-width="1"/>
+  <text x="345.0" y="135.0" text-anchor="middle" font-size="8" fill="#4c0519" font-family="system-ui,sans-serif">Search</text>
+  <circle cx="410.0" cy="131.0" r="22" fill="#be123c2a" stroke="#be123c66" stroke-width="1"/>
+  <text x="410.0" y="135.0" text-anchor="middle" font-size="8" fill="#4c0519" font-family="system-ui,sans-serif">Feed</text>
+  <ellipse cx="140.0" cy="300.0" rx="130.0" ry="84.0" fill="#f43f5e14" stroke="#f43f5e55" stroke-width="1.5"/>
+  <text x="140.0" y="232.0" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="700">Infrastructure</text>
+  <circle cx="75.0" cy="309.0" r="22" fill="#f43f5e2a" stroke="#f43f5e66" stroke-width="1"/>
+  <text x="75.0" y="313.0" text-anchor="middle" font-size="8" fill="#4c0519" font-family="system-ui,sans-serif">Compute</text>
+  <circle cx="140.0" cy="309.0" r="22" fill="#f43f5e2a" stroke="#f43f5e66" stroke-width="1"/>
+  <text x="140.0" y="313.0" text-anchor="middle" font-size="8" fill="#4c0519" font-family="system-ui,sans-serif">Storage</text>
 </svg>

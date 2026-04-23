@@ -1,32 +1,32 @@
-<svg viewBox="0 0 600 500" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
-  <line x1="300" y1="250" x2="300.0" y2="100.0" stroke="#6b728050" stroke-width="2.5"/>
-  <line x1="300.0" y1="100.0" x2="285.7" y2="29.4" stroke="#e5e7eb88" stroke-width="1.5"/>
-  <circle cx="285.7" cy="29.4" r="14" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
-  <text x="285.7" y="32.9" text-anchor="middle" font-size="8" fill="#111827" font-family="system-ui,sans-serif">iOS</text>
-  <line x1="300.0" y1="100.0" x2="314.3" y2="29.4" stroke="#e5e7eb88" stroke-width="1.5"/>
-  <circle cx="314.3" cy="29.4" r="14" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
-  <text x="314.3" y="32.9" text-anchor="middle" font-size="8" fill="#111827" font-family="system-ui,sans-serif">Android</text>
-  <circle cx="300.0" cy="100.0" r="22" fill="#374151" stroke="#ffffff" stroke-width="2"/>
-  <text x="300.0" y="104.0" text-anchor="middle" font-size="9" fill="#ffffff" font-weight="700" font-family="system-ui,sans-serif">Mobile</text>
-  <line x1="300" y1="250" x2="429.9" y2="325.0" stroke="#6b728050" stroke-width="2.5"/>
-  <line x1="429.9" y1="325.0" x2="498.2" y2="347.9" stroke="#e5e7eb88" stroke-width="1.5"/>
-  <circle cx="498.2" cy="347.9" r="14" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
-  <text x="498.2" y="351.4" text-anchor="middle" font-size="8" fill="#111827" font-family="system-ui,sans-serif">React</text>
-  <line x1="429.9" y1="325.0" x2="483.9" y2="372.7" stroke="#e5e7eb88" stroke-width="1.5"/>
-  <circle cx="483.9" cy="372.7" r="14" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
-  <text x="483.9" y="376.2" text-anchor="middle" font-size="8" fill="#111827" font-family="system-ui,sans-serif">API</text>
-  <circle cx="429.9" cy="325.0" r="22" fill="#374151" stroke="#ffffff" stroke-width="2"/>
-  <text x="429.9" y="329.0" text-anchor="middle" font-size="9" fill="#ffffff" font-weight="700" font-family="system-ui,sans-serif">Web</text>
-  <line x1="300" y1="250" x2="170.1" y2="325.0" stroke="#6b728050" stroke-width="2.5"/>
-  <line x1="170.1" y1="325.0" x2="116.1" y2="372.7" stroke="#e5e7eb88" stroke-width="1.5"/>
-  <circle cx="116.1" cy="372.7" r="14" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
-  <text x="116.1" y="376.2" text-anchor="middle" font-size="8" fill="#111827" font-family="system-ui,sans-serif">Analytics</text>
-  <line x1="170.1" y1="325.0" x2="101.8" y2="347.9" stroke="#e5e7eb88" stroke-width="1.5"/>
-  <circle cx="101.8" cy="347.9" r="14" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
-  <text x="101.8" y="351.4" text-anchor="middle" font-size="8" fill="#111827" font-family="system-ui,sans-serif">ML</text>
-  <circle cx="170.1" cy="325.0" r="22" fill="#374151" stroke="#ffffff" stroke-width="2"/>
-  <text x="170.1" y="329.0" text-anchor="middle" font-size="9" fill="#ffffff" font-weight="700" font-family="system-ui,sans-serif">Data</text>
-  <circle cx="300" cy="250" r="32" fill="#6b7280" stroke="#ffffff" stroke-width="2"/>
-  <text x="300" y="248" text-anchor="middle" font-size="10" fill="#ffffff" font-weight="700" font-family="system-ui,sans-serif">Product</text>
-  <text x="300" y="261" text-anchor="middle" font-size="10" fill="#ffffff" font-weight="700" font-family="system-ui,sans-serif">Platform</text>
+<svg viewBox="0 0 600 500" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#fffbeb;border-radius:8px">
+  <line x1="300" y1="250" x2="300.0" y2="100.0" stroke="#f59e0b50" stroke-width="2.5"/>
+  <line x1="300.0" y1="100.0" x2="285.7" y2="29.4" stroke="#fde68a88" stroke-width="1.5"/>
+  <circle cx="285.7" cy="29.4" r="14" fill="#ffffff" stroke="#fde68a" stroke-width="1"/>
+  <text x="285.7" y="32.9" text-anchor="middle" font-size="8" fill="#451a03" font-family="system-ui,sans-serif">iOS</text>
+  <line x1="300.0" y1="100.0" x2="314.3" y2="29.4" stroke="#fde68a88" stroke-width="1.5"/>
+  <circle cx="314.3" cy="29.4" r="14" fill="#ffffff" stroke="#fde68a" stroke-width="1"/>
+  <text x="314.3" y="32.9" text-anchor="middle" font-size="8" fill="#451a03" font-family="system-ui,sans-serif">Android</text>
+  <circle cx="300.0" cy="100.0" r="22" fill="#d97706" stroke="#fffbeb" stroke-width="2"/>
+  <text x="300.0" y="104.0" text-anchor="middle" font-size="9" fill="#fffbeb" font-weight="700" font-family="system-ui,sans-serif">Mobile</text>
+  <line x1="300" y1="250" x2="429.9" y2="325.0" stroke="#f59e0b50" stroke-width="2.5"/>
+  <line x1="429.9" y1="325.0" x2="498.2" y2="347.9" stroke="#fde68a88" stroke-width="1.5"/>
+  <circle cx="498.2" cy="347.9" r="14" fill="#ffffff" stroke="#fde68a" stroke-width="1"/>
+  <text x="498.2" y="351.4" text-anchor="middle" font-size="8" fill="#451a03" font-family="system-ui,sans-serif">React</text>
+  <line x1="429.9" y1="325.0" x2="483.9" y2="372.7" stroke="#fde68a88" stroke-width="1.5"/>
+  <circle cx="483.9" cy="372.7" r="14" fill="#ffffff" stroke="#fde68a" stroke-width="1"/>
+  <text x="483.9" y="376.2" text-anchor="middle" font-size="8" fill="#451a03" font-family="system-ui,sans-serif">API</text>
+  <circle cx="429.9" cy="325.0" r="22" fill="#d97706" stroke="#fffbeb" stroke-width="2"/>
+  <text x="429.9" y="329.0" text-anchor="middle" font-size="9" fill="#fffbeb" font-weight="700" font-family="system-ui,sans-serif">Web</text>
+  <line x1="300" y1="250" x2="170.1" y2="325.0" stroke="#f59e0b50" stroke-width="2.5"/>
+  <line x1="170.1" y1="325.0" x2="116.1" y2="372.7" stroke="#fde68a88" stroke-width="1.5"/>
+  <circle cx="116.1" cy="372.7" r="14" fill="#ffffff" stroke="#fde68a" stroke-width="1"/>
+  <text x="116.1" y="376.2" text-anchor="middle" font-size="8" fill="#451a03" font-family="system-ui,sans-serif">Analytics</text>
+  <line x1="170.1" y1="325.0" x2="101.8" y2="347.9" stroke="#fde68a88" stroke-width="1.5"/>
+  <circle cx="101.8" cy="347.9" r="14" fill="#ffffff" stroke="#fde68a" stroke-width="1"/>
+  <text x="101.8" y="351.4" text-anchor="middle" font-size="8" fill="#451a03" font-family="system-ui,sans-serif">ML</text>
+  <circle cx="170.1" cy="325.0" r="22" fill="#d97706" stroke="#fffbeb" stroke-width="2"/>
+  <text x="170.1" y="329.0" text-anchor="middle" font-size="9" fill="#fffbeb" font-weight="700" font-family="system-ui,sans-serif">Data</text>
+  <circle cx="300" cy="250" r="32" fill="#f59e0b" stroke="#fffbeb" stroke-width="2"/>
+  <text x="300" y="248" text-anchor="middle" font-size="10" fill="#fffbeb" font-weight="700" font-family="system-ui,sans-serif">Product</text>
+  <text x="300" y="261" text-anchor="middle" font-size="10" fill="#fffbeb" font-weight="700" font-family="system-ui,sans-serif">Platform</text>
 </svg>

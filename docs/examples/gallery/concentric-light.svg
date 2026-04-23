@@ -1,11 +1,11 @@
-<svg viewBox="0 0 500 428" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#ffffff;border-radius:8px">
-  <text x="250" y="20" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Organizational Layers</text>
-  <circle cx="250.0" cy="228.0" r="190.0" fill="#37415113" stroke="#37415155" stroke-width="1.2"/>
-  <text x="250.0" y="75.8" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif">Individual</text>
-  <circle cx="250.0" cy="228.0" r="142.5" fill="#3741511a" stroke="#37415155" stroke-width="1.2"/>
-  <text x="250.0" y="123.3" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif">Team</text>
-  <circle cx="250.0" cy="228.0" r="95.0" fill="#37415121" stroke="#37415155" stroke-width="1.2"/>
-  <text x="250.0" y="170.8" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif">Department</text>
-  <circle cx="250.0" cy="228.0" r="47.5" fill="#37415128" stroke="#37415155" stroke-width="1.2"/>
-  <text x="250.0" y="218.3" text-anchor="middle" font-size="11" fill="#111827" font-family="system-ui,sans-serif">Organization</text>
+<svg viewBox="0 0 500 428" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#fff1f2;border-radius:8px">
+  <text x="250" y="20" text-anchor="middle" font-size="13" fill="#be123c" font-family="system-ui,sans-serif" font-weight="600">Organizational Layers</text>
+  <circle cx="250.0" cy="228.0" r="190.0" fill="#e11d4813" stroke="#e11d4855" stroke-width="1.2"/>
+  <text x="250.0" y="75.8" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif">Individual</text>
+  <circle cx="250.0" cy="228.0" r="142.5" fill="#e11d481a" stroke="#e11d4855" stroke-width="1.2"/>
+  <text x="250.0" y="123.3" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif">Team</text>
+  <circle cx="250.0" cy="228.0" r="95.0" fill="#e11d4821" stroke="#e11d4855" stroke-width="1.2"/>
+  <text x="250.0" y="170.8" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif">Department</text>
+  <circle cx="250.0" cy="228.0" r="47.5" fill="#e11d4828" stroke="#e11d4855" stroke-width="1.2"/>
+  <text x="250.0" y="218.3" text-anchor="middle" font-size="11" fill="#4c0519" font-family="system-ui,sans-serif">Organization</text>
 </svg>

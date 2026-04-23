@@ -1,14 +1,14 @@
 <svg viewBox="0 0 600 110" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="600" height="110" fill="#ffffff" rx="8"/>
-    <text x="300" y="20" text-anchor="middle" font-size="13" fill="#6b7280" font-family="system-ui,sans-serif" font-weight="600">Development Lifecycle</text>
-    <polygon points="12,38 104,38 124,65 104,92 12,92" fill="#374151ee" stroke="#ffffff" stroke-width="2.5"/>
-    <text x="48.0" y="69" text-anchor="middle" font-size="10.5" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Discovery</text>
-    <polygon points="128,38 220,38 240,65 220,92 128,92 148,65" fill="#313b4bee" stroke="#ffffff" stroke-width="2.5"/>
-    <text x="184.0" y="69" text-anchor="middle" font-size="10.5" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Design</text>
-    <polygon points="244,38 336,38 356,65 336,92 244,92 264,65" fill="#2b3544ee" stroke="#ffffff" stroke-width="2.5"/>
-    <text x="300.0" y="69" text-anchor="middle" font-size="10.5" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Build</text>
-    <polygon points="360,38 452,38 472,65 452,92 360,92 380,65" fill="#252f3eee" stroke="#ffffff" stroke-width="2.5"/>
-    <text x="416.0" y="69" text-anchor="middle" font-size="10.5" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Test</text>
-    <polygon points="476,38 588,38 588,92 476,92 496,65" fill="#1f2937ee" stroke="#ffffff" stroke-width="2.5"/>
-    <text x="542.0" y="69" text-anchor="middle" font-size="10.5" fill="#111827" font-family="system-ui,sans-serif" font-weight="600">Deploy</text>
+    <rect width="600" height="110" fill="#f0fdf4" rx="8"/>
+    <text x="300" y="20" text-anchor="middle" font-size="13" fill="#059669" font-family="system-ui,sans-serif" font-weight="600">Development Lifecycle</text>
+    <polygon points="12,38 104,38 124,65 104,92 12,92" fill="#059669ee" stroke="#f0fdf4" stroke-width="2.5"/>
+    <text x="48.0" y="69" text-anchor="middle" font-size="10.5" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Discovery</text>
+    <polygon points="128,38 220,38 240,65 220,92 128,92 148,65" fill="#058f65ee" stroke="#f0fdf4" stroke-width="2.5"/>
+    <text x="184.0" y="69" text-anchor="middle" font-size="10.5" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Design</text>
+    <polygon points="244,38 336,38 356,65 336,92 244,92 264,65" fill="#058760ee" stroke="#f0fdf4" stroke-width="2.5"/>
+    <text x="300.0" y="69" text-anchor="middle" font-size="10.5" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Build</text>
+    <polygon points="360,38 452,38 472,65 452,92 360,92 380,65" fill="#04805cee" stroke="#f0fdf4" stroke-width="2.5"/>
+    <text x="416.0" y="69" text-anchor="middle" font-size="10.5" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Test</text>
+    <polygon points="476,38 588,38 588,92 476,92 496,65" fill="#047857ee" stroke="#f0fdf4" stroke-width="2.5"/>
+    <text x="542.0" y="69" text-anchor="middle" font-size="10.5" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Deploy</text>
   </svg>
