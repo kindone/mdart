@@ -48,26 +48,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  publish-vscode:
-    name: Publish VS Code extension
-    runs-on: ubuntu-latest
-    needs: publish-npm     # wait for npm so the extension can install published deps
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build extension
-        run: npm run build --workspace=apps/vscode
-
-      - name: Publish to VS Code Marketplace
-        run: npm run publish --workspace=apps/vscode
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+# Note: VS Code Marketplace publishing is not wired up in CI. When a
+# publisher account + VSCE_PAT are ready, add a publish-vscode job that
+# runs `npm run publish --workspace=apps/vscode` with VSCE_PAT as an env.
