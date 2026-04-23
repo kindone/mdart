@@ -1,0 +1,19 @@
+<svg viewBox="0 0 560 108" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="560" height="108" fill="#080f10" rx="8"/>
+    <defs><marker id="cp-arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><polygon points="0,0 7,3.5 0,7" fill="#064e3b"/></marker></defs>
+    <circle cx="84.0" cy="54.0" r="40" fill="#10b98133" stroke="#10b981" stroke-width="1.5"/>
+    <text x="84.0" y="49.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Ideate</text>
+    <text x="84.0" y="64.0" text-anchor="middle" font-size="8" fill="#6ee7b7" font-family="system-ui,sans-serif">Ideas</text>
+    <line x1="126.0" y1="54.0" x2="174.0" y2="54.0" stroke="#064e3b" stroke-width="1.5" marker-end="url(#cp-arr)"/>
+    <circle cx="220.0" cy="54.0" r="40" fill="#0cad7933" stroke="#0cad79" stroke-width="1.5"/>
+    <text x="220.0" y="49.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Design</text>
+    <text x="220.0" y="64.0" text-anchor="middle" font-size="8" fill="#6ee7b7" font-family="system-ui,sans-serif">Prototype</text>
+    <line x1="262.0" y1="54.0" x2="310.0" y2="54.0" stroke="#064e3b" stroke-width="1.5" marker-end="url(#cp-arr)"/>
+    <circle cx="356.0" cy="54.0" r="40" fill="#09a27133" stroke="#09a271" stroke-width="1.5"/>
+    <text x="356.0" y="49.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Build</text>
+    <text x="356.0" y="64.0" text-anchor="middle" font-size="8" fill="#6ee7b7" font-family="system-ui,sans-serif">Implement</text>
+    <line x1="398.0" y1="54.0" x2="446.0" y2="54.0" stroke="#064e3b" stroke-width="1.5" marker-end="url(#cp-arr)"/>
+    <circle cx="492.0" cy="54.0" r="40" fill="#05966933" stroke="#059669" stroke-width="1.5"/>
+    <text x="492.0" y="49.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Ship</text>
+    <text x="492.0" y="64.0" text-anchor="middle" font-size="8" fill="#6ee7b7" font-family="system-ui,sans-serif">Launch</text>
+  </svg>

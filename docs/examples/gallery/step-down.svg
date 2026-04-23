@@ -1,0 +1,15 @@
+<svg viewBox="0 0 560 186" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="560" height="186" fill="#080f10" rx="8"/>
+    <defs><marker id="step-arr" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto"><polygon points="0,0 5,2.5 0,5" fill="#34d399"/></marker></defs>
+    <rect x="8.0" y="12.0" width="110" height="36" rx="5" fill="#10b98133" stroke="#10b981" stroke-width="1.2"/>
+    <text x="63.0" y="34.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Kickoff</text>
+    <line x1="118.0" y1="48.0" x2="124.0" y2="54.0" stroke="#34d399cc" stroke-width="2.5" marker-end="url(#step-arr)"/>
+    <rect x="124.0" y="54.0" width="110" height="36" rx="5" fill="#0cad7933" stroke="#0cad79" stroke-width="1.2"/>
+    <text x="179.0" y="76.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Design</text>
+    <line x1="234.0" y1="90.0" x2="240.0" y2="96.0" stroke="#34d399cc" stroke-width="2.5" marker-end="url(#step-arr)"/>
+    <rect x="240.0" y="96.0" width="110" height="36" rx="5" fill="#09a27133" stroke="#09a271" stroke-width="1.2"/>
+    <text x="295.0" y="118.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Build</text>
+    <line x1="350.0" y1="132.0" x2="356.0" y2="138.0" stroke="#34d399cc" stroke-width="2.5" marker-end="url(#step-arr)"/>
+    <rect x="356.0" y="138.0" width="110" height="36" rx="5" fill="#05966933" stroke="#059669" stroke-width="1.2"/>
+    <text x="411.0" y="160.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Release</text>
+  </svg>

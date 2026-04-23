@@ -1,0 +1,16 @@
+<svg viewBox="0 0 560 102" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="560" height="102" fill="#080f10" rx="8"/>
+    <text x="280" y="20" text-anchor="middle" font-size="13" fill="#6ee7b7" font-family="system-ui,sans-serif" font-weight="600">Project Timeline · 12 weeks</text>
+    <path d="M13.0,40 H89.6 V72.0 H13.0 A5,5 0 0,1 8,67.0 V45.0 A5,5 0 0,1 13.0,40 Z" fill="#10b981"/>
+    <text x="48.8" y="60.0" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">Discovery</text>
+    <text x="48.8" y="86.0" text-anchor="middle" font-size="9" fill="#10b981" font-family="system-ui,sans-serif">15%</text>
+    <path d="M89.6,40 H198.4 V72.0 H89.6 V40.0 Z" fill="#0cad79"/>
+    <text x="144.0" y="60.0" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">Design</text>
+    <text x="144.0" y="86.0" text-anchor="middle" font-size="9" fill="#0cad79" font-family="system-ui,sans-serif">20%</text>
+    <path d="M198.4,40 H470.4 V72.0 H198.4 V40.0 Z" fill="#09a271"/>
+    <text x="334.4" y="60.0" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">Development</text>
+    <text x="334.4" y="86.0" text-anchor="middle" font-size="9" fill="#09a271" font-family="system-ui,sans-serif">50%</text>
+    <path d="M470.4,40 H547.0 A5,5 0 0,1 552.0,45.0 V67.0 A5,5 0 0,1 547.0,72.0 H470.4 V40.0 Z" fill="#059669"/>
+    <text x="511.2" y="60.0" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">Launch</text>
+    <text x="511.2" y="86.0" text-anchor="middle" font-size="9" fill="#059669" font-family="system-ui,sans-serif">15%</text>
+  </svg>

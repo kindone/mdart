@@ -1,0 +1,30 @@
+<svg viewBox="0 0 560 151" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="560" height="151" fill="#080f10" rx="8"/>
+    <defs><marker id="sl-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0,0 6,3 0,6" fill="#064e3b"/></marker></defs>
+    <rect x="0" y="8.0" width="560" height="44" fill="#10b9810a"/>
+    <rect x="2" y="10.0" width="52" height="40" rx="4" fill="#10b98133" stroke="#10b98166" stroke-width="1"/>
+    <text x="28.0" y="34.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Customer</text>
+    <rect x="60.0" y="16.0" width="90.0" height="28" rx="4" fill="#10b98122" stroke="#10b98166" stroke-width="1"/>
+    <text x="105.0" y="33.0" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="system-ui,sans-serif" font-weight="400">Request</text>
+    <line x1="152.0" y1="30.0" x2="462.0" y2="30.0" stroke="#064e3b" stroke-width="1" marker-end="url(#sl-arr)"/>
+    <rect x="466.0" y="16.0" width="90.0" height="28" rx="4" fill="#10b98122" stroke="#10b98166" stroke-width="1"/>
+    <text x="511.0" y="33.0" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="system-ui,sans-serif" font-weight="400">Confirm</text>
+    <rect x="0" y="53.0" width="560" height="44" fill="#0ba8750a"/>
+    <line x1="0" y1="53.0" x2="560" y2="53.0" stroke="#0e3020" stroke-width="0.5"/>
+    <rect x="2" y="55.0" width="52" height="40" rx="4" fill="#0ba87533" stroke="#0ba87566" stroke-width="1"/>
+    <text x="28.0" y="79.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Sales</text>
+    <rect x="60.0" y="61.0" width="90.0" height="28" rx="4" fill="#0ba87522" stroke="#0ba87566" stroke-width="1"/>
+    <text x="105.0" y="78.0" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="system-ui,sans-serif" font-weight="400">Review</text>
+    <line x1="152.0" y1="75.0" x2="259.0" y2="75.0" stroke="#064e3b" stroke-width="1" marker-end="url(#sl-arr)"/>
+    <rect x="263.0" y="61.0" width="90.0" height="28" rx="4" fill="#0ba87522" stroke="#0ba87566" stroke-width="1"/>
+    <text x="308.0" y="78.0" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="system-ui,sans-serif" font-weight="400">Propose</text>
+    <line x1="355.0" y1="75.0" x2="462.0" y2="75.0" stroke="#064e3b" stroke-width="1" marker-end="url(#sl-arr)"/>
+    <rect x="466.0" y="61.0" width="90.0" height="28" rx="4" fill="#0ba87522" stroke="#0ba87566" stroke-width="1"/>
+    <text x="511.0" y="78.0" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="system-ui,sans-serif" font-weight="400">Close</text>
+    <rect x="0" y="98.0" width="560" height="44" fill="#0596690a"/>
+    <line x1="0" y1="98.0" x2="560" y2="98.0" stroke="#0e3020" stroke-width="0.5"/>
+    <rect x="2" y="100.0" width="52" height="40" rx="4" fill="#05966933" stroke="#05966966" stroke-width="1"/>
+    <text x="28.0" y="124.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Support</text>
+    <rect x="60.0" y="106.0" width="90.0" height="28" rx="4" fill="#05966922" stroke="#05966966" stroke-width="1"/>
+    <text x="105.0" y="123.0" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="system-ui,sans-serif" font-weight="400">Onboard</text>
+  </svg>

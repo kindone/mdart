@@ -1,0 +1,27 @@
+<svg viewBox="0 0 520 448" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#180a0e;border-radius:8px">
+  <text x="260" y="20" text-anchor="middle" font-size="13" fill="#fda4af" font-family="system-ui,sans-serif" font-weight="600">Team Dependencies</text>
+  <line x1="260.0" y1="90.0" x2="388.2" y2="164.0" stroke="#f43f5e55" stroke-width="1.8"/>
+  <line x1="260.0" y1="90.0" x2="388.2" y2="312.0" stroke="#f43f5e55" stroke-width="1.8"/>
+  <line x1="388.2" y1="164.0" x2="388.2" y2="312.0" stroke="#f43f5e55" stroke-width="1.8"/>
+  <line x1="388.2" y1="164.0" x2="260.0" y2="386.0" stroke="#f43f5e55" stroke-width="1.8"/>
+  <line x1="388.2" y1="312.0" x2="260.0" y2="386.0" stroke="#f43f5e55" stroke-width="1.8"/>
+  <line x1="388.2" y1="312.0" x2="131.8" y2="312.0" stroke="#f43f5e55" stroke-width="1.8"/>
+  <line x1="260.0" y1="386.0" x2="131.8" y2="312.0" stroke="#f43f5e55" stroke-width="1.8"/>
+  <line x1="260.0" y1="386.0" x2="131.8" y2="164.0" stroke="#f43f5e55" stroke-width="1.8"/>
+  <line x1="131.8" y1="312.0" x2="131.8" y2="164.0" stroke="#f43f5e55" stroke-width="1.8"/>
+  <line x1="131.8" y1="312.0" x2="260.0" y2="90.0" stroke="#f43f5e55" stroke-width="1.8"/>
+  <line x1="131.8" y1="164.0" x2="260.0" y2="90.0" stroke="#f43f5e55" stroke-width="1.8"/>
+  <line x1="131.8" y1="164.0" x2="388.2" y2="164.0" stroke="#f43f5e55" stroke-width="1.8"/>
+  <circle cx="260.0" cy="90.0" r="22" fill="#1a0d12" stroke="#f43f5e99" stroke-width="1.8"/>
+  <text x="260.0" y="94.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Frontend</text>
+  <circle cx="388.2" cy="164.0" r="22" fill="#1a0d12" stroke="#f43f5e99" stroke-width="1.8"/>
+  <text x="388.2" y="168.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Backend</text>
+  <circle cx="388.2" cy="312.0" r="22" fill="#1a0d12" stroke="#f43f5e99" stroke-width="1.8"/>
+  <text x="388.2" y="316.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Design</text>
+  <circle cx="260.0" cy="386.0" r="22" fill="#1a0d12" stroke="#f43f5e99" stroke-width="1.8"/>
+  <text x="260.0" y="390.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Data</text>
+  <circle cx="131.8" cy="312.0" r="22" fill="#1a0d12" stroke="#f43f5e99" stroke-width="1.8"/>
+  <text x="131.8" y="316.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">DevOps</text>
+  <circle cx="131.8" cy="164.0" r="22" fill="#1a0d12" stroke="#f43f5e99" stroke-width="1.8"/>
+  <text x="131.8" y="168.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">QA</text>
+</svg>

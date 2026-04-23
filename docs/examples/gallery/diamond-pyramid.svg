@@ -1,0 +1,12 @@
+<svg viewBox="0 0 600 332" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#100a04;border-radius:8px">
+  <polygon points="282.0,12.0 318.0,12.0 422.8,72.0 177.2,72.0" fill="#a3520b" stroke="#100a04" stroke-width="2"/>
+  <polygon points="177.2,72.0 422.8,72.0 527.6,132.0 72.4,132.0" fill="#be6509" stroke="#100a04" stroke-width="2"/>
+  <polygon points="72.4,132.0 527.6,132.0 527.6,192.0 72.4,192.0" fill="#d97706" stroke="#100a04" stroke-width="2"/>
+  <polygon points="72.4,192.0 527.6,192.0 422.8,252.0 177.2,252.0" fill="#be6509" stroke="#100a04" stroke-width="2"/>
+  <polygon points="177.2,252.0 422.8,252.0 318.0,312.0 282.0,312.0" fill="#a3520b" stroke="#100a04" stroke-width="2"/>
+  <text x="300.0" y="46.0" text-anchor="middle" font-size="12" font-weight="600" fill="#100a04" font-family="system-ui,sans-serif">Niche</text>
+  <text x="300.0" y="106.0" text-anchor="middle" font-size="12" font-weight="600" fill="#100a04" font-family="system-ui,sans-serif">Early Adopters</text>
+  <text x="300.0" y="166.0" text-anchor="middle" font-size="12" font-weight="600" fill="#100a04" font-family="system-ui,sans-serif">Mainstream</text>
+  <text x="300.0" y="226.0" text-anchor="middle" font-size="12" font-weight="600" fill="#100a04" font-family="system-ui,sans-serif">Late Majority</text>
+  <text x="300.0" y="286.0" text-anchor="middle" font-size="12" font-weight="600" fill="#100a04" font-family="system-ui,sans-serif">Laggards</text>
+</svg>

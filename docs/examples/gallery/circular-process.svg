@@ -1,0 +1,20 @@
+<svg viewBox="0 0 500 440" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#080f10;border-radius:8px">
+  
+  <defs><marker id="cp-arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,1 L7,4 L0,7 Z" fill="#34d399cc"/></marker></defs>
+  <path d="M306.7,74.4 A160,160 0 0,1 408.2,200.1" fill="none" stroke="#34d39955" stroke-width="2" marker-end="url(#cp-arr)"/>
+  <path d="M408.2,247.9 A160,160 0 0,1 306.7,373.6" fill="none" stroke="#34d39955" stroke-width="2" marker-end="url(#cp-arr)"/>
+  <path d="M193.3,373.6 A160,160 0 0,1 91.8,247.9" fill="none" stroke="#34d39955" stroke-width="2" marker-end="url(#cp-arr)"/>
+  <path d="M91.8,200.1 A160,160 0 0,1 193.3,74.4" fill="none" stroke="#34d39955" stroke-width="2" marker-end="url(#cp-arr)"/>
+  <rect x="198.0" y="46.0" width="104" height="36" rx="7" fill="#10b98128" stroke="#10b981" stroke-width="1.8"/>
+  <text x="203.0" y="55.0" font-size="8" fill="#10b981" font-family="system-ui,sans-serif" font-weight="800" opacity="0.85">1</text>
+  <text x="250.0" y="67.3" text-anchor="middle" font-size="10.5" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Plan</text>
+  <rect x="358.0" y="206.0" width="104" height="36" rx="7" fill="#0db07b28" stroke="#0db07b" stroke-width="1.8"/>
+  <text x="363.0" y="215.0" font-size="8" fill="#0db07b" font-family="system-ui,sans-serif" font-weight="800" opacity="0.85">2</text>
+  <text x="410.0" y="227.3" text-anchor="middle" font-size="10.5" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Build</text>
+  <rect x="198.0" y="366.0" width="104" height="36" rx="7" fill="#0ba87528" stroke="#0ba875" stroke-width="1.8"/>
+  <text x="203.0" y="375.0" font-size="8" fill="#0ba875" font-family="system-ui,sans-serif" font-weight="800" opacity="0.85">3</text>
+  <text x="250.0" y="387.3" text-anchor="middle" font-size="10.5" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Test</text>
+  <rect x="38.0" y="206.0" width="104" height="36" rx="7" fill="#089f6f28" stroke="#089f6f" stroke-width="1.8"/>
+  <text x="43.0" y="215.0" font-size="8" fill="#089f6f" font-family="system-ui,sans-serif" font-weight="800" opacity="0.85">4</text>
+  <text x="90.0" y="227.3" text-anchor="middle" font-size="10.5" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Ship</text>
+</svg>

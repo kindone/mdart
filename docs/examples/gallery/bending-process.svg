@@ -1,0 +1,23 @@
+<svg viewBox="0 0 624 136" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="624" height="136" fill="#080f10" rx="8"/>
+    <defs>
+    <marker id="bp-r" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#34d399"/></marker>
+  </defs>
+    <rect x="40.0" y="12.0" width="175.3" height="36" rx="5" fill="#10b98133" stroke="#10b981" stroke-width="1.2"/>
+    <text x="127.7" y="34.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Research</text>
+    <line x1="216.3" y1="30.0" x2="220.3" y2="30.0" stroke="#34d39999" stroke-width="1.5" marker-end="url(#bp-r)"/>
+    <rect x="221.3" y="12.0" width="175.3" height="36" rx="5" fill="#0eb27c33" stroke="#0eb27c" stroke-width="1.2"/>
+    <text x="309.0" y="34.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Design</text>
+    <line x1="397.7" y1="30.0" x2="401.7" y2="30.0" stroke="#34d39999" stroke-width="1.5" marker-end="url(#bp-r)"/>
+    <rect x="402.7" y="12.0" width="175.3" height="36" rx="5" fill="#0cab7733" stroke="#0cab77" stroke-width="1.2"/>
+    <text x="490.3" y="34.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Prototype</text>
+    <path d="M578,30.0 H594 A8,8 0 0,1 602,38.0 V82.0 A8,8 0 0,1 594,90.0 H578" fill="none" stroke="#34d39988" stroke-width="2" marker-end="url(#bp-r)"/>
+    <rect x="402.7" y="72.0" width="175.3" height="36" rx="5" fill="#09a47333" stroke="#09a473" stroke-width="1.2"/>
+    <text x="490.3" y="94.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Test</text>
+    <line x1="401.7" y1="90.0" x2="397.7" y2="90.0" stroke="#34d39999" stroke-width="1.5" marker-end="url(#bp-r)"/>
+    <rect x="221.3" y="72.0" width="175.3" height="36" rx="5" fill="#079d6e33" stroke="#079d6e" stroke-width="1.2"/>
+    <text x="309.0" y="94.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Review</text>
+    <line x1="220.3" y1="90.0" x2="216.3" y2="90.0" stroke="#34d39999" stroke-width="1.5" marker-end="url(#bp-r)"/>
+    <rect x="40.0" y="72.0" width="175.3" height="36" rx="5" fill="#34d39933" stroke="#34d399" stroke-width="1.2"/>
+    <text x="127.7" y="94.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Launch</text>
+  </svg>

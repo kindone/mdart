@@ -427,9 +427,68 @@ section { margin-bottom: 3.5rem; }
 </body>
 </html>`
 
+// ── Markdown gallery (GitHub-friendly) ────────────────────────────────────────
+
+// Write each SVG to docs/examples/gallery/<name>.svg so gallery.md can embed them
+const galleryImgDir = join(root, 'docs', 'examples', 'gallery')
+await mkdir(galleryImgDir, { recursive: true })
+
+for (const family of FAMILIES) {
+  for (const layout of family.layouts) {
+    if (layout.svg && !layout.svg.startsWith('<div class="render-error"')) {
+      await writeFile(join(galleryImgDir, `${layout.name}.svg`), layout.svg, 'utf8')
+    }
+  }
+}
+
+const tocLines = FAMILIES.map(f => `- [${f.name} (${f.layouts.length})](#${f.slug})`).join('\n')
+
+const mdSections = FAMILIES.map(f => {
+  const cards = f.layouts.map(l => {
+    const hasSvg = l.svg && !l.svg.startsWith('<div class="render-error"')
+    return [
+      `### \`${l.name}\``,
+      '',
+      '```',
+      l.source,
+      '```',
+      '',
+      hasSvg
+        ? `![${l.name}](./examples/gallery/${l.name}.svg)`
+        : `> *(render error)*`,
+      '',
+    ].join('\n')
+  }).join('\n')
+
+  return [
+    `## ${f.name}`,
+    '',
+    `_${f.desc}_`,
+    '',
+    cards,
+  ].join('\n')
+}).join('\n---\n\n')
+
+const md = [
+  `# MdArt Layout Reference`,
+  '',
+  `**${layoutCount} layouts across ${FAMILIES.length} families.** Every layout type with its source and rendered output.`,
+  '',
+  `See the [interactive playground](https://github.com/mdart/mdart) for live editing, or open [gallery.html](./gallery.html) for a richer viewer.`,
+  '',
+  '## Contents',
+  '',
+  tocLines,
+  '',
+  '---',
+  '',
+  mdSections,
+].join('\n')
+
 // ── Write ─────────────────────────────────────────────────────────────────────
 
 await mkdir(join(root, 'docs'), { recursive: true })
 await writeFile(join(root, 'docs', 'gallery.html'), html, 'utf8')
+await writeFile(join(root, 'docs', 'gallery.md'),   md,   'utf8')
 
-console.log(`✓  ${total} layouts rendered${failed ? ` (${failed} failed)` : ''} → docs/gallery.html`)
+console.log(`✓  ${total} layouts rendered${failed ? ` (${failed} failed)` : ''} → docs/gallery.html, docs/gallery.md, docs/examples/gallery/*.svg`)

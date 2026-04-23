@@ -1,0 +1,18 @@
+<svg viewBox="0 0 540 177.6" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#080f10;border-radius:8px">
+  <text x="270" y="20" text-anchor="middle" font-size="13" fill="#6ee7b7" font-family="system-ui,sans-serif" font-weight="600">Health Metrics</text>
+  <path d="M23.400000000000006,128.208 A66.6,66.6 0 0,1 156.6,128.208" fill="none" stroke="#064e3b44" stroke-width="11.322" stroke-linecap="round"/>
+  <path d="M23.400000000000006,128.208 A66.6,66.6 0 0,1 156.6,126.1" fill="none" stroke="#34d399" stroke-width="11.322" stroke-linecap="round"/>
+  <circle cx="156.6" cy="126.1" r="5.7" fill="#34d399"/>
+  <text x="90" y="122.2" text-anchor="middle" font-size="27" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">99%</text>
+  <text x="90" y="144.2" text-anchor="middle" font-size="10" fill="#6ee7b7" font-family="system-ui,sans-serif">Uptime</text>
+  <path d="M203.4,128.208 A66.6,66.6 0 0,1 336.6,128.208" fill="none" stroke="#064e3b44" stroke-width="11.322" stroke-linecap="round"/>
+  <path d="M203.4,128.208 A66.6,66.6 0 0,1 274.2,61.7" fill="none" stroke="#fbbf24" stroke-width="11.322" stroke-linecap="round"/>
+  <circle cx="274.2" cy="61.7" r="5.7" fill="#fbbf24"/>
+  <text x="270" y="122.2" text-anchor="middle" font-size="27" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">52%</text>
+  <text x="270" y="144.2" text-anchor="middle" font-size="10" fill="#6ee7b7" font-family="system-ui,sans-serif">Error Rate</text>
+  <path d="M383.4,128.208 A66.6,66.6 0 0,1 516.6,128.208" fill="none" stroke="#064e3b44" stroke-width="11.322" stroke-linecap="round"/>
+  <path d="M383.4,128.208 A66.6,66.6 0 0,1 508.4,96.1" fill="none" stroke="#34d399" stroke-width="11.322" stroke-linecap="round"/>
+  <circle cx="508.4" cy="96.1" r="5.7" fill="#34d399"/>
+  <text x="450" y="122.2" text-anchor="middle" font-size="27" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">84%</text>
+  <text x="450" y="144.2" text-anchor="middle" font-size="10" fill="#6ee7b7" font-family="system-ui,sans-serif">Satisfaction</text>
+</svg>

@@ -1,0 +1,24 @@
+<svg viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="560" height="180" fill="#0e0a1a" rx="8"/>
+    <defs>
+    <marker id="bc-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#8b5cf6"/>
+    </marker>
+  </defs>
+    <rect x="8" y="8" width="267" height="68" rx="5" fill="#130f20" stroke="#8b5cf6" stroke-opacity="0.55" stroke-width="1"/>
+    <path d="M 13 8 L 270 8 Q 275 8 275 13 L 275 28 L 8 28 L 8 13 Q 8 8 13 8 Z" fill="#8b5cf6"/>
+    <text x="141.5" y="23" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Research</text>
+    <rect x="285" y="8" width="267" height="68" rx="5" fill="#130f20" stroke="#8651f3" stroke-opacity="0.55" stroke-width="1"/>
+    <path d="M 290 8 L 547 8 Q 552 8 552 13 L 552 28 L 285 28 L 285 13 Q 285 8 290 8 Z" fill="#8651f3"/>
+    <text x="418.5" y="23" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Design</text>
+    <rect x="285" y="104" width="267" height="68" rx="5" fill="#130f20" stroke="#8145f0" stroke-opacity="0.55" stroke-width="1"/>
+    <path d="M 290 104 L 547 104 Q 552 104 552 109 L 552 124 L 285 124 L 285 109 Q 285 104 290 104 Z" fill="#8145f0"/>
+    <text x="418.5" y="119" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Build</text>
+    <rect x="8" y="104" width="267" height="68" rx="5" fill="#130f20" stroke="#7c3aed" stroke-opacity="0.55" stroke-width="1"/>
+    <path d="M 13 104 L 270 104 Q 275 104 275 109 L 275 124 L 8 124 L 8 109 Q 8 104 13 104 Z" fill="#7c3aed"/>
+    <text x="141.5" y="119" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Launch</text>
+    <line x1="277.0" y1="42.0" x2="279.0" y2="42.0" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#bc-arr)"/>
+    <line x1="418.5" y1="78.0" x2="418.5" y2="98.0" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#bc-arr)"/>
+    <line x1="283.0" y1="138.0" x2="281.0" y2="138.0" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#bc-arr)"/>
+    <line x1="141.5" y1="102.0" x2="141.5" y2="82.0" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#bc-arr)"/>
+  </svg>

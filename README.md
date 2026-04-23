@@ -186,7 +186,7 @@ npm run gen-examples
 
 ## Gallery
 
-Browse all 97 layout types with live rendered previews: **[docs/gallery.html](./docs/gallery.html)**
+Browse all 97 layout types with source + rendered SVG: **[docs/gallery.md](./docs/gallery.md)** (GitHub-friendly) or [docs/gallery.html](./docs/gallery.html) (richer standalone viewer — clone the repo).
 
 ## Syntax reference
 

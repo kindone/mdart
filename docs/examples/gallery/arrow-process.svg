@@ -1,0 +1,14 @@
+<svg viewBox="0 0 600 110" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="600" height="110" fill="#080f10" rx="8"/>
+    <rect x="11.0" y="22" width="116" height="70" rx="7" fill="#10b98128" stroke="#10b981" stroke-width="2"/>
+    <text x="69.0" y="61.0" text-anchor="middle" font-size="10.5" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Research</text>
+    <polygon points="131,43.0 155,43.0 155,27.0 167.0,57.0 155,87.0 155,71.0 131,71.0" fill="#10b98199"/>
+    <rect x="165.0" y="22" width="116" height="70" rx="7" fill="#0cad7928" stroke="#0cad79" stroke-width="2"/>
+    <text x="223.0" y="61.0" text-anchor="middle" font-size="10.5" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Prototype</text>
+    <polygon points="285,43.0 309,43.0 309,27.0 321.0,57.0 309,87.0 309,71.0 285,71.0" fill="#0cad7999"/>
+    <rect x="319.0" y="22" width="116" height="70" rx="7" fill="#09a27128" stroke="#09a271" stroke-width="2"/>
+    <text x="377.0" y="61.0" text-anchor="middle" font-size="10.5" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Build</text>
+    <polygon points="439,43.0 463,43.0 463,27.0 475.0,57.0 463,87.0 463,71.0 439,71.0" fill="#09a27199"/>
+    <rect x="473.0" y="22" width="116" height="70" rx="7" fill="#05966928" stroke="#059669" stroke-width="2"/>
+    <text x="531.0" y="61.0" text-anchor="middle" font-size="10.5" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Launch</text>
+  </svg>

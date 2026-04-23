@@ -1,0 +1,17 @@
+<svg viewBox="0 0 500 428" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#180a0e;border-radius:8px">
+  <text x="250" y="20" text-anchor="middle" font-size="13" fill="#fda4af" font-family="system-ui,sans-serif" font-weight="600">Growth Framework</text>
+  <line x1="250" y1="123" x2="250" y2="198" stroke="#f43f5e55" stroke-width="12"/>
+  <line x1="250" y1="258" x2="250" y2="333" stroke="#f43f5e55" stroke-width="12"/>
+  <line x1="173" y1="228" x2="220" y2="228" stroke="#f43f5e55" stroke-width="12"/>
+  <line x1="280" y1="228" x2="327" y2="228" stroke="#f43f5e55" stroke-width="12"/>
+  <circle cx="250" cy="228" r="30" fill="#fb718533" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="250" y="232" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Referral</text>
+  <rect x="197.0" y="73.0" width="106" height="50" rx="6" fill="#1a0d12" stroke="#f43f5e88" stroke-width="1.5"/>
+  <text x="250.0" y="91.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Acquire</text>
+  <rect x="327.0" y="203.0" width="106" height="50" rx="6" fill="#1a0d12" stroke="#e11d4888" stroke-width="1.5"/>
+  <text x="380.0" y="221.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Activate</text>
+  <rect x="197.0" y="333.0" width="106" height="50" rx="6" fill="#1a0d12" stroke="#fb718588" stroke-width="1.5"/>
+  <text x="250.0" y="351.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Retain</text>
+  <rect x="67.0" y="203.0" width="106" height="50" rx="6" fill="#1a0d12" stroke="#f43f5e88" stroke-width="1.5"/>
+  <text x="120.0" y="221.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Revenue</text>
+</svg>

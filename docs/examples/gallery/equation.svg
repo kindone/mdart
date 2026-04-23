@@ -1,0 +1,23 @@
+<svg viewBox="0 0 560 124" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="560" height="124" fill="#080f10" rx="8"/>
+    <rect x="91.0" y="16.0" width="110.0" height="100" rx="7" fill="#10b98122" stroke="#10b98188" stroke-width="1.5"/>
+    <rect x="91.0" y="16.0" width="110.0" height="22" rx="7" fill="#10b981"/>
+    <rect x="91.0" y="30.0" width="110.0" height="8" fill="#10b981"/>
+    <text x="146.0" y="30.0" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">People</text>
+    <text x="146.0" y="56.0" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="system-ui,sans-serif">Team skills</text>
+    <text x="146.0" y="72.0" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="system-ui,sans-serif">Culture</text>
+    <text x="213.0" y="74.0" text-anchor="middle" font-size="20" fill="#064e3b" font-family="system-ui,sans-serif" font-weight="300">+</text>
+    <rect x="225.0" y="16.0" width="110.0" height="100" rx="7" fill="#0ba87522" stroke="#0ba87588" stroke-width="1.5"/>
+    <rect x="225.0" y="16.0" width="110.0" height="22" rx="7" fill="#0ba875"/>
+    <rect x="225.0" y="30.0" width="110.0" height="8" fill="#0ba875"/>
+    <text x="280.0" y="30.0" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">Process</text>
+    <text x="280.0" y="56.0" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="system-ui,sans-serif">Workflows</text>
+    <text x="280.0" y="72.0" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="system-ui,sans-serif">Systems</text>
+    <text x="347.0" y="74.0" text-anchor="middle" font-size="20" fill="#064e3b" font-family="system-ui,sans-serif" font-weight="300">=</text>
+    <rect x="359.0" y="16.0" width="110.0" height="100" rx="7" fill="#34d39922" stroke="#34d39988" stroke-width="1.5"/>
+    <rect x="359.0" y="16.0" width="110.0" height="22" rx="7" fill="#34d399"/>
+    <rect x="359.0" y="30.0" width="110.0" height="8" fill="#34d399"/>
+    <text x="414.0" y="30.0" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">Results</text>
+    <text x="414.0" y="56.0" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="system-ui,sans-serif">Outcomes</text>
+    <text x="414.0" y="72.0" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="system-ui,sans-serif">Impact</text>
+  </svg>

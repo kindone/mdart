@@ -1,0 +1,37 @@
+<svg viewBox="0 0 580 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#080f18;border-radius:8px">
+  <text x="290" y="20" text-anchor="middle" font-size="13" fill="#7dd3fc" font-family="system-ui,sans-serif" font-weight="600">Order Lifecycle</text>
+  <defs>
+    <marker id="sm-a" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+      <path d="M0,0 L7,3.5 L0,7 Z" fill="#38bdf899"/>
+    </marker>
+  </defs>
+  <path d="M332.1,70.0 Q381.6,72.7 379.4,146.7" fill="none" stroke="#38bdf866" stroke-width="1.5" marker-end="url(#sm-a)"/>
+  <rect x="343.0" y="73.4" width="63.0" height="12" rx="3" fill="#091520" opacity="0.88"/>
+  <text x="374.5" y="82.4" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="system-ui,sans-serif">payment ok</text>
+  <path d="M247.9,70.0 Q206.7,84.1 200.6,146.7" fill="none" stroke="#38bdf866" stroke-width="1.5" marker-end="url(#sm-a)"/>
+  <rect x="190.5" y="84.8" width="46.5" height="12" rx="3" fill="#091520" opacity="0.88"/>
+  <text x="213.7" y="93.8" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="system-ui,sans-serif">timeout</text>
+  <path d="M411.8,176.4 Q431.3,247.7 393.8,300.4" fill="none" stroke="#38bdf866" stroke-width="1.5" marker-end="url(#sm-a)"/>
+  <rect x="399.4" y="235.0" width="41.0" height="12" rx="3" fill="#091520" opacity="0.88"/>
+  <text x="419.9" y="244.0" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="system-ui,sans-serif">packed</text>
+  <path d="M385.8,150.2 Q336.3,147.5 338.5,73.5" fill="none" stroke="#38bdf866" stroke-width="1.5" marker-end="url(#sm-a)"/>
+  <rect x="325.6" y="128.7" width="35.5" height="12" rx="3" fill="#091520" opacity="0.88"/>
+  <text x="343.4" y="137.7" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="system-ui,sans-serif">retry</text>
+  <path d="M323.2,322.3 Q294.0,352.3 264.8,322.3" fill="none" stroke="#38bdf866" stroke-width="1.5" marker-end="url(#sm-a)"/>
+  <rect x="265.3" y="331.3" width="57.5" height="12" rx="3" fill="#091520" opacity="0.88"/>
+  <text x="294.0" y="340.3" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="system-ui,sans-serif">confirmed</text>
+  <circle cx="206.0" cy="60.0" r="7" fill="#e2e8f0"/>
+  <line x1="213.0" y1="60.0" x2="234.0" y2="60.0" stroke="#e2e8f0" stroke-width="2.5" marker-end="url(#sm-a)"/>
+  <rect x="240.0" y="45.0" width="100" height="30" rx="6" fill="#091520" stroke="#0ea5e9" stroke-width="1.5"/>
+  <text x="290.0" y="65.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Pending</text>
+  <rect x="377.9" y="145.2" width="100" height="30" rx="6" fill="#091520" stroke="#38bdf866" stroke-width="1.5"/>
+  <text x="427.9" y="165.2" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Processing</text>
+  <rect x="325.2" y="307.3" width="100" height="30" rx="6" fill="#091520" stroke="#38bdf866" stroke-width="1.5"/>
+  <text x="375.2" y="327.3" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Shipped</text>
+  <rect x="150.8" y="303.3" width="108" height="38" rx="9" fill="none" stroke="#38bdf8" stroke-width="2"/>
+  <rect x="154.8" y="307.3" width="100" height="30" rx="6" fill="#38bdf818" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="204.8" y="327.3" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Delivered</text>
+  <rect x="98.1" y="141.2" width="108" height="38" rx="9" fill="none" stroke="#38bdf8" stroke-width="2"/>
+  <rect x="102.1" y="145.2" width="100" height="30" rx="6" fill="#38bdf818" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="152.1" y="165.2" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Cancelled</text>
+</svg>
