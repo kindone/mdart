@@ -42,3 +42,6 @@ Desktop.ini
 
 # ── TypeScript incremental build info ────────────────────────────────────────
 *.tsbuildinfo
+
+# ── Playground runtime state ──────────────────────────────────────────────────
+apps/playground/data/
