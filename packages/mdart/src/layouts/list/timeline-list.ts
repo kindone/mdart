@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, getCaption } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -43,8 +43,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Label
     svgContent += `<text x="${cardX + CARD_W / 2}" y="${cy - 6}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(item.label)}</text>`
 
-    if (item.value) {
-      svgContent += `<text x="${cardX + CARD_W / 2}" y="${cy + 10}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value)}</text>`
+    const caption = getCaption(item)
+    if (caption) {
+      svgContent += `<text x="${cardX + CARD_W / 2}" y="${cy + 10}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(caption)}</text>`
     }
 
     if (item.attrs.length > 0) {

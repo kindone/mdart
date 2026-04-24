@@ -1,4 +1,5 @@
 import type { MdArtTheme } from '../theme'
+import type { MdArtItem } from '../parser'
 
 // ── XML / text helpers ────────────────────────────────────────────────────────
 
@@ -14,6 +15,20 @@ export function tt(s: string, max: number): string {
   const tr = truncate(s, max)
   if (tr === s) return escapeXml(s)
   return `<title>${escapeXml(s)}</title>${escapeXml(tr)}`
+}
+
+/**
+ * Resolve a single-line description for an item, preferring `value` (explicit
+ * inline `: desc` form) and falling back to a summary of `children` labels
+ * (nested `  - child` form). Used by renderers that have only one description
+ * slot, so authors can use either syntax interchangeably.
+ *
+ * Returns null when neither is present.
+ */
+export function getCaption(item: MdArtItem, maxChildren = 3, sep = ' · '): string | null {
+  if (item.value) return item.value
+  if (!item.children || item.children.length === 0) return null
+  return item.children.slice(0, maxChildren).map(c => c.label).join(sep)
 }
 
 // ── Color helpers ─────────────────────────────────────────────────────────────
@@ -84,7 +99,8 @@ export function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: b
 
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.2"/>`)
     parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, Math.floor(BOX_W / 6))}</text>`)
-    if (item.value) parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 16).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, Math.floor(BOX_W / 5))}</text>`)
+    const caption = getCaption(item)
+    if (caption) parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 16).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, Math.floor(BOX_W / 5))}</text>`)
 
     if (i < n - 1) {
       const nextY = ascending

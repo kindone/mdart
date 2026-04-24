@@ -518,10 +518,35 @@ const md = [
   mdSections,
 ].join('\n')
 
+// ── Playground markdown showcase (gallery-all-diagram-types.md) ──────────────
+// Shows every layout type in a single markdown doc — rendered by the demo's
+// markdown mode so users can see all 97 layouts with their source + SVG in
+// one scrollable page.
+
+const playgroundMd = [
+  '# MdArt Diagram Gallery',
+  '',
+  `Every layout type (${layoutCount} total across ${FAMILIES.length} families) with its mdart source.`,
+  '',
+  ...FAMILIES.flatMap(f => [
+    `## ${f.name}`,
+    '',
+    ...f.layouts.flatMap(l => [
+      '```mdart',
+      l.source,
+      '```',
+      '',
+    ]),
+  ]),
+].join('\n')
+
 // ── Write ─────────────────────────────────────────────────────────────────────
 
 await mkdir(join(root, 'docs'), { recursive: true })
 await writeFile(join(root, 'docs', 'gallery.html'), html, 'utf8')
 await writeFile(join(root, 'docs', 'gallery.md'),   md,   'utf8')
 
-console.log(`✓  ${total} layouts rendered${failed ? ` (${failed} failed)` : ''} → docs/gallery.html, docs/gallery.md, docs/examples/gallery/*.svg`)
+const playgroundMdPath = join(root, 'apps/playground/examples/markdown/gallery-all-diagram-types.md')
+await writeFile(playgroundMdPath, playgroundMd, 'utf8')
+
+console.log(`✓  ${total} layouts rendered${failed ? ` (${failed} failed)` : ''} → docs/gallery.html, docs/gallery.md, docs/examples/gallery/*.svg, apps/playground/examples/markdown/gallery-all-diagram-types.md`)

@@ -1,16 +1,27 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, getCaption } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
 
-  const W = 460
-  const ROW_H = 40
-  const PAD = 16
+  const W      = 460
+  const PAD    = 16
   const titleH = spec.title ? 28 : 0
+
+  // Grow row height when any item has a caption so label + caption stack cleanly.
+  const captions       = items.map(it => getCaption(it))
+  const hasAnyCaption  = captions.some(c => c !== null)
+  const ROW_H          = hasAnyCaption ? 48 : 40
+
   const H = PAD + titleH + items.length * ROW_H + PAD
+
+  // Available text width after badge (22px) + 8px gap
+  const textStart = PAD + 30
+  const textPx    = (W - PAD) - textStart - 4
+  const labelMax  = Math.floor(textPx / 5.8)   // for 12 px
+  const valueMax  = Math.floor(textPx / 5.0)   // for 11 px
 
   let svgContent = ''
 
@@ -20,17 +31,26 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
-    const y = PAD + titleH + i * ROW_H
-    const cy = y + ROW_H / 2
-    const t = items.length > 1 ? i / (items.length - 1) : 0
+    const y    = PAD + titleH + i * ROW_H
+    const cy   = y + ROW_H / 2
+    const t    = items.length > 1 ? i / (items.length - 1) : 0
     const fill = lerpColor(theme.secondary, theme.primary, t)
 
-    svgContent += `<rect x="${PAD}" y="${cy - 11}" width="22" height="22" rx="4" fill="${fill}" />`
-    svgContent += `<text x="${PAD + 11}" y="${cy + 4}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${i + 1}</text>`
-    svgContent += `<text x="${PAD + 30}" y="${cy + 4}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(item.label)}</text>`
+    const caption = captions[i]
 
-    if (item.value) {
-      svgContent += `<text x="${W - PAD}" y="${cy + 4}" text-anchor="end" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value)}</text>`
+    // Number badge (square) — vertically centred with label baseline
+    const badgeCy = caption ? y + 18 : cy
+    svgContent += `<rect x="${PAD}" y="${badgeCy - 11}" width="22" height="22" rx="4" fill="${fill}" />`
+    svgContent += `<text x="${PAD + 11}" y="${badgeCy + 4}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${i + 1}</text>`
+
+    if (caption) {
+      // Two-line row: label on top, caption muted below
+      const labelY = y + 22
+      const valueY = y + 38
+      svgContent += `<text x="${textStart}" y="${labelY}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, labelMax)}</text>`
+      svgContent += `<text x="${textStart}" y="${valueY}" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, valueMax)}</text>`
+    } else {
+      svgContent += `<text x="${textStart}" y="${cy + 4}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, labelMax)}</text>`
     }
 
     if (i < items.length - 1) {
