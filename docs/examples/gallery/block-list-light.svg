@@ -4,16 +4,20 @@
     <rect x="0.0" y="8.0" width="6" height="68" rx="3" fill="#059669"/>
     <text x="16.0" y="34.0" font-size="12" fill="#052e16" font-family="system-ui,sans-serif" font-weight="700">Strategy</text>
     <text x="16.0" y="52.0" font-size="10" fill="#059669" font-family="system-ui,sans-serif">Define your approach</text>
+    <text x="16.0" y="66.0" font-size="9" fill="#d1fae5" font-family="system-ui,sans-serif">Vision · Goals</text>
     <rect x="252.0" y="8.0" width="244.0" height="68" rx="8" fill="#058c6333" stroke="#058c6388" stroke-width="1.5"/>
     <rect x="252.0" y="8.0" width="6" height="68" rx="3" fill="#058c63"/>
     <text x="268.0" y="34.0" font-size="12" fill="#052e16" font-family="system-ui,sans-serif" font-weight="700">Design</text>
     <text x="268.0" y="52.0" font-size="10" fill="#059669" font-family="system-ui,sans-serif">Shape the solution</text>
+    <text x="268.0" y="66.0" font-size="9" fill="#d1fae5" font-family="system-ui,sans-serif">Research · Prototype</text>
     <rect x="0.0" y="84.0" width="244.0" height="68" rx="8" fill="#04825d33" stroke="#04825d88" stroke-width="1.5"/>
     <rect x="0.0" y="84.0" width="6" height="68" rx="3" fill="#04825d"/>
     <text x="16.0" y="110.0" font-size="12" fill="#052e16" font-family="system-ui,sans-serif" font-weight="700">Build</text>
     <text x="16.0" y="128.0" font-size="10" fill="#059669" font-family="system-ui,sans-serif">Execute the plan</text>
+    <text x="16.0" y="142.0" font-size="9" fill="#d1fae5" font-family="system-ui,sans-serif">Ship · Measure</text>
     <rect x="252.0" y="84.0" width="244.0" height="68" rx="8" fill="#04785733" stroke="#04785788" stroke-width="1.5"/>
     <rect x="252.0" y="84.0" width="6" height="68" rx="3" fill="#047857"/>
     <text x="268.0" y="110.0" font-size="12" fill="#052e16" font-family="system-ui,sans-serif" font-weight="700">Launch</text>
     <text x="268.0" y="128.0" font-size="10" fill="#059669" font-family="system-ui,sans-serif">Ship to the world</text>
+    <text x="268.0" y="142.0" font-size="9" fill="#d1fae5" font-family="system-ui,sans-serif">Announce · Iterate</text>
   </svg>

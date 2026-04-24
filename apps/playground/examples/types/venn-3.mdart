@@ -1,6 +1,12 @@
 type: venn-3
 
 - Marketing
+  - Campaigns
+  - Content
 - Sales
+  - Pipeline
+  - Accounts
 - Product
+  - Features
+  - UX
 - All Three ∩

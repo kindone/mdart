@@ -2,5 +2,11 @@ type: equation
 title: Value Formula
 
 - User Value
+  - Problem fit
+  - Delight
 - Technical Quality
+  - Performance
+  - Maintainability
 - Speed of Delivery
+  - Time to market
+  - Iteration velocity

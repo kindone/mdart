@@ -393,9 +393,17 @@ type: timeline-list
 ```
 type: block-list
 - Strategy: Define your approach
+  - Vision
+  - Goals
 - Design: Shape the solution
+  - Research
+  - Prototype
 - Build: Execute the plan
+  - Ship
+  - Measure
 - Launch: Ship to the world
+  - Announce
+  - Iterate
 ```
 
 <picture>
@@ -620,9 +628,17 @@ type: spiral
 ```
 type: block-cycle
 - Research
+  - Interviews
+  - Competitive analysis
 - Design
+  - Wireframes
+  - User testing
 - Build
+  - Implementation
+  - QA
 - Launch
+  - Rollout
+  - Monitoring
 ```
 
 <picture>
@@ -1144,8 +1160,14 @@ type: venn
 ```
 type: venn-3
 - Marketing
+  - Campaigns
+  - Content
 - Sales
+  - Pipeline
+  - Accounts
 - Product
+  - Features
+  - UX
 - All Three ∩
 ```
 

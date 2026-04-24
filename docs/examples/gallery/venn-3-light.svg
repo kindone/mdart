@@ -4,7 +4,13 @@
   <circle cx="342.0" cy="157.7" r="105" fill="#be123c22" stroke="#be123c77" stroke-width="1.5"/>
   <circle cx="280.0" cy="253.8" r="105" fill="#f43f5e22" stroke="#f43f5e77" stroke-width="1.5"/>
   <text x="168.0" y="99.9" text-anchor="middle" font-size="12" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="600">Marketing</text>
+  <text x="168.0" y="114.9" text-anchor="middle" font-size="9" fill="#be123c" font-family="system-ui,sans-serif">Campaigns</text>
+  <text x="168.0" y="128.9" text-anchor="middle" font-size="9" fill="#be123c" font-family="system-ui,sans-serif">Content</text>
   <text x="392.0" y="99.9" text-anchor="middle" font-size="12" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="600">Sales</text>
+  <text x="392.0" y="114.9" text-anchor="middle" font-size="9" fill="#be123c" font-family="system-ui,sans-serif">Pipeline</text>
+  <text x="392.0" y="128.9" text-anchor="middle" font-size="9" fill="#be123c" font-family="system-ui,sans-serif">Accounts</text>
   <text x="280.0" y="316.8" text-anchor="middle" font-size="12" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="600">Product</text>
+  <text x="280.0" y="331.8" text-anchor="middle" font-size="9" fill="#be123c" font-family="system-ui,sans-serif">Features</text>
+  <text x="280.0" y="345.8" text-anchor="middle" font-size="9" fill="#be123c" font-family="system-ui,sans-serif">UX</text>
   <text x="280.0" y="192.7" text-anchor="middle" font-size="9" fill="#f43f5e" font-family="system-ui,sans-serif" font-weight="600">All Three ∩</text>
 </svg>

@@ -2,7 +2,12 @@ type: timeline-v
 title: Release History
 
 - v1.0: Initial release
+  - MVP feature set
 - v1.2: Bug fixes & perf
+  - Stability improvements
 - v2.0: Major redesign
+  - New information architecture
 - v2.5: API v2
+  - GraphQL endpoint
 - v3.0: Enterprise tier
+  - SSO and audit logs

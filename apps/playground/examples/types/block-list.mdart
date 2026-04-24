@@ -2,6 +2,14 @@ type: block-list
 title: Core Values
 
 - Honesty: Radical transparency
+  - Share early
+  - Admit mistakes
 - Quality: Never ship broken
+  - Test first
+  - Review carefully
 - Speed: Bias to action
+  - Decide fast
+  - Iterate
 - Care: People first
+  - Listen well
+  - Support peers
