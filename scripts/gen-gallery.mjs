@@ -532,6 +532,8 @@ const playgroundMd = [
     `## ${f.name}`,
     '',
     ...f.layouts.flatMap(l => [
+      `### \`${l.name}\``,
+      '',
       '```mdart',
       l.source,
       '```',

@@ -4,6 +4,8 @@ Every layout type (97 total across 10 families) with its mdart source.
 
 ## Process
 
+### `process`
+
 ```mdart
 type: process
 - Discovery
@@ -12,6 +14,8 @@ type: process
 - Test
 - Deploy
 ```
+
+### `chevron-process`
 
 ```mdart
 type: chevron-process
@@ -22,6 +26,8 @@ type: chevron-process
 - Deploy
 ```
 
+### `arrow-process`
+
 ```mdart
 type: arrow-process
 - Research
@@ -29,6 +35,8 @@ type: arrow-process
 - Build
 - Launch
 ```
+
+### `circular-process`
 
 ```mdart
 type: circular-process
@@ -38,6 +46,8 @@ type: circular-process
 - Ship
 ```
 
+### `funnel`
+
 ```mdart
 type: funnel
 - Awareness
@@ -46,6 +56,8 @@ type: funnel
 - Purchase
 ```
 
+### `roadmap`
+
 ```mdart
 type: roadmap
 - Q1: Foundation
@@ -53,6 +65,8 @@ type: roadmap
 - Q3: Growth
 - Q4: Scale
 ```
+
+### `waterfall`
 
 ```mdart
 type: waterfall
@@ -63,6 +77,8 @@ type: waterfall
 - Deployment
 ```
 
+### `step-up`
+
 ```mdart
 type: step-up
 - Awareness
@@ -70,6 +86,8 @@ type: step-up
 - Evaluation
 - Purchase
 ```
+
+### `step-down`
 
 ```mdart
 type: step-down
@@ -79,6 +97,8 @@ type: step-down
 - Release
 ```
 
+### `circle-process`
+
 ```mdart
 type: circle-process
 - Ideate: Ideas
@@ -86,6 +106,8 @@ type: circle-process
 - Build: Implement
 - Ship: Launch
 ```
+
+### `equation`
 
 ```mdart
 type: equation
@@ -100,6 +122,8 @@ type: equation
   - Impact
 ```
 
+### `bending-process`
+
 ```mdart
 type: bending-process
 - Research
@@ -110,6 +134,8 @@ type: bending-process
 - Launch
 ```
 
+### `segmented-bar`
+
 ```mdart
 type: segmented-bar
 title: Project Timeline · 12 weeks
@@ -118,6 +144,8 @@ title: Project Timeline · 12 weeks
 - Development: 50%
 - Launch: 15%
 ```
+
+### `phase-process`
 
 ```mdart
 type: phase-process
@@ -132,6 +160,8 @@ type: phase-process
   - Sprint 2
 ```
 
+### `timeline-h`
+
 ```mdart
 type: timeline-h
 - Kickoff: Jan
@@ -140,6 +170,8 @@ type: timeline-h
 - Review: Sep
 - Ship: Dec
 ```
+
+### `timeline-v`
 
 ```mdart
 type: timeline-v
@@ -151,6 +183,8 @@ type: timeline-v
   - 500 early users
 - GA Release: Dec '24
 ```
+
+### `swimlane`
 
 ```mdart
 type: swimlane
@@ -167,6 +201,8 @@ type: swimlane
 
 ## List
 
+### `bullet-list`
+
 ```mdart
 type: bullet-list
 - Fast iteration cycles
@@ -174,6 +210,8 @@ type: bullet-list
 - Continuous feedback
 - Data-driven decisions
 ```
+
+### `numbered-list`
 
 ```mdart
 type: numbered-list
@@ -184,6 +222,8 @@ type: numbered-list
 - Ship and iterate
 ```
 
+### `checklist`
+
 ```mdart
 type: checklist
 - Set up CI/CD pipeline [done]
@@ -192,6 +232,8 @@ type: checklist
 - Performance profiling
 - Security audit
 ```
+
+### `two-column-list`
 
 ```mdart
 type: two-column-list
@@ -202,6 +244,8 @@ type: two-column-list
 - Review: Demo to stakeholders
 ```
 
+### `timeline-list`
+
 ```mdart
 type: timeline-list
 - 2022: Founded
@@ -210,6 +254,8 @@ type: timeline-list
 - 2025: Series A
 - 2026: Expansion
 ```
+
+### `block-list`
 
 ```mdart
 type: block-list
@@ -227,6 +273,8 @@ type: block-list
   - Iterate
 ```
 
+### `chevron-list`
+
 ```mdart
 type: chevron-list
 - Awareness
@@ -234,6 +282,8 @@ type: chevron-list
 - Decision
 - Action
 ```
+
+### `card-list`
 
 ```mdart
 type: card-list
@@ -248,6 +298,8 @@ type: card-list
   - Sales
 ```
 
+### `zigzag-list`
+
 ```mdart
 type: zigzag-list
 - Research
@@ -256,12 +308,16 @@ type: zigzag-list
 - Launch
 ```
 
+### `ribbon-list`
+
 ```mdart
 type: ribbon-list
 - Vision: Long-term direction of the company
 - Mission: Why we exist and who we serve
 - Values: Principles that guide every decision
 ```
+
+### `hexagon-list`
 
 ```mdart
 type: hexagon-list
@@ -272,6 +328,8 @@ type: hexagon-list
 - Impact
 ```
 
+### `trapezoid-list`
+
 ```mdart
 type: trapezoid-list
 - Executive
@@ -279,6 +337,8 @@ type: trapezoid-list
 - Operations
 - Foundation
 ```
+
+### `tab-list`
 
 ```mdart
 type: tab-list
@@ -293,6 +353,8 @@ type: tab-list
   - GitHub
 ```
 
+### `circle-list`
+
 ```mdart
 type: circle-list
 - Discovery: Research & requirements
@@ -300,6 +362,8 @@ type: circle-list
 - Execution: Build & iterate
 - Launch: Monitor & optimize
 ```
+
+### `icon-list`
 
 ```mdart
 type: icon-list
@@ -311,6 +375,8 @@ type: icon-list
 
 ## Cycle
 
+### `cycle`
+
 ```mdart
 type: cycle
 - Plan
@@ -318,6 +384,8 @@ type: cycle
 - Measure
 - Learn
 ```
+
+### `donut-cycle`
 
 ```mdart
 type: donut-cycle
@@ -327,6 +395,8 @@ type: donut-cycle
 - Refine
 ```
 
+### `gear-cycle`
+
 ```mdart
 type: gear-cycle
 - Intake
@@ -334,6 +404,8 @@ type: gear-cycle
 - Output
 - Review
 ```
+
+### `spiral`
 
 ```mdart
 type: spiral
@@ -343,6 +415,8 @@ type: spiral
 - v2.0
 - v3.0
 ```
+
+### `block-cycle`
 
 ```mdart
 type: block-cycle
@@ -360,6 +434,8 @@ type: block-cycle
   - Monitoring
 ```
 
+### `segmented-cycle`
+
 ```mdart
 type: segmented-cycle
 - Discovery
@@ -369,6 +445,8 @@ type: segmented-cycle
 - Retrospective
 ```
 
+### `nondirectional-cycle`
+
 ```mdart
 type: nondirectional-cycle
 - Brand
@@ -377,6 +455,8 @@ type: nondirectional-cycle
 - Support
 ```
 
+### `multidirectional-cycle`
+
 ```mdart
 type: multidirectional-cycle
 - Strategy
@@ -384,6 +464,8 @@ type: multidirectional-cycle
 - Engineering
 - Data
 ```
+
+### `loop`
 
 ```mdart
 type: loop
@@ -394,6 +476,8 @@ type: loop
 ```
 
 ## Hierarchy
+
+### `org-chart`
 
 ```mdart
 type: org-chart
@@ -408,6 +492,8 @@ type: org-chart
     - Growth
 ```
 
+### `h-org-chart`
+
 ```mdart
 type: h-org-chart
 - CEO
@@ -419,6 +505,8 @@ type: h-org-chart
     - Research
   - Operations
 ```
+
+### `tree`
 
 ```mdart
 type: tree
@@ -434,6 +522,8 @@ type: tree
   - Database
 ```
 
+### `hierarchy-list`
+
 ```mdart
 type: hierarchy-list
 - Platform
@@ -445,6 +535,8 @@ type: hierarchy-list
   - Infrastructure
     - nginx
 ```
+
+### `radial-tree`
 
 ```mdart
 type: radial-tree
@@ -460,6 +552,8 @@ title: Product Platform
   - ML
 ```
 
+### `decision-tree`
+
 ```mdart
 type: decision-tree
 - Urgent?
@@ -468,6 +562,8 @@ type: decision-tree
     - Schedule
     - Eliminate
 ```
+
+### `sitemap`
 
 ```mdart
 type: sitemap
@@ -482,6 +578,8 @@ type: sitemap
   - About
 ```
 
+### `bracket`
+
 ```mdart
 type: bracket
 - Q1 Winner
@@ -489,6 +587,8 @@ type: bracket
 - Q3 Winner
 - Q4 Winner
 ```
+
+### `mind-map`
 
 ```mdart
 type: mind-map
@@ -507,6 +607,8 @@ title: Product Strategy
 
 ## Matrix
 
+### `swot`
+
 ```mdart
 type: swot
 title: Product Launch
@@ -520,6 +622,8 @@ title: Product Launch
 ! Regulatory changes
 ```
 
+### `pros-cons`
+
 ```mdart
 type: pros-cons
 - Pros
@@ -531,6 +635,8 @@ type: pros-cons
   - Less customization
   - Ongoing SaaS fees
 ```
+
+### `comparison`
 
 ```mdart
 type: comparison
@@ -548,6 +654,8 @@ type: comparison
   - Enterprise: Dedicated
 ```
 
+### `matrix-2x2`
+
 ```mdart
 type: matrix-2x2
 title: Prioritization Matrix
@@ -562,6 +670,8 @@ title: Prioritization Matrix
 - Avoid
   - Legacy API
 ```
+
+### `bcg`
 
 ```mdart
 type: bcg
@@ -578,6 +688,8 @@ title: Product Portfolio
   - Legacy Export
 ```
 
+### `ansoff`
+
 ```mdart
 type: ansoff
 title: Growth Strategy
@@ -592,6 +704,8 @@ title: Growth Strategy
 - Diversification
   - Marketplace
 ```
+
+### `matrix-nxm`
 
 ```mdart
 type: matrix-nxm
@@ -612,6 +726,8 @@ title: Skills Matrix
 
 ## Pyramid
 
+### `pyramid`
+
 ```mdart
 type: pyramid
 title: Maslow's Hierarchy
@@ -621,6 +737,8 @@ title: Maslow's Hierarchy
 - Safety
 - Physiological
 ```
+
+### `inverted-pyramid`
 
 ```mdart
 type: inverted-pyramid
@@ -632,6 +750,8 @@ title: Acquisition Funnel
 - Purchase
 ```
 
+### `pyramid-list`
+
 ```mdart
 type: pyramid-list
 - Vision
@@ -639,6 +759,8 @@ type: pyramid-list
 - Tactics
 - Actions
 ```
+
+### `segmented-pyramid`
 
 ```mdart
 type: segmented-pyramid
@@ -648,6 +770,8 @@ title: Investment Allocation
 - Balanced: 35%
 - Conservative: 40%
 ```
+
+### `diamond-pyramid`
 
 ```mdart
 type: diamond-pyramid
@@ -660,6 +784,8 @@ type: diamond-pyramid
 
 ## Relationship
 
+### `venn`
+
 ```mdart
 type: venn
 - Design
@@ -670,6 +796,8 @@ type: venn
   - Backend
 - Product ∩ Engineering
 ```
+
+### `venn-3`
 
 ```mdart
 type: venn-3
@@ -685,6 +813,8 @@ type: venn-3
 - All Three ∩
 ```
 
+### `venn-4`
+
 ```mdart
 type: venn-4
 - Strategy
@@ -697,6 +827,8 @@ type: venn-4
   - Analytics
 ```
 
+### `concentric`
+
 ```mdart
 type: concentric
 title: Organizational Layers
@@ -705,6 +837,8 @@ title: Organizational Layers
 - Team
 - Individual
 ```
+
+### `balance`
 
 ```mdart
 type: balance
@@ -718,6 +852,8 @@ type: balance
   - Maintenance
 ```
 
+### `opposing-arrows`
+
 ```mdart
 type: opposing-arrows
 - Supply
@@ -730,6 +866,8 @@ type: opposing-arrows
   - Trends
 ```
 
+### `web`
+
 ```mdart
 type: web
 title: Team Dependencies
@@ -740,6 +878,8 @@ title: Team Dependencies
 - DevOps
 - QA
 ```
+
+### `cluster`
 
 ```mdart
 type: cluster
@@ -755,6 +895,8 @@ title: Engineering Org
   - Storage
 ```
 
+### `target`
+
 ```mdart
 type: target
 title: Focus Areas
@@ -763,6 +905,8 @@ title: Focus Areas
 - Should Have
 - Nice to Have
 ```
+
+### `radial`
 
 ```mdart
 type: radial
@@ -780,6 +924,8 @@ title: Platform
 - Security
 ```
 
+### `converging`
+
 ```mdart
 type: converging
 title: Product Success
@@ -788,6 +934,8 @@ title: Product Success
 - Technical Feasibility
 - Business Viability
 ```
+
+### `diverging`
 
 ```mdart
 type: diverging
@@ -798,6 +946,8 @@ title: Platform APIs
 - Partner API
 - Webhooks
 ```
+
+### `plus`
 
 ```mdart
 type: plus
@@ -811,6 +961,8 @@ title: Growth Framework
 
 ## Statistical
 
+### `progress-list`
+
 ```mdart
 type: progress-list
 title: Q4 KPIs
@@ -821,6 +973,8 @@ title: Q4 KPIs
 - Feature Delivery: 73%
 ```
 
+### `bullet-chart`
+
 ```mdart
 type: bullet-chart
 title: Sales vs Target
@@ -830,6 +984,8 @@ title: Sales vs Target
 - Retention: 88 [90]
 ```
 
+### `scorecard`
+
 ```mdart
 type: scorecard
 title: Monthly Metrics
@@ -838,6 +994,8 @@ title: Monthly Metrics
 - MAU: 48,200 [+8%]
 - ARPU: $2.65 [+4%]
 ```
+
+### `treemap`
 
 ```mdart
 type: treemap
@@ -849,6 +1007,8 @@ title: Time Allocation
 - Infra: 8%
 - Docs: 5%
 ```
+
+### `sankey`
 
 ```mdart
 type: sankey
@@ -864,6 +1024,8 @@ title: Traffic Sources
   - Dashboard
 ```
 
+### `waffle`
+
 ```mdart
 type: waffle
 title: Budget Allocation
@@ -874,6 +1036,8 @@ title: Budget Allocation
 - Other: 30%
 ```
 
+### `gauge`
+
 ```mdart
 type: gauge
 title: Health Metrics
@@ -881,6 +1045,8 @@ title: Health Metrics
 - Error Rate: 52%
 - Satisfaction: 84%
 ```
+
+### `radar`
 
 ```mdart
 type: radar
@@ -892,6 +1058,8 @@ title: Team Skills
 - Data: 68
 - Testing: 78
 ```
+
+### `heatmap`
 
 ```mdart
 type: heatmap
@@ -915,6 +1083,8 @@ title: Response Time by Hour & Day
 
 ## Planning
 
+### `kanban`
+
 ```mdart
 type: kanban
 title: Sprint 14
@@ -930,6 +1100,8 @@ title: Sprint 14
   - Error console [done]
 ```
 
+### `gantt`
+
 ```mdart
 type: gantt
 title: Q2 Roadmap
@@ -939,6 +1111,8 @@ title: Q2 Roadmap
 - Mobile app [wk6-wk12]
 - Launch [wk12-wk13]
 ```
+
+### `sprint-board`
 
 ```mdart
 type: sprint-board
@@ -954,6 +1128,8 @@ title: Sprint 14
   - Unit tests: 4 [done]
 ```
 
+### `timeline`
+
 ```mdart
 type: timeline
 title: Product Roadmap
@@ -964,6 +1140,8 @@ title: Product Roadmap
 - Q1 '24: v2.0
 ```
 
+### `milestone`
+
 ```mdart
 type: milestone
 title: Project Alpha
@@ -973,6 +1151,8 @@ title: Project Alpha
 - Testing
 - Launch
 ```
+
+### `wbs`
 
 ```mdart
 type: wbs
@@ -990,6 +1170,8 @@ title: Platform v2
 
 ## Technical
 
+### `layered-arch`
+
 ```mdart
 type: layered-arch
 title: System Architecture
@@ -1006,6 +1188,8 @@ title: System Architecture
   - SQLite
   - File system
 ```
+
+### `entity`
 
 ```mdart
 type: entity
@@ -1025,6 +1209,8 @@ title: Core Schema
   - type
 ```
 
+### `network`
+
 ```mdart
 type: network
 title: Service Topology
@@ -1039,11 +1225,15 @@ title: Service Topology
   → MCP Server
 ```
 
+### `pipeline`
+
 ```mdart
 type: pipeline
 title: CI/CD Pipeline
 - Source → Lint → Test → Build → Deploy → Monitor
 ```
+
+### `sequence`
 
 ```mdart
 type: sequence
@@ -1057,6 +1247,8 @@ title: Auth Flow
 - API
   → Browser: Set-Cookie
 ```
+
+### `state-machine`
 
 ```mdart
 type: state-machine
@@ -1072,6 +1264,8 @@ title: Order Lifecycle
 - Delivered [final]
 - Cancelled [final]
 ```
+
+### `class`
 
 ```mdart
 type: class
