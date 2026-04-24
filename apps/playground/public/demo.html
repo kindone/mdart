@@ -1010,7 +1010,7 @@ function populateExampleSelect() {
   while (sel.options.length > 1) sel.remove(1)
 
   if (mode === 'renderer') {
-    // Grouped by family — 97 types
+    // Grouped by family — 97 types (renderer mode uses plain type names)
     for (const [fam, types] of Object.entries(families)) {
       const grp = document.createElement('optgroup')
       grp.label = fam
@@ -1021,12 +1021,33 @@ function populateExampleSelect() {
       }
       sel.appendChild(grp)
     }
-  } else {
-    const arr = mode === 'markdown' ? examples.markdown : examples.mdart
+    return
+  }
+
+  // MdArt + Markdown modes: values are prefixed to disambiguate
+  // ("curated:<slug>" for showcase examples, "type:<name>" for per-type examples)
+  const arr = mode === 'markdown' ? examples.markdown : examples.mdart
+  if (arr.length) {
+    const grp = document.createElement('optgroup')
+    grp.label = 'Showcase'
     for (const e of arr) {
       const opt = document.createElement('option')
-      opt.value = e.slug; opt.textContent = e.name
-      sel.appendChild(opt)
+      opt.value = 'curated:' + e.slug; opt.textContent = e.name
+      grp.appendChild(opt)
+    }
+    sel.appendChild(grp)
+  }
+  // Per-type examples — only meaningful in MdArt mode (markdown doesn't map to types)
+  if (mode === 'mdart') {
+    for (const [fam, types] of Object.entries(families)) {
+      const grp = document.createElement('optgroup')
+      grp.label = fam
+      for (const t of types) {
+        const opt = document.createElement('option')
+        opt.value = 'type:' + t; opt.textContent = t
+        grp.appendChild(opt)
+      }
+      sel.appendChild(grp)
     }
   }
 }
@@ -1035,20 +1056,35 @@ document.getElementById('example-select').addEventListener('change', function() 
   if (!this.value) return
   if (mode === 'renderer') {
     loadTypeExample(this.value)
-  } else {
-    const slug = this.value
+    this.value = ''
+    return
+  }
+
+  // MdArt + Markdown modes: value is prefixed "curated:<slug>" or "type:<name>"
+  const val = this.value
+  let src = null
+  let newCurrentExample = null
+
+  if (val.startsWith('type:')) {
+    // Per-type example — load from TYPE_EXAMPLES map, not a saveable slug
+    const typeName = val.slice(5)
+    src = TYPE_EXAMPLES[typeName]
+  } else if (val.startsWith('curated:')) {
+    const slug = val.slice(8)
     const arr = mode === 'markdown' ? examples.markdown : examples.mdart
     const cat = mode === 'markdown' ? 'markdown' : 'mdart'
     const found = arr.find(e => e.slug === slug)
-    const src = found?.content
-    if (src && monacoEditor) {
-      monacoEditor.setValue(src)
-      currentExample = found ? { category: cat, slug: found.slug } : null
-      exampleBaseContent = src
-      updateSaveBtn()
-      if (mode === 'markdown') renderMarkdown(true)
-      else renderMdArt(true)
-    }
+    src = found?.content
+    if (found) newCurrentExample = { category: cat, slug: found.slug }
+  }
+
+  if (src && monacoEditor) {
+    monacoEditor.setValue(src)
+    currentExample = newCurrentExample
+    exampleBaseContent = src
+    updateSaveBtn()
+    if (mode === 'markdown') renderMarkdown(true)
+    else renderMdArt(true)
   }
   this.value = ''
 })
