@@ -301,6 +301,15 @@ pre.int-code {
   z-index: 200; box-shadow: -4px 0 24px rgba(0,0,0,.5);
 }
 .chat-panel.open { transform: translateX(0); }
+
+/* Dock mode: on desktop, an open chat panel pushes the toolbar + main area
+   left instead of overlaying the diagram. On mobile it stays as an overlay. */
+@media (min-width: 900px) {
+  .toolbar, .main { transition: margin-right .22s ease; }
+  body.chat-docked .toolbar,
+  body.chat-docked .main { margin-right: 360px; }
+  body.chat-docked .chat-panel { box-shadow: none; }
+}
 .chat-header {
   display: flex; align-items: center; gap: 6px;
   height: 44px; padding: 0 12px;
@@ -1805,12 +1814,14 @@ document.getElementById('btn-session-delete').addEventListener('click', async ()
 document.getElementById('btn-chat-close').addEventListener('click', () => {
   document.getElementById('chat-panel').classList.remove('open')
   document.getElementById('btn-chat-toggle').classList.remove('active')
+  document.body.classList.remove('chat-docked')
 })
 document.getElementById('btn-chat-toggle').addEventListener('click', () => {
   const panel = document.getElementById('chat-panel')
   const btn = document.getElementById('btn-chat-toggle')
   const open = panel.classList.toggle('open')
   btn.classList.toggle('active', open)
+  document.body.classList.toggle('chat-docked', open)
   if (open) {
     fetchSessions().then(() => populateSessionSelect())
   }
