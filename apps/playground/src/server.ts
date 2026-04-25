@@ -68,6 +68,7 @@ const MDART_SRC   = path.join(MDART_PKG, 'src')
 const DIST_INDEX  = path.join(MDART_PKG, 'dist/index.js')
 const README_PATH = path.join(MDART_ROOT, 'README.md')
 const DOCS_DIR    = path.join(MDART_ROOT, 'docs')
+const SCRIPTS_DIR = path.join(MDART_ROOT, 'scripts')
 const EXAMPLES_DIR  = path.join(__dirname, '../examples')
 
 const DATA_DIR      = path.join(__dirname, '../data')
@@ -794,6 +795,8 @@ app.post('/lab/chat', (req, res) => {
     '--include-partial-messages',
     '--permission-mode', 'acceptEdits',
     '--add-dir', EXAMPLES_DIR,
+    '--add-dir', DOCS_DIR,
+    '--add-dir', SCRIPTS_DIR,
     '--mcp-config', '{"mcpServers":{}}',
     '--strict-mcp-config',
     '--system-prompt', LAB_SYSTEM_PROMPT,
