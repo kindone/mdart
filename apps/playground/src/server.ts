@@ -793,6 +793,7 @@ app.post('/lab/chat', (req, res) => {
     '--verbose',
     '--include-partial-messages',
     '--permission-mode', 'acceptEdits',
+    '--add-dir', EXAMPLES_DIR,
     '--mcp-config', '{"mcpServers":{}}',
     '--strict-mcp-config',
     '--system-prompt', LAB_SYSTEM_PROMPT,
@@ -945,6 +946,12 @@ Shared SVG helpers:  layouts/shared.ts
 Tree-layout helpers: layouts/hierarchy/shared.ts
 Theme definitions:   packages/mdart/src/theme.ts
 Parser:              packages/mdart/src/parser.ts
+
+Example mdart sources (one file per type, shown in the demo dropdown):
+  apps/playground/examples/types/{type}.mdart
+Curated mdart + markdown showcases:
+  apps/playground/examples/{mdart,markdown}/*.{mdart,md}
+You can edit these directly when the user asks to tweak an example.
 
 ## Key types
 
