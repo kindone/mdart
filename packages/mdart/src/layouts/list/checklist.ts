@@ -84,7 +84,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let subTop = labelZoneBottom + GAP_BEFORE_SUBS
 
     for (const child of item.children) {
-      const childDone = isDone(child)
+      // A done parent visually ticks all its subtasks too.
+      const childDone = done || isDone(child)
       const cy        = subTop + SUB_BOX / 2
       const cLabelY   = subTop + 10
 

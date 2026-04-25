@@ -1,8 +1,12 @@
 type: bullet-list
 title: Engineering Principles
 
-- Design for testability first
-- Minimal scope per change
+- Design for testability first: Write code that's easy to verify
+  - Isolate side effects
+  - Prefer pure functions
+- Minimal scope per change: One concern per commit
 - Read before editing
-- Verify your work
+  - Skim the call sites
+  - Check for side effects
+- Verify your work: Run the check, don't just trust the diff
 - Update docs alongside code

@@ -1,8 +1,13 @@
 type: numbered-list
 title: Deploy Checklist
 
-- Run npm test
+- Run tests: Gate before we build anything
+  - unit
+  - integration
+  - smoke
 - Build client
+  - tsc --noEmit
+  - esbuild bundle
 - Build server
-- Restart service
+- Restart service: Rolling restart across the fleet
 - Confirm health check

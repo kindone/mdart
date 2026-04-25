@@ -2,7 +2,11 @@ type: checklist
 title: PR Review
 
 - Tests pass [done]
-- No type errors [done]
+  - unit
+  - integration
+- No type errors [done]: Strict mode clean
 - Docs updated [done]
 - Breaking changes noted
-- Performance impact checked
+  - migration path
+  - deprecation notes
+- Performance impact checked: No p99 regression

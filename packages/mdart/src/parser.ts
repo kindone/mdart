@@ -48,8 +48,14 @@ function parseLabelValue(raw: string): { label: string; value?: string } {
 }
 
 function parseItem(rawLine: string): MdArtItem {
-  const { cleanLabel, attrs } = parseAttrs(rawLine)
-  const { label, value } = parseLabelValue(cleanLabel)
+  // 1. Pull off trailing [attrs] from the whole line ("label [x]" or "label: value [x]").
+  const tailParsed = parseAttrs(rawLine)
+  // 2. Split label from value on the first non-URL colon.
+  const { label: rawLabel, value } = parseLabelValue(tailParsed.cleanLabel)
+  // 3. Also check the label portion for its own [attrs] ("label [x]: value").
+  const labelParsed = parseAttrs(rawLabel)
+  const label = labelParsed.cleanLabel
+  const attrs = [...labelParsed.attrs, ...tailParsed.attrs]
   return {
     label,
     value,
