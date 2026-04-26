@@ -1,11 +1,11 @@
 <svg viewBox="0 0 440 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="440" height="400" fill="#faf5ff" rx="8"/>
-    <line x1="220.0" y1="50.0" x2="370.0" y2="200.0" stroke="#ede9fe" stroke-width="1" opacity="0.6"/>
-    <line x1="220.0" y1="50.0" x2="220.0" y2="350.0" stroke="#ede9fe" stroke-width="1" opacity="0.6"/>
-    <line x1="220.0" y1="50.0" x2="70.0" y2="200.0" stroke="#ede9fe" stroke-width="1" opacity="0.6"/>
-    <line x1="370.0" y1="200.0" x2="220.0" y2="350.0" stroke="#ede9fe" stroke-width="1" opacity="0.6"/>
-    <line x1="370.0" y1="200.0" x2="70.0" y2="200.0" stroke="#ede9fe" stroke-width="1" opacity="0.6"/>
-    <line x1="220.0" y1="350.0" x2="70.0" y2="200.0" stroke="#ede9fe" stroke-width="1" opacity="0.6"/>
+    <line x1="220.0" y1="50.0" x2="370.0" y2="200.0" stroke="#6d28d9" stroke-width="1" opacity="0.55"/>
+    <line x1="220.0" y1="50.0" x2="220.0" y2="350.0" stroke="#6d28d9" stroke-width="1" opacity="0.55"/>
+    <line x1="220.0" y1="50.0" x2="70.0" y2="200.0" stroke="#6d28d9" stroke-width="1" opacity="0.55"/>
+    <line x1="370.0" y1="200.0" x2="220.0" y2="350.0" stroke="#6d28d9" stroke-width="1" opacity="0.55"/>
+    <line x1="370.0" y1="200.0" x2="70.0" y2="200.0" stroke="#6d28d9" stroke-width="1" opacity="0.55"/>
+    <line x1="220.0" y1="350.0" x2="70.0" y2="200.0" stroke="#6d28d9" stroke-width="1" opacity="0.55"/>
     <circle cx="220.0" cy="50.0" r="20" fill="#7c3aed" stroke="#faf5ff" stroke-width="2"/>
     <text x="220.0" y="54.0" text-anchor="middle" font-size="10" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600">Strategy</text>
     <circle cx="370.0" cy="200.0" r="20" fill="#7734e6" stroke="#faf5ff" stroke-width="2"/>

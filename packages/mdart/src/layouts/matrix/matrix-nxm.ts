@@ -16,12 +16,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.title) {
     svgContent += `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
   }
-  // Column headers (A, B, C…)
+  // Column headers — use explicit spec.columns if provided, else A, B, C…
+  const colHeaders = Array.from({ length: numCols }, (_, c) =>
+    spec.columns?.[c] ?? String.fromCharCode(65 + c)
+  )
+  const colHeaderMax = Math.floor(COL_W / 7)
   svgContent += `<rect x="0" y="${TITLE_H}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`
   for (let c = 0; c < numCols; c++) {
     const colX = LABEL_W + c * COL_W
     svgContent += `<rect x="${colX}" y="${TITLE_H}" width="${COL_W}" height="${HEADER_H}" fill="${theme.primary}28" stroke="${theme.border}" stroke-width="0.5"/>`
-    svgContent += `<text x="${colX + COL_W / 2}" y="${TITLE_H + 23}" text-anchor="middle" font-size="11" fill="${theme.primary}" font-family="system-ui,sans-serif" font-weight="700">${String.fromCharCode(65 + c)}</text>`
+    svgContent += `<text x="${colX + COL_W / 2}" y="${TITLE_H + 23}" text-anchor="middle" font-size="11" fill="${theme.primary}" font-family="system-ui,sans-serif" font-weight="700">${tt(colHeaders[c], colHeaderMax)}</text>`
   }
   // Rows
   for (let r = 0; r < rows.length; r++) {

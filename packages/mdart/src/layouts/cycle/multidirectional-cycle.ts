@@ -37,7 +37,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     for (let j = i + 1; j < n; j++) {
       const a = positions[i]
       const b = positions[j]
-      parts.push(`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${theme.muted}" stroke-width="1" opacity="0.6"/>`)
+      parts.push(`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1" opacity="0.55"/>`)
     }
   }
 

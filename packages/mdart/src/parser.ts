@@ -19,6 +19,7 @@ export interface MdArtSpec {
   items: MdArtItem[]
   nodes?: string[]        // for network graph sections
   edges?: Array<{from: string, to: string}>
+  columns?: string[]      // explicit column headers for grid renderers (matrix-nxm, heatmap)
   colors?: Record<string, string | string[]>  // per-fence color overrides
   raw: string
 }
@@ -26,14 +27,19 @@ export interface MdArtSpec {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function parseAttrs(segment: string): { cleanLabel: string; attrs: string[] } {
-  // Find last [...] bracket group
-  const bracketMatch = segment.match(/^(.*)\[([^\]]*)\]\s*$/)
-  if (!bracketMatch) {
-    return { cleanLabel: segment.trim(), attrs: [] }
+  // Repeatedly strip trailing [...] groups so multiple separate bracket
+  // pairs are all extracted (e.g. "foo [a] [b] [c]" → label "foo", attrs
+  // ["a","b","c"]). Comma-lists inside a single bracket also still split.
+  let s = segment
+  const attrs: string[] = []
+  while (true) {
+    const m = s.match(/^(.*?)\s*\[([^\]]*)\]\s*$/)
+    if (!m) break
+    const inside = m[2].split(',').map(a => a.trim()).filter(Boolean)
+    attrs.unshift(...inside)   // preserve left-to-right user order
+    s = m[1]
   }
-  const cleanLabel = bracketMatch[1].trim()
-  const attrs = bracketMatch[2].split(',').map(a => a.trim()).filter(Boolean)
-  return { cleanLabel, attrs }
+  return { cleanLabel: s.trim(), attrs }
 }
 
 function parseLabelValue(raw: string): { label: string; value?: string } {
@@ -62,7 +68,9 @@ function parseItem(rawLine: string): MdArtItem {
     attrs,
     children: [],
     flowChildren: [],
-    isIntersection: label.includes('∩'),
+    // Intersection is signalled by ∩ (math) or && (typeable). Both work in any
+    // venn renderer, e.g. `Marketing && Sales` ≡ `Marketing ∩ Sales`.
+    isIntersection: /∩|&&/.test(label),
   }
 }
 
@@ -146,6 +154,9 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
         // palette: #f00, #0f0, #00f  (comma-separated hex colours)
         if (!spec.colors) spec.colors = {}
         spec.colors['palette'] = val.split(',').map(c => c.trim()).filter(Boolean)
+      } else if (key === 'columns') {
+        // columns: Frontend, Backend, DevOps  (comma-separated column headers)
+        spec.columns = val.split(',').map(c => c.trim()).filter(Boolean)
       } else {
         // Not a recognized front-matter key — treat as body start
         bodyStart = i

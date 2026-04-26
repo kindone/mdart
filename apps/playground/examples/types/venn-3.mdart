@@ -1,12 +1,15 @@
 type: venn-3
+title: Cross-functional Initiatives
 
 - Marketing
   - Campaigns
-  - Content
 - Sales
   - Pipeline
-  - Accounts
 - Product
   - Features
-  - UX
-- All Three ∩
+
+- Marketing && Sales: Pipeline content
+- Sales && Product: Customer feedback
+- Marketing && Product: Launch campaigns
+
+- Marketing && Sales && Product: Joint roadmap

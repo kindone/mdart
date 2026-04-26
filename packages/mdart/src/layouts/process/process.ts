@@ -24,16 +24,20 @@ function renderVerticalProcess(spec: MdArtSpec, theme: MdArtTheme): string {
   const PAD = 16
   const NODE_W = 280
   const ARROW_H = 16
-  const H = PAD + n * ROW_H + (n - 1) * ARROW_H + PAD
+  const titleH = spec.title ? 30 : 0
+  const H = PAD + titleH + n * ROW_H + (n - 1) * ARROW_H + PAD
   const nodeX = (W - NODE_W) / 2
 
   let svgContent = ''
+  if (spec.title) {
+    svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+  }
 
   for (let i = 0; i < n; i++) {
     const item = items[i]
     const t = n > 1 ? i / (n - 1) : 0.5
     const fill = lerpColor(theme.secondary, theme.primary, t)
-    const y = PAD + i * (ROW_H + ARROW_H)
+    const y = PAD + titleH + i * (ROW_H + ARROW_H)
     const label = escapeXml(item.label)
     const cy = y + ROW_H / 2
 
@@ -67,13 +71,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const ARROW_W = 18
   const nodeW = Math.min(130, Math.floor((W - PAD * 2 - ARROW_W * (n - 1)) / n))
   const nodeH = 60
-  const H = nodeH + PAD * 2
+  const titleH = spec.title ? 30 : 0          // reserved strip above the boxes
+  const H = nodeH + PAD * 2 + titleH
 
   if (n > 5) return renderVerticalProcess(spec, theme)
 
   const totalContentW = n * nodeW + (n - 1) * ARROW_W
   const startX = (W - totalContentW) / 2
-  const cy = H / 2
+  const cy = PAD + titleH + nodeH / 2          // centre of boxes, below title strip
 
   let svgContent = ''
 
@@ -88,8 +93,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     svgContent += `<rect x="${x}" y="${y}" width="${nodeW}" height="${nodeH}" rx="6" fill="${fill}" />`
 
+    // Visual centring: SVG <text y> is the baseline, so add ~font-size * 0.35
+    // to nudge the glyph body down to the box midline.
     const hasValue = !!item.value
-    const textY = cy + (hasValue ? -8 : 0)
+    const textY = cy + (hasValue ? -6 : 4)
     if (lines.length === 1) {
       svgContent += `<text x="${x + nodeW / 2}" y="${textY}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${label}</text>`
     } else {
@@ -99,7 +106,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       })
     }
     if (hasValue) {
-      svgContent += `<text x="${x + nodeW / 2}" y="${cy + 10}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value!)}</text>`
+      svgContent += `<text x="${x + nodeW / 2}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value!)}</text>`
     }
 
     if (i < n - 1) {
@@ -111,7 +118,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
-    ${spec.title ? `<text x="${W / 2}" y="16" text-anchor="middle" font-size="12" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(spec.title)}</text>` : ''}
+    ${spec.title ? `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>` : ''}
     ${svgContent}
   </svg>`
 }

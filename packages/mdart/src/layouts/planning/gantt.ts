@@ -49,7 +49,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const x = LABEL_W + (t / maxEnd) * BAR_AREA
     parts.push(
       `<line x1="${x.toFixed(1)}" y1="${TITLE_H + HEADER_H - 2}" x2="${x.toFixed(1)}" y2="${H - 8}" stroke="${theme.border}" stroke-width="0.5"/>`,
-      `<text x="${x.toFixed(1)}" y="${TITLE_H + 14}" text-anchor="middle" font-size="10" fill="${theme.muted}" font-family="system-ui,sans-serif">${t + 1}</text>`,
+      `<text x="${x.toFixed(1)}" y="${TITLE_H + 14}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${t + 1}</text>`,
     )
   }
 

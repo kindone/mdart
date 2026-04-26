@@ -24,7 +24,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const parts: string[] = []
 
   // Track ring
-  parts.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${theme.border}" stroke-width="14" opacity="0.4"/>`)
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${theme.textMuted}" stroke-width="14" opacity="0.45"/>`)
 
   // Center title
   if (spec.title) {

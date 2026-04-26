@@ -1,8 +1,8 @@
 type: circle-process
 title: Agile Sprint
 
-- Plan
-- Design
-- Develop
-- Review
-- Retro
+- Plan: 1 day
+- Design: 1 day
+- Develop: 5 days
+- Review: 2 days
+- Retro: 0.5 day

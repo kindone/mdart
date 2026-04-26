@@ -3,10 +3,10 @@ import type { MdArtTheme } from '../../theme'
 import { escapeXml, tt } from '../shared'
 
 const BCG_QUADS = [
-  { key: 'stars',     keywords: ['star'],            label: '★ Stars',          sub: 'High growth · High share', fill: '#1e3a5f', text: '#93c5fd' },
-  { key: 'questions', keywords: ['question', 'mark'], label: '? Question Marks', sub: 'High growth · Low share',  fill: '#3b1f00', text: '#fcd34d' },
-  { key: 'cash',      keywords: ['cash', 'cow'],      label: '$ Cash Cows',      sub: 'Low growth · High share',  fill: '#064e3b', text: '#6ee7b7' },
-  { key: 'dogs',      keywords: ['dog'],              label: '✕ Dogs',            sub: 'Low growth · Low share',   fill: '#3b0a0a', text: '#fca5a5' },
+  { key: 'stars',     keywords: ['star'],             label: '★ Stars',          sub: 'High growth · High share', fill: '#3730a3', text: '#a5b4fc' },  // indigo-800/300
+  { key: 'questions', keywords: ['question', 'mark'], label: '? Question Marks', sub: 'High growth · Low share',  fill: '#92400e', text: '#fcd34d' },  // amber-800/300
+  { key: 'cash',      keywords: ['cash', 'cow'],      label: '$ Cash Cows',      sub: 'Low growth · High share',  fill: '#065f46', text: '#6ee7b7' },  // emerald-800/300
+  { key: 'dogs',      keywords: ['dog'],              label: '✕ Dogs',           sub: 'Low growth · Low share',   fill: '#9f1239', text: '#fda4af' },  // rose-800/300
 ]
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {

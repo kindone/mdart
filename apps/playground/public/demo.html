@@ -58,6 +58,7 @@ body {
 .btn-primary:disabled { background: #555; color: #888; cursor: not-allowed; }
 .btn-ghost { background: transparent; color: #888; }
 .btn-ghost:hover { background: #3c3c3c; color: #d4d4d4; border-color: #777; }
+.btn-nav { padding: 0 8px; font-size: 16px; line-height: 1; min-width: 28px; }
 .btn-claude {
   background: #1a1228; color: #c084fc; border: 1px solid #7c3aed44;
   border-radius: 4px; height: 28px; padding: 0 10px; font-size: 12px;
@@ -101,6 +102,12 @@ body {
 .btn-auto.on { color: #4ec9b0; border-color: #3c5e5a; background: #1a2e2c; }
 #btn-save-example { color: #e5c07b; border-color: #5e5220; }
 #btn-save-example:hover { background: #2d2510; border-color: #e5c07b; }
+/* In renderer mode the source pane has its own Examples dropdown, so the
+   toolbar one is redundant on desktop. Hidden ≥768 px; visible on mobile
+   where the in-pane select is hidden to save header space. */
+@media (min-width: 768px) {
+  body.renderer-mode #example-select { display: none; }
+}
 
 /* ── Mobile tab bar ── */
 .mobile-tabs {
@@ -151,9 +158,14 @@ body {
   height: 28px; padding: 0 10px; background: #252526; border-bottom: 1px solid #3c3c3c;
   font-size: 11px; color: #858585; flex-shrink: 0; gap: 6px;
 }
+.pane-header > #source-filename {
+  /* Filename can shrink and truncate; controls keep their full width. */
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 1 auto;
+}
 .pane-header select {
   background: #3c3c3c; color: #d4d4d4; border: 1px solid #555;
   border-radius: 3px; font-size: 11px; height: 20px; padding: 0 4px; cursor: pointer;
+  max-width: 110px;
 }
 .pane-header select:hover { border-color: #007acc; }
 .btn-render-small {
@@ -162,6 +174,11 @@ body {
   flex-shrink: 0;
 }
 .btn-render-small:hover { background: #007acc44; }
+#btn-source-save { background: transparent; color: #e5c07b; border-color: #5e5220; }
+#btn-source-save:hover { background: #2d2510; border-color: #e5c07b; }
+#btn-source-reset { background: transparent; color: #999; border-color: #555; }
+#btn-source-reset:hover { background: #2a2a2a; border-color: #777; }
+.pane-header-controls { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
 #mdart-source {
   width: 100%; flex: 1; min-height: 0;
   background: #1e1e1e; color: #d4d4d4;
@@ -451,6 +468,13 @@ pre.int-code {
   #mdart-source { font-size: 14px; }
   .chat-panel { width: 100%; max-width: 100%; }
   .mode-btn { padding: 0 8px; font-size: 12px; }
+
+  /* Source pane: drop the in-pane Examples select on mobile — the toolbar's
+     file-select already covers picking a type — so Save/Reset/Render fit. */
+  #pane-source #type-example-select { display: none; }
+  .pane-header { padding: 0 8px; gap: 4px; }
+  .pane-header-controls { gap: 4px; }
+  .btn-render-small { padding: 0 6px; }
 }
 </style>
 </head>
@@ -492,6 +516,7 @@ pre.int-code {
 
   <!-- Renderer controls -->
   <div class="ctrl-group hidden" id="ctrl-renderer">
+    <button class="btn btn-ghost btn-nav" id="btn-prev-type" title="Previous example (Alt+←)">‹</button>
     <select id="file-select" title="Layout file to edit">
       <optgroup label="— process —">
         <option value="layouts/process/process.ts">process</option>
@@ -616,7 +641,8 @@ pre.int-code {
       </optgroup>
       <option value="theme.ts">theme.ts</option>
     </select>
-    <button class="btn btn-primary" id="btn-apply" disabled>▶ Apply</button>
+    <button class="btn btn-ghost btn-nav" id="btn-next-type" title="Next example (Alt+→)">›</button>
+    <button class="btn btn-primary" id="btn-apply" disabled>💾 Save</button>
     <button class="btn btn-ghost desktop-only" id="btn-reset">↺ Reset</button>
     <span class="dirty-dot" id="dirty-dot" title="Unsaved changes"></span>
   </div>
@@ -692,11 +718,15 @@ pre.int-code {
     <!-- Source pane (Renderer mode only) -->
     <div class="source-pane hidden" id="pane-source">
       <div class="pane-header">
-        <span>mdart source</span>
-        <select id="type-example-select" title="Load type example">
-          <option value="">Examples…</option>
-        </select>
-        <button class="btn-render-small" id="btn-render-only">▶ Render</button>
+        <span id="source-filename">mdart source</span>
+        <span class="pane-header-controls">
+          <select id="type-example-select" title="Load type example">
+            <option value="">Examples…</option>
+          </select>
+          <button class="btn-render-small hidden" id="btn-source-save" title="Save mdart source to its example file on disk">💾 Save</button>
+          <button class="btn-render-small hidden" id="btn-source-reset" title="Revert to the saved version">↺ Reset</button>
+          <button class="btn-render-small" id="btn-render-only">▶ Render</button>
+        </span>
       </div>
       <textarea id="mdart-source" spellcheck="false" autocorrect="off"></textarea>
     </div>
@@ -909,6 +939,9 @@ let chatStreaming = false
 const savedContent = { mdart: '', markdown: '', renderer: '' }
 let currentExample = null  // { category: 'mdart'|'markdown'|'types', slug: string } | null
 let exampleBaseContent = ''  // content at time of load, for dirty detection
+// Source pane (renderer mode) — independent of Monaco's example tracking
+let mdartSourceBase = ''    // textarea content as last loaded from / saved to disk
+let mdartSourceType = null  // type slug if textarea content came from examples/types/<slug>.mdart
 // Auto-render on change (persisted); renderer mode is always manual
 let autoRender = localStorage.getItem('mdart-auto-render') !== 'false'
 
@@ -946,6 +979,9 @@ function setMode(newMode) {
 
   // body class for markdown iframe styling
   document.body.classList.toggle('markdown-mode', newMode === 'markdown')
+  // body class lets CSS hide redundant toolbar controls in renderer mode
+  // (the source-pane has its own type-example-select on desktop)
+  document.body.classList.toggle('renderer-mode', newMode === 'renderer')
 
   // Integration panel: hide when leaving markdown
   if (newMode !== 'markdown') hideIntegration()
@@ -987,7 +1023,14 @@ function setMode(newMode) {
       const srcEl = document.getElementById('mdart-source')
       if (!srcEl.value.trim()) {
         const type = FILE_TO_TYPE[currentFile]
-        srcEl.value = (type && TYPE_EXAMPLES[type]) || TYPE_EXAMPLES['process'] || ''
+        if (type && TYPE_EXAMPLES[type]) {
+          setMdartSource(TYPE_EXAMPLES[type], type)
+        } else if (TYPE_EXAMPLES['process']) {
+          setMdartSource(TYPE_EXAMPLES['process'], 'process')
+        }
+      } else {
+        // Source already populated externally — refresh dirty state
+        updateSourceDirty()
       }
       // Always load from disk — savedContent.renderer not used
       loadRendererFile(currentFile)
@@ -1010,10 +1053,11 @@ function populateExampleSelect() {
   while (sel.options.length > 1) sel.remove(1)
 
   if (mode === 'renderer') {
-    // Grouped by family — 97 types
+    // 97 types grouped by family; `— family —` decorates the optgroup label
+    // so it reads as a header, matching the toolbar's left file-select.
     for (const [fam, types] of Object.entries(families)) {
       const grp = document.createElement('optgroup')
-      grp.label = fam
+      grp.label = `— ${fam} —`
       for (const t of types) {
         const opt = document.createElement('option')
         opt.value = t; opt.textContent = t
@@ -1063,7 +1107,7 @@ document.getElementById('type-example-select').addEventListener('change', functi
 function loadTypeExample(type) {
   const src = TYPE_EXAMPLES[type]
   if (src) {
-    document.getElementById('mdart-source').value = src
+    setMdartSource(src, type)
     renderOnly()
   }
   // Sync file select if a file exists for this type
@@ -1075,12 +1119,43 @@ function loadTypeExample(type) {
   }
 }
 
-// Populate type example select in source pane (all 97 types grouped)
+// Set the source-pane textarea content and remember its origin so Save/Reset
+// know which file to write back to and what "clean" means.
+function setMdartSource(content, type) {
+  document.getElementById('mdart-source').value = content
+  mdartSourceBase = content
+  mdartSourceType = type ?? null
+  updateSourceFilename()
+  updateSourceDirty()
+}
+
+function updateSourceFilename() {
+  const el = document.getElementById('source-filename')
+  if (!el) return
+  if (mdartSourceType) {
+    el.textContent = `${mdartSourceType}.mdart`
+    el.title = `examples/types/${mdartSourceType}.mdart`
+  } else {
+    el.textContent = 'mdart source'
+    el.title = 'unsaved source — load an example to enable Save'
+  }
+}
+
+function updateSourceDirty() {
+  const ta = document.getElementById('mdart-source')
+  const dirty = mdartSourceType !== null && ta.value !== mdartSourceBase
+  document.getElementById('btn-source-save').classList.toggle('hidden', !dirty)
+  document.getElementById('btn-source-reset').classList.toggle('hidden', !dirty)
+}
+
+// Populate type example select in source pane — 97 types grouped by family.
+// Match the left file-select's `— family —` label format so optgroup headers
+// read as headers (and don't blend into options like `process`, `cycle`).
 ;(function() {
   const sel = document.getElementById('type-example-select')
   for (const [fam, types] of Object.entries(families)) {
     const grp = document.createElement('optgroup')
-    grp.label = fam
+    grp.label = `— ${fam} —`
     for (const t of types) {
       const opt = document.createElement('option')
       opt.value = t; opt.textContent = t
@@ -1092,6 +1167,34 @@ function loadTypeExample(type) {
 
 // ── Renderer file select ──────────────────────────────────────────────────────
 
+// Linear prev/next navigation through the 97 type files (skips shared/theme).
+function getOrderedTypeFiles() {
+  const opts = document.getElementById('file-select').options
+  return Array.from(opts)
+    .map(o => o.value)
+    .filter(v => v && FILE_TO_TYPE[v])
+}
+function navigateType(delta) {
+  const sel = document.getElementById('file-select')
+  const files = getOrderedTypeFiles()
+  if (files.length === 0) return
+  let idx = files.indexOf(sel.value)
+  if (idx === -1) idx = 0  // current file is shared/theme — start from first type
+  const next = files[(idx + delta + files.length) % files.length]
+  sel.value = next
+  sel.dispatchEvent(new Event('change'))
+}
+document.getElementById('btn-prev-type').addEventListener('click', () => navigateType(-1))
+document.getElementById('btn-next-type').addEventListener('click', () => navigateType(+1))
+
+// Alt+← / Alt+→ shortcut for keyboard-only navigation
+document.addEventListener('keydown', (e) => {
+  if (mode !== 'renderer') return
+  if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); navigateType(-1) }
+  if (e.key === 'ArrowRight') { e.preventDefault(); navigateType(+1) }
+})
+
 document.getElementById('file-select').addEventListener('change', function() {
   if (!this.value) return
   currentFile = this.value
@@ -1101,7 +1204,7 @@ document.getElementById('file-select').addEventListener('change', function() {
   // Load matching type example into source pane
   const type = FILE_TO_TYPE[this.value]
   if (type && TYPE_EXAMPLES[type]) {
-    document.getElementById('mdart-source').value = TYPE_EXAMPLES[type]
+    setMdartSource(TYPE_EXAMPLES[type], type)
   }
 })
 
@@ -1180,13 +1283,13 @@ async function renderMarkdown(explicit = false) {
   }
 }
 
-async function applyRenderer() {
+async function saveRenderer() {
   if (!monacoEditor) return false
   const content = monacoEditor.getValue()
   const mdartSource = document.getElementById('mdart-source').value.trim()
   if (!mdartSource) { setStatus('error', 'no source'); return false }
   document.getElementById('btn-apply').disabled = true
-  setStatus('busy', 'building…')
+  setStatus('busy', 'saving…')
   try {
     const res = await fetch('/lab/apply', {
       method: 'POST',
@@ -1201,12 +1304,12 @@ async function applyRenderer() {
     isDirty = false
     document.getElementById('dirty-dot').classList.remove('visible')
     document.getElementById('dirty-dot-header').classList.remove('visible')
-    setStatus('ok', `built ${data.buildMs}ms`)
+    setStatus('ok', `saved · built ${data.buildMs}ms`)
     if (isMobile()) showMobPane('preview')
     return true
   } catch (err) {
     showError(err.message)
-    setStatus('error', 'build error')
+    setStatus('error', 'save error')
     document.getElementById('btn-apply').disabled = false
     return false
   }
@@ -1236,7 +1339,7 @@ async function renderOnly() {
 function dispatchRender(explicit = false) {
   if (mode === 'mdart') renderMdArt(explicit)
   else if (mode === 'markdown') renderMarkdown(explicit)
-  // renderer mode: manual apply only (don't auto-render TypeScript changes)
+  // renderer mode: manual save only (don't auto-render TypeScript changes)
 }
 
 // ── DOM helpers ───────────────────────────────────────────────────────────────
@@ -1361,7 +1464,7 @@ function hideIntegration() {
 
 document.getElementById('btn-render').addEventListener('click', () => renderMdArt(true))
 document.getElementById('btn-render-md').addEventListener('click', () => renderMarkdown(true))
-document.getElementById('btn-apply').addEventListener('click', applyRenderer)
+document.getElementById('btn-apply').addEventListener('click', saveRenderer)
 
 // Auto-render toggle
 function syncAutoBtn() {
@@ -1467,9 +1570,49 @@ document.getElementById('mdart-source').addEventListener('keydown', e => {
 // Auto-render mdart source in renderer mode (uses current built bundle, no rebuild)
 let sourceRenderTimer = null
 document.getElementById('mdart-source').addEventListener('input', () => {
+  updateSourceDirty()
   if (mode !== 'renderer' || !autoRender) return
   clearTimeout(sourceRenderTimer)
   sourceRenderTimer = setTimeout(() => renderOnly(), 500)
+})
+
+// Save mdart source pane back to its example file on disk.
+document.getElementById('btn-source-save').addEventListener('click', async () => {
+  if (!mdartSourceType) return
+  const ta = document.getElementById('mdart-source')
+  const content = ta.value
+  const btn = document.getElementById('btn-source-save')
+  const orig = btn.textContent
+  btn.textContent = '⏳ Saving…'; btn.disabled = true
+  try {
+    const res = await fetch(`/examples/types/${encodeURIComponent(mdartSourceType)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    })
+    if (!res.ok) throw new Error('Save failed')
+    // Update local cache so re-selecting the type doesn't show stale content
+    examples.types[mdartSourceType] = content
+    rebuildExampleMaps()
+    mdartSourceBase = content
+    btn.textContent = '✓ Saved'
+    setTimeout(() => {
+      btn.textContent = orig
+      btn.disabled = false
+      updateSourceDirty()
+    }, 1200)
+  } catch {
+    btn.textContent = orig
+    btn.disabled = false
+    setStatus('error', 'save failed')
+  }
+})
+
+// Revert mdart source pane to last-loaded / last-saved content.
+document.getElementById('btn-source-reset').addEventListener('click', () => {
+  document.getElementById('mdart-source').value = mdartSourceBase
+  updateSourceDirty()
+  renderOnly()
 })
 
 // ── Mobile pane switching ─────────────────────────────────────────────────────
@@ -1731,13 +1874,13 @@ async function sendChat() {
     // Renderer mode: reload file and rebuild
     if (mode === 'renderer') {
       await loadRendererFile(currentFile)
-      // Re-enable apply after external file change — applyRenderer will disable it again on success
+      // Re-enable Save after external file change — saveRenderer will disable it again on success
       isDirty = true
       document.getElementById('btn-apply').disabled = false
-      const built = await applyRenderer()
+      const built = await saveRenderer()
       const notice = document.createElement('div')
       notice.className = 'chat-notice'
-      notice.textContent = built ? '↻ File reloaded · bundle rebuilt' : '↻ File reloaded — click Apply to build'
+      notice.textContent = built ? '↻ File reloaded · bundle rebuilt' : '↻ File reloaded — click Save to build'
       document.getElementById('chat-messages').appendChild(notice)
     }
   } catch (err) {
@@ -1983,7 +2126,7 @@ require(['vs/editor/editor.main'], async function() {
 
   // Ctrl+Enter in Monaco
   monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-    if (mode === 'renderer') applyRenderer()
+    if (mode === 'renderer') saveRenderer()
     else dispatchRender(true)
   })
 

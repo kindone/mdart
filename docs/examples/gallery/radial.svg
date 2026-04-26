@@ -1,23 +1,23 @@
 <svg viewBox="0 0 560 440" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#180a0e;border-radius:8px">
-  <line x1="280.0" y1="182.0" x2="280.0" y2="62.0" stroke="#3a1020cc" stroke-width="1.5"/>
+  <line x1="280.0" y1="182.0" x2="280.0" y2="62.0" stroke="#fda4af" stroke-width="1.5"/>
   <rect x="228.0" y="44.0" width="104" height="36" rx="5" fill="#1a0d12" stroke="#f43f5e66" stroke-width="1.2"/>
   <text x="280.0" y="67.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Mobile</text>
-  <text x="280.0" y="88.0" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">iOS</text>
-  <text x="280.0" y="101.0" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">Android</text>
-  <line x1="316.1" y1="208.3" x2="430.3" y2="171.2" stroke="#3a1020cc" stroke-width="1.5"/>
+  <text x="280.0" y="36.0" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">iOS</text>
+  <text x="280.0" y="23.0" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">Android</text>
+  <line x1="316.1" y1="208.3" x2="430.3" y2="171.2" stroke="#fda4af" stroke-width="1.5"/>
   <rect x="378.3" y="153.2" width="104" height="36" rx="5" fill="#1a0d12" stroke="#f43f5e66" stroke-width="1.2"/>
   <text x="430.3" y="176.2" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Web</text>
-  <text x="430.3" y="197.2" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">React</text>
-  <text x="430.3" y="210.2" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">API</text>
-  <line x1="302.3" y1="250.7" x2="372.9" y2="347.8" stroke="#3a1020cc" stroke-width="1.5"/>
+  <text x="430.3" y="145.2" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">React</text>
+  <text x="430.3" y="132.2" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">API</text>
+  <line x1="302.3" y1="250.7" x2="372.9" y2="347.8" stroke="#fda4af" stroke-width="1.5"/>
   <rect x="320.9" y="329.8" width="104" height="36" rx="5" fill="#1a0d12" stroke="#f43f5e66" stroke-width="1.2"/>
   <text x="372.9" y="352.8" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Data</text>
-  <text x="372.9" y="373.8" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">Analytics</text>
-  <line x1="257.7" y1="250.7" x2="187.1" y2="347.8" stroke="#3a1020cc" stroke-width="1.5"/>
+  <text x="372.9" y="377.8" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">Analytics</text>
+  <line x1="257.7" y1="250.7" x2="187.1" y2="347.8" stroke="#fda4af" stroke-width="1.5"/>
   <rect x="135.1" y="329.8" width="104" height="36" rx="5" fill="#1a0d12" stroke="#f43f5e66" stroke-width="1.2"/>
   <text x="187.1" y="352.8" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Design</text>
-  <text x="187.1" y="373.8" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">UI</text>
-  <line x1="243.9" y1="208.3" x2="129.7" y2="171.2" stroke="#3a1020cc" stroke-width="1.5"/>
+  <text x="187.1" y="377.8" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">UI</text>
+  <line x1="243.9" y1="208.3" x2="129.7" y2="171.2" stroke="#fda4af" stroke-width="1.5"/>
   <rect x="77.7" y="153.2" width="104" height="36" rx="5" fill="#1a0d12" stroke="#f43f5e66" stroke-width="1.2"/>
   <text x="129.7" y="176.2" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Security</text>
   <circle cx="280" cy="220" r="38" fill="#1a0d12" stroke="#fb7185" stroke-width="1.5"/>

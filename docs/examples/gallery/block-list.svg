@@ -1,23 +1,27 @@
-<svg viewBox="0 0 500 168" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="500" height="168" fill="#080f10" rx="8"/>
-    <rect x="0.0" y="8.0" width="244.0" height="68" rx="8" fill="#10b98133" stroke="#10b98188" stroke-width="1.5"/>
-    <rect x="0.0" y="8.0" width="6" height="68" rx="3" fill="#10b981"/>
-    <text x="16.0" y="34.0" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Strategy</text>
-    <text x="16.0" y="52.0" font-size="10" fill="#6ee7b7" font-family="system-ui,sans-serif">Define your approach</text>
-    <text x="16.0" y="66.0" font-size="9" fill="#064e3b" font-family="system-ui,sans-serif">Vision · Goals</text>
-    <rect x="252.0" y="8.0" width="244.0" height="68" rx="8" fill="#0cad7933" stroke="#0cad7988" stroke-width="1.5"/>
-    <rect x="252.0" y="8.0" width="6" height="68" rx="3" fill="#0cad79"/>
-    <text x="268.0" y="34.0" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Design</text>
-    <text x="268.0" y="52.0" font-size="10" fill="#6ee7b7" font-family="system-ui,sans-serif">Shape the solution</text>
-    <text x="268.0" y="66.0" font-size="9" fill="#064e3b" font-family="system-ui,sans-serif">Research · Prototype</text>
-    <rect x="0.0" y="84.0" width="244.0" height="68" rx="8" fill="#09a27133" stroke="#09a27188" stroke-width="1.5"/>
-    <rect x="0.0" y="84.0" width="6" height="68" rx="3" fill="#09a271"/>
-    <text x="16.0" y="110.0" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Build</text>
-    <text x="16.0" y="128.0" font-size="10" fill="#6ee7b7" font-family="system-ui,sans-serif">Execute the plan</text>
-    <text x="16.0" y="142.0" font-size="9" fill="#064e3b" font-family="system-ui,sans-serif">Ship · Measure</text>
-    <rect x="252.0" y="84.0" width="244.0" height="68" rx="8" fill="#05966933" stroke="#05966988" stroke-width="1.5"/>
-    <rect x="252.0" y="84.0" width="6" height="68" rx="3" fill="#059669"/>
-    <text x="268.0" y="110.0" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Launch</text>
-    <text x="268.0" y="128.0" font-size="10" fill="#6ee7b7" font-family="system-ui,sans-serif">Ship to the world</text>
-    <text x="268.0" y="142.0" font-size="9" fill="#064e3b" font-family="system-ui,sans-serif">Announce · Iterate</text>
+<svg viewBox="0 0 500 192" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="500" height="192" fill="#080f10" rx="8"/>
+    <rect x="0.0" y="8.0" width="244.0" height="80" rx="8" fill="#10b98133" stroke="#10b98188" stroke-width="1.5"/>
+    <rect x="0.0" y="8.0" width="6" height="80" rx="3" fill="#10b981"/>
+    <text x="16.0" y="30.0" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Strategy</text>
+    <text x="16.0" y="46.0" font-size="10" fill="#6ee7b7" font-style="italic" font-family="system-ui,sans-serif">Define your approach</text>
+    <text x="16.0" y="62.0" font-size="10" fill="#6ee7b7" fill-opacity="1" font-family="system-ui,sans-serif">· Vision</text>
+    <text x="16.0" y="76.0" font-size="10" fill="#6ee7b7" fill-opacity="0.7" font-family="system-ui,sans-serif">· Goals</text>
+    <rect x="252.0" y="8.0" width="244.0" height="80" rx="8" fill="#0cad7933" stroke="#0cad7988" stroke-width="1.5"/>
+    <rect x="252.0" y="8.0" width="6" height="80" rx="3" fill="#0cad79"/>
+    <text x="268.0" y="30.0" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Design</text>
+    <text x="268.0" y="46.0" font-size="10" fill="#6ee7b7" font-style="italic" font-family="system-ui,sans-serif">Shape the solution</text>
+    <text x="268.0" y="62.0" font-size="10" fill="#6ee7b7" fill-opacity="1" font-family="system-ui,sans-serif">· Research</text>
+    <text x="268.0" y="76.0" font-size="10" fill="#6ee7b7" fill-opacity="0.7" font-family="system-ui,sans-serif">· Prototype</text>
+    <rect x="0.0" y="96.0" width="244.0" height="80" rx="8" fill="#09a27133" stroke="#09a27188" stroke-width="1.5"/>
+    <rect x="0.0" y="96.0" width="6" height="80" rx="3" fill="#09a271"/>
+    <text x="16.0" y="118.0" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Build</text>
+    <text x="16.0" y="134.0" font-size="10" fill="#6ee7b7" font-style="italic" font-family="system-ui,sans-serif">Execute the plan</text>
+    <text x="16.0" y="150.0" font-size="10" fill="#6ee7b7" fill-opacity="1" font-family="system-ui,sans-serif">· Ship</text>
+    <text x="16.0" y="164.0" font-size="10" fill="#6ee7b7" fill-opacity="0.7" font-family="system-ui,sans-serif">· Measure</text>
+    <rect x="252.0" y="96.0" width="244.0" height="80" rx="8" fill="#05966933" stroke="#05966988" stroke-width="1.5"/>
+    <rect x="252.0" y="96.0" width="6" height="80" rx="3" fill="#059669"/>
+    <text x="268.0" y="118.0" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="700">Launch</text>
+    <text x="268.0" y="134.0" font-size="10" fill="#6ee7b7" font-style="italic" font-family="system-ui,sans-serif">Ship to the world</text>
+    <text x="268.0" y="150.0" font-size="10" fill="#6ee7b7" fill-opacity="1" font-family="system-ui,sans-serif">· Announce</text>
+    <text x="268.0" y="164.0" font-size="10" fill="#6ee7b7" fill-opacity="0.7" font-family="system-ui,sans-serif">· Iterate</text>
   </svg>

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, tt } from '../shared'
 import { render as renderProcess } from './process'
 
 function wrapText(text: string, maxChars: number): string[] {
@@ -66,11 +66,21 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const bodyX = x + (isFirst ? 0 : P / 2)
     const bodyW = chevW - (isFirst ? P : 0) - (isLast ? 0 : P)
     const tx = bodyX + bodyW / 2
+    const hasValue = !!item.value
     const lines = wrapText(item.label, Math.max(4, Math.floor(bodyW / 7)))
-    lines.slice(0, 2).forEach((line, li) => {
-      const ty = lines.length === 1 ? cy + 4 : cy + (li === 0 ? -5 : 9)
-      parts.push(`<text x="${tx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`)
-    })
+    // When a value is present, restrict the label to a single line so the
+    // value can sit beneath it; otherwise fall back to the prior 2-line wrap.
+    const labelLines = hasValue ? lines.slice(0, 1) : lines.slice(0, 2)
+
+    if (hasValue) {
+      parts.push(`<text x="${tx.toFixed(1)}" y="${cy - 3}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelLines[0])}</text>`)
+      parts.push(`<text x="${tx.toFixed(1)}" y="${cy + 12}" text-anchor="middle" font-size="9" fill="${theme.text}" fill-opacity="0.72" font-family="system-ui,sans-serif">${tt(item.value!, Math.max(4, Math.floor(bodyW / 6)))}</text>`)
+    } else {
+      labelLines.forEach((line, li) => {
+        const ty = labelLines.length === 1 ? cy + 4 : cy + (li === 0 ? -5 : 9)
+        parts.push(`<text x="${tx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`)
+      })
+    }
   })
 
   return svgWrapProcess(W, H, theme, parts)

@@ -25,7 +25,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const x1 = n.parentX, y1 = n.parentY + DH
       const x2 = n.x,       y2 = isLeaf ? n.y - LH / 2 : n.y - DH
       const mid = (y1 + y2) / 2
-      lines.push(`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} C${x1.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.border}88" stroke-width="1.5"/>`)
+      lines.push(`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} C${x1.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.textMuted}cc" stroke-width="1.5"/>`)
       const siblings = n.parentX !== undefined ? flat.filter(s => s.parentX === n.parentX && s.parentY === n.parentY) : []
       if (siblings.length === 2) {
         const isFirst = siblings[0] === n

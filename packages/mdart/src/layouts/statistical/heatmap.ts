@@ -32,11 +32,19 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const parts: string[] = []
 
+  // Column headers: explicit spec.columns wins; otherwise derive from the
+  // first row's child labels (intuitive when users write `Morning: 5` etc.).
+  const derivedCols = rows[0]?.children.map(ch => ch.label) ?? []
+  const colHeaders = Array.from({ length: numCols }, (_, c) =>
+    spec.columns?.[c] ?? derivedCols[c] ?? String.fromCharCode(65 + c)
+  )
+  const colHeaderMax = Math.floor(CELL_W / 6)
+
   parts.push(`<rect x="0" y="${TITLE_H}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
   for (let c = 0; c < numCols; c++) {
     const colX = LABEL_W + c * CELL_W
     parts.push(`<rect x="${colX}" y="${TITLE_H}" width="${CELL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
-    parts.push(`<text x="${(colX + CELL_W / 2).toFixed(1)}" y="${(TITLE_H + 19).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${String.fromCharCode(65 + c)}</text>`)
+    parts.push(`<text x="${(colX + CELL_W / 2).toFixed(1)}" y="${(TITLE_H + 19).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${tt(colHeaders[c], colHeaderMax)}</text>`)
   }
 
   rows.forEach((row, r) => {
@@ -50,7 +58,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const alpha = Math.round(18 + v * 210).toString(16).padStart(2, '0')
       parts.push(`<rect x="${colX}" y="${rowY}" width="${CELL_W}" height="${CELL_H}" fill="${theme.primary}${alpha}" stroke="${theme.border}55" stroke-width="0.5"/>`)
       const textFill = v > 0.55 ? theme.bg : theme.text
-      parts.push(`<text x="${(colX + CELL_W / 2).toFixed(1)}" y="${(rowY + 25).toFixed(1)}" text-anchor="middle" font-size="10" fill="${textFill}" font-family="system-ui,sans-serif">${tt(cell.label, 9)}</text>`)
+      // Prefer the cell's value (e.g. "5"); fall back to label when absent.
+      const cellText = cell.value ?? cell.label
+      parts.push(`<text x="${(colX + CELL_W / 2).toFixed(1)}" y="${(rowY + 25).toFixed(1)}" text-anchor="middle" font-size="10" fill="${textFill}" font-family="system-ui,sans-serif">${escapeXml(tt(cellText, 9))}</text>`)
     })
   })
 

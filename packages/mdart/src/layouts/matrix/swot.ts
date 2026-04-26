@@ -12,10 +12,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
 
   const quadrantMap: Record<string, SwotQuadrant> = {
-    S: { label: 'Strengths', items: [], fill: '#064e3b', textColor: '#6ee7b7' },
-    W: { label: 'Weaknesses', items: [], fill: '#4c0519', textColor: '#fda4af' },
-    O: { label: 'Opportunities', items: [], fill: '#1e3a8a', textColor: '#93c5fd' },
-    T: { label: 'Threats', items: [], fill: '#451a03', textColor: '#fcd34d' },
+    S: { label: 'Strengths',     items: [], fill: '#065f46', textColor: '#34d399' },  // emerald-800/400
+    W: { label: 'Weaknesses',    items: [], fill: '#9f1239', textColor: '#fb7185' },  // rose-800/400
+    O: { label: 'Opportunities', items: [], fill: '#3730a3', textColor: '#818cf8' },  // indigo-800/400
+    T: { label: 'Threats',       items: [], fill: '#92400e', textColor: '#fbbf24' },  // amber-800/400
   }
 
   // Prefix-based

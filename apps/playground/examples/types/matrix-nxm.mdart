@@ -1,5 +1,6 @@
 type: matrix-nxm
 title: Skills Matrix
+columns: Frontend, Backend, DevOps
 
 - Alice
   - Expert

@@ -1,15 +1,15 @@
 <svg viewBox="0 0 520 308" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#180a0e;border-radius:8px">
   
-  <polygon points="260,88 242,128 278,128" fill="#1a0d12" stroke="#3a1020" stroke-width="1.5"/>
-  <rect x="230" y="128" width="60" height="8" rx="2" fill="#1a0d12" stroke="#3a1020" stroke-width="1"/>
-  <rect x="60.0" y="80.0" width="400" height="8" rx="3" fill="#1a0d12" stroke="#3a1020" stroke-width="1.5"/>
-  <line x1="119" y1="84" x2="119" y2="122" stroke="#3a102066" stroke-width="1.5"/>
+  <polygon points="260,88 242,128 278,128" fill="#1a0d12" stroke="#fda4af" stroke-width="1.5"/>
+  <rect x="230" y="128" width="60" height="8" rx="2" fill="#1a0d12" stroke="#fda4af" stroke-width="1"/>
+  <rect x="60.0" y="80.0" width="400" height="8" rx="3" fill="#1a0d12" stroke="#fda4af" stroke-width="1.5"/>
+  <line x1="119" y1="84" x2="119" y2="122" stroke="#fda4af99" stroke-width="1.5"/>
   <rect x="54.0" y="122.0" width="130" height="18" rx="4" fill="#f43f5e30" stroke="#f43f5e77" stroke-width="1.2"/>
   <text x="119.0" y="134.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Benefits</text>
   <text x="119.0" y="150.0" text-anchor="middle" font-size="9" fill="#fda4af" font-family="system-ui,sans-serif">Speed</text>
   <text x="119.0" y="164.0" text-anchor="middle" font-size="9" fill="#fda4af" font-family="system-ui,sans-serif">Flexibility</text>
   <text x="119.0" y="178.0" text-anchor="middle" font-size="9" fill="#fda4af" font-family="system-ui,sans-serif">Cost</text>
-  <line x1="401" y1="84" x2="401" y2="122" stroke="#3a102066" stroke-width="1.5"/>
+  <line x1="401" y1="84" x2="401" y2="122" stroke="#fda4af99" stroke-width="1.5"/>
   <rect x="336.0" y="122.0" width="130" height="18" rx="4" fill="#e11d4830" stroke="#e11d4877" stroke-width="1.2"/>
   <text x="401.0" y="134.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Risks</text>
   <text x="401.0" y="150.0" text-anchor="middle" font-size="9" fill="#fda4af" font-family="system-ui,sans-serif">Complexity</text>

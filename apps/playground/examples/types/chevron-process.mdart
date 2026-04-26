@@ -1,8 +1,8 @@
 type: chevron-process
 title: Sales Pipeline
 
-- Prospect
-- Qualify
-- Propose
-- Negotiate
-- Close
+- Prospect: 100 leads
+- Qualify: 40 leads
+- Propose: 20 deals
+- Negotiate: 10 deals
+- Close: 6 won

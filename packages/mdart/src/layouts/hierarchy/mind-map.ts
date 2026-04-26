@@ -37,9 +37,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const by = cy + R1 * Math.sin(angle)
     const branch = branches[i]
 
-    lines.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${theme.accent}55" stroke-width="2"/>`)
+    lines.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${theme.accent}99" stroke-width="2"/>`)
 
-    shapes.push(`<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="50" ry="20" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1"/>`)
+    shapes.push(`<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="50" ry="20" fill="${theme.surface}" stroke="${theme.accent}cc" stroke-width="1"/>`)
     texts.push(`<text x="${bx.toFixed(1)}" y="${(by + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(branch.label, 13)}</text>`)
 
     const subs = branch.children
@@ -52,8 +52,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const sx = bx + R2 * Math.cos(subAngle)
       const sy = by + R2 * Math.sin(subAngle)
 
-      lines.push(`<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.muted}" stroke-width="1" opacity="0.8"/>`)
-      shapes.push(`<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="20" fill="${theme.surface}" stroke="${theme.muted}55" stroke-width="1"/>`)
+      lines.push(`<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1" opacity="0.7"/>`)
+      shapes.push(`<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="20" fill="${theme.surface}" stroke="${theme.textMuted}aa" stroke-width="1"/>`)
       texts.push(`<text x="${sx.toFixed(1)}" y="${(sy + 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(subs[j].label, 11)}</text>`)
     }
   }

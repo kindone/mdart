@@ -17,12 +17,19 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // start line from circle edge, not center — so it never crosses the circle
     const lx = cx + CR * Math.cos(angle), ly = cy + CR * Math.sin(angle)
     const item = spokes[i]
-    parts.push(`<line x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.border}cc" stroke-width="1.5"/>`)
+    parts.push(`<line x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1.5"/>`)
     if (item) {
       parts.push(`<rect x="${(sx - 52).toFixed(1)}" y="${(sy - 18).toFixed(1)}" width="104" height="36" rx="5" fill="${theme.surface}" stroke="${theme.primary}66" stroke-width="1.2"/>`)
       parts.push(`<text x="${sx.toFixed(1)}" y="${(sy + 5).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, 12)}</text>`)
+      // Render children on the OUTER side of the box (away from the hub) so
+      // they never sit on top of the connector line. For upper-half boxes the
+      // outer side is above; for lower-half (or pure horizontal) it stays below.
+      // Asymmetric offsets compensate for SVG text baselines: 8.5 px text
+      // ascends ~7 px above its y, descends ~3 px below — so a "below" baseline
+      // needs 4 extra px to match the visual gap of an "above" baseline.
+      const above = Math.sin(angle) < -0.1
       item.children.slice(0, 2).forEach((ch, j) => {
-        const offY = sy + 26 + j * 13
+        const offY = above ? sy - 26 - j * 13 : sy + 30 + j * 13
         parts.push(`<text x="${sx.toFixed(1)}" y="${offY.toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 12)}</text>`)
       })
     }

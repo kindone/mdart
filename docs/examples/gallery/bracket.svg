@@ -1,28 +1,28 @@
 <svg viewBox="0 0 434 166" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#14100a;border-radius:8px">
-  <rect x="10" y="12.0" width="98" height="26" rx="3" fill="#1a1408" stroke="#3a280088" stroke-width="1.2"/>
-  <text x="59.0" y="29.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="400">Q1 Winner</text>
-  <polyline points="108,25.0 118,25.0 118,42.0" fill="none" stroke="#3a280055" stroke-width="1.5"/>
-  <polyline points="108,59.0 118,59.0 118,42.0" fill="none" stroke="#3a280055" stroke-width="1.5"/>
-  <line x1="118" y1="42.0" x2="148" y2="42.0" stroke="#3a280055" stroke-width="1.5"/>
-  <rect x="10" y="46.0" width="98" height="26" rx="3" fill="#1a1408" stroke="#3a280088" stroke-width="1.2"/>
-  <text x="59.0" y="63.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="400">Q2 Winner</text>
-  <rect x="10" y="80.0" width="98" height="26" rx="3" fill="#1a1408" stroke="#3a280088" stroke-width="1.2"/>
-  <text x="59.0" y="97.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="400">Q3 Winner</text>
-  <polyline points="108,93.0 118,93.0 118,110.0" fill="none" stroke="#3a280055" stroke-width="1.5"/>
-  <polyline points="108,127.0 118,127.0 118,110.0" fill="none" stroke="#3a280055" stroke-width="1.5"/>
-  <line x1="118" y1="110.0" x2="148" y2="110.0" stroke="#3a280055" stroke-width="1.5"/>
-  <rect x="10" y="114.0" width="98" height="26" rx="3" fill="#1a1408" stroke="#3a280088" stroke-width="1.2"/>
-  <text x="59.0" y="131.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="400">Q4 Winner</text>
-  <text x="59.0" y="160.0" text-anchor="middle" font-size="8" fill="#3a280088" font-family="system-ui,sans-serif">Round 1</text>
-  <rect x="148" y="29.0" width="98" height="26" rx="3" fill="#1a1408" stroke="#3a280088" stroke-width="1.2"/>
-  <text x="197.0" y="46.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Q1 Winner</text>
-  <polyline points="246,42.0 256,42.0 256,76.0" fill="none" stroke="#3a280055" stroke-width="1.5"/>
-  <polyline points="246,110.0 256,110.0 256,76.0" fill="none" stroke="#3a280055" stroke-width="1.5"/>
-  <line x1="256" y1="76.0" x2="286" y2="76.0" stroke="#3a280055" stroke-width="1.5"/>
-  <rect x="148" y="97.0" width="98" height="26" rx="3" fill="#1a1408" stroke="#3a280088" stroke-width="1.2"/>
-  <text x="197.0" y="114.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Q3 Winner</text>
-  <text x="197.0" y="160.0" text-anchor="middle" font-size="8" fill="#3a280088" font-family="system-ui,sans-serif">Final</text>
-  <rect x="286" y="63.0" width="98" height="26" rx="3" fill="#fbbf24" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="335.0" y="80.0" text-anchor="middle" font-size="9" fill="#14100a" font-family="system-ui,sans-serif" font-weight="700">Q1 Winner</text>
-  <text x="335.0" y="160.0" text-anchor="middle" font-size="8" fill="#fbbf24" font-family="system-ui,sans-serif">🏆 Champion</text>
+  <rect x="10" y="12.0" width="98" height="26" rx="3" fill="#1a1408" stroke="#fde68acc" stroke-width="1.2" opacity="1"/>
+  <text x="59.0" y="29.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="400" opacity="1">Q1 Winner</text>
+  <polyline points="108,25.0 118,25.0 118,42.0" fill="none" stroke="#fde68aaa" stroke-width="1.5"/>
+  <polyline points="108,59.0 118,59.0 118,42.0" fill="none" stroke="#fde68aaa" stroke-width="1.5"/>
+  <line x1="118" y1="42.0" x2="148" y2="42.0" stroke="#fde68aaa" stroke-width="1.5"/>
+  <rect x="10" y="46.0" width="98" height="26" rx="3" fill="#1a1408" stroke="#fde68acc" stroke-width="1.2" opacity="1"/>
+  <text x="59.0" y="63.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="400" opacity="1">Q2 Winner</text>
+  <rect x="10" y="80.0" width="98" height="26" rx="3" fill="#1a1408" stroke="#fde68acc" stroke-width="1.2" opacity="1"/>
+  <text x="59.0" y="97.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="400" opacity="1">Q3 Winner</text>
+  <polyline points="108,93.0 118,93.0 118,110.0" fill="none" stroke="#fde68aaa" stroke-width="1.5"/>
+  <polyline points="108,127.0 118,127.0 118,110.0" fill="none" stroke="#fde68aaa" stroke-width="1.5"/>
+  <line x1="118" y1="110.0" x2="148" y2="110.0" stroke="#fde68aaa" stroke-width="1.5"/>
+  <rect x="10" y="114.0" width="98" height="26" rx="3" fill="#1a1408" stroke="#fde68acc" stroke-width="1.2" opacity="1"/>
+  <text x="59.0" y="131.0" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="400" opacity="1">Q4 Winner</text>
+  <text x="59.0" y="160.0" text-anchor="middle" font-size="8" fill="#fde68a" font-family="system-ui,sans-serif">Round 1</text>
+  <rect x="148" y="29.0" width="98" height="26" rx="3" fill="none" stroke="#fde68a55" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="197.0" y="46.0" text-anchor="middle" font-size="8" fill="#fde68a77" font-family="system-ui,sans-serif">TBD</text>
+  <polyline points="246,42.0 256,42.0 256,76.0" fill="none" stroke="#fde68aaa" stroke-width="1.5"/>
+  <polyline points="246,110.0 256,110.0 256,76.0" fill="none" stroke="#fde68aaa" stroke-width="1.5"/>
+  <line x1="256" y1="76.0" x2="286" y2="76.0" stroke="#fde68aaa" stroke-width="1.5"/>
+  <rect x="148" y="97.0" width="98" height="26" rx="3" fill="none" stroke="#fde68a55" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="197.0" y="114.0" text-anchor="middle" font-size="8" fill="#fde68a77" font-family="system-ui,sans-serif">TBD</text>
+  <text x="197.0" y="160.0" text-anchor="middle" font-size="8" fill="#fde68a" font-family="system-ui,sans-serif">Final</text>
+  <rect x="286" y="63.0" width="98" height="26" rx="3" fill="none" stroke="#fde68a55" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="335.0" y="80.0" text-anchor="middle" font-size="8" fill="#fde68a77" font-family="system-ui,sans-serif">TBD</text>
+  <text x="335.0" y="160.0" text-anchor="middle" font-size="8" fill="#fde68a" font-family="system-ui,sans-serif">Champion</text>
 </svg>

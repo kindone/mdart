@@ -1,0 +1,16 @@
+<svg viewBox="0 0 560 408" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#180a0e;border-radius:8px">
+  <text x="280" y="20" text-anchor="middle" font-size="13" fill="#fda4af" font-family="system-ui,sans-serif" font-weight="600">Full-Stack Skills</text>
+  <circle cx="218.0" cy="177.7" r="105" fill="#f43f5e28" stroke="#f43f5e88" stroke-width="1.5"/>
+  <circle cx="342.0" cy="177.7" r="105" fill="#e11d4828" stroke="#e11d4888" stroke-width="1.5"/>
+  <circle cx="280.0" cy="273.8" r="105" fill="#fb718528" stroke="#fb718588" stroke-width="1.5"/>
+  <text x="168.0" y="119.9" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Frontend</text>
+  <text x="168.0" y="133.9" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">React</text>
+  <text x="392.0" y="119.9" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Backend</text>
+  <text x="392.0" y="133.9" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">Node.js</text>
+  <text x="280.0" y="336.8" text-anchor="middle" font-size="12" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">DevOps</text>
+  <text x="280.0" y="350.8" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">Docker</text>
+  <text x="280.0" y="148.7" text-anchor="middle" font-size="9" fill="#fb7185" font-family="system-ui,sans-serif" font-weight="600">Full-stack</text>
+  <text x="342.0" y="244.8" text-anchor="middle" font-size="9" fill="#fb7185" font-family="system-ui,sans-serif" font-weight="600">Platform</text>
+  <text x="218.0" y="244.8" text-anchor="middle" font-size="9" fill="#fb7185" font-family="system-ui,sans-serif" font-weight="600">Web ops</text>
+  <text x="280.0" y="212.7" text-anchor="middle" font-size="9" fill="#fb7185" font-family="system-ui,sans-serif" font-weight="600">Generalist</text>
+</svg>

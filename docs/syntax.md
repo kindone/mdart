@@ -21,6 +21,7 @@ theme: rose              ← any named theme (see Themes section below)
 - Label                    plain item
 - Label: value             with value  (text after first colon)
 - Label [attr] [attr]      with attrs  (text inside brackets)
+- Label [attr]: value      attrs work on either side of the colon
   - Child                  child item  (any consistent indent)
   -> Target: message       flow child  (→ U+2192 or ASCII ->)
 ```
@@ -54,7 +55,7 @@ Or as an arrow chain: `Step 1 -> Step 2 -> Step 3`
 
 **Process** — process, chevron-process, arrow-process, circular-process, waterfall, snake-process, bending-process, step-up, step-down
 **Cycle** — cycle, donut-cycle, block-cycle, gear-cycle, nondirectional-cycle, multidirectional-cycle, loop, spiral
-**List** — bullet-list, numbered-list, chevron-list, hexagon-list, zigzag-list, trapezoid-list
+**List** — chevron-list, hexagon-list, zigzag-list, trapezoid-list (and the geometric list family). `bullet-list` / `numbered-list` are outline lists — see §5.
 **Pyramid** — pyramid, inverted-pyramid, pyramid-list, diamond-pyramid
 **Relationship** — concentric, target, web, converging, diverging, plus, bracket, bracket-tree
 
@@ -211,6 +212,7 @@ title: Market Entry
 
 #### `comparison`
 Top-level items = **rows** (attributes); children = `Column: value` pairs.
+Set `direction: LR` in front-matter to flip — top-level items become columns instead.
 ```
 - Type
   - Postgres: Relational
@@ -244,17 +246,22 @@ title: Database Comparison
 
 #### `matrix-nxm`
 Top-level items = rows; children = cell values in column order.
+Add `columns:` (comma-separated) in front-matter for explicit column headers — otherwise headers fall back to `A, B, C…`.
 ```
+columns: Frontend, Backend, DevOps
 - Alice
   - Expert
   - Proficient
+  - Learning
 - Bob
   - Proficient
+  - Expert
   - Expert
 ```
 
 ```mdart matrix-nxm
 title: Skills Matrix
+columns: Frontend, Backend, DevOps
 - Alice
   - Expert
   - Proficient
@@ -270,19 +277,20 @@ title: Skills Matrix
 ```
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/matrix-nxm-6eb0c79587.svg">
-  <img alt="matrix-nxm" src="./examples/syntax/matrix-nxm-6eb0c79587-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/matrix-nxm-0b247ded9d.svg">
+  <img alt="matrix-nxm" src="./examples/syntax/matrix-nxm-0b247ded9d-light.svg">
 </picture>
 
 
 #### `heatmap`
-Top-level items = rows; children = cells. Value sets colour intensity.
+Top-level items = rows; children = cells. Value sets colour intensity **and** is shown inside the cell.
+Column headers come from `columns:` front-matter if set, else from the first row's child labels (so `Morning: 5` makes "Morning" a column header automatically).
 ```
 - Mon
-  - Morning: 5     ← key: value  →  labelled cell
+  - Morning: 5     ← key: value  →  cell shows "5"; "Morning" becomes column header
   - Midday: 12
 - Tue
-  - 8              ← plain number →  number shown as label
+  - 8              ← plain number →  cell shows "8"
   - 14
 ```
 
@@ -446,35 +454,81 @@ title: Animals
 </picture>
 
 
-#### `venn` · `venn-3`
-Children inside each circle; a peer item containing `∩` labels the intersection.
+#### `venn` · `venn-3` · `venn-4`
+Children inside each circle; a peer item containing `∩` or `&&` labels an intersection.
+The intersection label is split on the separator and routed to the geometric centroid of the named circles, so pairwise overlaps land on the right edge.
+
+| separator | when to use |
+|---|---|
+| `∩` | mathematical purity |
+| `&&` | typeable on any keyboard (recommended) |
+
+`venn`, `venn-3`, and `venn-4` all use the same renderer — the layout (2 circles / triangle / 2×2 grid) is auto-selected from the count of non-intersection items.
+
 ```
 - Design
   - UX Research
 - Engineering
   - Backend
-- Design ∩ Engineering
+- Design && Engineering: Design system
 ```
 
 ```mdart venn-3
 title: Full-Stack Skills
 - Frontend
   - React
-  - CSS
 - Backend
   - Node.js
-  - SQL
 - DevOps
   - Docker
-  - CI/CD
-- Frontend ∩ Backend
-- Backend ∩ DevOps
-- Frontend ∩ DevOps
+- Frontend && Backend: Full-stack
+- Backend && DevOps: Platform
+- Frontend && DevOps: Web ops
+- Frontend && Backend && DevOps: Generalist
 ```
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/venn-3-c6873fa332.svg">
-  <img alt="venn-3" src="./examples/syntax/venn-3-c6873fa332-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/venn-3-d300e5abea.svg">
+  <img alt="venn-3" src="./examples/syntax/venn-3-d300e5abea-light.svg">
+</picture>
+
+
+#### `bullet-list` · `numbered-list`
+These two list types treat `value` and `children` as separate slots (unlike the geometric list family, which folds them into one caption):
+
+| slot | rendering |
+|---|---|
+| `item.label` | main row text (12 px bold) |
+| `item.value` | muted italic subtitle under the label |
+| `item.children` | indented sub-rows, 1 level deep — small circle markers (`bullet-list`) or `a, b, c…` letter badges (`numbered-list`) |
+
+```
+- Run tests: Gate before we build
+  - unit
+  - integration
+- Build client
+  - tsc --noEmit
+- Restart service: Rolling restart
+- Confirm health check
+```
+
+```mdart numbered-list
+title: Deploy Checklist
+- Run tests: Gate before we build anything
+  - unit
+  - integration
+  - smoke
+- Build client
+  - tsc --noEmit
+  - esbuild bundle
+- Build server
+- Restart service: Rolling restart across the fleet
+- Confirm health check
+```
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/numbered-list-0fc7b45be0.svg">
+  <img alt="numbered-list" src="./examples/syntax/numbered-list-0fc7b45be0-light.svg">
 </picture>
 
 
@@ -794,7 +848,7 @@ palette: #7c3aed, #0891b2, #059669, #d97706, #be185d
 
 | Attr | Applies to | Effect |
 |---|---|---|
-| `[done]` | checklist, kanban, sprint-board, timeline, milestone, wbs | Completed styling |
+| `[done]` | checklist, kanban, sprint-board, timeline, milestone, wbs | Completed styling. In `checklist`, a `[done]` parent cascades to all its children. |
 | `[active]` | kanban, sprint-board, timeline, milestone, wbs | In-progress highlight |
 | `[final]` | state-machine states | Double-border |
 | `[abstract]` | class classes | Italic name |

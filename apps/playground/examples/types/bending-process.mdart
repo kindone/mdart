@@ -1,13 +1,13 @@
 type: bending-process
 title: Build Pipeline
 
-- Checkout
-- Install Deps
-- Lint
-- Unit Tests
-- Build
-- Integration Tests
-- Security Scan
-- Deploy Staging
-- E2E Tests
-- Deploy Prod
+- Checkout: git clone
+- Install Deps: pnpm i
+- Lint: ESLint
+- Unit Tests: Vitest
+- Build: esbuild
+- Integration Tests: Playwright
+- Security Scan: Snyk
+- Deploy Staging: Helm
+- E2E Tests: Cypress
+- Deploy Prod: ArgoCD

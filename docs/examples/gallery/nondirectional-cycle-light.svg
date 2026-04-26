@@ -1,6 +1,6 @@
 <svg viewBox="0 0 440 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="440" height="400" fill="#faf5ff" rx="8"/>
-    <circle cx="220" cy="200" r="145" fill="none" stroke="#ddd6fe" stroke-width="14" opacity="0.4"/>
+    <circle cx="220" cy="200" r="145" fill="none" stroke="#6d28d9" stroke-width="14" opacity="0.45"/>
     <circle cx="220.0" cy="55.0" r="22" fill="#7c3aed"/>
     <text x="220.0" y="59.0" text-anchor="middle" font-size="9" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600">Brand</text>
     <circle cx="365.0" cy="200.0" r="22" fill="#7734e6"/>

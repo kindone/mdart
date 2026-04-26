@@ -1,4 +1,5 @@
 type: venn-4
+title: Cross-functional Initiatives
 
 - Strategy
   - OKRs
@@ -8,3 +9,10 @@ type: venn-4
   - Frontend
 - Data
   - Analytics
+
+- Strategy && Design: Vision alignment
+- Engineering && Data: Telemetry
+- Strategy && Engineering: Roadmap
+- Design && Data: A/B test design
+
+- Strategy && Design && Engineering && Data: Product launch

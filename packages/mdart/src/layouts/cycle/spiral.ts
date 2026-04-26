@@ -36,7 +36,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const y = cy + r * Math.sin(theta)
     spiralPoints.push(`${x.toFixed(1)},${y.toFixed(1)}`)
   }
-  parts.push(`<polyline points="${spiralPoints.join(' ')}" fill="none" stroke="${theme.border}" stroke-width="2" opacity="0.5"/>`)
+  parts.push(`<polyline points="${spiralPoints.join(' ')}" fill="none" stroke="${theme.textMuted}" stroke-width="2" opacity="0.7"/>`)
 
   // Place milestones evenly along spiral
   for (let k = 0; k < n; k++) {

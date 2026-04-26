@@ -30,7 +30,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const x2 = n.x,       y2 = n.y - BOX_H / 2
       const mid = (y1 + y2) / 2
       lines.push(
-        `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} C${x1.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.border}" stroke-width="1.5"/>`
+        `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} C${x1.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.textMuted}cc" stroke-width="1.5"/>`
       )
     }
     const bx = n.x - BOX_W / 2

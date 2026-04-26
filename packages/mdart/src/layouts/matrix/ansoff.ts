@@ -3,10 +3,10 @@ import type { MdArtTheme } from '../../theme'
 import { escapeXml, tt } from '../shared'
 
 const ANSOFF_QUADS = [
-  { key: 'penetration',     keywords: ['penetrat'],      label: 'Market Penetration',  sub: 'Existing product · Existing market', fill: '#064e3b', text: '#6ee7b7' },
-  { key: 'product-dev',     keywords: ['product dev', 'product d', 'new product'], label: 'Product Development', sub: 'New product · Existing market', fill: '#1e3a8a', text: '#93c5fd' },
-  { key: 'market-dev',      keywords: ['market dev', 'market d', 'new market'],   label: 'Market Development',  sub: 'Existing product · New market',  fill: '#3b1f00', text: '#fcd34d' },
-  { key: 'diversification', keywords: ['divers'],         label: 'Diversification',     sub: 'New product · New market',           fill: '#4c0519', text: '#fda4af' },
+  { key: 'penetration',     keywords: ['penetrat'],                                label: 'Market Penetration',  sub: 'Existing product · Existing market', fill: '#065f46', text: '#6ee7b7' },  // emerald-800/300
+  { key: 'product-dev',     keywords: ['product dev', 'product d', 'new product'], label: 'Product Development', sub: 'New product · Existing market',      fill: '#3730a3', text: '#a5b4fc' },  // indigo-800/300
+  { key: 'market-dev',      keywords: ['market dev',  'market d',  'new market'],  label: 'Market Development',  sub: 'Existing product · New market',      fill: '#92400e', text: '#fcd34d' },  // amber-800/300
+  { key: 'diversification', keywords: ['divers'],                                  label: 'Diversification',     sub: 'New product · New market',           fill: '#9f1239', text: '#fda4af' },  // rose-800/300
 ]
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {

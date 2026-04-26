@@ -35,7 +35,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (n.parentX !== undefined && n.parentY !== undefined) {
       const py = n.parentY + bh(n.level - 1) / 2
       const cy = n.y - bh(n.level) / 2
-      lines.push(`<line x1="${n.parentX.toFixed(1)}" y1="${py.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${cy.toFixed(1)}" stroke="${theme.border}55" stroke-width="1.2"/>`)
+      lines.push(`<line x1="${n.parentX.toFixed(1)}" y1="${py.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${cy.toFixed(1)}" stroke="${theme.textMuted}aa" stroke-width="1.2"/>`)
     }
     const fill = n.level === 0 ? theme.accent : n.level === 1 ? theme.primary : theme.secondary
     boxes.push(`<rect x="${(n.x - bw(n.level)/2).toFixed(1)}" y="${(n.y - bh(n.level)/2).toFixed(1)}" width="${bw(n.level)}" height="${bh(n.level)}" rx="4" fill="${fill}" stroke="${theme.bg}" stroke-width="1.5"/>`)

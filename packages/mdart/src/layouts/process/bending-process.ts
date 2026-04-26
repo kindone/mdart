@@ -17,7 +17,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const TURN_EXT = 32
   const BASE_W = 560
   const W = BASE_W + TURN_EXT * 2
-  const BOX_W = (BASE_W - 16) / COLS - 6, BOX_H = 36, ROW_GAP = 24
+  // Grow box height when any item carries a value so label + subtitle fit cleanly.
+  const anyValue = items.some(it => !!it.value)
+  const BOX_W = (BASE_W - 16) / COLS - 6, BOX_H = anyValue ? 44 : 36, ROW_GAP = 24
   const rows = Math.ceil(n / COLS)
   const titleH = spec.title ? 28 : 8
   const H = titleH + rows * (BOX_H + ROW_GAP) + 8
@@ -41,7 +43,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const isLast = i === n - 1
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W.toFixed(1)}" height="${BOX_H}" rx="5" fill="${isLast ? theme.accent + '33' : fill + '33'}" stroke="${isLast ? theme.accent : fill}" stroke-width="1.2"/>`)
-    parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, Math.floor(BOX_W / 6))}</text>`)
+    if (item.value) {
+      // Two-line stack: bold label above midline, muted value below.
+      parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 17).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, Math.floor(BOX_W / 6))}</text>`)
+      parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 32).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, Math.floor(BOX_W / 5))}</text>`)
+    } else {
+      parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, Math.floor(BOX_W / 6))}</text>`)
+    }
 
     if (i < n - 1) {
       const next = positions[i + 1]

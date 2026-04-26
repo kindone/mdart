@@ -35,8 +35,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<rect x="${x.toFixed(1)}" y="${(cardY + 14).toFixed(1)}" width="${CARD_W.toFixed(1)}" height="8" fill="${fill}"/>`)
     parts.push(`<text x="${(x + CARD_W / 2).toFixed(1)}" y="${(cardY + 14).toFixed(1)}" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${tt(item.label, 14)}</text>`)
     const subs = item.children.length ? item.children.map(c => c.label) : item.value ? [item.value] : []
-    subs.slice(0, 3).forEach((s, si) => {
-      parts.push(`<text x="${(x + CARD_W / 2).toFixed(1)}" y="${(cardY + 40 + si * 16).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(s, 14)}</text>`)
+    // Centre the sub-list block in the body area (between header band at
+    // cardY+22 and card bottom at cardY+CARD_H). Cap at 4 rows — that's the
+    // most that fit at 16 px row height without colliding with the bottom.
+    const visible = subs.slice(0, 4)
+    const bodyCy  = cardY + 22 + (CARD_H - 22) / 2  // centre of body area
+    const rowH    = 16
+    visible.forEach((s, si) => {
+      const ty = bodyCy + (si - (visible.length - 1) / 2) * rowH + 4
+      parts.push(`<text x="${(x + CARD_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(s, 14)}</text>`)
     })
     if (i < n - 1) {
       const op = i === n - 2 ? '=' : '+'
