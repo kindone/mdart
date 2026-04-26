@@ -797,6 +797,10 @@ app.post('/lab/chat', (req, res) => {
     '--add-dir', EXAMPLES_DIR,
     '--add-dir', DOCS_DIR,
     '--add-dir', SCRIPTS_DIR,
+    // acceptEdits auto-approves Edit/Write only — Bash still prompts.
+    // Whitelist the runners the Lab actually needs (gen-* scripts, tests, builds);
+    // anything else (rm, curl, kubectl, etc.) still requires explicit approval.
+    '--allowedTools', 'Bash(node *) Bash(npm *) Bash(npx *)',
     '--mcp-config', '{"mcpServers":{}}',
     '--strict-mcp-config',
     '--system-prompt', LAB_SYSTEM_PROMPT,
