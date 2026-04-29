@@ -9,6 +9,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
 
+  // Aligned with other list layouts; width drives label truncation (was 480 → wasted right margin in wide embeds)
   const W      = 480
   const PAD    = 16
   const titleH = spec.title ? 28 : 0
@@ -49,6 +50,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const item  = items[i]
     const itemH = itemHeights[i]
     const done  = isDone(item)
+    const extraAttrs = item.attrs.filter(a => !DONE_ATTRS.includes(a))
+    // 12px sans ~4.8px/char; reserve room when inline [tags] on the right
+    const labelRight = W - PAD - (extraAttrs.length > 0 ? Math.min(200, 28 + extraAttrs.join(', ').length * 5.5) : 8)
+    const labelMax = Math.max(12, Math.floor((labelRight - (PAD + 26)) / 4.8))
 
     // ── Main checkbox + label ───────────────────────────────────────────────
     const boxY   = yCur + TOP_PAD     // 8
@@ -63,18 +68,21 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelStyle = done
       ? `fill="${theme.text}" fill-opacity="0.62" font-style="italic"`
       : `fill="${theme.text}"`
-    svgContent += `<text x="${PAD + 26}" y="${labelY}" font-size="12" font-family="system-ui,sans-serif" ${labelStyle}>${tt(item.label, 58)}</text>`
+    svgContent += `<text x="${PAD + 26}" y="${labelY}" font-size="12" font-family="system-ui,sans-serif" ${labelStyle}>${tt(item.label, labelMax)}</text>`
 
-    const extraAttrs = item.attrs.filter(a => !DONE_ATTRS.includes(a))
     if (extraAttrs.length > 0) {
       svgContent += `<text x="${W - PAD}" y="${labelY}" text-anchor="end" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">[${extraAttrs.join(', ')}]</text>`
     }
+
+    // 10px value line; full width under label
+    const valueW = W - 2 * PAD - 26
+    const valueMax = Math.max(16, Math.floor(valueW / 4.0))
 
     // ── Optional description (item.value) ───────────────────────────────────
     let labelZoneBottom = yCur + LABEL_BOTTOM  // 23
     if (item.value) {
       const vy = labelY + VALUE_STEP  // yCur + 34
-      svgContent += `<text x="${PAD + 26}" y="${vy}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, 70)}</text>`
+      svgContent += `<text x="${PAD + 26}" y="${vy}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, valueMax)}</text>`
       labelZoneBottom = yCur + LABEL_BOTTOM + VALUE_STEP  // 37
     }
 
@@ -82,6 +90,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const subX = PAD + 32
     // First child box top: labelZoneBottom + GAP_BEFORE_SUBS
     let subTop = labelZoneBottom + GAP_BEFORE_SUBS
+
+    const cTextX = subX + SUB_BOX + 6
+    const subLabelMax = Math.max(12, Math.floor((W - PAD - cTextX) / 4.2))
 
     for (const child of item.children) {
       // A done parent visually ticks all its subtasks too.
@@ -97,7 +108,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const cStyle = childDone
         ? `fill="${theme.text}" fill-opacity="0.55" font-style="italic"`
         : `fill="${theme.text}" fill-opacity="0.85"`
-      svgContent += `<text x="${subX + SUB_BOX + 6}" y="${cLabelY}" font-size="10.5" font-family="system-ui,sans-serif" ${cStyle}>${tt(child.label, 62)}</text>`
+      svgContent += `<text x="${cTextX}" y="${cLabelY}" font-size="10.5" font-family="system-ui,sans-serif" ${cStyle}>${tt(child.label, subLabelMax)}</text>`
 
       subTop += SUB_BOX + SUB_GAP  // 16
     }

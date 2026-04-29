@@ -308,7 +308,7 @@ pre.int-code {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Claude chat panel ── */
+/* ── AI chat panel ── */
 .chat-panel {
   position: fixed; top: 0; right: 0; bottom: 0;
   width: 360px; max-width: 90vw;
@@ -348,6 +348,19 @@ pre.int-code {
   background: #2d2d2d; color: #d4d4d4; border: 1px solid #3c3c3c; padding: 0 4px;
 }
 .chat-session-bar select:focus { border-color: #7c3aed; outline: none; }
+.chat-model-bar {
+  display: flex; align-items: center; gap: 4px;
+  height: 32px; padding: 0 8px;
+  background: #1e1e1e; border-bottom: 1px solid #3c3c3c; flex-shrink: 0;
+}
+.chat-model-bar select {
+  min-width: 0; height: 22px; border-radius: 3px; font-size: 11px; cursor: pointer;
+  background: #2d2d2d; color: #d4d4d4; border: 1px solid #3c3c3c; padding: 0 4px;
+}
+#chat-cli-select { flex: 0 0 88px; }
+#chat-model-select { flex: 1; }
+.chat-model-bar select:focus { border-color: #7c3aed; outline: none; }
+.chat-model-bar select:disabled { opacity: .55; cursor: not-allowed; }
 .btn-session {
   flex-shrink: 0; background: transparent; color: #858585;
   border: 1px solid #3c3c3c; border-radius: 3px; font-size: 12px;
@@ -425,7 +438,7 @@ pre.int-code {
   .mobile-tabs { display: flex; }
   .desktop-only { display: none !important; }
 
-  /* Two-row toolbar: row 1 = mode toggle + Claude, row 2 = controls + examples */
+  /* Two-row toolbar: row 1 = mode toggle + AI chat, row 2 = controls + examples */
   .toolbar {
     flex-wrap: wrap;
     height: auto;
@@ -436,7 +449,7 @@ pre.int-code {
   }
   .toolbar-logo { display: none; }
   .mode-toggle { order: 1; }
-  .sep { order: 2; }           /* flex:1 spacer keeps Claude flush-right on row 1 */
+  .sep { order: 2; }           /* flex:1 spacer keeps AI chat flush-right on row 1 */
   .btn-claude { order: 3; }
   .status-badge { display: none; }
   /* .toolbar-break: full-width zero-height element that forces a new flex row */
@@ -659,15 +672,15 @@ pre.int-code {
 
   <button class="btn btn-ghost hidden" id="btn-save-example" title="Save changes to this example file">💾 Save</button>
 
-  <button class="btn-claude hidden" id="btn-chat-toggle" title="Claude AI assistant (Ctrl+Shift+K)">✦ Claude</button>
+  <button class="btn-claude hidden" id="btn-chat-toggle" title="AI assistant (Ctrl+Shift+K)">✦ AI</button>
   <span class="status-badge idle" id="status-badge">ready</span>
   <a href="/" class="nav-link desktop-only">← Docs</a>
 </div>
 
-<!-- ── Claude chat panel ── -->
-<div id="chat-panel" class="chat-panel" role="complementary" aria-label="Claude chat">
+<!-- ── AI chat panel ── -->
+<div id="chat-panel" class="chat-panel" role="complementary" aria-label="AI chat">
   <div class="chat-header">
-    <span class="chat-header-title">✦ Claude</span>
+    <span class="chat-header-title" id="chat-header-title">✦ AI</span>
     <button class="btn-chat-action" id="btn-chat-close">✕</button>
   </div>
   <div class="chat-session-bar">
@@ -677,11 +690,15 @@ pre.int-code {
     <button class="btn-session danger" id="btn-session-clear" title="Clear history">↺</button>
     <button class="btn-session danger" id="btn-session-delete" title="Delete session">🗑</button>
   </div>
+  <div class="chat-model-bar">
+    <select id="chat-cli-select" title="CLI backend"></select>
+    <select id="chat-model-select" title="Model"></select>
+  </div>
   <div id="chat-messages" class="chat-messages">
-    <div class="chat-empty" id="chat-empty">Ask Claude about mdart diagrams,<br>renderer code, or SVG layout math.</div>
+    <div class="chat-empty" id="chat-empty">Ask the AI assistant about mdart diagrams,<br>renderer code, or SVG layout math.</div>
   </div>
   <div class="chat-input-area">
-    <textarea id="chat-input" placeholder="Ask Claude… (Enter to send, Shift+Enter for newline)" rows="3"
+    <textarea id="chat-input" placeholder="Ask AI… (Enter to send, Shift+Enter for newline)" rows="3"
       autocomplete="off" spellcheck="false"></textarea>
     <div class="chat-input-row">
       <label class="chat-ctx-label" title="Attaches current editor content + source to the message">
@@ -1647,9 +1664,82 @@ window.addEventListener('resize', () => { if (!isMobile()) showMobPane('editor')
 
 const ACTIVE_SESSION_KEY = 'mdart-active-session'
 const PENDING_JOB_KEY    = 'mdart-pending-job'
+const DEFAULT_CHAT_META = {
+  available: false,
+  defaultCli: 'claude',
+  adapters: {
+    claude: { available: false, models: [{ value: null, label: 'Default' }], capabilities: { streamingTokens: true } },
+  },
+}
+let chatMeta = DEFAULT_CHAT_META
 let sessions = []        // [{ id, name, messageCount, updatedAt }]
 let activeSessionId = null
 let chatHistory = []
+
+function activeSession() {
+  return sessions.find(s => s.id === activeSessionId) ?? null
+}
+
+function assistantLabel(cli) {
+  return cli === 'opencode' ? 'OpenCode' : 'Claude'
+}
+
+async function loadChatStatus() {
+  try {
+    const r = await fetch('/lab/chat/status')
+    chatMeta = await r.json()
+  } catch {
+    chatMeta = DEFAULT_CHAT_META
+  }
+  if (chatMeta.available) document.getElementById('btn-chat-toggle').classList.remove('hidden')
+  populateCliSelect()
+}
+
+function populateCliSelect() {
+  const cliSelect = document.getElementById('chat-cli-select')
+  while (cliSelect.options.length) cliSelect.remove(0)
+  let firstAvailable = null
+  for (const [name, info] of Object.entries(chatMeta.adapters ?? {})) {
+    const opt = document.createElement('option')
+    opt.value = name
+    opt.textContent = name === 'opencode' ? 'opencode' : 'claude'
+    opt.disabled = !info.available
+    if (info.available && !firstAvailable) firstAvailable = name
+    cliSelect.appendChild(opt)
+  }
+  let current = activeSession()?.cli ?? chatMeta.defaultCli ?? firstAvailable ?? 'claude'
+  if (!activeSession() && chatMeta.adapters?.[current]?.available === false && firstAvailable) current = firstAvailable
+  if ([...cliSelect.options].some(o => o.value === current)) cliSelect.value = current
+  populateModelSelect(current)
+}
+
+function populateModelSelect(cli) {
+  const modelSelect = document.getElementById('chat-model-select')
+  while (modelSelect.options.length) modelSelect.remove(0)
+  const models = chatMeta.adapters?.[cli]?.models ?? [{ value: null, label: 'Default' }]
+  for (const model of models) {
+    const opt = document.createElement('option')
+    opt.value = model.value ?? ''
+    opt.textContent = model.label
+    modelSelect.appendChild(opt)
+  }
+  const current = activeSession()
+  if (current?.cli === cli && current.model) modelSelect.value = current.model
+  else modelSelect.value = ''
+}
+
+function syncChatChrome() {
+  const current = activeSession()
+  const cli = current?.cli ?? chatMeta.defaultCli ?? 'claude'
+  document.getElementById('chat-header-title').textContent = `✦ ${assistantLabel(cli)}`
+  if (current) {
+    document.getElementById('chat-cli-select').value = current.cli ?? cli
+    populateModelSelect(current.cli ?? cli)
+    const cliLocked = chatStreaming || (current.messageCount ?? 0) > 0 || chatHistory.length > 0
+    document.getElementById('chat-cli-select').disabled = cliLocked
+    document.getElementById('chat-model-select').disabled = chatStreaming
+  }
+}
 
 async function fetchSessions() {
   try {
@@ -1669,18 +1759,30 @@ async function fetchHistory(sessionId) {
 }
 
 async function createSession(name) {
+  const cli = document.getElementById('chat-cli-select').value || chatMeta.defaultCli || 'claude'
+  const model = document.getElementById('chat-model-select').value || null
   const r = await fetch('/lab/sessions', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, cli, model }),
   })
   return (await r.json()).session
 }
 
 async function renameSession(id, name) {
-  await fetch(`/lab/sessions/${id}`, {
+  const r = await fetch(`/lab/sessions/${id}`, {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
   })
+  return (await r.json()).session
+}
+
+async function updateSessionSettings(id, cli, model) {
+  const r = await fetch(`/lab/sessions/${id}`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cli, model: model || null }),
+  })
+  if (!r.ok) throw new Error((await r.json()).error ?? 'Failed to update session')
+  return (await r.json()).session
 }
 
 async function deleteSession(id) {
@@ -1697,7 +1799,7 @@ function populateSessionSelect() {
   for (const s of sessions) {
     const opt = document.createElement('option')
     opt.value = s.id
-    opt.textContent = s.name + (s.messageCount ? ` (${s.messageCount})` : '')
+    opt.textContent = `${s.name} · ${s.cli ?? 'claude'}` + (s.messageCount ? ` (${s.messageCount})` : '')
     if (s.id === activeSessionId) opt.selected = true
     sel.appendChild(opt)
   }
@@ -1712,6 +1814,7 @@ async function switchToSession(id) {
   chatHistory = data?.history ?? []
   renderHistory()
   document.getElementById('session-select').value = id
+  syncChatChrome()
 }
 
 async function initSessions() {
@@ -1730,11 +1833,13 @@ async function initSessions() {
 function renderHistory() {
   const msgs = document.getElementById('chat-messages')
   const empty = document.getElementById('chat-empty')
-  if (!chatHistory.length) { empty.style.display = ''; return }
-  empty.style.display = 'none'
   msgs.querySelectorAll('.chat-msg').forEach(e => e.remove())
+  msgs.querySelectorAll('.chat-notice').forEach(e => e.remove())
+  if (!chatHistory.length) { empty.style.display = ''; syncChatChrome(); return }
+  empty.style.display = 'none'
   for (const msg of chatHistory) appendMessage(msg.role, msg.content, false)
   msgs.scrollTop = msgs.scrollHeight
+  syncChatChrome()
 }
 
 function appendMessage(role, content, scroll = true) {
@@ -1743,7 +1848,7 @@ function appendMessage(role, content, scroll = true) {
   const msgs = document.getElementById('chat-messages')
   const div = document.createElement('div')
   div.className = `chat-msg ${role}`
-  div.innerHTML = `<span class="chat-msg-role">${role === 'user' ? 'You' : 'Claude'}</span>
+  div.innerHTML = `<span class="chat-msg-role">${role === 'user' ? 'You' : assistantLabel(activeSession()?.cli)}</span>
     <div class="chat-msg-body">${role === 'assistant' ? mdToHtml(content) : escHtml(content)}</div>`
   msgs.appendChild(div)
   if (scroll) msgs.scrollTop = msgs.scrollHeight
@@ -1758,7 +1863,7 @@ function appendStreamingMessage() {
   div.className = 'chat-msg assistant'
   const body = document.createElement('div')
   body.className = 'chat-msg-body chat-typing'
-  div.innerHTML = `<span class="chat-msg-role">Claude</span>`
+  div.innerHTML = `<span class="chat-msg-role">${assistantLabel(activeSession()?.cli)}</span>`
   div.appendChild(body)
   msgs.appendChild(div)
   msgs.scrollTop = msgs.scrollHeight
@@ -1808,6 +1913,12 @@ async function connectToStream(jobId, bodyEl) {
             bodyEl.classList.add('chat-typing')
             document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight
           }
+          if (parsed.type === 'text' && parsed.part?.text) {
+            accumulated += parsed.part.text
+            bodyEl.innerHTML = mdToHtml(accumulated)
+            bodyEl.classList.add('chat-typing')
+            document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight
+          }
         }
         if (evtName === 'done') {
           bodyEl.classList.remove('chat-typing')
@@ -1849,6 +1960,7 @@ async function sendChat() {
 
   chatStreaming = true
   document.getElementById('btn-chat-send').disabled = true
+  syncChatChrome()
   const bodyEl = appendStreamingMessage()
 
   // Generate a stable jobId stored in localStorage so we can reconnect if the page closes
@@ -1890,6 +2002,7 @@ async function sendChat() {
   } finally {
     chatStreaming = false
     document.getElementById('btn-chat-send').disabled = false
+    syncChatChrome()
   }
 }
 
@@ -1897,6 +2010,7 @@ async function attemptReconnect(jobId) {
   if (chatStreaming) return
   chatStreaming = true
   document.getElementById('btn-chat-send').disabled = true
+  syncChatChrome()
   const bodyEl = appendStreamingMessage()
   bodyEl.innerHTML = '<em style="color:#888;font-size:12px">Reconnecting to in-progress response…</em>'
   bodyEl.classList.add('chat-typing')
@@ -1909,6 +2023,7 @@ async function attemptReconnect(jobId) {
   } finally {
     chatStreaming = false
     document.getElementById('btn-chat-send').disabled = false
+    syncChatChrome()
   }
 }
 
@@ -1920,7 +2035,7 @@ document.getElementById('session-select').addEventListener('change', async funct
 
 document.getElementById('btn-session-new').addEventListener('click', async () => {
   const s = await createSession(`Chat ${sessions.length + 1}`)
-  sessions.unshift({ id: s.id, name: s.name, messageCount: 0, updatedAt: s.updatedAt })
+  sessions.unshift(s)
   populateSessionSelect()
   await switchToSession(s.id)
 })
@@ -1929,9 +2044,38 @@ document.getElementById('btn-session-rename').addEventListener('click', async ()
   const current = sessions.find(s => s.id === activeSessionId)
   const name = prompt('Rename session:', current?.name ?? '')
   if (!name?.trim()) return
-  await renameSession(activeSessionId, name.trim())
-  if (current) current.name = name.trim()
+  const updated = await renameSession(activeSessionId, name.trim())
+  if (current) Object.assign(current, updated)
   populateSessionSelect()
+  syncChatChrome()
+})
+
+document.getElementById('chat-cli-select').addEventListener('change', async function() {
+  const current = activeSession()
+  if (!current) return
+  populateModelSelect(this.value)
+  try {
+    const updated = await updateSessionSettings(current.id, this.value, document.getElementById('chat-model-select').value || null)
+    Object.assign(current, updated)
+    populateSessionSelect()
+    syncChatChrome()
+  } catch (err) {
+    alert(err.message)
+    syncChatChrome()
+  }
+})
+
+document.getElementById('chat-model-select').addEventListener('change', async function() {
+  const current = activeSession()
+  if (!current) return
+  try {
+    const updated = await updateSessionSettings(current.id, document.getElementById('chat-cli-select').value, this.value || null)
+    Object.assign(current, updated)
+    syncChatChrome()
+  } catch (err) {
+    alert(err.message)
+    syncChatChrome()
+  }
 })
 
 document.getElementById('btn-session-clear').addEventListener('click', async () => {
@@ -1941,6 +2085,7 @@ document.getElementById('btn-session-clear').addEventListener('click', async () 
   renderHistory()
   const s = sessions.find(s => s.id === activeSessionId)
   if (s) { s.messageCount = 0; populateSessionSelect() }
+  syncChatChrome()
 })
 
 document.getElementById('btn-session-delete').addEventListener('click', async () => {
@@ -1966,7 +2111,7 @@ document.getElementById('btn-chat-toggle').addEventListener('click', () => {
   btn.classList.toggle('active', open)
   document.body.classList.toggle('chat-docked', open)
   if (open) {
-    fetchSessions().then(() => populateSessionSelect())
+    fetchSessions().then(() => { populateSessionSelect(); syncChatChrome() })
   }
 })
 document.getElementById('chat-input').addEventListener('keydown', e => {
@@ -2006,13 +2151,6 @@ function checkPendingJob() {
     chatToggle.addEventListener('click', onOpen, { once: true })
   }
 }
-
-// Claude availability check
-fetch('/lab/chat/status').then(r => r.json()).then(data => {
-  if (data.available) {
-    document.getElementById('btn-chat-toggle').classList.remove('hidden')
-  }
-}).catch(() => {})
 
 // ── Markdown → HTML (chat rendering) ─────────────────────────────────────────
 
@@ -2145,7 +2283,8 @@ require(['vs/editor/editor.main'], async function() {
     renderTimer = setTimeout(() => dispatchRender(false), 500)
   })
 
-  // Init sessions (fetches from server, renders history)
+  // Init chat metadata + sessions (fetches from server, renders history)
+  await loadChatStatus()
   await initSessions()
 
   // Hide loading overlay

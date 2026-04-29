@@ -4,9 +4,13 @@ import { escapeXml, tt } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items.slice(0, 4)
-  const W = 500, TITLE_H = spec.title ? 28 : 0
-  const CELL_W = W / 2, CELL_H = 168
+  const W = 500
+  const TITLE_H = spec.title ? 28 : 0
+  const CELL_W = W / 2
+  const CELL_H = 168
   const H = TITLE_H + CELL_H * 2
+  const headerMax = Math.max(8, Math.floor((CELL_W - 24) / 5.0))
+  const bulletMax = Math.max(8, Math.floor((CELL_W - 28) / 4.3))
 
   const fills   = [`${theme.primary}22`, `${theme.secondary}1a`, `${theme.accent}1a`, `${theme.secondary}22`]
   const strokes = [theme.primary, theme.secondary, theme.accent, theme.secondary]
@@ -21,9 +25,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const [col, row] = positions[i]
     const x = col * CELL_W, y = TITLE_H + row * CELL_H
     svgContent += `<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${fills[i]}" stroke="${theme.border}" stroke-width="0.5"/>`
-    svgContent += `<text x="${x + CELL_W / 2}" y="${y + 26}" text-anchor="middle" font-size="12" fill="${strokes[i]}" font-family="system-ui,sans-serif" font-weight="700">${tt(item.label, 20)}</text>`
+    svgContent += `<text x="${x + CELL_W / 2}" y="${y + 26}" text-anchor="middle" font-size="12" fill="${strokes[i]}" font-family="system-ui,sans-serif" font-weight="700">${tt(item.label, headerMax)}</text>`
     item.children.slice(0, 5).forEach((ch, j) => {
-      svgContent += `<text x="${x + 12}" y="${y + 46 + j * 19}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" opacity="0.85">• ${tt(ch.label, 22)}</text>`
+      svgContent += `<text x="${x + 12}" y="${y + 46 + j * 19}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" opacity="0.85">• ${tt(ch.label, bulletMax)}</text>`
     })
   })
   // Center axis lines

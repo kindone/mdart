@@ -14,9 +14,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (items.length === 0) return renderEmpty(theme)
   const W = 500
   const COLS = 2
-  const CELL_W = (W - 12) / COLS
-  const CELL_H = 80   // tall enough for label + value + 2 child lines
   const GAP = 8
+  const CELL_W = (W - (COLS - 1) * GAP) / COLS
+  const CELL_H = 80   // tall enough for label + value + 2 child lines
+  // 6px accent bar + text from x+16 to right edge − padding → ~5px/char at 12px, 4.2 at 10px
+  const labelMax = Math.max(8, Math.floor((CELL_W - 24) / 5.0))
+  const valueMax = Math.max(10, Math.floor((CELL_W - 24) / 4.2))
+  const childMax = Math.max(8, Math.floor((CELL_W - 30) / 4.4))
   const rows = Math.ceil(items.length / COLS)
   const titleH = spec.title ? 30 : 8
   const H = titleH + rows * (CELL_H + GAP) + 8
@@ -29,15 +33,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.secondary, t)
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CELL_W.toFixed(1)}" height="${CELL_H}" rx="8" fill="${fill}33" stroke="${fill}88" stroke-width="1.5"/>`)
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="6" height="${CELL_H}" rx="3" fill="${fill}"/>`)
-    parts.push(`<text x="${(x+16).toFixed(1)}" y="${(y+22).toFixed(1)}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(item.label, 28)}</text>`)
+    parts.push(`<text x="${(x+16).toFixed(1)}" y="${(y+22).toFixed(1)}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(item.label, labelMax)}</text>`)
     // Value: italic muted subtitle — distinct from the bulleted children below.
-    if (item.value) parts.push(`<text x="${(x+16).toFixed(1)}" y="${(y+38).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-style="italic" font-family="system-ui,sans-serif">${tt(item.value, 34)}</text>`)
+    if (item.value) parts.push(`<text x="${(x+16).toFixed(1)}" y="${(y+38).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-style="italic" font-family="system-ui,sans-serif">${tt(item.value, valueMax)}</text>`)
     // Children: up to 2 bulleted list items. Same size + colour as the value
     // so they sit comfortably; bullet prefix + non-italic distinguishes them.
     item.children.slice(0, 2).forEach((child, ci) => {
       const cy = y + (item.value ? 54 : 42) + ci * 14
       const op = ci === 0 ? '1' : '0.7'
-      parts.push(`<text x="${(x+16).toFixed(1)}" y="${cy.toFixed(1)}" font-size="10" fill="${theme.textMuted}" fill-opacity="${op}" font-family="system-ui,sans-serif">· ${tt(child.label, 32)}</text>`)
+      parts.push(`<text x="${(x+16).toFixed(1)}" y="${cy.toFixed(1)}" font-size="10" fill="${theme.textMuted}" fill-opacity="${op}" font-family="system-ui,sans-serif">· ${tt(child.label, childMax)}</text>`)
     })
   })
   return svg(W, H, theme, parts)

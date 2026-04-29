@@ -12,7 +12,12 @@ function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
-  const W = 500, ROW_H = 44, R = 16, LEFT = 28
+  const W = 500
+  const ROW_H = 44, R = 16, LEFT = 28
+  const textX = LEFT + R + 10
+  const rightM = 16
+  const labelMax = Math.max(18, Math.floor((W - textX - rightM) / 5.0))
+  const capMax = Math.max(24, Math.floor((W - textX - rightM) / 4.2))
   const titleH = spec.title ? 30 : 8
   const H = titleH + items.length * ROW_H + 8
   const parts: string[] = []
@@ -25,9 +30,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.secondary, t)
     parts.push(`<circle cx="${LEFT}" cy="${cy}" r="${R}" fill="${fill}"/>`)
     parts.push(`<text x="${LEFT}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${i + 1}</text>`)
-    parts.push(`<text x="${LEFT + R + 10}" y="${(cy - 4).toFixed(1)}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, 36)}</text>`)
+    parts.push(`<text x="${textX}" y="${(cy - 4).toFixed(1)}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, labelMax)}</text>`)
     const caption = getCaption(item)
-    if (caption) parts.push(`<text x="${LEFT + R + 10}" y="${(cy + 12).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, 44)}</text>`)
+    if (caption) parts.push(`<text x="${textX}" y="${(cy + 12).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, capMax)}</text>`)
   })
   return svg(W, H, theme, parts)
 }

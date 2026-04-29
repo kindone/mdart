@@ -17,7 +17,7 @@
  *   PATCH /lab/sessions/:id            → rename session
  *   DELETE /lab/sessions/:id           → delete session
  *   GET  /lab/sessions/:id/history     → full message history
- *   DELETE /lab/sessions/:id/history   → clear history + reset Claude session
+ *   DELETE /lab/sessions/:id/history   → clear history + reset CLI session
  *   POST /lab/chat          → { jobId } — start background job
  *   GET  /lab/chat/stream/:jobId → SSE replay + live stream
  *   GET  /health            → { ok: true }
@@ -40,6 +40,7 @@ import { randomUUID } from 'node:crypto'
 import { tmpdir } from 'node:os'
 
 import { renderMdArt, parseMdArt } from 'mdart'
+import { adapters, defaultCliName, getAdapter, normalizeCliName, type CliName } from './cli/index.js'
 
 // Ecosystem adapters — each is a real adapter package (workspace-resolved locally,
 // published to npm when ready).
@@ -598,10 +599,7 @@ app.post('/lab/render', async (req, res) => {
   }
 })
 
-// ── Lab chat (Claude) ─────────────────────────────────────────────────────────
-
-const CLAUDE_BIN = process.env.CLAUDE_PATH
-  ?? `${process.env.HOME ?? '/usr/local'}/.local/bin/claude`
+// ── Lab chat (multi-CLI) ──────────────────────────────────────────────────────
 
 // ── Session store ─────────────────────────────────────────────────────────────
 
@@ -614,6 +612,9 @@ interface ChatMessage {
 interface ChatSession {
   id: string
   name: string
+  cli: CliName
+  model: string | null
+  /** Legacy field name; stores the active CLI's external session id. */
   claudeSessionId: string | null
   history: ChatMessage[]
   createdAt: number
@@ -628,6 +629,12 @@ async function loadSessions(): Promise<void> {
   try {
     const raw = await readFile(SESSIONS_FILE, 'utf8')
     sessions = JSON.parse(raw) as SessionStore
+    let changed = false
+    for (const s of Object.values(sessions)) {
+      if (!s.cli) { s.cli = defaultCliName(); changed = true }
+      if (s.model === undefined) { s.model = null; changed = true }
+    }
+    if (changed) saveSessions()
   } catch {
     sessions = {}
   }
@@ -639,9 +646,27 @@ function saveSessions(): void {
     .catch(err => console.error('[sessions] save error:', err))
 }
 
-function makeSession(name: string): ChatSession {
+function makeSession(name: string, cli: CliName = defaultCliName(), model: string | null = null): ChatSession {
   const now = Date.now()
-  return { id: randomUUID(), name, claudeSessionId: null, history: [], createdAt: now, updatedAt: now }
+  return { id: randomUUID(), name, cli, model, claudeSessionId: null, history: [], createdAt: now, updatedAt: now }
+}
+
+function serializeSession(s: ChatSession) {
+  return {
+    id: s.id,
+    name: s.name,
+    cli: s.cli,
+    model: s.model,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+    messageCount: s.history.length,
+  }
+}
+
+function normalizeModel(cli: CliName, value: unknown): string | null {
+  if (value == null || value === '') return null
+  const model = String(value)
+  return adapters[cli].models.some(m => m.value === model) ? model : null
 }
 
 // ── Chat job store ────────────────────────────────────────────────────────────
@@ -677,16 +702,31 @@ function broadcastToJob(job: ChatJob, event: string, data: unknown): void {
 
 /**
  * GET /lab/chat/status
- * Returns { available: true } if the Claude CLI binary is reachable.
+ * Returns available CLI adapters and model lists.
  */
 app.get('/lab/chat/status', (_req, res) => {
-  res.json({ available: existsSync(CLAUDE_BIN) })
+  const cliInfo = Object.fromEntries(
+    Object.entries(adapters).map(([name, adapter]) => [
+      name,
+      {
+        available: existsSync(adapter.binaryPath()),
+        binaryPath: adapter.binaryPath(),
+        models: adapter.models,
+        capabilities: adapter.capabilities,
+      },
+    ]),
+  )
+  res.json({
+    available: Object.values(cliInfo).some(info => info.available),
+    defaultCli: defaultCliName(),
+    adapters: cliInfo,
+  })
 })
 
 /** GET /lab/sessions — list all sessions (no history payload) */
 app.get('/lab/sessions', (_req, res) => {
   const list = Object.values(sessions)
-    .map(s => ({ id: s.id, name: s.name, createdAt: s.createdAt, updatedAt: s.updatedAt, messageCount: s.history.length }))
+    .map(serializeSession)
     .sort((a, b) => b.updatedAt - a.updatedAt)
   res.json({ sessions: list })
 })
@@ -694,23 +734,35 @@ app.get('/lab/sessions', (_req, res) => {
 /** POST /lab/sessions — create a new session */
 app.post('/lab/sessions', (req, res) => {
   const count = Object.keys(sessions).length
-  const name = (req.body as { name?: string }).name?.trim() || `Chat ${count + 1}`
-  const s = makeSession(name)
+  const body = req.body as { name?: string; cli?: string; model?: string | null }
+  const name = body.name?.trim() || `Chat ${count + 1}`
+  const cli = normalizeCliName(body.cli ?? defaultCliName())
+  const model = normalizeModel(cli, body.model)
+  const s = makeSession(name, cli, model)
   sessions[s.id] = s
   saveSessions()
-  res.json({ session: { id: s.id, name: s.name, createdAt: s.createdAt, updatedAt: s.updatedAt, messageCount: 0 } })
+  res.json({ session: serializeSession(s) })
 })
 
-/** PATCH /lab/sessions/:id — rename a session */
+/** PATCH /lab/sessions/:id — rename a session, update model, or change CLI before first turn */
 app.patch('/lab/sessions/:id', (req, res) => {
   const s = sessions[req.params.id]
   if (!s) { res.status(404).json({ error: 'session not found' }); return }
-  const name = (req.body as { name?: string }).name?.trim()
-  if (!name) { res.status(400).json({ error: 'name required' }); return }
-  s.name = name
+  const body = req.body as { name?: string; cli?: string; model?: string | null }
+  const name = body.name?.trim()
+  if (name) s.name = name
+  if (body.cli !== undefined || body.model !== undefined) {
+    const nextCli = body.cli !== undefined ? normalizeCliName(body.cli) : s.cli
+    if (nextCli !== s.cli && (s.history.length > 0 || s.claudeSessionId)) {
+      res.status(409).json({ error: 'CLI can only be changed before the first message' })
+      return
+    }
+    s.cli = nextCli
+    if (body.model !== undefined) s.model = normalizeModel(s.cli, body.model)
+  }
   s.updatedAt = Date.now()
   saveSessions()
-  res.json({ session: { id: s.id, name: s.name, updatedAt: s.updatedAt } })
+  res.json({ session: serializeSession(s) })
 })
 
 /** DELETE /lab/sessions/:id — delete a session */
@@ -728,7 +780,7 @@ app.get('/lab/sessions/:id/history', (req, res) => {
   res.json({ history: s.history })
 })
 
-/** DELETE /lab/sessions/:id/history — clear history and reset Claude session */
+/** DELETE /lab/sessions/:id/history — clear history and reset CLI session */
 app.delete('/lab/sessions/:id/history', (req, res) => {
   const s = sessions[req.params.id]
   if (!s) { res.status(404).json({ error: 'session not found' }); return }
@@ -743,7 +795,7 @@ app.delete('/lab/sessions/:id/history', (req, res) => {
  * POST /lab/chat
  * Body: { message: string, context?: string, jobId?: string }
  *
- * Starts a background Claude job and returns { jobId } immediately.
+ * Starts a background CLI job and returns { jobId } immediately.
  * If a job with the given jobId already exists (reconnect), returns the same jobId.
  * Use GET /lab/chat/stream/:jobId to receive the SSE stream.
  */
@@ -780,7 +832,7 @@ app.post('/lab/chat', (req, res) => {
 
   let accumulated = ''
 
-  // Respond immediately with jobId — Claude runs as a background job
+  // Respond immediately with jobId — the CLI runs as a background job
   res.json({ jobId })
 
   const bareUserMessage = message.trim()
@@ -788,121 +840,98 @@ app.post('/lab/chat', (req, res) => {
     ? `${context.trim()}\n\n${bareUserMessage}`
     : bareUserMessage
 
-  const args = [
-    '--print', fullMessage,
-    '--output-format', 'stream-json',
-    '--verbose',
-    '--include-partial-messages',
-    '--permission-mode', 'acceptEdits',
-    '--add-dir', EXAMPLES_DIR,
-    '--add-dir', DOCS_DIR,
-    '--add-dir', SCRIPTS_DIR,
-    // acceptEdits auto-approves Edit/Write only — Bash still prompts.
-    // Whitelist the runners the Lab actually needs (gen-* scripts, tests, builds);
-    // anything else (rm, curl, kubectl, etc.) still requires explicit approval.
-    '--allowedTools', 'Bash(node *) Bash(npm *) Bash(npx *)',
-    '--mcp-config', '{"mcpServers":{}}',
-    '--strict-mcp-config',
-    '--system-prompt', LAB_SYSTEM_PROMPT,
-  ]
-  if (session.claudeSessionId) args.push('--resume', session.claudeSessionId)
-
-  const cleanEnv: NodeJS.ProcessEnv = {}
-  for (const [k, v] of Object.entries(process.env)) {
-    if (!k.startsWith('CLAUDE')) cleanEnv[k] = v
+  const adapter = getAdapter(session.cli)
+  const launchOpts = {
+    prompt: fullMessage,
+    resumeId: session.claudeSessionId,
+    systemPrompt: LAB_SYSTEM_PROMPT,
+    model: session.model,
+    workingDirectory: MDART_PKG,
+    extraDirs: [EXAMPLES_DIR, DOCS_DIR, SCRIPTS_DIR],
   }
-  if (process.env.ANTHROPIC_BASE_URL) cleanEnv.ANTHROPIC_BASE_URL = process.env.ANTHROPIC_BASE_URL
-
-  const child = spawnProc(CLAUDE_BIN, args, {
-    env: { ...cleanEnv, CI: 'true' },
+  const args = adapter.buildArgs(launchOpts)
+  const parser = adapter.createParser(launchOpts)
+  const child = spawnProc(adapter.binaryPath(), args, {
+    env: { ...adapter.buildEnv(process.env), CI: 'true' },
     shell: false,
     stdio: ['ignore', 'pipe', 'pipe'],
     cwd: MDART_PKG,
   })
 
-  child.stderr.resume()
+  let stderrOutput = ''
+  let completed = false
+  child.stderr.on('data', (data: Buffer) => { stderrOutput += data.toString() })
+
+  const finishJob = (status: 'done' | 'error') => {
+    completed = true
+    job.status = status
+    for (const watcher of job.watchers) {
+      if (!watcher.writableEnded) watcher.end()
+    }
+    job.watchers.clear()
+  }
 
   const rl = createInterface({ input: child.stdout, crlfDelay: Infinity })
 
   rl.on('error', (err) => {
     broadcastToJob(job, 'error', { message: err.message })
-    job.status = 'error'
+    finishJob('error')
   })
 
   rl.on('line', (line) => {
-    if (!line.trim()) return
-    let chunk: Record<string, unknown>
-    try { chunk = JSON.parse(line) as Record<string, unknown> } catch { return }
+    const { rawChunk, events } = parser.parseLine(line)
+    if (rawChunk !== null) broadcastToJob(job, 'chunk', rawChunk)
 
-    if (chunk.type === 'system' && chunk.subtype === 'init') {
-      session.claudeSessionId = chunk.session_id as string
-      session.updatedAt = Date.now()
-      saveSessions()
-    }
-
-    const ev = chunk.type === 'stream_event'
-      ? (chunk.event as Record<string, unknown> | undefined)
-      : null
-    const isTextDelta = ev?.type === 'content_block_delta' &&
-      (ev.delta as Record<string, unknown> | undefined)?.type === 'text_delta'
-    const isResult = chunk.type === 'result'
-    const isInit   = chunk.type === 'system' && chunk.subtype === 'init'
-    if (isTextDelta || isResult || isInit) broadcastToJob(job, 'chunk', chunk)
-
-    if (isTextDelta) {
-      const delta = (ev!.delta as Record<string, unknown>).text as string
-      accumulated += delta
-    }
-
-    if (isResult) {
-      const isErr = chunk.is_error as boolean
-      if (isErr) {
-        const detail = (chunk.errors as string[] | undefined)?.join('; ') || String(chunk.result)
-        broadcastToJob(job, 'error', { message: detail })
-        job.status = 'error'
-      } else {
-        broadcastToJob(job, 'done', { session_id: chunk.session_id })
-        job.status = 'done'
-      }
-      if (!isErr && accumulated) {
-        session.history.push({ role: 'user', content: bareUserMessage, ts: job.createdAt })
-        session.history.push({ role: 'assistant', content: accumulated, ts: Date.now() })
+    for (const event of events) {
+      if (event.type === 'session_id') {
+        session.claudeSessionId = event.externalId
         session.updatedAt = Date.now()
         saveSessions()
       }
-      if (isErr) {
-        session.claudeSessionId = null  // reset stale session on error
+      if (event.type === 'text_block_start') {
+        if (accumulated.length > 0 && !accumulated.endsWith('\n')) accumulated += '\n\n'
+      }
+      if (event.type === 'text_delta') {
+        accumulated += event.text
+      }
+      if (event.type === 'result_done') {
+        broadcastToJob(job, 'done', { session_id: event.externalId })
+        if (accumulated) {
+          session.history.push({ role: 'user', content: bareUserMessage, ts: job.createdAt })
+          session.history.push({ role: 'assistant', content: accumulated, ts: Date.now() })
+          session.updatedAt = Date.now()
+          saveSessions()
+        }
+        finishJob('done')
+      }
+      if (event.type === 'result_error') {
+        broadcastToJob(job, 'error', { message: event.message, code: event.code })
+        if (event.code === 'session_expired') session.claudeSessionId = null
+        session.updatedAt = Date.now()
         saveSessions()
+        finishJob('error')
       }
-      // Close all watcher connections
-      for (const watcher of job.watchers) {
-        if (!watcher.writableEnded) watcher.end()
-      }
-      job.watchers.clear()
     }
   })
 
   child.on('error', (err) => {
     broadcastToJob(job, 'error', { message: err.message })
-    job.status = 'error'
-    for (const watcher of job.watchers) {
-      if (!watcher.writableEnded) watcher.end()
-    }
-    job.watchers.clear()
+    finishJob('error')
   })
 
   child.on('close', (code) => {
-    if (job.status === 'running') {
+    if (job.status === 'running' && !completed) {
       if (code !== 0) {
-        broadcastToJob(job, 'error', { message: `Claude exited with code ${code}` })
-        job.status = 'error'
+        const detail = stderrOutput.trim() || `${adapter.name} exited with code ${code}`
+        const errorCode = adapter.classifyError(detail, Boolean(session.claudeSessionId))
+        broadcastToJob(job, 'error', { message: detail, code: errorCode })
+        if (errorCode === 'session_expired') session.claudeSessionId = null
+        session.updatedAt = Date.now()
+        saveSessions()
+        finishJob('error')
       } else {
-        job.status = 'done'
+        finishJob('done')
       }
-      for (const watcher of job.watchers) {
-        if (!watcher.writableEnded) watcher.end()
-      }
-      job.watchers.clear()
     }
   })
   // Note: No res.on('close') → child.kill() — job runs to completion even if browser disconnects

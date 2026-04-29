@@ -42,9 +42,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${CARD_H}" rx="7" fill="${theme.surface}" stroke="${fill}66" stroke-width="1.2"/>`)
     parts.push(`<path d="M${(x+7).toFixed(1)},${y.toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${x.toFixed(1)},${(y+7).toFixed(1)} L${x.toFixed(1)},${(y+HEADER_H).toFixed(1)} L${(x+CARD_W).toFixed(1)},${(y+HEADER_H).toFixed(1)} L${(x+CARD_W).toFixed(1)},${(y+7).toFixed(1)} Q${(x+CARD_W).toFixed(1)},${y.toFixed(1)} ${(x+CARD_W-7).toFixed(1)},${y.toFixed(1)} Z" fill="${fill}"/>`)
 
-    const headerMax = Math.floor((CARD_W - 16) / 6.5)
-    const valueMax  = Math.floor((CARD_W - 16) / 5.5)   // 10 px font
-    const childMax  = Math.floor((CARD_W - 16) / 6.0)
+    // 11/10px sans: ~5.0/4.3 px/char; keep 6px horizontal inset inside card for centered text
+    const innerW = Math.max(40, CARD_W - 12)
+    const headerMax = Math.max(4, Math.floor(innerW / 5.0))
+    const valueMax  = Math.max(6, Math.floor(innerW / 4.2))
+    const childMax  = Math.max(4, Math.floor(innerW / 4.4))
 
     // Header label
     parts.push(`<text x="${(x+CARD_W/2).toFixed(1)}" y="${(y+HEADER_H/2+4).toFixed(1)}" text-anchor="middle" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${tt(item.label, headerMax)}</text>`)

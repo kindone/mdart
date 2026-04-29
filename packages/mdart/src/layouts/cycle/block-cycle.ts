@@ -21,10 +21,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const W = 560
   const topN = n / 2
   const COLS = topN
-  const BOX_W = Math.floor((W - 16 - (COLS - 1) * 10) / COLS)
+  const GAP_X = 10
+  const BOX_W = Math.floor((W - 16 - (COLS - 1) * GAP_X) / COLS)
   const BOX_H = 68
   const HEADER_H = 20
-  const GAP_X = 10
   const GAP_Y = 28
   const titleH = spec.title ? 28 : 8
   const H = titleH + 2 * BOX_H + GAP_Y + 8
@@ -66,12 +66,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<rect x="${x}" y="${y}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${theme.surface}" stroke="${headerFill}" stroke-opacity="0.55" stroke-width="1"/>`)
     // Colored header (top corners rounded)
     parts.push(`<path d="M ${x + 5} ${y} L ${x + BOX_W - 5} ${y} Q ${x + BOX_W} ${y} ${x + BOX_W} ${y + 5} L ${x + BOX_W} ${y + HEADER_H} L ${x} ${y + HEADER_H} L ${x} ${y + 5} Q ${x} ${y} ${x + 5} ${y} Z" fill="${headerFill}"/>`)
-    // Header text — maxChars derived from actual box width (font-size 10 ≈ 5.5 px/char)
-    const headerMaxChars = Math.floor((BOX_W - 8) / 5.5)
+    // Header (10px) and body (9px) — slightly tighter px/char = fewer false ellipses
+    const headerMaxChars = Math.max(6, Math.floor((BOX_W - 8) / 5.0))
     parts.push(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, headerMaxChars)}</text>`)
 
-    // Body content: children or value — maxChars derived from actual box width (font-size 9 ≈ 5.0 px/char)
-    const bodyMaxChars = Math.floor((BOX_W - 12) / 5.0)
+    // Body content: children or value
+    const bodyMaxChars = Math.max(8, Math.floor((BOX_W - 12) / 4.4))
     const bodyLines: string[] = item.children.length > 0
       ? item.children.slice(0, 2).map(c => truncate(c.label, bodyMaxChars))
       : (item.value ? [truncate(item.value, bodyMaxChars)] : [])

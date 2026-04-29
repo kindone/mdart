@@ -40,15 +40,19 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const W = 500
   const H = 400
-  const titleH = spec.title ? 26 : 0
+  const PAD = 16
+  // Match pros-cons: title block height + gap below title before the diagram (not a 2px hairline).
+  const titleH = spec.title ? 28 : 0
+  const contentTop = spec.title ? PAD + titleH : 0
   const CELL_W = W / 2
-  const CELL_H = (H - titleH) / 2
-  const PAD = 10
+  const CELL_H = (H - contentTop) / 2
+  // 10px body + "• " — use right edge of cell (x+10 inset)
+  const bulletMax = Math.max(10, Math.floor((CELL_W - 20) / 4.3))
 
   let svgContent = ''
 
   if (spec.title) {
-    svgContent += `<text x="${W / 2}" y="${PAD + 14}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   const quadrants = [
@@ -61,7 +65,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   for (const { key, col, row } of quadrants) {
     const q = quadrantMap[key]
     const x = col * CELL_W
-    const y = titleH + row * CELL_H
+    const y = contentTop + row * CELL_H
 
     svgContent += `<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${q.fill}" />`
     svgContent += `<text x="${x + CELL_W / 2}" y="${y + 22}" text-anchor="middle" font-size="12" fill="${q.textColor}" font-family="system-ui,sans-serif" font-weight="700">${q.label}</text>`
@@ -69,7 +73,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const maxItems = Math.min(q.items.length, 5)
     for (let i = 0; i < maxItems; i++) {
       const itemY = y + 38 + i * 16
-      svgContent += `<text x="${x + 10}" y="${itemY}" font-size="10" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.85">• ${tt(q.items[i], 28)}</text>`
+      svgContent += `<text x="${x + 10}" y="${itemY}" font-size="10" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.85">• ${tt(q.items[i], bulletMax)}</text>`
     }
 
     if (q.items.length > 5) {
@@ -78,8 +82,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
 
   // Grid lines
-  svgContent += `<line x1="${W / 2}" y1="${titleH}" x2="${W / 2}" y2="${H}" stroke="${theme.bg}" stroke-width="2" />`
-  svgContent += `<line x1="0" y1="${titleH + CELL_H}" x2="${W}" y2="${titleH + CELL_H}" stroke="${theme.bg}" stroke-width="2" />`
+  svgContent += `<line x1="${W / 2}" y1="${contentTop}" x2="${W / 2}" y2="${H}" stroke="${theme.bg}" stroke-width="2" />`
+  svgContent += `<line x1="0" y1="${contentTop + CELL_H}" x2="${W}" y2="${contentTop + CELL_H}" stroke="${theme.bg}" stroke-width="2" />`
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>

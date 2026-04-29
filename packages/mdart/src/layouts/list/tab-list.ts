@@ -11,18 +11,23 @@ function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
 
 function tabPanelContentParts(item: MdArtItem, theme: MdArtTheme, panelY: number, W: number): string[] {
   const cx = W / 2
+  const hPad = 20
+  const maxTitle = Math.max(10, Math.floor((W - 2 * hPad) / 5.0))
+  const maxValue = Math.max(16, Math.floor((W - 2 * hPad) / 4.0))
+  const maxChild = Math.max(30, Math.floor((W - 2 * hPad) / 4.0))
+  const maxSub = Math.max(36, Math.floor((W - 2 * hPad) / 3.6))
   const parts: string[] = []
-  parts.push(`<text x="${cx}" y="${panelY + 26}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(item.label)}</text>`)
+  parts.push(`<text x="${cx}" y="${panelY + 26}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, maxTitle)}</text>`)
   if (item.value) {
-    parts.push(`<text x="${cx}" y="${panelY + 44}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value)}</text>`)
+    parts.push(`<text x="${cx}" y="${panelY + 44}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, maxValue)}</text>`)
   }
   const childRow = item.children.map(c => c.label).join('  ·  ')
   if (childRow) {
-    parts.push(`<text x="${cx}" y="${panelY + 62}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(childRow, 55)}</text>`)
+    parts.push(`<text x="${cx}" y="${panelY + 62}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(childRow, maxChild)}</text>`)
   }
   const subRow = item.children.flatMap(c => c.children).map(c => c.label).join('  ·  ')
   if (subRow) {
-    parts.push(`<text x="${cx}" y="${panelY + 78}" text-anchor="middle" font-size="9" fill="${theme.muted}" font-family="system-ui,sans-serif">${tt(subRow, 60)}</text>`)
+    parts.push(`<text x="${cx}" y="${panelY + 78}" text-anchor="middle" font-size="9" fill="${theme.muted}" font-family="system-ui,sans-serif">${tt(subRow, maxSub)}</text>`)
   }
   return parts
 }
@@ -30,7 +35,11 @@ function tabPanelContentParts(item: MdArtItem, theme: MdArtTheme, panelY: number
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
-  const W = 500, TAB_H = 28, CONTENT_H = 100, TAB_W = Math.min(110, (W - 8) / items.length)
+  const W = 500
+  const n = items.length
+  const TAB_H = 28, CONTENT_H = 100
+  // Let tabs use horizontal space; cap so labels don't dominate tiny tabs
+  const TAB_W = Math.min(160, (W - 8) / n)
   const titleH = spec.title ? 30 : 8
   const H = titleH + TAB_H + CONTENT_H + 8
   const activeFill = lerpColor(theme.primary, theme.secondary, 0)
@@ -48,13 +57,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = items.length > 1 ? i / (items.length - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const isActive = i === 0
+    const tabLabelMax = Math.max(3, Math.floor((TAB_W - 6) / 5.0))
     parts.push(
       `<g class="mdart-tab-hit" data-tab="${i}" data-color="${fill}" style="cursor:pointer">` +
         `<rect class="mdart-tab-rect" x="${tx}" y="${ty}" width="${TAB_W}" height="${TAB_H}" rx="5" ` +
         `fill="${isActive ? fill : `${fill}22`}" ` +
         `${isActive ? '' : `stroke="${fill}55" stroke-width="1"`}/>` +
         `<text class="mdart-tab-label" x="${(tx + TAB_W / 2).toFixed(1)}" y="${(ty + TAB_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" ` +
-        `fill="${isActive ? '#ffffff' : theme.textMuted}" font-family="system-ui,sans-serif" font-weight="${isActive ? '700' : '400'}">${tt(item.label, 12)}</text>` +
+        `fill="${isActive ? '#ffffff' : theme.textMuted}" font-family="system-ui,sans-serif" font-weight="${isActive ? '700' : '400'}">${tt(item.label, tabLabelMax)}</text>` +
       `</g>`,
     )
   })
