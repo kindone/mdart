@@ -113,6 +113,37 @@ describe('parseMdArt', () => {
     expect(spec.items[1].children).toHaveLength(1)
   })
 
+  it('treats → inside indented key:value child as literal value (not chain)', () => {
+    // Regression: the arrow-chain branch used to fire on any line containing
+    // " → ", flattening structured comparison columns like the y-protocols
+    // sync example. → in a child's value must stay literal.
+    const src = [
+      'type: comparison',
+      '',
+      '- SyncStep1',
+      '  - direction: A → B',
+      '  - payload: state vector',
+      '- SyncStep2',
+      '  - direction: B → A',
+      '  - payload: ops',
+    ].join('\n')
+    const spec = parseMdArt(src)
+    expect(spec.items).toHaveLength(2)
+    expect(spec.items[0].label).toBe('SyncStep1')
+    expect(spec.items[0].children).toHaveLength(2)
+    expect(spec.items[0].children[0].label).toBe('direction')
+    expect(spec.items[0].children[0].value).toBe('A → B')
+  })
+
+  it('treats single root-level key:value with → in value as one item', () => {
+    // "direction: any → any" should NOT split into a chain — only one colon,
+    // and it sits before the only arrow.
+    const spec = parseMdArt('- direction: any → any')
+    expect(spec.items).toHaveLength(1)
+    expect(spec.items[0].label).toBe('direction')
+    expect(spec.items[0].value).toBe('any → any')
+  })
+
   // ── [attr] extraction ─────────────────────────────────────────────────────
 
   it('extracts single attr', () => {

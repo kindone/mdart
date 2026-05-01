@@ -175,15 +175,26 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
   if (!spec.type) spec.type = 'process'
 
   // ── Arrow chain detection ──────────────────────────────────────────────────
-  // Check if the entire body is a single arrow-chain line
+  // Check if the entire body is a single arrow-chain line. Skip when the line
+  // is really a single key:value with → in the value (e.g. "direction: any → any")
+  // — see the structurally-identical guard at the per-line branch below for the
+  // disambiguation rationale.
   const bodyLines = lines.slice(bodyStart).filter(l => l.trim())
     .map(l => l.replace(/ -> /g, ' → '))  // normalise ASCII arrow in chain detection
   if (bodyLines.length === 1 && bodyLines[0].includes(' → ')) {
-    // Strip any leading bullet marker (- or *) before splitting
     const chainLine = bodyLines[0].trim().replace(/^[-*]\s+/, '')
-    const parts = chainLine.split(' → ')
-    spec.items = parts.map(p => parseItem(p.trim()))
-    return spec
+    const colonIdx  = chainLine.indexOf(': ')
+    const arrowIdx  = chainLine.indexOf(' → ')
+    const colonBeforeArrow = colonIdx !== -1 && colonIdx < arrowIdx
+    const moreColonsAfterArrow = colonBeforeArrow && chainLine.indexOf(': ', arrowIdx) !== -1
+    const isKeyValueOnly = colonBeforeArrow && !moreColonsAfterArrow
+    if (!isKeyValueOnly) {
+      const parts = chainLine.split(' → ')
+      spec.items = parts.map(p => parseItem(p.trim()))
+      return spec
+    }
+    // Fall through to the hierarchical parser, which will produce a single
+    // item with label="direction" value="any → any".
   }
 
   // ── Hierarchical list parsing ──────────────────────────────────────────────
@@ -225,15 +236,36 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
 
     const depth = indentLevel(line)
 
-    // Arrow chain line (can appear as a body line)
-    if (trimmed.includes(' → ') && !trimmed.startsWith('→')) {
-      // Strip any leading bullet marker (- or *) before splitting
+    // Arrow chain line (can appear as a body line). Skip when the line is
+    // really a key-value pair whose value happens to contain " → ":
+    //
+    //  Indented child of a structured parent (e.g. comparison column):
+    //      - SyncStep1
+    //        - direction: A → B   ← "A → B" is the value, NOT a chain
+    //
+    //  Single key:value at root with arrow in the value:
+    //      direction: any → any   ← one colon, before the only arrow
+    //
+    // But genuine chains where each part is itself "key: value" must still
+    // parse as chains (covered by an existing test):
+    //      Alpha: First → Beta: Second → Gamma: Third
+    // The disambiguator: a key:value-with-arrow-in-value pattern has *one*
+    // colon and that colon is before the first arrow. A kv chain has more
+    // colons appearing after the first arrow.
+    if (trimmed.includes(' → ') && !trimmed.startsWith('→') && depth === 0) {
       const chainLine = trimmed.replace(/^[-*]\s+/, '')
-      const parts = chainLine.split(' → ')
-      const items = parts.map(p => parseItem(p.trim()))
-      spec.items.push(...items)
-      stack.length = 0
-      continue
+      const colonIdx  = chainLine.indexOf(': ')
+      const arrowIdx  = chainLine.indexOf(' → ')
+      const colonBeforeArrow = colonIdx !== -1 && colonIdx < arrowIdx
+      const moreColonsAfterArrow = colonBeforeArrow && chainLine.indexOf(': ', arrowIdx) !== -1
+      const isKeyValueOnly = colonBeforeArrow && !moreColonsAfterArrow
+      if (!isKeyValueOnly) {
+        const parts = chainLine.split(' → ')
+        const items = parts.map(p => parseItem(p.trim()))
+        spec.items.push(...items)
+        stack.length = 0
+        continue
+      }
     }
 
     // Flow child: → prefix
