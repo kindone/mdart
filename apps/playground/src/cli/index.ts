@@ -105,10 +105,19 @@ function cleanClaudeEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const out: NodeJS.ProcessEnv = {}
   for (const [key, val] of Object.entries(env)) {
     if (val === undefined) continue
+    // Strip CLAUDE* (CLAUDECODE=1 hangs the child) and ANTHROPIC_API_KEY so the
+    // spawned CLI falls back to the OAuth credentials at ~/.claude/.credentials.json
+    // (subscription billing) instead of API-key billing. Without this, a depleted
+    // ANTHROPIC_API_KEY in steward's .env propagates here and every chat turn
+    // fails with "Credit balance is too low" even though Claude Pro is active.
+    // Mirrors steward's fix in commit a7297e1.
     if (key.startsWith('CLAUDE')) continue
+    if (key === 'ANTHROPIC_API_KEY') continue
     out[key] = val
   }
-  if (env.ANTHROPIC_BASE_URL) out.ANTHROPIC_BASE_URL = env.ANTHROPIC_BASE_URL
+  // Re-admit explicit allowlist
+  if (env.CLAUDE_CODE_OAUTH_TOKEN) out.CLAUDE_CODE_OAUTH_TOKEN = env.CLAUDE_CODE_OAUTH_TOKEN
+  if (env.ANTHROPIC_BASE_URL)      out.ANTHROPIC_BASE_URL      = env.ANTHROPIC_BASE_URL
   return out
 }
 
