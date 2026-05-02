@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, lerpColor } from '../shared'
+import { escapeXml, truncate, wrapLabel, lerpColor, renderEmpty } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -48,16 +48,26 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const midW = (topW + botW) / 2
     const fontSize = midW > 140 ? 12 : midW > 80 ? 11 : midW > 50 ? 9 : 8
-    const textY = y + LAYER_H / 2 + fontSize / 3
     const maxChars = Math.max(4, Math.floor(midW / 7))
+    // Allow two lines only when the layer is tall enough
+    const maxLines = LAYER_H >= 32 ? 2 : 1
+    const { lines, truncated } = wrapLabel(item.label, maxChars, maxLines)
+    const lineH = fontSize + 2
+    const firstY = y + LAYER_H / 2 - ((lines.length - 1) * lineH) / 2 + fontSize * 0.3
+    const tip = truncated ? `<title>${escapeXml(item.label)}</title>` : ''
+    const tspans = lines
+      .map((l, li) => `<tspan x="${cxPos.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
+      .join('')
     labels.push(
-      `<text x="${cxPos.toFixed(1)}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(item.label, maxChars)}</text>`,
+      `<text x="${cxPos.toFixed(1)}" y="${firstY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${tspans}</text>`,
     )
 
+    // Side label for very narrow layers (top of upright / bottom of inverted)
     if (midW < 60 && item.label) {
       const sideX = cxPos + Math.max(topW, botW) / 2 + 8
+      const sideY = y + LAYER_H / 2 + fontSize * 0.3
       labels.push(
-        `<text x="${sideX.toFixed(1)}" y="${textY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.label, 20)}</text>`,
+        `<text x="${sideX.toFixed(1)}" y="${sideY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(truncate(item.label, 20))}</text>`,
       )
     }
   }
@@ -66,11 +76,5 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   ${spec.title ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>` : ''}
   ${shapes.join('\n  ')}
   ${labels.join('\n  ')}
-</svg>`
-}
-
-function renderEmpty(theme: MdArtTheme): string {
-  return `<svg viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  <text x="150" y="42" text-anchor="middle" font-size="12" fill="${theme.textMuted}" font-family="system-ui,sans-serif">No items</text>
 </svg>`
 }

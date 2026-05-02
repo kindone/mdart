@@ -2,6 +2,28 @@ import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, tt, renderEmpty } from '../shared'
 
+function wrapLabel(label: string, maxPerLine: number): string[] {
+  if (label.length <= maxPerLine) return [label];
+  const words = label.split(/\s+/);
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length <= maxPerLine) {
+      current = next;
+    } else {
+      if (current) lines.push(current);
+      current = word;
+      if (current.length > maxPerLine) {
+        lines.push(current.slice(0, maxPerLine - 1) + '…');
+        current = '';
+      }
+    }
+  }
+  if (current) lines.push(current);
+  return lines.slice(0, 2);
+}
+
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
     ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
@@ -19,7 +41,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const W = 600
   const TITLE_H = spec.title ? 30 : 8
   const n = columns.length
-  const GAP = 10
+  const GAP = 5
   const COL_W = (W - (n + 1) * GAP) / n
   const HEADER_H = 34
   const CARD_H = 28
@@ -56,11 +78,30 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const cardY = colY + HEADER_H + PAD + idx * (CARD_H + CARD_GAP)
       const cardW = COL_W - PAD * 2
       const isDone = card.attrs.includes('done')
+      const maxPerLine = Math.floor((cardW - 20) / 7)
+      const lines = wrapLabel(card.label, maxPerLine)
+      const textX = (cardX + 10).toFixed(1)
+      const n = lines.length
+
+      // Baseline math: font-size 11 → baseline ≈ 9px from text top.
+      // 1 line:  top at (28-11)/2=8.5, baseline at 8.5+9=17.5 → y=18
+      // 2 lines: block top at (28-23)/2=2.5, line1 baseline 11.5→y=12, line2 at 12+12=24
+      const y1 = n === 1 ? cardY + 18 : cardY + 12
+      const y2 = cardY + 24
 
       parts.push(
         `<rect x="${cardX.toFixed(1)}" y="${cardY.toFixed(1)}" width="${cardW.toFixed(1)}" height="${CARD_H}" rx="5" fill="${theme.bg}" stroke="${theme.border}" stroke-width="1"/>`,
-        `<text x="${(cardX + 10).toFixed(1)}" y="${(cardY + 17).toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${tt(card.label, Math.floor(cardW / 7))}</text>`,
       )
+      if (n === 1) {
+        parts.push(
+          `<text x="${textX}" y="${y1.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[0])}</text>`,
+        )
+      } else {
+        parts.push(
+          `<text x="${textX}" y="${y1.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[0])}</text>`,
+          `<text x="${textX}" y="${y2.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[1])}</text>`,
+        )
+      }
     })
   })
 

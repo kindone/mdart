@@ -11,6 +11,51 @@ export function truncate(s: string, max: number): string {
   return s.length > max ? s.slice(0, max - 1) + '…' : s
 }
 
+/**
+ * Word-wrap `label` into at most `maxLines` lines of `perLineChars` characters.
+ * Returns raw (unescaped) lines and whether any content was dropped.
+ * When truncated === true, callers should emit a <title> child on the <text>
+ * element so the full string is visible as an SVG tooltip on hover.
+ */
+export function wrapLabel(
+  label: string,
+  perLineChars: number,
+  maxLines = 2
+): { lines: string[]; truncated: boolean } {
+  const trimmed = label.trim()
+  if (!trimmed) return { lines: [''], truncated: false }
+
+  const words = trimmed.split(/\s+/)
+  const lines: string[] = []
+  let wordIdx = 0
+
+  while (wordIdx < words.length && lines.length < maxLines) {
+    let line = ''
+    while (wordIdx < words.length) {
+      const next = line ? `${line} ${words[wordIdx]}` : words[wordIdx]
+      if (next.length <= perLineChars) { line = next; wordIdx++ }
+      else break
+    }
+    if (!line) {
+      // Single word too long — hard-truncate it
+      line = words[wordIdx].slice(0, perLineChars - 1) + '…'
+      wordIdx++
+    }
+    lines.push(line)
+  }
+
+  const truncated = wordIdx < words.length
+  if (truncated && lines.length > 0) {
+    const last = lines[lines.length - 1]
+    if (!last.endsWith('…'))
+      lines[lines.length - 1] = last.length < perLineChars
+        ? last + '…'
+        : last.slice(0, perLineChars - 1) + '…'
+  }
+
+  return { lines: lines.length > 0 ? lines : [''], truncated }
+}
+
 export function tt(s: string, max: number): string {
   const tr = truncate(s, max)
   if (tr === s) return escapeXml(s)

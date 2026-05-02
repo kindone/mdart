@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, truncate, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, lerpColor, renderEmpty } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -11,6 +11,7 @@ function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefi
   ${parts.join('\n  ')}
 </svg>`
 }
+
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const layers = spec.items
@@ -30,6 +31,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const CHIP_H = 26
   const CHAR_PX = 6.5 // 11px system-ui — avg width for Latin truncation
   const CHIP_PAD = 18 // horizontal padding inside chip for label
+  const LINE_HEIGHT = 12
 
   const parts: string[] = []
 
@@ -43,29 +45,44 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<rect x="${LAYER_LEFT_PAD}" y="${y.toFixed(1)}" width="${W - LAYER_LEFT_PAD - LAYER_RIGHT_PAD}" height="${LAYER_H}" rx="8" fill="${fill}22" stroke="${fill}66" stroke-width="1.2"/>`)
 
     if (layer.children.length === 0) {
-      const mid = (y + LAYER_H / 2 + 4).toFixed(1)
       const maxNoChild = Math.max(24, Math.floor((W - LAYER_LEFT_PAD - LAYER_RIGHT_PAD - 32) / 6.5))
-      parts.push(`<text x="24" y="${mid}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(layer.label, maxNoChild)}</text>`)
+      const { lines: labelLines, truncated: lTrunc } = wrapLabel(layer.label, maxNoChild)
+      const labelStartY = y + (LAYER_H - LINE_HEIGHT * labelLines.length) / 2 + LINE_HEIGHT - 2
+      const tip = lTrunc ? `<title>${escapeXml(layer.label)}</title>` : ''
+      const tspans = labelLines.map((line, li) => `<tspan x="24" dy="${li === 0 ? 0 : LINE_HEIGHT}">${escapeXml(line)}</tspan>`).join('')
+      parts.push(`<text x="24" y="${labelStartY.toFixed(1)}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tip}${tspans}</text>`)
     } else {
       const titleMax = Math.max(6, Math.floor((TITLE_COL - 28) / 6.5))
-      parts.push(`<text x="24" y="${(y + LAYER_H / 2 + 4).toFixed(1)}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(layer.label, titleMax)}</text>`)
+      const { lines: labelLines, truncated: lTrunc } = wrapLabel(layer.label, titleMax)
+      const labelStartY = y + (LAYER_H - LINE_HEIGHT * labelLines.length) / 2 + LINE_HEIGHT - 2
+      const tip = lTrunc ? `<title>${escapeXml(layer.label)}</title>` : ''
+      const tspans = labelLines.map((line, li) => `<tspan x="24" dy="${li === 0 ? 0 : LINE_HEIGHT}">${escapeXml(line)}</tspan>`).join('')
+      parts.push(`<text x="24" y="${labelStartY.toFixed(1)}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tip}${tspans}</text>`)
       parts.push(`<line x1="128" y1="${(y + 10).toFixed(1)}" x2="128" y2="${(y + LAYER_H - 10).toFixed(1)}" stroke="${fill}55" stroke-width="1"/>`)
 
       const children = layer.children.slice(0, 7)
       const n = children.length
       const rowInner = W - LAYER_RIGHT_PAD - FIRST_CHIP_X
-      // Equal budget per column so a single component can use the full right-hand span when n=1.
       const perChipMax = n > 0 ? (rowInner - (n - 1) * CHIP_GAP) / n : 0
       let chipX = FIRST_CHIP_X
-      const chipY = y + (LAYER_H - CHIP_H) / 2
+      const chipMidY = y + LAYER_H / 2
       for (const child of children) {
         const maxChars = Math.max(4, Math.floor((perChipMax - CHIP_PAD) / CHAR_PX))
-        const vis = truncate(child.label, maxChars)
-        const naturalW = vis.length * 7 + 18
+        const { lines, truncated: cTrunc } = wrapLabel(child.label, maxChars)
+        const longest = lines.reduce((acc, line) => Math.max(acc, line.length), 0)
+        const naturalW = longest * 7 + 18
         const chipW = Math.max(24, Math.min(perChipMax, naturalW))
+        const chipH = CHIP_H + Math.max(0, lines.length - 1) * LINE_HEIGHT
+        const chipTop = chipMidY - chipH / 2
+        const textStartY = chipTop + (chipH - LINE_HEIGHT * lines.length) / 2 + LINE_HEIGHT - 2
+        const textCenterX = (chipX + chipW / 2).toFixed(1)
+        const chipTip = cTrunc ? `<title>${escapeXml(child.label)}</title>` : ''
+        const chipSpans = lines
+          .map((line, idx) => `<tspan x="${textCenterX}" dy="${idx === 0 ? 0 : LINE_HEIGHT}">${escapeXml(line)}</tspan>`)
+          .join('')
         parts.push(
-          `<rect x="${chipX.toFixed(1)}" y="${chipY.toFixed(1)}" width="${chipW.toFixed(1)}" height="${CHIP_H}" rx="5" fill="${theme.surface}" stroke="${fill}66" stroke-width="1"/>`,
-          `<text x="${(chipX + chipW / 2).toFixed(1)}" y="${(chipY + 16).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(child.label, maxChars)}</text>`,
+          `<rect x="${chipX.toFixed(1)}" y="${chipTop.toFixed(1)}" width="${chipW.toFixed(1)}" height="${chipH.toFixed(1)}" rx="5" fill="${theme.surface}" stroke="${fill}66" stroke-width="1"/>`,
+          `<text x="${textCenterX}" y="${textStartY.toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${chipTip}${chipSpans}</text>`,
         )
         chipX += chipW + CHIP_GAP
       }
