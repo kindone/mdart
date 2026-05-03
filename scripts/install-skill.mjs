@@ -11,8 +11,12 @@
  *
  * Usage:
  *
- *   # Default: install to ~/.claude/skills/mdart
+ *   # Default: install to mdart's own .claude/skills/mdart (project-scoped,
+ *   # matches the convention consumers like steward use).
  *   npm run install:skill
+ *
+ *   # Install globally instead:
+ *   npm run install:skill -- --no-default --target=$HOME/.claude/skills/mdart
  *
  *   # Custom targets via CLI (repeatable):
  *   npm run install:skill -- --target=/path/to/dest --target=/another/dest
@@ -37,7 +41,7 @@ import { fileURLToPath } from 'node:url'
 
 const HERE   = path.dirname(fileURLToPath(import.meta.url))
 const ROOT   = path.resolve(HERE, '..')
-const SOURCE = path.join(ROOT, 'skills', 'mdart')
+const SOURCE = path.join(ROOT, 'packages', 'mdart', 'skills', 'mdart')
 
 // ── Argument parsing ──────────────────────────────────────────────────────
 const args      = process.argv.slice(2)
@@ -51,7 +55,10 @@ const envTargets = (process.env.MDART_SKILL_TARGETS ?? '')
   .map(s => s.trim())
   .filter(Boolean)
 
-const defaultTarget = path.join(os.homedir(), '.claude', 'skills', 'mdart')
+// Default target = mdart's own .claude/skills/, project-scoped (matches the
+// convention consumers like steward use). Pass --target to install elsewhere
+// (e.g. global ~/.claude/skills/mdart).
+const defaultTarget = path.join(ROOT, '.claude', 'skills', 'mdart')
 
 const targets = []
 if (!noDefault && cliTargets.length === 0 && envTargets.length === 0) {

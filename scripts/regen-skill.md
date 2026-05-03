@@ -1,18 +1,20 @@
 # Meta-prompt: regenerate the MdArt skill
 
-This is a Claude prompt. Run it from the mdart repo root with:
+This is a Claude prompt. The recommended invocation is the npm script (run from the mdart repo root):
 
 ```bash
-claude -p "$(cat skills/regen-skill.md)"
+npm run regen:skill
 ```
 
-Or paste it into a Claude session. The prompt is self-contained and ends with the expected outputs.
+That expands to `claude --permission-mode acceptEdits "$(cat scripts/regen-skill.md)"` — opens an interactive Claude session pre-loaded with this meta-prompt and pre-authorised to edit files. You can review each edit as Claude works.
+
+Alternatively, paste the contents below into any Claude session. The prompt is self-contained and ends with the expected outputs.
 
 ---
 
 ## Goal
 
-Update `skills/mdart/SKILL.md` and `skills/mdart/anti-patterns.md` so they accurately reflect the current state of the mdart codebase. Preserve hand-curated prose; only edit content where the underlying data has changed.
+Update `packages/mdart/skills/mdart/SKILL.md` and `packages/mdart/skills/mdart/anti-patterns.md` so they accurately reflect the current state of the mdart codebase. Preserve hand-curated prose; only edit content where the underlying data has changed.
 
 ## Sources of truth
 
@@ -32,8 +34,8 @@ Read these files **before** editing the skill. Trust them over the existing skil
 
 | Path | Always-loaded? | Contents |
 |---|---|---|
-| `skills/mdart/SKILL.md` | Yes | Frontmatter, intro, §1 family cheat sheet, §2 decision tree, brief anti-pattern reminders, footer |
-| `skills/mdart/anti-patterns.md` | On demand | Full §5: 7 categories of failure modes |
+| `packages/mdart/skills/mdart/SKILL.md` | Yes | Frontmatter, intro, §1 family cheat sheet, §2 decision tree, brief anti-pattern reminders, footer |
+| `packages/mdart/skills/mdart/anti-patterns.md` | On demand | Full §5: 7 categories of failure modes |
 
 ## Process
 
@@ -69,7 +71,7 @@ If the regenerator finds a different alias set, update the SKILL.md alias table 
 
 ### Step 2 — Diff against current SKILL.md
 
-Read the current `skills/mdart/SKILL.md`. Extract type names mentioned in §1 and §2. Compute:
+Read the current `packages/mdart/skills/mdart/SKILL.md`. Extract type names mentioned in §1 and §2. Compute:
 - **New types** — present in `layouts/` but not in current SKILL.md.
 - **Removed types** — mentioned in current SKILL.md but no longer in `layouts/`.
 - **Unchanged types** — in both. Do not touch their references unless renaming a sibling forces a §1 row rewrite.
@@ -107,7 +109,7 @@ Re-read `parser.ts` and the relevant renderer files. If any claim is now stale, 
 In `SKILL.md`, replace the trailing `<sub>` line with:
 
 ```
-<sub>Skill version: derived from mdart v<VERSION> (<YYYY-MM-DD>). Regenerate via `skills/regen-skill.md` when mdart layouts/ changes.</sub>
+<sub>Skill version: derived from mdart v<VERSION> (<YYYY-MM-DD>). Regenerate via `scripts/regen-skill.md` in the mdart repo when its `layouts/` changes; consumers re-fetch via their own sync script.</sub>
 ```
 
 Use the `version` field from `packages/mdart/package.json` and today's date.
@@ -122,7 +124,7 @@ Use the `version` field from `packages/mdart/package.json` and today's date.
 
 ## Output
 
-After editing the two skill files, instruct the user to run `npm run install:skill` (or include it as the final step if running unattended) so the updated content is copied to all configured destination directories.
+After editing the two skill files, instruct the user that consumers (steward, learn-crdt, etc.) will pick up the changes the next time they run their own `sync:mdart`-style script — the skill is bundled into the mdart npm package via the `files` field, so re-installing mdart in the consumer brings the new skill files into `node_modules/mdart/skills/mdart/`, which the consumer's sync script then copies into its `.claude/skills/mdart/`.
 
 Then print a summary in this exact format:
 

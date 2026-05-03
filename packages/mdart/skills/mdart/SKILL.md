@@ -194,4 +194,4 @@ Before emitting a `mdart` fence:
 
 ---
 
-<sub>Skill version: derived from mdart v0.2.1 (2026-05-02). Regenerate via `skills/regen-skill.md` and re-install via `npm run install:skill` when mdart layouts/ changes.</sub>
+<sub>Skill version: derived from mdart v0.2.1 (2026-05-02). Regenerate via `scripts/regen-skill.md` in the mdart repo when its `layouts/` changes; consumers re-fetch via their own sync script.</sub>

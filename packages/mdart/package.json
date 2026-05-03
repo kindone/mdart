@@ -21,7 +21,8 @@
   "files": [
     "dist",
     "!dist/**/*.test.d.ts",
-    "!dist/**/*.test.d.ts.map"
+    "!dist/**/*.test.d.ts.map",
+    "skills"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node scripts/build-esm.js",
