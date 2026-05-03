@@ -277,4 +277,50 @@ describe('parseMdArt', () => {
     expect(spec.items[0].label).toBe('Simple Label')
     expect(spec.items[0].value).toBeUndefined()
   })
+
+  // ── Indent unit auto-detection ────────────────────────────────────────────
+
+  it('parses 2-space indent (classic)', () => {
+    const src = '- A\n  - B\n    - C'
+    const spec = parseMdArt(src)
+    expect(spec.items[0].label).toBe('A')
+    expect(spec.items[0].children[0].label).toBe('B')
+    expect(spec.items[0].children[0].children[0].label).toBe('C')
+  })
+
+  it('parses 4-space indent consistently', () => {
+    const src = '- A\n    - B\n        - C'
+    const spec = parseMdArt(src)
+    expect(spec.items).toHaveLength(1)
+    expect(spec.items[0].label).toBe('A')
+    expect(spec.items[0].children).toHaveLength(1)
+    expect(spec.items[0].children[0].label).toBe('B')
+    expect(spec.items[0].children[0].children[0].label).toBe('C')
+  })
+
+  it('parses tab indent consistently', () => {
+    const src = '- A\n\t- B\n\t\t- C'
+    const spec = parseMdArt(src)
+    expect(spec.items).toHaveLength(1)
+    expect(spec.items[0].children).toHaveLength(1)
+    expect(spec.items[0].children[0].label).toBe('B')
+    expect(spec.items[0].children[0].children[0].label).toBe('C')
+  })
+
+  it('4-space indent: multiple top-level items with children', () => {
+    const src = '- Group 1\n    - Item A\n- Group 2\n    - Item B'
+    const spec = parseMdArt(src)
+    expect(spec.items).toHaveLength(2)
+    expect(spec.items[0].children).toHaveLength(1)
+    expect(spec.items[0].children[0].label).toBe('Item A')
+    expect(spec.items[1].children).toHaveLength(1)
+    expect(spec.items[1].children[0].label).toBe('Item B')
+  })
+
+  it('4-space indent: → flow children attach to nearest shallower parent', () => {
+    const src = '- Source\n    → Target A\n    → Target B'
+    const spec = parseMdArt(src)
+    expect(spec.items[0].flowChildren).toHaveLength(2)
+    expect(spec.items[0].flowChildren[0].label).toBe('Target A')
+  })
 })

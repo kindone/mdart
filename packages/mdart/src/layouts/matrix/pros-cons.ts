@@ -12,10 +12,18 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // We track currentSection to route those flat siblings to the right bucket.
   let currentSection: 'pros' | 'cons' | null = null
 
+  // Recognised header words (exact match, case-insensitive, trailing ':' stripped).
+  // Substring matching used to misroute labels like "Proposal" or "Concerns about X".
+  // For unusual headings, opt in explicitly with a [pros] or [cons] attr.
+  const PROS_HEADERS = new Set(['pros', 'pro', 'advantages', 'advantage', 'benefits', 'benefit', 'for'])
+  const CONS_HEADERS = new Set(['cons', 'con', 'disadvantages', 'disadvantage', 'risks', 'risk', 'against'])
+
   for (const item of spec.items) {
-    const lower = item.label.toLowerCase()
-    const isProsHeader = lower.includes('pro') || lower.includes('advantage') || lower.includes('benefit')
-    const isConsHeader = lower.includes('con') || lower.includes('disadvantage') || lower.includes('risk')
+    const normalized = item.label.toLowerCase().trim().replace(/:$/, '').trim()
+    const hasProsAttr = item.attrs.some(a => a.toLowerCase() === 'pros')
+    const hasConsAttr = item.attrs.some(a => a.toLowerCase() === 'cons')
+    const isProsHeader = hasProsAttr || PROS_HEADERS.has(normalized)
+    const isConsHeader = hasConsAttr || CONS_HEADERS.has(normalized)
 
     if (isProsHeader) {
       currentSection = 'pros'

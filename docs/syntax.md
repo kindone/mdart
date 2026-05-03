@@ -35,6 +35,10 @@ Arrow chain shorthand: `Step 1 -> Step 2 -> Step 3`
 - `+`, `?`, `!` prefix items (SWOT-style) are treated as plain items in any non-SWOT type
 - `-` items in `swot` are treated as weaknesses at top level, plain bullets when nested
 
+**Caveat — flow-only diagram types:** `sequence`, `state-machine`, and `network` interpret children as **edges/messages**, not containment. Use `-> Target: message` for those — a plain `- Target` child is still parsed (it lands in the same flow slot) but reads less clearly to anyone editing the source. Recommendation: pick `->` for these three types, and `-` everywhere else.
+
+**Indentation** — the indent step is auto-detected per fence. Use **2 spaces, 4 spaces, or 1 tab** — whichever you prefer, as long as it's consistent within a single block. The parser uses the smallest non-zero leading-whitespace count it sees as the unit; all deeper levels must be a multiple of it. Don't mix styles inside one fence.
+
 ---
 
 ## Syntax patterns
@@ -192,6 +196,14 @@ Prefix character determines quadrant — no `- Item` bullets needed.
 ! Threat
 ```
 
+Or, if you'd rather group items under headings, use exact label words (case-insensitive): `Strengths`, `Weaknesses`, `Opportunities`, `Threats` (singular forms also accepted). For domain-specific or translated headings, opt in explicitly with `[strengths]` / `[weaknesses]` / `[opportunities]` / `[threats]` attrs (or short `[s] [w] [o] [t]`).
+```
+- Internal positives [strengths]
+  - Strong engineering team
+- Internal negatives [weaknesses]
+  - Limited brand recognition
+```
+
 ```mdart swot
 title: Market Entry
 + Strong engineering team
@@ -208,6 +220,19 @@ title: Market Entry
   <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/swot-e06ce7ac0d.svg">
   <img alt="swot" src="./examples/syntax/swot-e06ce7ac0d-light.svg">
 </picture>
+
+
+#### `pros-cons`
+Two columns. Headers are recognised by exact label (case-insensitive): `Pros` / `Cons` (also `Pro`, `Con`, `Advantages`, `Disadvantages`, `Benefits`, `Risks`, `For`, `Against`). For unusual headings, opt in with `[pros]` / `[cons]` attrs.
+```mdart pros-cons
+title: Microservices vs Monolith
+- Pros
+  - Independent deployments
+  - Technology flexibility
+- Cons
+  - Operational complexity
+  - Network latency
+```
 
 
 #### `comparison`
@@ -491,6 +516,32 @@ title: Full-Stack Skills
   <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/venn-3-d300e5abea.svg">
   <img alt="venn-3" src="./examples/syntax/venn-3-d300e5abea-light.svg">
 </picture>
+
+
+#### `bracket`
+Single-elimination tournament bracket. List the contestants top-to-bottom in seed order; the renderer pairs them into rounds and pads with byes if you don't have a power of two. Wins are encoded as attrs on each contestant — there is no separate "match" syntax.
+
+| attr | meaning |
+|---|---|
+| `[w]` (or `[win]`, `[winner]`) | one win — repeat for multiple rounds: `[w] [w]` = 2 |
+| `[wN]` | compact form for N wins, e.g. `[w3]` |
+| `[semi]` | reached the semifinal (= rounds − 2 wins) |
+| `[final]` | reached the final (= rounds − 1 wins) |
+| `[champion]` | won the whole thing (= rounds wins) |
+
+A slot only advances once at least one of the pair has enough wins for that round. Pairs with no winner declared yet render as a dashed `TBD`. Empty leaf slots (when contestants < `2^rounds`) render as `bye`.
+
+```mdart bracket
+title: Hackathon Finals
+- Team Alpha [w]
+- Team Beta
+- Team Gamma [champion]
+- Team Delta
+- Team Echo
+- Team Foxtrot [w]
+- Team Golf
+- Team Hotel [w2]
+```
 
 
 #### `bullet-list` · `numbered-list`

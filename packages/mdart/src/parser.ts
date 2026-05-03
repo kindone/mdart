@@ -74,14 +74,36 @@ function parseItem(rawLine: string): MdArtItem {
   }
 }
 
-function indentLevel(line: string): number {
-  let spaces = 0
+function leadingWhitespace(line: string): number {
+  // Tabs count as 2 (matches the historical default unit). Mixed indents in the
+  // same block resolve consistently as long as users pick one style.
+  let n = 0
   for (const ch of line) {
-    if (ch === ' ') spaces++
-    else if (ch === '\t') spaces += 2
+    if (ch === ' ') n++
+    else if (ch === '\t') n += 2
     else break
   }
-  return Math.floor(spaces / 2)
+  return n
+}
+
+function detectIndentUnit(lines: string[], bodyStart: number): number {
+  // Find the smallest positive leading-whitespace count across body lines.
+  // That becomes the indent step. Examples:
+  //   "  - child"   → unit 2  (classic 2-space)
+  //   "    - child" → unit 4  (4-space style)
+  //   "\t- child"   → unit 2  (one tab, since tab counts as 2)
+  // No indented lines → fall back to 2 (legacy behaviour).
+  let min = Infinity
+  for (let i = bodyStart; i < lines.length; i++) {
+    if (!lines[i].trim()) continue
+    const w = leadingWhitespace(lines[i])
+    if (w > 0 && w < min) min = w
+  }
+  return min === Infinity ? 2 : min
+}
+
+function indentLevel(line: string, unit: number): number {
+  return Math.floor(leadingWhitespace(line) / unit)
 }
 
 // ── Main parser ───────────────────────────────────────────────────────────────
@@ -198,7 +220,10 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
   }
 
   // ── Hierarchical list parsing ──────────────────────────────────────────────
-  // Stack-based: track indent depth
+  // Stack-based: track indent depth. Indent unit auto-detected per fence so
+  // 2-space, 4-space, and 1-tab styles all work — as long as the block is
+  // internally consistent.
+  const indentUnit = detectIndentUnit(lines, bodyStart)
   const stack: Array<{ item: MdArtItem; depth: number }> = []
 
   for (let i = bodyStart; i < lines.length; i++) {
@@ -234,7 +259,7 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
       continue
     }
 
-    const depth = indentLevel(line)
+    const depth = indentLevel(line, indentUnit)
 
     // Arrow chain line (can appear as a body line). Skip when the line is
     // really a key-value pair whose value happens to contain " → ":

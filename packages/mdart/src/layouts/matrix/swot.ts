@@ -18,24 +18,63 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     T: { label: 'Threats',       items: [], fill: '#92400e', textColor: '#fbbf24' },  // amber-800/400
   }
 
-  // Prefix-based
+  // Group-heading recognition: exact match (case-insensitive, trailing ':' stripped)
+  // against the canonical SWOT words. Opt-in attrs `[strengths]` / `[weaknesses]` /
+  // `[opportunities]` / `[threats]` (or short `[s] [w] [o] [t]`) override label-based
+  // detection so users can pick any heading text they like.
+  const HEADER_MAP: Record<string, string> = {
+    strength: 'S', strengths: 'S',
+    weakness: 'W', weaknesses: 'W',
+    opportunity: 'O', opportunities: 'O',
+    threat: 'T', threats: 'T',
+  }
+  const ATTR_MAP: Record<string, string> = {
+    strengths: 'S', strength: 'S', s: 'S',
+    weaknesses: 'W', weakness: 'W', w: 'W',
+    opportunities: 'O', opportunity: 'O', o: 'O',
+    threats: 'T', threat: 'T', t: 'T',
+  }
+
+  // The parser flattens swot top-level items (stack reset on prefix items), so
+  // children of `- Strengths` headers end up as separate flat siblings rather
+  // than nested. Track currentSection so subsequent flat items route to the
+  // right quadrant — same pattern as pros-cons.
+  let currentSection: string | null = null
+
   for (const item of spec.items) {
-    if (item.prefix === '+') quadrantMap.S.items.push(item.label)
-    else if (item.prefix === '-') quadrantMap.W.items.push(item.label)
-    else if (item.prefix === '?') quadrantMap.O.items.push(item.label)
-    else if (item.prefix === '!') quadrantMap.T.items.push(item.label)
-    else {
-      // Group heading — detect by name
-      const lower = item.label.toLowerCase()
-      let key: string | null = null
-      if (lower.startsWith('strength')) key = 'S'
-      else if (lower.startsWith('weakness')) key = 'W'
-      else if (lower.startsWith('opportunit')) key = 'O'
-      else if (lower.startsWith('threat')) key = 'T'
-      if (key) {
-        quadrantMap[key].items.push(...item.children.map(c => c.label))
-      }
+    // 1. Header detection runs first: by attr, then by exact label.
+    let headerKey: string | null = null
+    for (const a of item.attrs) {
+      const k = ATTR_MAP[a.toLowerCase()]
+      if (k) { headerKey = k; break }
     }
+    if (!headerKey) {
+      const normalized = item.label.toLowerCase().trim().replace(/:$/, '').trim()
+      headerKey = HEADER_MAP[normalized] ?? null
+    }
+    if (headerKey) {
+      currentSection = headerKey
+      // If children were attached (e.g. non-swot-style nesting), consume immediately.
+      if (item.children.length) {
+        quadrantMap[headerKey].items.push(...item.children.map(c => c.label))
+        currentSection = null
+      }
+      continue
+    }
+
+    // 2. Otherwise, route by SWOT prefix char.
+    if (item.prefix === '+') { quadrantMap.S.items.push(item.label); continue }
+    if (item.prefix === '?') { quadrantMap.O.items.push(item.label); continue }
+    if (item.prefix === '!') { quadrantMap.T.items.push(item.label); continue }
+    if (item.prefix === '-') {
+      // - is the SWOT weakness marker by default, but if a heading was just
+      // declared (e.g. `- Threats`), route subsequent items to that section.
+      quadrantMap[currentSection ?? 'W'].items.push(item.label)
+      continue
+    }
+
+    // 3. Unprefixed flat sibling — only routes if we're inside a declared section.
+    if (currentSection) quadrantMap[currentSection].items.push(item.label)
   }
 
   const W = 500
