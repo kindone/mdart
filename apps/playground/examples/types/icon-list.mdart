@@ -1,7 +1,7 @@
 type: icon-list
 title: Platform Features
 
-- Encryption: End-to-end encrypted [🔒]
-- Performance: Sub-100ms API [⚡]
-- Analytics: Real-time insights [📊]
-- Multi-region: Global failover [🌍]
+- 🔒 Encryption: End-to-end encrypted at rest and in transit with zero-knowledge key management
+- ⚡ Performance: Sub-100ms API response times globally via edge caching and connection pooling
+- 📊 Analytics: Real-time insights with custom dashboards and automated anomaly detection
+- 🌍 Multi-region: Global failover across five regions with automatic traffic rerouting

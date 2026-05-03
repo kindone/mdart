@@ -197,13 +197,17 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
   if (!spec.type) spec.type = 'process'
 
   // ── Arrow chain detection ──────────────────────────────────────────────────
+  // List-type diagrams use → as content (prose / math notation), not as a
+  // flow separator, so chain detection must be suppressed for them.
+  const isListType = /list/.test(spec.type)
+
   // Check if the entire body is a single arrow-chain line. Skip when the line
   // is really a single key:value with → in the value (e.g. "direction: any → any")
   // — see the structurally-identical guard at the per-line branch below for the
   // disambiguation rationale.
   const bodyLines = lines.slice(bodyStart).filter(l => l.trim())
     .map(l => l.replace(/ -> /g, ' → '))  // normalise ASCII arrow in chain detection
-  if (bodyLines.length === 1 && bodyLines[0].includes(' → ')) {
+  if (!isListType && bodyLines.length === 1 && bodyLines[0].includes(' → ')) {
     const chainLine = bodyLines[0].trim().replace(/^[-*]\s+/, '')
     const colonIdx  = chainLine.indexOf(': ')
     const arrowIdx  = chainLine.indexOf(' → ')
@@ -277,7 +281,7 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
     // The disambiguator: a key:value-with-arrow-in-value pattern has *one*
     // colon and that colon is before the first arrow. A kv chain has more
     // colons appearing after the first arrow.
-    if (trimmed.includes(' → ') && !trimmed.startsWith('→') && depth === 0) {
+    if (!isListType && trimmed.includes(' → ') && !trimmed.startsWith('→') && depth === 0) {
       const chainLine = trimmed.replace(/^[-*]\s+/, '')
       const colonIdx  = chainLine.indexOf(': ')
       const arrowIdx  = chainLine.indexOf(' → ')

@@ -2,8 +2,8 @@ type: milestone
 title: Launch Readiness
 
 - Security audit complete [done]
-- Load testing passed [done]
-- Docs site live [done]
-- Support runbook ready [active]
-- Status page configured
-- Rollback plan tested
+- Load testing at 10x expected peak traffic passed [done]
+- Documentation site live with full API reference [done]
+- Support runbook ready and team trained on incident response [active]
+- Status page configured with uptime monitoring and subscriber alerts
+- Rollback plan tested with sub-5-minute recovery time verified

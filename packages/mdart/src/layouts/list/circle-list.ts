@@ -1,38 +1,112 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, getCaption } from '../shared'
+import { escapeXml, wrapLabel, lerpColor, renderEmpty, getCaption } from '../shared'
 
-function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
-    ${parts.join('\n    ')}
-  </svg>`
+// ── Layout constants ─────────────────────────────────────────────────────────
+
+const W       = 500
+const LEFT    = 28          // circle centre x
+const R       = 16          // circle radius
+const textX   = LEFT + R + 10   // 54
+const PAD_T   = 8           // above text block
+const PAD_B   = 8           // below text block
+const LBL_FS  = 12, LBL_LH = 15
+const CAP_FS  = 10, CAP_LH = 13
+const SEC_G   = 4            // gap between label block and caption block
+const MIN_H   = 38           // minimum row height
+const rightM  = 16
+
+const LABEL_MAX = Math.max(12, Math.floor((W - textX - rightM) / 6.5))  // ~67
+const CAP_MAX   = Math.max(12, Math.floor((W - textX - rightM) / 5.2))  // ~84
+
+// ── Per-row layout ────────────────────────────────────────────────────────────
+
+interface RowLayout {
+  lblLines: string[]
+  lblTrunc: boolean
+  capLines: string[]
+  capTrunc: boolean
+  caption:  string | null
+  blockH:   number
+  rowH:     number
 }
+
+function computeRowLayout(item: MdArtSpec['items'][number]): RowLayout {
+  const { lines: lblLines, truncated: lblTrunc } = wrapLabel(item.label, LABEL_MAX, 3)
+  const caption = getCaption(item)
+  const { lines: capLines, truncated: capTrunc } = caption
+    ? wrapLabel(caption, CAP_MAX, 3)
+    : { lines: [], truncated: false }
+
+  const blockH = lblLines.length * LBL_LH
+    + (capLines.length > 0 ? SEC_G + capLines.length * CAP_LH : 0)
+  const rowH   = Math.max(MIN_H, PAD_T + blockH + PAD_B)
+
+  return { lblLines, lblTrunc, capLines, capTrunc, caption, blockH, rowH }
+}
+
+// ── Renderer ─────────────────────────────────────────────────────────────────
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
-  const W = 500
-  const ROW_H = 44, R = 16, LEFT = 28
-  const textX = LEFT + R + 10
-  const rightM = 16
-  const labelMax = Math.max(18, Math.floor((W - textX - rightM) / 5.0))
-  const capMax = Math.max(24, Math.floor((W - textX - rightM) / 4.2))
-  const titleH = spec.title ? 30 : 8
-  const H = titleH + items.length * ROW_H + 8
+
+  const titleH  = spec.title ? 30 : 8
+  const layouts = items.map(computeRowLayout)
+
+  // Cumulative Y positions
+  const rowY: number[] = []
+  let cumY = titleH
+  for (const l of layouts) {
+    rowY.push(cumY)
+    cumY += l.rowH
+  }
+  const H = cumY + 8
+
   const parts: string[] = []
-  if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
-  // Connecting line
-  parts.push(`<line x1="${LEFT}" y1="${titleH + ROW_H/2}" x2="${LEFT}" y2="${titleH + (items.length-1)*ROW_H + ROW_H/2}" stroke="${theme.border}" stroke-width="2" stroke-dasharray="4,4"/>`)
+  if (spec.title) {
+    parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
+  }
+
+  // Connecting dashed line from first to last circle centre
+  if (items.length > 1) {
+    const firstCy = rowY[0] + layouts[0].rowH / 2
+    const lastCy  = rowY[items.length - 1] + layouts[items.length - 1].rowH / 2
+    parts.push(`<line x1="${LEFT}" y1="${firstCy.toFixed(1)}" x2="${LEFT}" y2="${lastCy.toFixed(1)}" stroke="${theme.border}" stroke-width="2" stroke-dasharray="4,4"/>`)
+  }
+
   items.forEach((item, i) => {
-    const cy = titleH + i * ROW_H + ROW_H / 2
-    const t = items.length > 1 ? i / (items.length - 1) : 0
-    const fill = lerpColor(theme.primary, theme.secondary, t)
-    parts.push(`<circle cx="${LEFT}" cy="${cy}" r="${R}" fill="${fill}"/>`)
+    const y      = rowY[i]
+    const { lblLines, lblTrunc, capLines, capTrunc, caption, blockH, rowH } = layouts[i]
+    const t      = items.length > 1 ? i / (items.length - 1) : 0
+    const fill   = lerpColor(theme.primary, theme.secondary, t)
+    const cy     = y + rowH / 2
+
+    // Circle + number
+    parts.push(`<circle cx="${LEFT}" cy="${cy.toFixed(1)}" r="${R}" fill="${fill}"/>`)
     parts.push(`<text x="${LEFT}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${i + 1}</text>`)
-    parts.push(`<text x="${textX}" y="${(cy - 4).toFixed(1)}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, labelMax)}</text>`)
-    const caption = getCaption(item)
-    if (caption) parts.push(`<text x="${textX}" y="${(cy + 12).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, capMax)}</text>`)
+
+    // Text block vertically centred in rowH
+    const lblStartY = y + (rowH - blockH) / 2 + LBL_FS * 0.75
+
+    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
+    const lblSpans = lblLines
+      .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
+      .join('')
+    parts.push(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`)
+
+    if (capLines.length > 0) {
+      const capStartY = lblStartY + lblLines.length * LBL_LH + SEC_G
+      const capTip    = capTrunc ? `<title>${escapeXml(caption!)}</title>` : ''
+      const capSpans  = capLines
+        .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : CAP_LH}">${escapeXml(l)}</tspan>`)
+        .join('')
+      parts.push(`<text x="${textX}" y="${capStartY.toFixed(1)}" font-size="${CAP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`)
+    }
   })
-  return svg(W, H, theme, parts)
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${parts.join('\n    ')}
+  </svg>`
 }

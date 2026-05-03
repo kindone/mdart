@@ -1,45 +1,117 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, getCaption } from '../shared'
+import { escapeXml, wrapLabel, lerpColor, renderEmpty, getCaption } from '../shared'
 
-function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
-    ${parts.join('\n    ')}
-  </svg>`
+// ── Layout constants ─────────────────────────────────────────────────────────
+
+const W        = 500
+const LEFT     = 24          // circle centre x
+const CIRCLE_R = 18          // circle radius
+const textX    = LEFT + CIRCLE_R + 10   // 52
+const PAD_T    = 8
+const PAD_B    = 8
+const LBL_FS   = 12, LBL_LH = 15
+const CAP_FS   = 10, CAP_LH = 13
+const SEC_G    = 4
+const MIN_H    = 42
+const rightM   = 16
+
+const LABEL_MAX = Math.max(12, Math.floor((W - textX - rightM) / 6.5))  // ~66
+const CAP_MAX   = Math.max(12, Math.floor((W - textX - rightM) / 5.2))  // ~82
+
+// ── Per-row layout ────────────────────────────────────────────────────────────
+
+interface RowLayout {
+  displayLabel: string
+  icon:         string
+  lblLines:     string[]
+  lblTrunc:     boolean
+  capLines:     string[]
+  capTrunc:     boolean
+  caption:      string | null
+  blockH:       number
+  rowH:         number
 }
+
+function computeRowLayout(item: MdArtSpec['items'][number]): RowLayout {
+  const emojiMatch  = item.label.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s*/u)
+  const icon        = emojiMatch ? emojiMatch[1] : (item.attrs[0] ?? '')
+  const displayLabel = emojiMatch ? item.label.slice(emojiMatch[0].length) : item.label
+
+  const { lines: lblLines, truncated: lblTrunc } = wrapLabel(displayLabel, LABEL_MAX, 3)
+  const caption = getCaption(item)
+  const { lines: capLines, truncated: capTrunc } = caption
+    ? wrapLabel(caption, CAP_MAX, 3)
+    : { lines: [], truncated: false }
+
+  const blockH = lblLines.length * LBL_LH
+    + (capLines.length > 0 ? SEC_G + capLines.length * CAP_LH : 0)
+  const rowH   = Math.max(MIN_H, PAD_T + blockH + PAD_B)
+
+  return { displayLabel, icon, lblLines, lblTrunc, capLines, capTrunc, caption, blockH, rowH }
+}
+
+// ── Renderer ─────────────────────────────────────────────────────────────────
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
-  const W = 500
-  const ROW_H = 44, CIRCLE_R = 18, LEFT = 24
-  const textX = LEFT + CIRCLE_R + 10
-  const rightM = 16
-  const labelMax = Math.max(20, Math.floor((W - textX - rightM) / 5.0))
-  const capMax = Math.max(24, Math.floor((W - textX - rightM) / 4.2))
-  const titleH = spec.title ? 30 : 8
-  const H = titleH + items.length * ROW_H + 8
+
+  const titleH  = spec.title ? 30 : 8
+  const layouts = items.map(computeRowLayout)
+
+  const rowY: number[] = []
+  let cumY = titleH
+  for (const l of layouts) {
+    rowY.push(cumY)
+    cumY += l.rowH
+  }
+  const H = cumY + 8
+
   const parts: string[] = []
-  if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
+  if (spec.title) {
+    parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
+  }
+
   items.forEach((item, i) => {
-    const cy = titleH + i * ROW_H + ROW_H / 2
-    const t = items.length > 1 ? i / (items.length - 1) : 0
-    const fill = lerpColor(theme.primary, theme.secondary, t)
+    const y      = rowY[i]
+    const { displayLabel, icon, lblLines, lblTrunc, capLines, capTrunc, caption, blockH, rowH } = layouts[i]
+    const t      = items.length > 1 ? i / (items.length - 1) : 0
+    const fill   = lerpColor(theme.primary, theme.secondary, t)
+    const cy     = y + rowH / 2
 
-    // Extract leading emoji from the label; fall back to attrs for non-emoji syntax
-    const emojiMatch = item.label.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s*/u)
-    const icon = emojiMatch ? emojiMatch[1] : (item.attrs[0] ?? '')
-    const displayLabel = emojiMatch ? item.label.slice(emojiMatch[0].length) : item.label
-
-    parts.push(`<circle cx="${LEFT}" cy="${cy}" r="${CIRCLE_R}" fill="${fill}"/>`)
+    // Circle + icon
+    parts.push(`<circle cx="${LEFT}" cy="${cy.toFixed(1)}" r="${CIRCLE_R}" fill="${fill}"/>`)
     if (icon) {
       parts.push(`<text x="${LEFT}" y="${(cy + 5).toFixed(1)}" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">${escapeXml(icon)}</text>`)
     }
-    parts.push(`<text x="${textX}" y="${(cy - 4).toFixed(1)}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(displayLabel, labelMax)}</text>`)
-    const caption = getCaption(item)
-    if (caption) parts.push(`<text x="${textX}" y="${(cy + 12).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, capMax)}</text>`)
-    if (i < items.length - 1) parts.push(`<line x1="${LEFT + CIRCLE_R + 10}" y1="${cy + ROW_H/2}" x2="${W - 16}" y2="${cy + ROW_H/2}" stroke="${theme.border}" stroke-width="0.5"/>`)
+
+    // Text block vertically centred
+    const lblStartY = y + (rowH - blockH) / 2 + LBL_FS * 0.75
+
+    const lblTip   = lblTrunc ? `<title>${escapeXml(displayLabel)}</title>` : ''
+    const lblSpans = lblLines
+      .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
+      .join('')
+    parts.push(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`)
+
+    if (capLines.length > 0) {
+      const capStartY = lblStartY + lblLines.length * LBL_LH + SEC_G
+      const capTip    = capTrunc ? `<title>${escapeXml(caption!)}</title>` : ''
+      const capSpans  = capLines
+        .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : CAP_LH}">${escapeXml(l)}</tspan>`)
+        .join('')
+      parts.push(`<text x="${textX}" y="${capStartY.toFixed(1)}" font-size="${CAP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`)
+    }
+
+    // Divider between rows
+    if (i < items.length - 1) {
+      parts.push(`<line x1="${textX}" y1="${y + rowH}" x2="${W - 16}" y2="${y + rowH}" stroke="${theme.border}" stroke-width="0.5"/>`)
+    }
   })
-  return svg(W, H, theme, parts)
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${parts.join('\n    ')}
+  </svg>`
 }

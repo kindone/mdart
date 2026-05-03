@@ -1,49 +1,82 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, lerpColor, renderEmpty } from '../shared'
 
-/**
- * Tier-2 "outline" list:
- *   item.label    → main row text
- *   item.value    → muted subtitle under the label
- *   item.children → indented sub-rows (1 level deep)
- */
+// ── Layout constants ─────────────────────────────────────────────────────────
+
+const W   = 460
+const PAD = 16
+
+const LBL_FS = 12, LBL_LH = 15   // main label
+const VAL_FS = 11, VAL_LH = 14   // value subtitle
+const CHD_FS = 11, CHD_LH = 17   // child rows
+
+const FIRST_LBL_BL = 22    // baseline of first label line from item top
+const LBL_VAL_STEP = 16    // advance from last label baseline to first value baseline
+const PAD_B        = 10    // padding below last baseline to item bottom
+
+const mainMarkerX   = PAD + 8           // circle centre x
+const mainTextStart = PAD + 22          // 38
+const subMarkerX    = PAD + 28          // indented circle centre x
+const subTextStart  = PAD + 38          // 54
+
+const LABEL_MAX = Math.max(12, Math.floor((W - PAD * 2 - mainTextStart) / 6.5))  // ~60
+const VALUE_MAX = Math.max(12, Math.floor((W - PAD * 2 - mainTextStart) / 6.0))  // ~65
+const CHILD_MAX = Math.max(12, Math.floor((W - PAD * 2 - subTextStart)  / 6.0))  // ~62
+
+// ── Per-item layout pre-computation ──────────────────────────────────────────
+
+interface ItemLayout {
+  lblLines:   string[]
+  lblTrunc:   boolean
+  valLines:   string[]
+  valTrunc:   boolean
+  chdLayouts: Array<{ lines: string[]; truncated: boolean }>
+  itemH:      number
+  firstValBL: number
+  firstChdBL: number
+}
+
+function computeItemLayout(item: MdArtSpec['items'][number]): ItemLayout {
+  const { lines: lblLines, truncated: lblTrunc } = wrapLabel(item.label, LABEL_MAX, 2)
+  const { lines: valLines, truncated: valTrunc } = item.value
+    ? wrapLabel(item.value, VALUE_MAX, 2)
+    : { lines: [], truncated: false }
+  const chdLayouts = item.children.map(ch => wrapLabel(ch.label, CHILD_MAX, 2))
+
+  const lastLblBL = FIRST_LBL_BL + (lblLines.length - 1) * LBL_LH
+  let anchorBL    = lastLblBL
+  let firstValBL  = 0
+  if (valLines.length > 0) {
+    firstValBL = lastLblBL + LBL_VAL_STEP
+    anchorBL   = firstValBL + (valLines.length - 1) * VAL_LH
+  }
+
+  let firstChdBL = 0
+  let lastBL     = anchorBL
+  if (item.children.length > 0) {
+    const gap   = item.value ? 20 : 26
+    firstChdBL  = anchorBL + gap
+    const total = chdLayouts.reduce((s, { lines }) => s + lines.length, 0)
+    lastBL      = firstChdBL + (total - 1) * CHD_LH
+  }
+
+  return {
+    lblLines, lblTrunc, valLines, valTrunc, chdLayouts,
+    itemH: lastBL + PAD_B,
+    firstValBL, firstChdBL,
+  }
+}
+
+// ── Renderer ─────────────────────────────────────────────────────────────────
+
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
 
-  const W      = 460
-  const PAD    = 16
-  const titleH = spec.title ? 28 : 0
-
-  // ── Per-item vertical offsets (from item top) ───────────────────────────────
-  //   label baseline      = 22
-  //   value baseline      = 38   (only if item.value)
-  //   first child BL      = (value ? 38 + 20 : 22 + 26)
-  //   child-to-child step = 17
-  //   bottom padding      = 10
-  //
-  // Bigger gap before the first child when there's no value, because the 12 px
-  // bold label has more visual weight than an 11 px italic subtitle.
-  const firstChildGap = (hasValue: boolean) => hasValue ? 20 : 26
-  const heights = items.map(item => {
-    const hasValue = !!item.value
-    const nCh      = item.children.length
-    const topBL    = hasValue ? 38 : 22
-    const lastBL   = nCh > 0 ? topBL + firstChildGap(hasValue) + (nCh - 1) * 17 : topBL
-    return lastBL + 10
-  })
-  const H = PAD + titleH + heights.reduce((s, h) => s + h, 0) + PAD
-
-  // ── X positions ─────────────────────────────────────────────────────────────
-  const mainMarkerX    = PAD + 8          // circle centre
-  const mainTextStart  = PAD + 22
-  const subMarkerX     = PAD + 28         // small circle centre, indented
-  const subTextStart   = PAD + 38
-
-  const mainLabelMax  = Math.floor(((W - PAD) - mainTextStart - 4) / 5.8)
-  const valueMax      = Math.floor(((W - PAD) - mainTextStart - 4) / 5.0)
-  const childLabelMax = Math.floor(((W - PAD) - subTextStart  - 4) / 5.3)
+  const titleH  = spec.title ? 28 : 0
+  const layouts = items.map(computeItemLayout)
+  const H       = PAD + titleH + layouts.reduce((s, l) => s + l.itemH, 0) + PAD
 
   let svg = ''
   if (spec.title) {
@@ -52,35 +85,51 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   let y = PAD + titleH
   for (let i = 0; i < items.length; i++) {
-    const item  = items[i]
-    const itemH = heights[i]
-    const t     = items.length > 1 ? i / (items.length - 1) : 0
-    const fill  = lerpColor(theme.secondary, theme.primary, t)
+    const item   = items[i]
+    const layout = layouts[i]
+    const t      = items.length > 1 ? i / (items.length - 1) : 0
+    const fill   = lerpColor(theme.secondary, theme.primary, t)
+    const { lblLines, lblTrunc, valLines, valTrunc, chdLayouts,
+            itemH, firstValBL, firstChdBL } = layout
 
-    // Main bullet + label
-    const labelBL  = y + 22
+    const labelBL  = y + FIRST_LBL_BL
     const markerCy = labelBL - 4
-    svg += `<circle cx="${mainMarkerX}" cy="${markerCy}" r="5" fill="${fill}" />`
-    svg += `<text x="${mainTextStart}" y="${labelBL}" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, mainLabelMax)}</text>`
 
-    // Optional value subtitle
-    let anchorBL = labelBL
-    if (item.value) {
-      const valueBL = y + 38
-      svg += `<text x="${mainTextStart}" y="${valueBL}" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic">${tt(item.value, valueMax)}</text>`
-      anchorBL = valueBL
+    // ── Main bullet ───────────────────────────────────────────────────────────
+    svg += `<circle cx="${mainMarkerX}" cy="${markerCy}" r="5" fill="${fill}" />`
+
+    // ── Main label (bold, up to 2 lines) ─────────────────────────────────────
+    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
+    const lblSpans = lblLines
+      .map((l, li) => `<tspan x="${mainTextStart}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
+      .join('')
+    svg += `<text x="${mainTextStart}" y="${labelBL}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`
+
+    // ── Value subtitle (italic muted, up to 2 lines) ──────────────────────────
+    if (valLines.length > 0) {
+      const valBL    = y + firstValBL
+      const valTip   = valTrunc ? `<title>${escapeXml(item.value!)}</title>` : ''
+      const valSpans = valLines
+        .map((l, li) => `<tspan x="${mainTextStart}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
+        .join('')
+      svg += `<text x="${mainTextStart}" y="${valBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic">${valTip}${valSpans}</text>`
     }
 
-    // Indented child rows (1 level deep)
-    const gap = firstChildGap(!!item.value)
+    // ── Child rows (up to 2 lines each) ──────────────────────────────────────
+    let chdBL = y + firstChdBL
     item.children.forEach((child, j) => {
-      const childBL       = anchorBL + gap + j * 17
-      const childMarkerCy = childBL - 4
+      const { lines: chLines, truncated: chTrunc } = chdLayouts[j]
+      const childMarkerCy = chdBL - 4
       svg += `<circle cx="${subMarkerX}" cy="${childMarkerCy}" r="3" fill="${fill}" fill-opacity="0.7" />`
-      svg += `<text x="${subTextStart}" y="${childBL}" font-size="11" fill="${theme.text}" fill-opacity="0.85" font-family="system-ui,sans-serif">${tt(child.label, childLabelMax)}</text>`
+      const chTip   = chTrunc ? `<title>${escapeXml(child.label)}</title>` : ''
+      const chSpans = chLines
+        .map((l, li) => `<tspan x="${subTextStart}" dy="${li === 0 ? 0 : CHD_LH}">${escapeXml(l)}</tspan>`)
+        .join('')
+      svg += `<text x="${subTextStart}" y="${chdBL}" font-size="${CHD_FS}" fill="${theme.text}" fill-opacity="0.85" font-family="system-ui,sans-serif">${chTip}${chSpans}</text>`
+      chdBL += chLines.length * CHD_LH
     })
 
-    // Divider between items
+    // ── Divider ───────────────────────────────────────────────────────────────
     if (i < items.length - 1) {
       svg += `<line x1="${PAD}" y1="${y + itemH}" x2="${W - PAD}" y2="${y + itemH}" stroke="${theme.border}" stroke-width="0.5" />`
     }

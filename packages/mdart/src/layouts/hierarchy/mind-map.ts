@@ -1,64 +1,109 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { tt } from '../shared'
+import { escapeXml, wrapLabel } from '../shared'
+
+// ── Node geometry ────────────────────────────────────────────────────────────
+// Three tiers, each an ellipse. rx/ry chosen so 2 wrapped lines fit.
+
+const CENTER_RX = 72,  CENTER_RY = 30
+const BRANCH_RX = 58,  BRANCH_RY = 27
+const SUB_RX    = 36,  SUB_RY    = 23
+
+const CENTER_FS = 12,  CENTER_LH = 15
+const BRANCH_FS = 10,  BRANCH_LH = 13
+const SUB_FS    = 8.5, SUB_LH   = 11
+
+// Max chars per line ≈ (2·rx − padding) / avg-px-per-char
+const CENTER_MC = Math.floor((CENTER_RX * 2 - 16) / 6.5)   // ~20
+const BRANCH_MC = Math.floor((BRANCH_RX * 2 - 14) / 5.8)   // ~17
+// Sub-nodes: text is intentionally wider than the ellipse — spill is fine
+const SUB_MC    = 20
+
+// Canvas — tall enough so top/bottom sub-nodes don't clip
+const W  = 720, H  = 660
+const cx = W / 2, cy = H / 2
+const R1 = 170   // center → branch
+const R2 = 100   // branch → sub-node (further out so subs don't crowd the branch)
+
+// ── Helper: centered multi-line <text> ───────────────────────────────────────
+
+function mlText(
+  x: number, y: number,
+  label: string,
+  maxChars: number,
+  fontSize: number,
+  lineH: number,
+  fill: string,
+  weight = 'normal',
+): string {
+  const { lines, truncated } = wrapLabel(label, maxChars, 2)
+  // Shift baseline up by half the total text-block height so it centers in the ellipse
+  const startY = y - (lines.length - 1) * lineH / 2 + fontSize * 0.32
+  const tip    = truncated ? `<title>${escapeXml(label)}</title>` : ''
+  const spans  = lines
+    .map((l, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
+    .join('')
+  return `<text x="${x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="${weight}">${tip}${spans}</text>`
+}
+
+// ── Renderer ─────────────────────────────────────────────────────────────────
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const W = 640, H = 520
-  const cx = W / 2, cy = H / 2
-
   let centerLabel: string
   let branches: MdArtSpec['items']
 
   if (spec.title) {
     centerLabel = spec.title
-    branches = spec.items
+    branches    = spec.items
   } else if (spec.items.length === 1) {
     centerLabel = spec.items[0].label
-    branches = spec.items[0].children
+    branches    = spec.items[0].children
   } else {
     centerLabel = 'Topic'
-    branches = spec.items
+    branches    = spec.items
   }
 
   const n = branches.length
-  const R1 = 155
-  const R2 = 78
 
-  const lines: string[] = []
-  const shapes: string[] = []
-  const texts: string[] = []
+  const connectors: string[] = []
+  const shapes:     string[] = []
+  const texts:      string[] = []
 
-  shapes.push(`<ellipse cx="${cx}" cy="${cy}" rx="64" ry="24" fill="${theme.surface}" stroke="${theme.accent}" stroke-width="1.5"/>`)
-  texts.push(`<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(centerLabel, 16)}</text>`)
+  // ── Center node ─────────────────────────────────────────────────────────────
+  shapes.push(`<ellipse cx="${cx}" cy="${cy}" rx="${CENTER_RX}" ry="${CENTER_RY}" fill="${theme.surface}" stroke="${theme.accent}" stroke-width="1.5"/>`)
+  texts.push(mlText(cx, cy, centerLabel, CENTER_MC, CENTER_FS, CENTER_LH, theme.text, '600'))
 
+  // ── Branches ────────────────────────────────────────────────────────────────
   for (let i = 0; i < n; i++) {
     const angle = (2 * Math.PI * i / n) - Math.PI / 2
     const bx = cx + R1 * Math.cos(angle)
     const by = cy + R1 * Math.sin(angle)
     const branch = branches[i]
 
-    lines.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${theme.accent}99" stroke-width="2"/>`)
+    connectors.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${theme.accent}99" stroke-width="2"/>`)
+    shapes.push(`<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="${BRANCH_RX}" ry="${BRANCH_RY}" fill="${theme.surface}" stroke="${theme.accent}cc" stroke-width="1"/>`)
+    texts.push(mlText(bx, by, branch.label, BRANCH_MC, BRANCH_FS, BRANCH_LH, theme.text))
 
-    shapes.push(`<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="50" ry="20" fill="${theme.surface}" stroke="${theme.accent}cc" stroke-width="1"/>`)
-    texts.push(`<text x="${bx.toFixed(1)}" y="${(by + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(branch.label, 13)}</text>`)
-
+    // ── Sub-nodes ──────────────────────────────────────────────────────────────
     const subs = branch.children
-    const ns = subs.length
+    const ns   = subs.length
     for (let j = 0; j < ns; j++) {
-      const spread = Math.min(Math.PI * 0.7, Math.max(0.45, (ns - 1) * 0.5))
+      // Angular step sized so adjacent sub-ellipse edges have at least 8 px clearance.
+      // chord ≈ R2·θ for small θ  →  θ_min = (2·SUB_RX + 8) / R2
+      const step     = ns <= 1 ? 0 : Math.max((2 * SUB_RX + 8) / R2, 0.45)
       const subAngle = ns <= 1
         ? angle
-        : angle + (j - (ns - 1) / 2) * (spread / Math.max(ns - 1, 1))
+        : angle + (j - (ns - 1) / 2) * step
       const sx = bx + R2 * Math.cos(subAngle)
       const sy = by + R2 * Math.sin(subAngle)
 
-      lines.push(`<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1" opacity="0.7"/>`)
-      shapes.push(`<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="20" fill="${theme.surface}" stroke="${theme.textMuted}aa" stroke-width="1"/>`)
-      texts.push(`<text x="${sx.toFixed(1)}" y="${(sy + 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(subs[j].label, 11)}</text>`)
+      connectors.push(`<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1" opacity="0.7"/>`)
+      shapes.push(`<ellipse cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" rx="${SUB_RX}" ry="${SUB_RY}" fill="${theme.surface}" stroke="${theme.textMuted}aa" stroke-width="1"/>`)
+      texts.push(mlText(sx, sy, subs[j].label, SUB_MC, SUB_FS, SUB_LH, theme.textMuted))
     }
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${[...lines, ...shapes, ...texts].join('\n  ')}
+  ${[...connectors, ...shapes, ...texts].join('\n  ')}
 </svg>`
 }

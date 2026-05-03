@@ -2,10 +2,10 @@ type: pros-cons
 title: Microservices vs Monolith
 
 - Pros
-  - Independent deployments
-  - Technology flexibility
-  - Fault isolation
+  - Independent deployments with no shared release coordination
+  - Technology flexibility to pick the right tool per service
+  - Fault isolation prevents one bad service from taking down the whole app
 - Cons
-  - Operational complexity
-  - Network latency
-  - Higher infra cost
+  - Operational complexity: each service needs its own CI pipeline and config
+  - Network latency added on every inter-service call
+  - Higher infrastructure cost for running multiple isolated runtimes

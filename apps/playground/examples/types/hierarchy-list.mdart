@@ -2,11 +2,11 @@ type: hierarchy-list
 title: Knowledge Base
 
 - Getting Started
-  - Installation
-  - Quick start
+  - Installation and environment prerequisites
+  - Quick start guide with a working example in under 5 minutes
 - Guides
-  - Authentication
-  - Webhooks
+  - Authentication with API keys and OAuth 2.0
+  - Webhooks: delivery guarantees, retries, and signature verification
 - Reference
-  - REST API
-  - SDK docs
+  - REST API endpoints with request and response schemas
+  - SDK docs for JavaScript, Python, and Go clients

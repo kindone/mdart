@@ -1,12 +1,12 @@
 type: tab-list
 title: Environment Config
 
-- Development
-  - Debug logging enabled
-  - Hot reload active
-- Staging
-  - Production parity
-  - Alerts muted
-- Production
-  - Full observability
-  - Rate limiting enforced
+- Development: Local developer setup with fast feedback loops
+  - Debug logging enabled for all services
+  - Hot reload active via Vite and nodemon
+- Staging: Production-parity environment for final validation
+  - All external integrations use sandbox credentials
+  - Alerts muted to avoid false-positive pages
+- Production: Live traffic with full observability and strict limits
+  - Full distributed tracing with 7-day retention
+  - Rate limiting and circuit breakers enforced

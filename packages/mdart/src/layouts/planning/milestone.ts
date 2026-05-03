@@ -1,53 +1,103 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty } from '../shared'
 
-function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
-  const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
-    : ''
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${titleEl}
-  ${parts.join('\n  ')}
-</svg>`
+// ── Layout constants ─────────────────────────────────────────────────────────
+
+const W      = 460
+const LINE_X = 36
+
+const LBL_FS = 12, LBL_LH = 15
+const PAD_T  = 8
+const PAD_B  = 8
+const MIN_ROW_H = 40
+
+// Label area: from diamond edge to where status tag starts (approx 90px from right)
+const textX    = LINE_X + 22
+const TAG_W    = 80   // reserved for status tag on the right
+const LABEL_MAX = Math.max(12, Math.floor((W - textX - TAG_W - 8) / 6.0))  // ~42
+
+// ── Per-row layout ────────────────────────────────────────────────────────────
+
+interface RowLayout {
+  lblLines: string[]
+  lblTrunc: boolean
+  rowH:     number
 }
+
+function computeRow(item: MdArtSpec['items'][number]): RowLayout {
+  const { lines: lblLines, truncated: lblTrunc } = wrapLabel(item.label, LABEL_MAX, 2)
+  const rowH = Math.max(MIN_ROW_H, PAD_T + lblLines.length * LBL_LH + PAD_B)
+  return { lblLines, lblTrunc, rowH }
+}
+
+// ── Renderer ─────────────────────────────────────────────────────────────────
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
 
-  const W = 460, ROW_H = 44
   const TITLE_H = spec.title ? 30 : 8
-  const LINE_X = 36
-  const H = TITLE_H + 12 + items.length * ROW_H + 8
+  const rows    = items.map(computeRow)
+
+  const rowY: number[] = []
+  let cumY = TITLE_H + 12
+  for (const r of rows) {
+    rowY.push(cumY)
+    cumY += r.rowH
+  }
+  const H = cumY + 8
+
+  function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
+    const titleEl = title
+      ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+      : ''
+    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
+  ${titleEl}
+  ${parts.join('\n  ')}
+</svg>`
+  }
 
   const parts: string[] = []
 
-  const spineY1 = TITLE_H + 12 + ROW_H / 2
-  const spineY2 = TITLE_H + 12 + (items.length - 0.5) * ROW_H
-  parts.push(`<line x1="${LINE_X}" y1="${spineY1.toFixed(1)}" x2="${LINE_X}" y2="${spineY2.toFixed(1)}" stroke="${theme.border}" stroke-width="2"/>`)
+  // Spine line
+  const spineY1 = TITLE_H + 12 + rows[0].rowH / 2
+  const spineY2 = TITLE_H + 12 + (items.length - 0.5) * rows[0].rowH
+  const lastCy  = rowY[items.length - 1] + rows[items.length - 1].rowH / 2
+  parts.push(`<line x1="${LINE_X}" y1="${spineY1.toFixed(1)}" x2="${LINE_X}" y2="${lastCy.toFixed(1)}" stroke="${theme.border}" stroke-width="2"/>`)
 
   items.forEach((item, i) => {
-    const cy = TITLE_H + 12 + i * ROW_H + ROW_H / 2
-    const done = item.attrs.includes('done') || item.attrs.includes('complete')
-    const active = item.attrs.includes('active') || item.attrs.includes('current') || item.attrs.includes('now')
+    const cy      = rowY[i] + rows[i].rowH / 2
+    const { lblLines, lblTrunc, rowH } = rows[i]
+    const done    = item.attrs.includes('done') || item.attrs.includes('complete')
+    const active  = item.attrs.includes('active') || item.attrs.includes('current') || item.attrs.includes('now')
     const upcoming = !done && !active
 
-    const s = active ? 10 : 8
-    const fill = done ? theme.accent : active ? theme.accent : theme.surface
+    const s      = active ? 10 : 8
+    const fill   = done || active ? theme.accent : theme.surface
     const stroke = done || active ? theme.accent : theme.border
-    const sw = active ? 2.5 : 1.5
+    const sw     = active ? 2.5 : 1.5
 
-    parts.push(`<rect x="${(LINE_X - s).toFixed(1)}" y="${(cy - s).toFixed(1)}" width="${(s*2).toFixed(1)}" height="${(s*2).toFixed(1)}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" transform="rotate(45 ${LINE_X} ${cy})"/>`)
-    if (done) parts.push(`<text x="${LINE_X}" y="${(cy+4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="700">✓</text>`)
+    parts.push(`<rect x="${(LINE_X - s).toFixed(1)}" y="${(cy - s).toFixed(1)}" width="${(s * 2).toFixed(1)}" height="${(s * 2).toFixed(1)}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" transform="rotate(45 ${LINE_X} ${cy})"/>`)
+    if (done) {
+      parts.push(`<text x="${LINE_X}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="700">✓</text>`)
+    }
 
     const labelColor = upcoming ? theme.textMuted : theme.text
-    const fw = active ? '600' : '400'
-    parts.push(`<text x="${(LINE_X + 22).toFixed(1)}" y="${(cy+5).toFixed(1)}" font-size="12" fill="${labelColor}" font-family="system-ui,sans-serif" font-weight="${fw}">${tt(item.label, 28)}</text>`)
+    const fw         = active ? '600' : '400'
 
-    const tag = done ? 'Done' : active ? 'In Progress' : (item.value ?? 'Upcoming')
+    // Label — vertically centred, up to 2 lines
+    const lblStartY = rowY[i] + (rowH - lblLines.length * LBL_LH) / 2 + LBL_FS * 0.75
+    const lblTip    = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
+    const lblSpans  = lblLines
+      .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
+      .join('')
+    parts.push(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${labelColor}" font-family="system-ui,sans-serif" font-weight="${fw}">${lblTip}${lblSpans}</text>`)
+
+    // Status tag on the right
+    const tag    = done ? 'Done' : active ? 'In Progress' : (item.value ?? 'Upcoming')
     const tagCol = done ? theme.accent : active ? '#fbbf24' : theme.textMuted
-    parts.push(`<text x="${W - 10}" y="${(cy+5).toFixed(1)}" text-anchor="end" font-size="9" fill="${tagCol}" font-family="system-ui,sans-serif">${tt(tag, 12)}</text>`)
+    parts.push(`<text x="${W - 10}" y="${(cy + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${tagCol}" font-family="system-ui,sans-serif">${escapeXml(tag.slice(0, 16))}</text>`)
   })
 
   return svgWrap(W, H, theme, spec.title, parts)

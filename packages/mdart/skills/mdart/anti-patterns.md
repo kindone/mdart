@@ -105,7 +105,47 @@ Even a good type pick can produce a bad diagram if syntax is sloppy.
 
 ---
 
-## 7. When in doubt
+## 7. Verbose labels & overstuffed diagrams
+
+MdArt nodes are fixed-size shapes. Long text overflows, shrinks the font, or
+wraps awkwardly. The diagram becomes harder to read as the data becomes more
+"complete". Detail belongs in prose around the diagram, not inside the nodes.
+
+See SKILL.md §3 for length budgets per node kind. Common manifestations:
+
+- **Full sentences inside process / cycle / pyramid nodes.** "The user signs
+  in via OAuth and we issue a JWT" should become "OAuth sign-in" + "Issue
+  JWT" as two steps, or "OAuth → JWT" if it really is one step.
+- **Descriptive paragraphs inside `kanban` / `sprint-board` cards.** Cards
+  hold task titles only. If you need acceptance criteria, write them outside
+  the fence.
+- **Long parenthetical asides.** "Cache (uses Redis with 60s TTL and falls
+  back to Postgres on miss)" → "Cache" with the detail in surrounding text.
+- **Restating the front-matter `title:` inside every node.** "Q3 Plan: Hire
+  · Q3 Plan: Ship · Q3 Plan: Review" → use `title: Q3 Plan` then `Hire ·
+  Ship · Review`.
+- **One mega-diagram covering 3 unrelated concepts.** If the user asked
+  about "our architecture, deploy pipeline, and on-call rotation", that's
+  three diagrams. Cramming them into one `network` fence loses the
+  distinct shape each one wants.
+- **Trying to show every leaf in a deep tree.** A 6-level org chart with 80
+  people is a directory, not a diagram. Show the top 2–3 levels, or split
+  per-department.
+- **Numerical breakdowns inside labels.** "Revenue (was $1.2M in Q1, $1.5M
+  in Q2, projected $1.8M in Q3)" → use a `bullet-chart` or `progress-list`
+  with the numbers as values, label is just "Revenue".
+
+**Fix priority when a diagram feels too big:**
+
+1. Compress every label to a noun phrase first (cheap, often enough).
+2. If still too dense, split by sub-topic into multiple fences with shared
+   `title:` prefix.
+3. If a single sub-topic is still too dense, the right tool is probably
+   prose with a small accompanying diagram, not a bigger diagram.
+
+---
+
+## 8. When in doubt
 
 If the choice still feels arbitrary after walking the decision tree:
 
@@ -114,3 +154,4 @@ If the choice still feels arbitrary after walking the decision tree:
 3. If the default would discard information the user explicitly provided (numbers, dates, edges, parallel lanes, status), escalate to the specialised type that preserves it.
 4. **Never pick a type just because its name appears in the user's prompt** — match the *structure* of the data, not the vocabulary.
 5. If the data is genuinely shapeless and there's no semantic differentiator, `bullet-list` (for nouns) or `process` (for verbs) is fine. The mistake is escalating *too eagerly* to those when something better fits.
+6. If the result feels overcrowded, re-read §7 — compress labels, split fences, or fall back to prose-plus-small-diagram.

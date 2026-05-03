@@ -1,8 +1,9 @@
 type: two-column-list
 title: Tech Stack
 
-- Frontend: React + TypeScript
-- Backend: Node.js + Express
-- Database: SQLite
-- Auth: Passkeys
-- Deploy: PM2 + nginx
+- Frontend: React with TypeScript and Vite for fast local dev
+- Backend: Node.js with Express and structured logging
+- Database: PostgreSQL with connection pooling via pgBouncer
+- Auth: Passkeys and OAuth 2.0 with short-lived JWT sessions
+- Deploy: PM2 cluster mode behind nginx with health checks
+- Observability: OpenTelemetry traces exported to Grafana Tempo

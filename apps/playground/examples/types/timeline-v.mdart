@@ -2,12 +2,12 @@ type: timeline-v
 title: Release History
 
 - v1.0: Initial release
-  - MVP feature set
-- v1.2: Bug fixes & perf
-  - Stability improvements
-- v2.0: Major redesign
-  - New information architecture
-- v2.5: API v2
-  - GraphQL endpoint
-- v3.0: Enterprise tier
-  - SSO and audit logs
+  - Shipped MVP feature set after 6-month private beta
+- v1.2: Bug fixes and performance improvements
+  - Reduced p99 latency by 40% and fixed auth edge cases
+- v2.0: Major redesign with new information architecture
+  - Complete UI overhaul and restructured navigation model
+- v2.5: API v2 with GraphQL and improved pagination
+  - Introduced cursor-based pagination and field-level permissions
+- v3.0: Enterprise tier with SSO and comprehensive audit logs
+  - Added SAML/OIDC support and tamper-evident audit trail

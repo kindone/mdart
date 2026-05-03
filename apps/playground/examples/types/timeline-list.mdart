@@ -1,8 +1,8 @@
 type: timeline-list
 title: Sprint Timeline
 
-- Mon: Planning & kickoff
-- Tue: Core implementation
-- Wed: Code review
-- Thu: Testing & fixes
-- Fri: Deploy & retro
+- Mon: Planning & kickoff with stakeholders to align on scope and acceptance criteria
+- Tue: Core feature implementation and API contract finalization
+- Wed: Code review, pair debugging, and addressing review feedback
+- Thu: End-to-end testing across environments and bug fixes
+- Fri: Deploy to production, write retro notes, and update runbook

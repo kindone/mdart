@@ -169,6 +169,55 @@ If your pick feels generic, walk back up rules 1–5 to check for a domain-speci
 
 ---
 
+## §3 — Node text density: keep labels short, split big diagrams
+
+MdArt nodes are **fixed-size shapes**, not paragraphs. Long labels overflow,
+get truncated, force tiny fonts, or wrap awkwardly. The diagram becomes
+unreadable long before the data becomes complete.
+
+**Rule of thumb per node:**
+
+| Node kind | Target | Hard ceiling |
+|---|---|---|
+| Process step / cycle phase / pyramid tier | 1–3 words | ~24 chars |
+| Tree / org-chart / mind-map node | 1–4 words | ~28 chars |
+| SWOT / pros-cons / matrix-2x2 cell | short phrase, ≤ ~6 words | ~50 chars |
+| `card-list` / `pyramid-list` body | 1 short sentence | ~80 chars |
+| `kanban` / `sprint-board` card | task title only, no description | ~40 chars |
+| Sequence / state-machine label | verb phrase or event name | ~24 chars |
+| Comparison / matrix-nxm cell | a value, not a sentence | ~30 chars |
+
+**Compression techniques** (apply before emitting the fence):
+
+- Drop articles (a/an/the) and filler verbs (is, are, has, can).
+- Use noun phrases over full sentences: "User auth" not "The user authenticates with the system".
+- Replace clauses with abbreviations where unambiguous: "Q3 launch" not "Launch in the third quarter".
+- Move detail into the front-matter `title:` or a paragraph **outside** the fence — never cram it inside a node.
+- For values: prefer `Name: 75%` over `Name (currently at 75%)`.
+- Domain jargon is fine if the audience knows it (`PR review`, `OAuth`, `CDN`).
+
+**When to split into multiple diagrams:**
+
+A single diagram should convey **one idea**. Split when any of these hold:
+
+- More than ~12 leaf nodes in a flat layout (process, list, cycle, comparison).
+- More than ~20 nodes in a hierarchy / network / mind-map.
+- Two or more clearly distinct concepts the user mentioned (e.g. "show our
+  architecture and our deploy pipeline" → two fences, not one).
+- Different appropriate types for different sub-parts (e.g. high-level
+  `process` + per-step `swimlane` detail).
+- A node would need a child diagram of its own to explain it — make that the
+  second fence.
+
+When splitting, give each fence a clear `title:` so the relationship between
+them is explicit ("Architecture · overview" + "Architecture · auth flow").
+Prefer 2–3 focused diagrams over one overstuffed one.
+
+If after splitting and compressing the labels still don't fit, the right
+answer is often **prose plus a small diagram**, not a bigger diagram.
+
+---
+
 ## Quick anti-pattern reminders
 
 Before emitting a diagram, sanity-check:
@@ -176,9 +225,11 @@ Before emitting a diagram, sanity-check:
 - **Picking by keyword match** — if the user said "timeline", that doesn't mean `timeline` (could be `timeline-list`, `gantt-lite`, or `roadmap`). Match data structure, not vocabulary.
 - **Defaulting to generic types** — `process` for unordered items, `bullet-list` for comparisons, `tree` for processes are the top three failures.
 - **Wrong family** — `pyramid` ≠ hierarchy; `cycle` ≠ recurring task; `network` ≠ hierarchy.
+- **Verbose node labels** — sentences inside shapes overflow or shrink the font. Compress to noun phrases (§3).
+- **Single overstuffed diagram** — if you'd need >12 flat nodes or >20 tree nodes, split into multiple fences (§3).
 - **Syntax traps** — in `sequence` / `state-machine` / `network`, always use `→ Target: message`, never `- Target` (parses as edge but reads as containment). SWOT/pros-cons headings must be exact words (`Strengths`, `Pros`, etc.) or use the explicit `[strengths]` / `[pros]` attr.
 
-For the full anti-pattern catalog with 6 categories of failure modes, **read `anti-patterns.md` in this skill directory**.
+For the full anti-pattern catalog with 7 categories of failure modes, **read `anti-patterns.md` in this skill directory**.
 
 ---
 
@@ -188,9 +239,10 @@ Before emitting a `mdart` fence:
 
 1. Walk §2 top-to-bottom. First match wins.
 2. Cross-check §1 — does the family default fit?
-3. Skim §5 / `anti-patterns.md` — am I about to make a known mistake?
-4. Choose `theme:` only if the user requested a specific look. Otherwise omit.
-5. Add `title:` only when it adds context the labels alone don't carry.
+3. Apply §3 — are any labels too long? Is the diagram too dense to read? Compress or split.
+4. Skim `anti-patterns.md` — am I about to make a known mistake?
+5. Choose `theme:` only if the user requested a specific look. Otherwise omit.
+6. Add `title:` only when it adds context the labels alone don't carry.
 
 ---
 
