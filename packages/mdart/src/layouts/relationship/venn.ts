@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt } from '../shared'
+import { escapeXml, truncate, wrapLabel } from '../shared'
 
 /**
  * Unified Venn renderer.
@@ -18,22 +18,6 @@ import { escapeXml, tt } from '../shared'
  */
 
 const SEP_RE = /\s*∩\s*|\s*&&\s*/
-
-/** Word-wrap into ≤2 lines of maxChars; truncate the second. */
-function wrapIx(text: string, maxChars: number): string[] {
-  if (text.length <= maxChars) return [text]
-  const words = text.split(' ')
-  const lines: string[] = []
-  let cur = ''
-  for (const w of words) {
-    if (!cur) { cur = w; continue }
-    if (cur.length + 1 + w.length <= maxChars) cur += ' ' + w
-    else { lines.push(cur); cur = w }
-  }
-  if (cur) lines.push(cur)
-  if (lines.length === 0) return [tt(text, maxChars)]
-  return lines.length === 1 ? lines : [lines[0], tt(lines.slice(1).join(' '), maxChars)]
-}
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -178,12 +162,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const ly = c.y + labelOff[i][1]
     const labelFontSize = n === 2 ? 13 : (n === 3 ? 12 : 11)
     const labelMax      = n === 2 ? 14 : (n === 3 ? 13 : 12)
-    parts.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, labelMax)}</text>`)
-    const maxChildren = n === 2 ? 4 : 2
+    const { lines: lblLines, truncated: lblTrunc } = wrapLabel(item.label, labelMax)
+    const lblLineH = labelFontSize + 2
+    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
+    const lblSpans = lblLines
+      .map((l, li) => `<tspan x="${lx.toFixed(1)}" dy="${li === 0 ? 0 : lblLineH}">${escapeXml(l)}</tspan>`)
+      .join('')
+    parts.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`)
+    const maxChildren  = n === 2 ? 4 : 2
+    const childGap     = n === 2 ? 12 : 14
+    const childSpacing = n === 2 ? 16 : 13
+    const childBaseY   = ly + (lblLines.length - 1) * lblLineH + childGap
     item.children.slice(0, maxChildren).forEach((ch, j) => {
-      const childY = ly + (n === 2 ? 12 + j * 16 : 14 + j * 13)
-      const fs     = n === 2 ? 10 : 8.5
-      parts.push(`<text x="${lx.toFixed(1)}" y="${childY.toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, n === 2 ? 13 : 10)}</text>`)
+      const fs = n === 2 ? 10 : 8.5
+      parts.push(`<text x="${lx.toFixed(1)}" y="${(childBaseY + j * childSpacing).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(truncate(ch.label, n === 2 ? 13 : 10))}</text>`)
     })
   })
 
@@ -201,14 +193,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Display text strips the separator-name list and shows just the value
     // (if user wrote `A && B: caption`) or a clean "A ∩ B" form otherwise.
     const display = ix.value ?? names.join(' ∩ ')
-    const lines   = wrapIx(display, 12)
+    const { lines, truncated } = wrapLabel(display, 12)
     const lineH   = n === 2 ? 13 : 11
     const startY  = pos.y - (lines.length - 1) * lineH / 2 + (n === 2 ? -4 : 3)
     const fs      = n === 2 ? 11 : 9
     const fw      = n === 2 ? '500' : '600'
-    lines.forEach((line, li) => {
-      parts.push(`<text x="${pos.x.toFixed(1)}" y="${(startY + li * lineH).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="${fw}">${escapeXml(line)}</text>`)
-    })
+    const tip     = truncated ? `<title>${escapeXml(display)}</title>` : ''
+    const tspans  = lines
+      .map((line, li) => `<tspan x="${pos.x.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(line)}</tspan>`)
+      .join('')
+    parts.push(`<text x="${pos.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="${fw}">${tip}${tspans}</text>`)
   })
 
   return svg(W, H, theme, spec.title, parts)
