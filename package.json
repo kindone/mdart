@@ -14,7 +14,8 @@
     "gen-examples":       "node scripts/gen-examples.mjs",
     "gen-gallery":        "node scripts/gen-gallery.mjs",
     "gen-syntax-images":  "node scripts/gen-syntax-images.mjs",
-    "gen-docs":           "npm run gen-examples && npm run gen-gallery && npm run gen-syntax-images"
+    "gen-docs":           "npm run gen-examples && npm run gen-gallery && npm run gen-syntax-images",
+    "install:skill":      "node scripts/install-skill.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
