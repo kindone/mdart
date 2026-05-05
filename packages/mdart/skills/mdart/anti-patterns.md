@@ -74,6 +74,33 @@ Some types have implicit count constraints. Violating them produces awkward outp
 
 ---
 
+## 4b. Wrong orientation (rows vs columns)
+
+The canvas scrolls vertically but is bounded horizontally. Many top-level
+items projected onto the *column* axis means narrow, illegible cells.
+
+- **`comparison` where attributes outnumber items, with no `direction: LR`.**
+  The default (`TB`) makes each top-level item a row, attributes columns. So
+  3 products × 10 features → 3 rows × 10 narrow columns. Add `direction: LR`
+  to flip: 3 columns of products × 10 rows of features. (When items ≥ attributes,
+  the default is already correct — leave the flag off.)
+- **`matrix-nxm` / `heatmap` with the shorter axis as top-level.** Top-level
+  items become **rows**. Plotting "10 people × 4 skills"? People (10) are
+  top-level, skills (4) are children. Reversing makes 10 narrow columns.
+- **`kanban` / `sprint-board` with 8+ status columns.** These types *must*
+  render top-level as columns. Beyond ~6, split into multiple boards (e.g.
+  one per team or sub-flow) rather than letting cards shrink.
+- **`sequence` with 8+ actors.** Actors are columns. ~6 is the comfortable
+  ceiling. For wider message graphs, split per-subsystem.
+- **`tree` / `org-chart` for very wide hierarchies.** Vertical tree types
+  expand sideways at the leaf level. If the structure is wider than ~6
+  siblings at any level, switch to `h-org-chart` (lays children left-to-right
+  so the tree grows downward) or `hierarchy-list` (pure outline).
+
+See SKILL.md §4 for the full orientation rule.
+
+---
+
 ## 5. Ignoring richer metaphors
 
 When the user uses metaphor language, lean into the corresponding type.

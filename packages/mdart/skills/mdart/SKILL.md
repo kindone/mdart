@@ -218,6 +218,105 @@ answer is often **prose plus a small diagram**, not a bigger diagram.
 
 ---
 
+## §4 — Orientation: prefer rows over columns
+
+Horizontal canvas space is bounded; vertical space scrolls comfortably. **When
+the data has a longer axis and a shorter axis, put the longer axis as rows.**
+A diagram that needs 8 columns spills off the page or shrinks each cell to
+illegibility; the same diagram with 8 rows just gets taller.
+
+The control mechanism varies by type:
+
+### a. Types with an explicit `direction:` flag
+
+Only one type currently flips on `direction:` in the front-matter:
+
+| Type | (default, no flag set) `TB` | `direction: LR` |
+|---|---|---|
+| `comparison` | top-level items become **rows** | top-level items become **columns** |
+
+**The default already favours rows** — top-level items stack vertically, and the
+columns are the (typically fewer) attribute names derived from children. So most
+comparisons need no flag.
+
+**Set `direction: LR` only when** the count of attributes (children) exceeds
+the count of items (top-level). E.g. comparing 3 products on 12 features:
+
+- Default TB → 3 rows × 12 columns ← **bad**, 12 narrow columns spill horizontally
+- `direction: LR` → 12 rows × 3 columns ← **good**, 12 features stack vertically
+
+```mdart
+type: comparison
+direction: LR
+title: Database options
+- PostgreSQL
+  - License: Open
+  - SQL: Yes
+  - Scale: Vertical
+  - ACID: Yes
+  - Replication: Yes
+  - Sharding: Add-on
+  - JSON: Native
+  - Full-text: Built-in
+- MongoDB
+  - License: SSPL
+  - SQL: No
+  - Scale: Horizontal
+  - ACID: Document-level
+  - Replication: Yes
+  - Sharding: Native
+  - JSON: Native
+  - Full-text: Built-in
+- Redis
+  - License: BSD
+  - SQL: No
+  - Scale: Horizontal
+  - ACID: No
+  - Replication: Yes
+  - Sharding: Cluster mode
+  - JSON: Module
+  - Full-text: Module
+```
+
+Without `direction: LR` the above produces 3 rows × 8 columns (8 cramped columns); with it, 8 rows × 3 columns.
+
+**Decision rule:** count top-level items vs distinct attributes per item. If items ≥ attributes, omit the flag (default TB is fine). If attributes > items, add `direction: LR`.
+
+### b. Types where data structure controls orientation
+
+These don't read `direction:` — orientation is determined by which axis you make
+top-level (parents) vs children. Put the **longer** axis as parents.
+
+| Type | Top-level → | Children → | Implication |
+|---|---|---|---|
+| `matrix-nxm` | rows | columns | put more-numerous axis as top-level |
+| `heatmap` | rows | columns | put more-numerous axis as top-level |
+| `swimlane` | rows (lanes) | tasks in lane | already row-oriented; many lanes are fine |
+
+For `matrix-nxm` / `heatmap`: if you're plotting "10 people × 4 skills", the people are top-level (10 rows), skills are children (4 columns) — *not* the other way around.
+
+### c. Column-oriented types with hard column budgets
+
+These types *must* render top-level items as columns by their nature. They don't have an orientation flag — instead, **cap the count and split** if you exceed it (per §3):
+
+| Type | Top-level items become | Comfortable max |
+|---|---|---|
+| `kanban`, `sprint-board` | columns (statuses) | 5–6 columns |
+| `sequence` | columns (actors) | ~6 actors |
+| `class` | classes laid out horizontally | ~5 classes |
+
+If a kanban needs 8 statuses or a sequence needs 10 actors, that's a sign to split into multiple fences (e.g. one sequence per sub-flow), not to cram them in.
+
+### d. Hierarchy / org-chart orientation
+
+For tree-shaped data, the choice is between two distinct types, not a flag:
+
+- **Wider than deep** (many siblings, few levels) → `h-org-chart` (horizontal lays children left-to-right, parent stays narrow).
+- **Deeper than wide** (few siblings, many levels) → `org-chart` or `tree` (vertical).
+- **Very wide and very deep** → consider `hierarchy-list` (text outline), or split sub-trees into separate fences.
+
+---
+
 ## Quick anti-pattern reminders
 
 Before emitting a diagram, sanity-check:
@@ -227,6 +326,7 @@ Before emitting a diagram, sanity-check:
 - **Wrong family** — `pyramid` ≠ hierarchy; `cycle` ≠ recurring task; `network` ≠ hierarchy.
 - **Verbose node labels** — sentences inside shapes overflow or shrink the font. Compress to noun phrases (§3).
 - **Single overstuffed diagram** — if you'd need >12 flat nodes or >20 tree nodes, split into multiple fences (§3).
+- **Wrong orientation** — `comparison` with many attributes per item and no `direction: LR`; `matrix-nxm` with the shorter axis as parents; kanban/sequence with too many columns. See §4.
 - **Syntax traps** — in `sequence` / `state-machine` / `network`, always use `→ Target: message`, never `- Target` (parses as edge but reads as containment). SWOT/pros-cons headings must be exact words (`Strengths`, `Pros`, etc.) or use the explicit `[strengths]` / `[pros]` attr.
 
 For the full anti-pattern catalog with 7 categories of failure modes, **read `anti-patterns.md` in this skill directory**.
@@ -240,9 +340,10 @@ Before emitting a `mdart` fence:
 1. Walk §2 top-to-bottom. First match wins.
 2. Cross-check §1 — does the family default fit?
 3. Apply §3 — are any labels too long? Is the diagram too dense to read? Compress or split.
-4. Skim `anti-patterns.md` — am I about to make a known mistake?
-5. Choose `theme:` only if the user requested a specific look. Otherwise omit.
-6. Add `title:` only when it adds context the labels alone don't carry.
+4. Apply §4 — is the longer axis going to be rows? For `comparison`, default (TB) is row-friendly; add `direction: LR` only if attributes > items. For `matrix-nxm` / `heatmap`, put the longer axis as top-level items.
+5. Skim `anti-patterns.md` — am I about to make a known mistake?
+6. Choose `theme:` only if the user requested a specific look. Otherwise omit.
+7. Add `title:` only when it adds context the labels alone don't carry.
 
 ---
 
