@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, parseLink, aWrap } from '../shared'
 
 /** Parse a strictly-numeric string (allowing commas, underscores, whitespace). */
 function parseNum(s: string): number | null {
@@ -67,14 +67,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const m      = metrics[i]
     const bandCx = W / 2
 
+    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
     if (m.raw !== null) {
       // Label small uppercase on top, metric BIG and bold below
-      svg += `<text x="${bandCx}" y="${y + 24}" text-anchor="middle" font-size="10" fill="#fff" fill-opacity="0.85" font-family="system-ui,sans-serif" font-weight="700" letter-spacing="0.08em">${escapeXml(item.label.toUpperCase())}</text>`
+      svg += aWrap(`<text x="${bandCx}" y="${y + 24}" text-anchor="middle" font-size="10" fill="#fff" fill-opacity="0.85" font-family="system-ui,sans-serif" font-weight="700" letter-spacing="0.08em">${escapeXml(itmDisplay.toUpperCase())}</text>`, itmUrl)
       const metricText = m.num !== null ? fmtNum(m.num) : m.raw
       svg += `<text x="${bandCx}" y="${y + 46}" text-anchor="middle" font-size="19" fill="#fff" font-family="system-ui,sans-serif" font-weight="800" letter-spacing="0.02em">${escapeXml(metricText)}</text>`
     } else {
       // No metric — just centre the label
-      svg += `<text x="${bandCx}" y="${y + STEP_H/2 + 5}" text-anchor="middle" font-size="13" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(item.label)}</text>`
+      svg += aWrap(`<text x="${bandCx}" y="${y + STEP_H/2 + 5}" text-anchor="middle" font-size="13" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(itmDisplay)}</text>`, itmUrl)
     }
 
     // Conversion rate from previous step — right gutter, small accent badge

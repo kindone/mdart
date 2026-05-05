@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { tt } from '../shared'
+import { tt, parseLink, aWrap } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const centerLabel = spec.title ?? spec.items[0]?.label ?? 'Hub'
@@ -19,8 +19,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const item = spokes[i]
     parts.push(`<line x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1.5"/>`)
     if (item) {
+      const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
       parts.push(`<rect x="${(sx - 52).toFixed(1)}" y="${(sy - 18).toFixed(1)}" width="104" height="36" rx="5" fill="${theme.surface}" stroke="${theme.primary}66" stroke-width="1.2"/>`)
-      parts.push(`<text x="${sx.toFixed(1)}" y="${(sy + 5).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, 12)}</text>`)
+      parts.push(aWrap(`<text x="${sx.toFixed(1)}" y="${(sy + 5).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, 12)}</text>`, itmUrl))
       // Render children on the OUTER side of the box (away from the hub) so
       // they never sit on top of the connector line. For upper-half boxes the
       // outer side is above; for lower-half (or pure horizontal) it stays below.

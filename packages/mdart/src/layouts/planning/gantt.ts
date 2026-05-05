@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -16,7 +16,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
 
-  interface GanttRow { label: string; start: number; end: number }
+  interface GanttRow { label: string; start: number; end: number; url: string | null }
 
   let maxEnd = 0
   const rows: GanttRow[] = items.map(item => {
@@ -31,7 +31,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       end = parseInt(rangeStr)
     }
     maxEnd = Math.max(maxEnd, end)
-    return { label: item.label, start, end }
+    const { display, url } = parseLink(item.label)
+    return { label: display, start, end, url }
   })
   if (maxEnd === 0) maxEnd = 8
 
@@ -60,7 +61,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       parts.push(`<rect x="0" y="${y.toFixed(1)}" width="${W}" height="${ROW_H}" fill="${theme.surface}" opacity="0.5"/>`)
     }
 
-    parts.push(`<text x="${(LABEL_W - 8).toFixed(1)}" y="${(y + 21).toFixed(1)}" text-anchor="end" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(row.label, 18)}</text>`)
+    parts.push(aWrap(`<text x="${(LABEL_W - 8).toFixed(1)}" y="${(y + 21).toFixed(1)}" text-anchor="end" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(row.label, 18)}</text>`, row.url))
 
     const barX = LABEL_W + (row.start / maxEnd) * BAR_AREA
     const barW = Math.max(6, ((row.end - row.start) / maxEnd) * BAR_AREA)

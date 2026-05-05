@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, truncate, escapeXml, tt, titleEl, renderEmpty } from '../shared'
+import { lerpColor, truncate, escapeXml, tt, titleEl, renderEmpty, parseLink, aWrap } from '../shared'
 import { render as renderCircleCycle } from './cycle'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
@@ -68,7 +68,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<path d="M ${x + 5} ${y} L ${x + BOX_W - 5} ${y} Q ${x + BOX_W} ${y} ${x + BOX_W} ${y + 5} L ${x + BOX_W} ${y + HEADER_H} L ${x} ${y + HEADER_H} L ${x} ${y + 5} Q ${x} ${y} ${x + 5} ${y} Z" fill="${headerFill}"/>`)
     // Header (10px) and body (9px) — slightly tighter px/char = fewer false ellipses
     const headerMaxChars = Math.max(6, Math.floor((BOX_W - 8) / 5.0))
-    parts.push(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, headerMaxChars)}</text>`)
+    const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
+    parts.push(aWrap(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, headerMaxChars)}</text>`, lblUrl))
 
     // Body content: children or value
     const bodyMaxChars = Math.max(8, Math.floor((BOX_W - 12) / 4.4))

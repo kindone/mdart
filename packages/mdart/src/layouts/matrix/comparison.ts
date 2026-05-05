@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, truncate, wrapLabel, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty } from '../shared'
 
 function lerpColorLocal(c1: string, c2: string, t: number): string {
   const hexToRgb = (hex: string) => {
@@ -13,26 +13,34 @@ function lerpColorLocal(c1: string, c2: string, t: number): string {
   return '#' + [lerp(r1, r2), lerp(g1, g2), lerp(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')
 }
 
-/** Emit a <text> element with tspans and an optional SVG tooltip. */
+const LINE_H  = 12
+const PAD_V   = 7    // top+bottom padding inside cells
+const MIN_ROW_H = 30
+
+/** Emit a <text> from a pre-computed wrap result, optionally wrapped in <a>. */
 function labelText(
   cx: number | string,
   y1: number,
   attrs: string,
   label: string,
-  maxChars: number,
-  lineH = 12
+  wrap: { lines: string[]; truncated: boolean; url?: string | null },
+  lineH = LINE_H,
 ): string {
-  const { lines, truncated } = wrapLabel(label, maxChars)
-  const tip = truncated ? `<title>${escapeXml(label)}</title>` : ''
+  const { lines, truncated, url = null } = wrap
+  const tip   = truncated ? `<title>${escapeXml(label)}</title>` : ''
   const spans = lines
     .map((l, i) => `<tspan x="${cx}" dy="${i === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
     .join('')
-  return `<text x="${cx}" y="${y1}" ${attrs}>${tip}${spans}</text>`
+  return aWrap(`<text x="${cx}" y="${y1}" ${attrs}>${tip}${spans}</text>`, url)
 }
 
-/** Compute the baseline y for the first line, centering n lines in cellH. */
-function centerY(baseY: number, cellH: number, n: number, lineH = 12): number {
+/** First-line baseline that centres n lines in cellH. */
+function centerY(baseY: number, cellH: number, n: number, lineH = LINE_H): number {
   return baseY + Math.round(cellH / 2) - Math.round((n - 1) * lineH / 2) + 5
+}
+
+function rowH(maxLines: number): number {
+  return Math.max(MIN_ROW_H, PAD_V + maxLines * LINE_H + PAD_V)
 }
 
 function validateComparisonSpec(spec: MdArtSpec): boolean {
@@ -61,7 +69,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   return spec.direction === 'LR' ? renderLR(spec, theme) : renderTB(spec, theme)
 }
 
-// ── LR (default): top-level items are columns ───────────────────────────────
+// ── LR: top-level items are columns (set explicitly via `direction: LR`) ─────
 function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
   const cols = spec.items
   if (cols.length === 0) return renderEmpty(theme)
@@ -75,76 +83,96 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
     : Array.from(new Set(cols.flatMap(c => c.children.map(ch => ch.label))))
   const dataCols = isPositional ? cols.slice(1) : cols
 
-  const LABEL_W = 120
-  const ROW_H = 34
-  const HEADER_H = 44
-  const PAD = 12
-  const LINE_H = 12
-  const titleH = spec.title ? 28 : 0
-  const W = Math.max(400, dataCols.length * 140 + LABEL_W)
-  const COL_W = Math.floor((W - LABEL_W) / dataCols.length)
-  const H = PAD + titleH + HEADER_H + rowLabels.length * ROW_H + PAD
+  const LABEL_W  = 120
+  const PAD      = 12
+  const titleH   = spec.title ? 28 : 0
+  const W        = Math.max(400, dataCols.length * 140 + LABEL_W)
+  const COL_W    = Math.floor((W - LABEL_W) / dataCols.length)
+  const cellMax  = Math.floor(COL_W / 7)
+  const rowMax   = 16
+
+  // Pre-compute column header wraps (needed for dynamic HEADER_H)
+  const colHeaderWraps = dataCols.map(col => wrapLabel(col.label, Math.floor(COL_W / 7), 5))
+  const cornerWrap     = wrapLabel(rowLabelColHeader, Math.floor(LABEL_W / 7), 5)
+  const maxHLines      = Math.max(...colHeaderWraps.map(w => w.lines.length), cornerWrap.lines.length, 1)
+  const HEADER_H       = Math.max(32, PAD_V + maxHLines * LINE_H + PAD_V)
+
+  // Pre-compute cell values and wraps
+  const cellValues: string[][] = rowLabels.map((rowLabel, ri) =>
+    dataCols.map(col => {
+      if (isPositional) return col.children[ri]?.label ?? '—'
+      const child = col.children.find(ch => ch.label === rowLabel)
+      return child?.value ?? (child ? '✓' : '—')
+    })
+  )
+  const rowLabelWraps = rowLabels.map(rl => wrapLabel(rl, rowMax, 5))
+  const cellWraps     = cellValues.map(row => row.map(v => wrapLabel(v, cellMax, 5)))
+
+  // Dynamic row heights
+  const dataRowHeights = rowLabels.map((_, ri) => {
+    const rlN   = rowLabelWraps[ri].lines.length
+    const cellN = cellWraps[ri].map(w => w.lines.length)
+    return rowH(Math.max(rlN, ...cellN, 1))
+  })
+
+  const dataRowY: number[] = []
+  let cumY = PAD + titleH + HEADER_H
+  for (const rh of dataRowHeights) { dataRowY.push(cumY); cumY += rh }
+  const H = cumY + PAD
 
   let svg = ''
-
   if (spec.title) {
     svg += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   const baseY = PAD + titleH
 
-  // Row label column header (corner cell)
+  // Row label column header (corner)
   svg += `<rect x="0" y="${baseY}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" />`
-  svg += `<text x="${LABEL_W / 2}" y="${baseY + 27}" text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(truncate(rowLabelColHeader, 16))}</text>`
+  svg += labelText(LABEL_W / 2, centerY(baseY, HEADER_H, cornerWrap.lines.length),
+    `text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
+    rowLabelColHeader, cornerWrap)
 
-  // Data column headers (colored)
+  // Data column headers
   for (let ci = 0; ci < dataCols.length; ci++) {
-    const col = dataCols[ci]
+    const col  = dataCols[ci]
     const colX = LABEL_W + ci * COL_W
-    const t = dataCols.length > 1 ? ci / (dataCols.length - 1) : 0.5
+    const t    = dataCols.length > 1 ? ci / (dataCols.length - 1) : 0.5
     const fill = lerpColorLocal('#1e3a8a', '#1d4ed8', t)
     svg += `<rect x="${colX}" y="${baseY}" width="${COL_W}" height="${HEADER_H}" fill="${fill}" />`
-    const { lines } = wrapLabel(col.label, Math.floor(COL_W / 7))
-    const hy = centerY(baseY, HEADER_H, lines.length, LINE_H)
+    const hw   = colHeaderWraps[ci]
+    const hy   = centerY(baseY, HEADER_H, hw.lines.length)
     svg += labelText(colX + COL_W / 2, hy,
       `text-anchor="middle" font-size="12" fill="#bfdbfe" font-family="system-ui,sans-serif" font-weight="700"`,
-      col.label, Math.floor(COL_W / 7))
+      col.label, hw)
   }
 
-  // Rows
+  // Data rows
   for (let ri = 0; ri < rowLabels.length; ri++) {
     const rowLabel = rowLabels[ri]
-    const rowY = baseY + HEADER_H + ri * ROW_H
-    const rowBg = ri % 2 === 0 ? theme.surface : theme.bg
+    const ry       = dataRowY[ri]
+    const rH       = dataRowHeights[ri]
+    const rowBg    = ri % 2 === 0 ? theme.surface : theme.bg
 
-    svg += `<rect x="0" y="${rowY}" width="${W}" height="${ROW_H}" fill="${rowBg}" />`
+    svg += `<rect x="0" y="${ry}" width="${W}" height="${rH}" fill="${rowBg}" />`
 
     // Row label
-    const { lines: rlLines } = wrapLabel(rowLabel, 16)
-    const rly = centerY(rowY, ROW_H, rlLines.length, LINE_H)
-    svg += labelText(PAD, rly,
+    const rlW = rowLabelWraps[ri]
+    svg += labelText(PAD, centerY(ry, rH, rlW.lines.length),
       `font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif"`,
-      rowLabel, 16)
+      rowLabel, rlW)
 
     // Data cells
     for (let ci = 0; ci < dataCols.length; ci++) {
-      const col = dataCols[ci]
       const colX = LABEL_W + ci * COL_W
-      let val: string
-      if (isPositional) {
-        val = col.children[ri]?.label ?? '—'
-      } else {
-        const child = col.children.find(ch => ch.label === rowLabel)
-        val = child?.value ?? (child ? '✓' : '—')
-      }
-      const { lines: vLines } = wrapLabel(val, Math.floor(COL_W / 7))
-      const vy = centerY(rowY, ROW_H, vLines.length, LINE_H)
-      svg += labelText(colX + COL_W / 2, vy,
+      const val  = cellValues[ri][ci]
+      const cw   = cellWraps[ri][ci]
+      svg += labelText(colX + COL_W / 2, centerY(ry, rH, cw.lines.length),
         `text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif"`,
-        val, Math.floor(COL_W / 7))
+        val, cw)
     }
 
-    svg += `<line x1="0" y1="${rowY + ROW_H}" x2="${W}" y2="${rowY + ROW_H}" stroke="${theme.border}" stroke-width="0.5" />`
+    svg += `<line x1="0" y1="${ry + rH}" x2="${W}" y2="${ry + rH}" stroke="${theme.border}" stroke-width="0.5" />`
   }
 
   // Column dividers
@@ -160,13 +188,13 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
   </svg>`
 }
 
-// ── TB (axis-flipped): top-level items are rows ───────────────────────────────
+// ── TB (default): top-level items are rows ──────────────────────────────────
 function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
 
   const allChildrenPositional = items.every(it => it.children.every(ch => !ch.value))
-  const useFirstRowHeaders = allChildrenPositional && items.length >= 2 && !spec.columns
+  const useFirstRowHeaders    = allChildrenPositional && items.length >= 2 && !spec.columns
 
   let colLabels: string[]
   let dataRows: typeof items
@@ -193,17 +221,43 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const numCols  = colLabels.length || 1
   const LABEL_W  = 130
-  const ROW_H    = 36
-  const HEADER_H = 32
   const PAD      = 12
-  const LINE_H   = 12
   const titleH   = spec.title ? 28 : 0
   const W        = Math.max(400, numCols * 130 + LABEL_W)
   const COL_W    = Math.floor((W - LABEL_W) / numCols)
-  const H        = PAD + titleH + HEADER_H + dataRows.length * ROW_H + PAD
+  const cellMax  = Math.floor(COL_W / 7)
+  const rowMax   = 16
+
+  // Pre-compute column header wraps (needed for dynamic HEADER_H)
+  const colHeaderWraps = colLabels.map(label => wrapLabel(label, cellMax, 5))
+  const cornerWrap     = topLeftHeader ? wrapLabel(topLeftHeader, Math.floor(LABEL_W / 7), 5) : null
+  const maxHLines      = Math.max(...colHeaderWraps.map(w => w.lines.length), cornerWrap ? cornerWrap.lines.length : 1, 1)
+  const HEADER_H       = Math.max(28, PAD_V + maxHLines * LINE_H + PAD_V)
+
+  // Pre-compute cell values and wraps
+  const cellValues: string[][] = dataRows.map(row =>
+    colLabels.map((colLabel, ci) => {
+      const kvChild = row.children.find(ch => ch.label === colLabel)
+      if (kvChild) return kvChild.value ?? '✓'
+      return row.children[ci]?.label ?? '—'
+    })
+  )
+  const rowLabelWraps = dataRows.map(r => wrapLabel(r.label, rowMax, 5))
+  const cellWraps     = cellValues.map(row => row.map(v => wrapLabel(v, cellMax, 5)))
+
+  // Dynamic row heights
+  const dataRowHeights = dataRows.map((_, ri) => {
+    const rlN   = rowLabelWraps[ri].lines.length
+    const cellN = cellWraps[ri].map(w => w.lines.length)
+    return rowH(Math.max(rlN, ...cellN, 1))
+  })
+
+  const dataRowY: number[] = []
+  let cumY = PAD + titleH + HEADER_H
+  for (const rh of dataRowHeights) { dataRowY.push(cumY); cumY += rh }
+  const H = cumY + PAD
 
   let svg = ''
-
   if (spec.title) {
     svg += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
   }
@@ -212,54 +266,50 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
 
   // Top-left corner + column headers
   svg += `<rect x="0" y="${baseY}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" />`
-  if (topLeftHeader) {
-    svg += `<text x="${LABEL_W / 2}" y="${baseY + 21}" text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(truncate(topLeftHeader, 18))}</text>`
+  if (topLeftHeader && cornerWrap) {
+    svg += labelText(LABEL_W / 2, centerY(baseY, HEADER_H, cornerWrap.lines.length),
+      `text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
+      topLeftHeader, cornerWrap)
   }
   for (let ci = 0; ci < numCols; ci++) {
     const colX = LABEL_W + ci * COL_W
     svg += `<rect x="${colX}" y="${baseY}" width="${COL_W}" height="${HEADER_H}" fill="${theme.surface}" />`
-    const { lines } = wrapLabel(colLabels[ci], Math.floor(COL_W / 7))
-    const hy = centerY(baseY, HEADER_H, lines.length, LINE_H)
+    const hw   = colHeaderWraps[ci]
+    const hy   = centerY(baseY, HEADER_H, hw.lines.length)
     svg += labelText(colX + COL_W / 2, hy,
       `text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
-      colLabels[ci], Math.floor(COL_W / 7))
+      colLabels[ci], hw)
   }
 
-  // Rows
+  // Data rows
   for (let ri = 0; ri < dataRows.length; ri++) {
     const row  = dataRows[ri]
-    const rowY = baseY + HEADER_H + ri * ROW_H
+    const ry   = dataRowY[ri]
+    const rH   = dataRowHeights[ri]
     const t    = dataRows.length > 1 ? ri / (dataRows.length - 1) : 0.5
     const fill = lerpColorLocal('#1e3a8a', '#1d4ed8', t)
 
     // Colored row label cell
-    svg += `<rect x="0" y="${rowY}" width="${LABEL_W}" height="${ROW_H}" fill="${fill}" />`
-    const { lines: rlLines } = wrapLabel(row.label, 16)
-    const rly = centerY(rowY, ROW_H, rlLines.length, LINE_H)
-    svg += labelText(LABEL_W / 2, rly,
-      `text-anchor="middle" font-size="12" fill="#bfdbfe" font-family="system-ui,sans-serif" font-weight="700"`,
-      row.label, 16)
+    svg += `<rect x="0" y="${ry}" width="${LABEL_W}" height="${rH}" fill="${fill}" />`
+    const rlW = rowLabelWraps[ri]
+    svg += labelText(LABEL_W / 2, centerY(ry, rH, rlW.lines.length),
+      `text-anchor="middle" font-size="11" fill="#bfdbfe" font-family="system-ui,sans-serif" font-weight="700"`,
+      row.label, rlW)
 
-    // Data cells
     const rowBg = ri % 2 === 0 ? theme.surface : theme.bg
-    svg += `<rect x="${LABEL_W}" y="${rowY}" width="${W - LABEL_W}" height="${ROW_H}" fill="${rowBg}" />`
+    svg += `<rect x="${LABEL_W}" y="${ry}" width="${W - LABEL_W}" height="${rH}" fill="${rowBg}" />`
+
     for (let ci = 0; ci < numCols; ci++) {
       const colX = LABEL_W + ci * COL_W
-      let val: string
-      const kvChild = row.children.find(ch => ch.label === colLabels[ci])
-      if (kvChild) {
-        val = kvChild.value ?? '✓'
-      } else {
-        val = row.children[ci]?.label ?? '—'
-      }
-      const { lines: vLines } = wrapLabel(val, Math.floor(COL_W / 7))
-      const vy = centerY(rowY, ROW_H, vLines.length, LINE_H)
-      svg += labelText(colX + COL_W / 2, vy,
+      const val  = cellValues[ri][ci]
+      const cw   = cellWraps[ri][ci]
+      svg += `<rect x="${colX}" y="${ry}" width="${COL_W}" height="${rH}" fill="${rowBg}" />`
+      svg += labelText(colX + COL_W / 2, centerY(ry, rH, cw.lines.length),
         `text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif"`,
-        val, Math.floor(COL_W / 7))
+        val, cw)
     }
 
-    svg += `<line x1="0" y1="${rowY + ROW_H}" x2="${W}" y2="${rowY + ROW_H}" stroke="${theme.border}" stroke-width="0.5" />`
+    svg += `<line x1="0" y1="${ry + rH}" x2="${W}" y2="${ry + rH}" stroke="${theme.border}" stroke-width="0.5" />`
   }
 
   // Vertical dividers

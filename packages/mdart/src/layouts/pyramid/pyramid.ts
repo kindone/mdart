@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, truncate, wrapLabel, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, truncate, wrapLabel, aWrap, lerpColor, renderEmpty } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -50,16 +50,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fontSize = midW > 140 ? 12 : midW > 80 ? 11 : midW > 50 ? 9 : 8
     const maxChars = Math.max(4, Math.floor(midW / 7))
     // Allow two lines only when the layer is tall enough
-    const maxLines = LAYER_H >= 32 ? 2 : 1
-    const { lines, truncated } = wrapLabel(item.label, maxChars, maxLines)
+    const maxLines = LAYER_H >= 32 ? 3 : 1
+    const { lines, truncated, url: lblUrl } = wrapLabel(item.label, maxChars, maxLines)
     const lineH = fontSize + 2
     const firstY = y + LAYER_H / 2 - ((lines.length - 1) * lineH) / 2 + fontSize * 0.3
-    const tip = truncated ? `<title>${escapeXml(item.label)}</title>` : ''
+    const tip = truncated ? `<title>${escapeXml(lines.join(' '))}</title>` : ''
     const tspans = lines
       .map((l, li) => `<tspan x="${cxPos.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
       .join('')
     labels.push(
-      `<text x="${cxPos.toFixed(1)}" y="${firstY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${tspans}</text>`,
+      aWrap(`<text x="${cxPos.toFixed(1)}" y="${firstY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${tspans}</text>`, lblUrl),
     )
 
     // Side label for very narrow layers (top of upright / bottom of inverted)

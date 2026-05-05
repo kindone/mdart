@@ -9,6 +9,20 @@
 import { describe, it, expect } from 'vitest'
 import { renderMdArt } from './renderer'
 
+// The pros-cons renderer column-aligns the marker (✓/✗) and the label by
+// putting them in separate <tspan>s at distinct x-coords inside one <text>.
+// These helpers assert that within a single row's <text>, the right marker
+// and label co-occur. Pros column text uses fill="#6ee7b7" (green),
+// cons column uses fill="#fda4af" (red). The `(?:(?!</text>)[\s\S])*?`
+// pattern is "any char except a </text> close tag" — it pins the match
+// to one text element so a marker in row 1 can't pair with a label in row 2.
+const inText = (color: string, marker: string, label: string) =>
+  new RegExp(
+    `<text[^>]*fill="${color}"[^>]*>(?:(?!</text>)[\\s\\S])*?${marker}(?:(?!</text>)[\\s\\S])*?${label}(?:(?!</text>)[\\s\\S])*?</text>`,
+  )
+const prosRow = (label: string) => inText('#6ee7b7', '✓', label)
+const consRow = (label: string) => inText('#fda4af', '✗', label)
+
 describe('pros-cons header matching', () => {
   it('routes children of "Pros" / "Cons" headers correctly', () => {
     const svg = renderMdArt(`type: pros-cons
@@ -20,8 +34,8 @@ describe('pros-cons header matching', () => {
     expect(svg).toContain('Fast')
     expect(svg).toContain('Risky')
     // Pros row uses ✓ marker, Cons row uses ✗ marker
-    expect(svg).toMatch(/✓\s*Fast/)
-    expect(svg).toMatch(/✗\s*Risky/)
+    expect(svg).toMatch(prosRow('Fast'))
+    expect(svg).toMatch(consRow('Risky'))
   })
 
   it('does NOT misroute labels containing "pro" or "con" as substrings', () => {
@@ -37,8 +51,8 @@ describe('pros-cons header matching', () => {
   - Real con
 `)
     // Real values still appear
-    expect(svg).toMatch(/✓\s*Real pro/)
-    expect(svg).toMatch(/✗\s*Real con/)
+    expect(svg).toMatch(prosRow('Real pro'))
+    expect(svg).toMatch(consRow('Real con'))
     // The Proposal child does NOT appear (item gets dropped, not misrouted)
     expect(svg).not.toContain('Some detail')
   })
@@ -50,8 +64,8 @@ describe('pros-cons header matching', () => {
 - Downside [cons]
   - Big risk
 `)
-    expect(svg).toMatch(/✓\s*Big win/)
-    expect(svg).toMatch(/✗\s*Big risk/)
+    expect(svg).toMatch(prosRow('Big win'))
+    expect(svg).toMatch(consRow('Big risk'))
   })
 })
 

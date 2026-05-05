@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty } from '../shared'
 
 const DONE_ATTRS = ['done', '✓', 'complete']
 const isDone = (it: { attrs: string[] }) => it.attrs.some(a => DONE_ATTRS.includes(a))
@@ -15,8 +15,8 @@ const VAL_FS = 10, VAL_LH = 13
 const CHD_FS = 10.5
 
 const TOP_PAD         = 8    // yCur → checkbox top
-const FIRST_LBL_BL    = 20   // yCur → first label baseline
-const SEC_G           = 7    // last label line bottom → first value line
+const FIRST_LBL_BL    = 22   // yCur → first label baseline (centres x-height on checkbox)
+const SEC_G           = 14   // label baseline → value baseline (full LBL_LH gap, prevents overlap)
 const GAP_BEFORE_SUBS = 10   // last text zone bottom → first sub-checkbox top
 const SUB_BOX         = 12
 const SUB_GAP         = 4
@@ -33,8 +33,10 @@ const CHD_MAX = Math.max(12, Math.floor((W - PAD - 50 - PAD) / 4.2))  // ~83
 interface ItemLayout {
   lblLines:    string[]
   lblTrunc:    boolean
+  lblUrl:      string | null
   valLines:    string[]
   valTrunc:    boolean
+  valUrl:      string | null
   chdLayouts:  Array<{ lines: string[]; truncated: boolean }>
   itemH:       number
   firstValBL:  number  // relative to yCur; 0 if no value
@@ -50,11 +52,11 @@ function computeItemLayout(
     ? Math.max(12, Math.floor((W - PAD - 26 - PAD - extraAttrChars * 5.5 - 30) / 4.8))
     : LBL_MAX
 
-  const { lines: lblLines, truncated: lblTrunc } = wrapLabel(item.label, lblMaxAdj, 3)
-  const { lines: valLines, truncated: valTrunc } = item.value
-    ? wrapLabel(item.value, VAL_MAX, 2)
-    : { lines: [], truncated: false }
-  const chdLayouts = item.children.map(ch => wrapLabel(ch.label, CHD_MAX, 2))
+  const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(item.label, lblMaxAdj, 5)
+  const { lines: valLines, truncated: valTrunc, url: valUrl } = item.value
+    ? wrapLabel(item.value, VAL_MAX, 5)
+    : { lines: [], truncated: false, url: null }
+  const chdLayouts = item.children.map(ch => wrapLabel(ch.label, CHD_MAX, 5))
 
   const lastLblBL  = FIRST_LBL_BL + (lblLines.length - 1) * LBL_LH
   let zoneBottom   = lastLblBL + 4   // approx descent below baseline
@@ -77,7 +79,7 @@ function computeItemLayout(
   }
 
   return {
-    lblLines, lblTrunc, valLines, valTrunc, chdLayouts,
+    lblLines, lblTrunc, lblUrl, valLines, valTrunc, valUrl, chdLayouts,
     itemH: lastBottom + BOTTOM_PAD,
     firstValBL, firstSubTop,
   }
@@ -111,7 +113,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const layout = layouts[i]
     const done   = isDone(item)
     const extraAttrs = item.attrs.filter(a => !DONE_ATTRS.includes(a))
-    const { lblLines, lblTrunc, valLines, valTrunc, chdLayouts, itemH, firstValBL, firstSubTop } = layout
+    const { lblLines, lblTrunc, lblUrl, valLines, valTrunc, valUrl, chdLayouts, itemH, firstValBL, firstSubTop } = layout
 
     // ── Main checkbox ──────────────────────────────────────────────────────────
     const boxY = yCur + TOP_PAD
@@ -126,11 +128,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelStyle = done
       ? `fill="${theme.text}" fill-opacity="0.62" font-style="italic"`
       : `fill="${theme.text}"`
-    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${PAD + 26}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    svgContent += `<text x="${PAD + 26}" y="${labelY}" font-size="${LBL_FS}" font-family="system-ui,sans-serif" ${labelStyle}>${lblTip}${lblSpans}</text>`
+    svgContent += aWrap(`<text x="${PAD + 26}" y="${labelY}" font-size="${LBL_FS}" font-family="system-ui,sans-serif" ${labelStyle}>${lblTip}${lblSpans}</text>`, lblUrl)
 
     // Inline tags right-aligned on first line
     if (extraAttrs.length > 0) {
@@ -140,11 +142,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // ── Value / description (up to 2 lines) ────────────────────────────────────
     if (valLines.length > 0) {
       const valY   = yCur + firstValBL
-      const valTip = valTrunc ? `<title>${escapeXml(item.value!)}</title>` : ''
+      const valTip = valTrunc ? `<title>${escapeXml(valLines.join(' '))}</title>` : ''
       const valSpans = valLines
         .map((l, li) => `<tspan x="${PAD + 26}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      svgContent += `<text x="${PAD + 26}" y="${valY}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${valTip}${valSpans}</text>`
+      svgContent += aWrap(`<text x="${PAD + 26}" y="${valY}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${valTip}${valSpans}</text>`, valUrl)
     }
 
     // ── Subtasks ───────────────────────────────────────────────────────────────

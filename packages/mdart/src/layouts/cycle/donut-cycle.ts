@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -43,7 +43,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelR = (outerR + innerR) / 2
     const lx = cx + labelR * Math.cos(midAngle)
     const ly = cy + labelR * Math.sin(midAngle)
-    svgContent += `<text x="${lx}" y="${ly + 4}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, 10)}</text>`
+    const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
+    svgContent += aWrap(`<text x="${lx}" y="${ly + 4}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10)}</text>`, lblUrl)
   }
 
   // Center label

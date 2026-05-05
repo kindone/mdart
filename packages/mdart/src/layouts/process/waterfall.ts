@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, parseLink, aWrap } from '../shared'
 
 function wrapText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
@@ -60,13 +60,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const y = startY + i * STEP_Y
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
+    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.5"/>`)
-    const lines = wrapText(item.label, Math.floor(BOX_W / 7))
+    const lines = wrapText(itmDisplay, Math.floor(BOX_W / 7))
     const cy = y + BOX_H / 2
+    let lblContent = ''
     lines.slice(0, 2).forEach((line, li) => {
       const ty = lines.length === 1 ? cy + 4 : cy + (li === 0 ? -5 : 8)
-      parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`)
+      lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
     })
+    parts.push(aWrap(lblContent, itmUrl))
   })
 
   return svgWrapProcess(W, H, theme, parts)

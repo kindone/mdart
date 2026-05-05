@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, truncate, renderEmpty } from '../shared'
+import { escapeXml, tt, truncate, renderEmpty, parseLink, aWrap } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -64,8 +64,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       parts.push(`<text x="${(x + CLASS_W/2).toFixed(1)}" y="${(y + 11).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.accent}99" font-family="system-ui,sans-serif">${stereo}</text>`)
     }
     const nameY = isSpecial ? y + 24 : y + 19
+    const { display: clsDisplay, url: clsUrl } = parseLink(cls.label)
     parts.push(
-      `<text x="${(x + CLASS_W/2).toFixed(1)}" y="${nameY.toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="ui-monospace,monospace" font-weight="700"${isSpecial ? ' font-style="italic"' : ''}>${tt(cls.label, Math.floor(CLASS_W / 7))}</text>`,
+      aWrap(`<text x="${(x + CLASS_W/2).toFixed(1)}" y="${nameY.toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="ui-monospace,monospace" font-weight="700"${isSpecial ? ' font-style="italic"' : ''}>${tt(clsDisplay, Math.floor(CLASS_W / 7))}</text>`, clsUrl),
       `<line x1="${x.toFixed(1)}" y1="${(y + HEADER_H).toFixed(1)}" x2="${(x + CLASS_W).toFixed(1)}" y2="${(y + HEADER_H).toFixed(1)}" stroke="${theme.accent}44" stroke-width="1"/>`,
     )
 

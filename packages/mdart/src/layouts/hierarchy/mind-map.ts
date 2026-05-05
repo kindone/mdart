@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel } from '../shared'
+import { escapeXml, wrapLabel, aWrap } from '../shared'
 
 // ── Node geometry ────────────────────────────────────────────────────────────
 // Three tiers, each an ellipse. rx/ry chosen so 2 wrapped lines fit.
@@ -36,14 +36,14 @@ function mlText(
   fill: string,
   weight = 'normal',
 ): string {
-  const { lines, truncated } = wrapLabel(label, maxChars, 2)
+  const { lines, truncated, url } = wrapLabel(label, maxChars, 3)
   // Shift baseline up by half the total text-block height so it centers in the ellipse
   const startY = y - (lines.length - 1) * lineH / 2 + fontSize * 0.32
   const tip    = truncated ? `<title>${escapeXml(label)}</title>` : ''
   const spans  = lines
     .map((l, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
     .join('')
-  return `<text x="${x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="${weight}">${tip}${spans}</text>`
+  return aWrap(`<text x="${x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="${weight}">${tip}${spans}</text>`, url)
 }
 
 // ── Renderer ─────────────────────────────────────────────────────────────────

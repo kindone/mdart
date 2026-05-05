@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, svgWrap, titleEl, renderEmpty } from '../shared'
+import { escapeXml, lerpColor, svgWrap, titleEl, renderEmpty, parseLink, aWrap } from '../shared'
 
 function wrapText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
@@ -76,22 +76,24 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const rx = (bx - hw).toFixed(1), ry = (by - hh).toFixed(1)
 
-    // Box
-    parts.push(`<rect x="${rx}" y="${ry}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="1.8"/>`)
-
     // Step-number badge (top-left corner)
     const badgeX = (bx - hw + 5).toFixed(1)
     const badgeY = (by - hh + 9).toFixed(1)
-    parts.push(`<text x="${badgeX}" y="${badgeY}" font-size="8" fill="${fill}" font-family="system-ui,sans-serif" font-weight="800" opacity="0.85">${i + 1}</text>`)
 
     // Label — up to 2 wrapped lines, vertically centred in box
-    const lines = wrapText(item.label, Math.floor(BOX_W / 6.8))
+    const { display: itemLabel, url } = parseLink(item.label)
+    const lines = wrapText(itemLabel, Math.floor(BOX_W / 6.8))
     const lineH = 11
     const totalH = lines.length * lineH
+
+    // Box + label text wrapped in aWrap for clickable node
+    let nodeContent = `<rect x="${rx}" y="${ry}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="1.8"/>`
+    nodeContent += `<text x="${badgeX}" y="${badgeY}" font-size="8" fill="${fill}" font-family="system-ui,sans-serif" font-weight="800" opacity="0.85">${i + 1}</text>`
     lines.slice(0, 2).forEach((line, li) => {
       const ty = (by - totalH / 2 + lineH * li + lineH * 0.8).toFixed(1)
-      parts.push(`<text x="${bx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`)
+      nodeContent += `<text x="${bx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
     })
+    parts.push(aWrap(nodeContent, url))
   })
 
   return svgWrap(W, H, theme, undefined, parts)

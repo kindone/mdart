@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, lerpColor, renderEmpty, getCaption } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -28,6 +28,7 @@ const CAP_MAX   = Math.max(12, Math.floor(INNER_W / 5.2))   // ~32
 interface CardLayout {
   lblLines: string[]
   lblTrunc: boolean
+  lblUrl:   string | null
   capLines: string[]
   capTrunc: boolean
   caption:  string | null
@@ -36,10 +37,10 @@ interface CardLayout {
 }
 
 function computeCard(item: MdArtSpec['items'][number]): CardLayout {
-  const { lines: lblLines, truncated: lblTrunc } = wrapLabel(item.label, LABEL_MAX, 3)
+  const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(item.label, LABEL_MAX, 5)
   const caption = getCaption(item)
   const { lines: capLines, truncated: capTrunc } = caption
-    ? wrapLabel(caption, CAP_MAX, 2)
+    ? wrapLabel(caption, CAP_MAX, 5)
     : { lines: [], truncated: false }
   const hasAttr = item.attrs.length > 0
 
@@ -48,7 +49,7 @@ function computeCard(item: MdArtSpec['items'][number]): CardLayout {
   if (hasAttr)             blockH += SEC_G + ATTR_LH
 
   const cardH = Math.max(MIN_CARD_H, PAD_V + blockH + PAD_V)
-  return { lblLines, lblTrunc, capLines, capTrunc, caption, hasAttr, cardH }
+  return { lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, hasAttr, cardH }
 }
 
 // ── Renderer ─────────────────────────────────────────────────────────────────
@@ -83,7 +84,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   for (let i = 0; i < items.length; i++) {
     const item  = items[i]
-    const { lblLines, lblTrunc, capLines, capTrunc, caption, hasAttr, cardH } = cards[i]
+    const { lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, hasAttr, cardH } = cards[i]
     const cy    = cardY[i] + cardH / 2
     const t     = items.length > 1 ? i / (items.length - 1) : 0
     const fill  = lerpColor(theme.secondary, theme.primary, t)
@@ -106,11 +107,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let textY   = cy0 + (cardH - blockH) / 2 + LBL_FS * 0.75
 
     // Label
-    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    svgContent += `<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`
+    svgContent += aWrap(`<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
     textY += lblLines.length * LBL_LH
 
     // Caption

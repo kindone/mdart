@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt } from '../shared'
+import { escapeXml, tt, parseLink, aWrap } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -27,11 +27,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   parts.push(`<line x1="${cx + CR}" y1="${cy}" x2="${cx + ARM - BW / 2}" y2="${cy}" stroke="${armColor}" stroke-width="12"/>`)
   const centerItem = items[4]
   parts.push(`<circle cx="${cx}" cy="${cy}" r="${CR}" fill="${theme.accent}33" stroke="${theme.accent}" stroke-width="1.5"/>`)
-  if (centerItem) parts.push(`<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="9" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(centerItem.label, 9)}</text>`)
+  if (centerItem) {
+    const { display: ctrDisplay, url: ctrUrl } = parseLink(centerItem.label)
+    parts.push(aWrap(`<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="9" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(ctrDisplay, 9)}</text>`, ctrUrl))
+  }
   items.slice(0, 4).forEach((item, i) => {
     const [px, py] = pos[i]
+    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
     parts.push(`<rect x="${(px - BW / 2).toFixed(1)}" y="${(py - BH / 2).toFixed(1)}" width="${BW}" height="${BH}" rx="6" fill="${theme.surface}" stroke="${colors[i]}88" stroke-width="1.5"/>`)
-    parts.push(`<text x="${px.toFixed(1)}" y="${(py - 7).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(item.label, 13)}</text>`)
+    parts.push(aWrap(`<text x="${px.toFixed(1)}" y="${(py - 7).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, 13)}</text>`, itmUrl))
     item.children.slice(0, 2).forEach((ch, j) => {
       parts.push(`<text x="${px.toFixed(1)}" y="${(py + 9 + j * 12).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 14)}</text>`)
     })

@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt } from '../shared'
+import { escapeXml, tt, parseLink, aWrap } from '../shared'
 import { countLeaves, maxDepth } from './shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
@@ -38,9 +38,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       lines.push(`<line x1="${n.parentX.toFixed(1)}" y1="${py.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${cy.toFixed(1)}" stroke="${theme.textMuted}aa" stroke-width="1.2"/>`)
     }
     const fill = n.level === 0 ? theme.accent : n.level === 1 ? theme.primary : theme.secondary
+    const { display: nDisplay, url: nUrl } = parseLink(n.label)
     boxes.push(`<rect x="${(n.x - bw(n.level)/2).toFixed(1)}" y="${(n.y - bh(n.level)/2).toFixed(1)}" width="${bw(n.level)}" height="${bh(n.level)}" rx="4" fill="${fill}" stroke="${theme.bg}" stroke-width="1.5"/>`)
     const fs = n.level === 0 ? 10 : n.level === 1 ? 9 : 8
-    boxes.push(`<text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="600">${tt(n.label, 12)}</text>`)
+    boxes.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="600">${tt(nDisplay, 12)}</text>`, nUrl))
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">

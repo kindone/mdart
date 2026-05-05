@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -35,8 +35,10 @@ const subLetter = (j: number) => j < 26 ? String.fromCharCode(97 + j) : String(j
 interface ItemLayout {
   lblLines:   string[]
   lblTrunc:   boolean
+  lblUrl:     string | null
   valLines:   string[]
   valTrunc:   boolean
+  valUrl:     string | null
   chdLayouts: Array<{ lines: string[]; truncated: boolean }>
   itemH:      number   // total item height
   firstValBL: number   // first value line baseline offset from item top (0 if no value)
@@ -44,11 +46,11 @@ interface ItemLayout {
 }
 
 function computeItemLayout(item: MdArtSpec['items'][number]): ItemLayout {
-  const { lines: lblLines, truncated: lblTrunc } = wrapLabel(item.label, LABEL_MAX, 2)
-  const { lines: valLines, truncated: valTrunc } = item.value
-    ? wrapLabel(item.value, VALUE_MAX, 2)
-    : { lines: [], truncated: false }
-  const chdLayouts = item.children.map(ch => wrapLabel(ch.label, CHILD_MAX, 2))
+  const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(item.label, LABEL_MAX, 5)
+  const { lines: valLines, truncated: valTrunc, url: valUrl } = item.value
+    ? wrapLabel(item.value, VALUE_MAX, 5)
+    : { lines: [], truncated: false, url: null }
+  const chdLayouts = item.children.map(ch => wrapLabel(ch.label, CHILD_MAX, 5))
 
   // Walk baselines top-to-bottom
   const lastLblBL = FIRST_LBL_BL + (lblLines.length - 1) * LBL_LH
@@ -69,7 +71,7 @@ function computeItemLayout(item: MdArtSpec['items'][number]): ItemLayout {
   }
 
   return {
-    lblLines, lblTrunc, valLines, valTrunc, chdLayouts,
+    lblLines, lblTrunc, lblUrl, valLines, valTrunc, valUrl, chdLayouts,
     itemH: lastBL + PAD_B,
     firstValBL, firstChdBL,
   }
@@ -96,7 +98,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const layout = layouts[i]
     const t      = items.length > 1 ? i / (items.length - 1) : 0
     const fill   = lerpColor(theme.secondary, theme.primary, t)
-    const { lblLines, lblTrunc, valLines, valTrunc, chdLayouts,
+    const { lblLines, lblTrunc, lblUrl, valLines, valTrunc, valUrl, chdLayouts,
             itemH, firstValBL, firstChdBL } = layout
 
     const labelBL = y + FIRST_LBL_BL
@@ -107,20 +109,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     svg += `<text x="${(mainBadgeX + BADGE_W / 2).toFixed(1)}" y="${(badgeCy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${i + 1}</text>`
 
     // ── Main label (bold, up to 2 lines) ─────────────────────────────────────
-    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${mainTextStart}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    svg += `<text x="${mainTextStart}" y="${labelBL}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`
+    svg += aWrap(`<text x="${mainTextStart}" y="${labelBL}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
 
     // ── Value subtitle (italic muted, up to 2 lines) ──────────────────────────
     if (valLines.length > 0) {
       const valBL    = y + firstValBL
-      const valTip   = valTrunc ? `<title>${escapeXml(item.value!)}</title>` : ''
+      const valTip   = valTrunc ? `<title>${escapeXml(valLines.join(' '))}</title>` : ''
       const valSpans = valLines
         .map((l, li) => `<tspan x="${mainTextStart}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      svg += `<text x="${mainTextStart}" y="${valBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic">${valTip}${valSpans}</text>`
+      svg += aWrap(`<text x="${mainTextStart}" y="${valBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic">${valTip}${valSpans}</text>`, valUrl)
     }
 
     // ── Child rows with letter badges (up to 2 lines each) ───────────────────

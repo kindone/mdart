@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
 
 function wrapLabel(label: string, maxPerLine: number): string[] {
   if (label.length <= maxPerLine) return [label];
@@ -21,7 +21,7 @@ function wrapLabel(label: string, maxPerLine: number): string[] {
     }
   }
   if (current) lines.push(current);
-  return lines.slice(0, 2);
+  return lines.slice(0, 5);
 }
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
@@ -61,7 +61,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     parts.push(`<rect x="${colX.toFixed(1)}" y="${colY.toFixed(1)}" width="${COL_W.toFixed(1)}" height="${COL_H}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>`)
     parts.push(`<path d="M${(colX + 8).toFixed(1)},${colY.toFixed(1)} Q${colX.toFixed(1)},${colY.toFixed(1)} ${colX.toFixed(1)},${(colY + 8).toFixed(1)} L${colX.toFixed(1)},${(colY + HEADER_H).toFixed(1)} L${(colX + COL_W).toFixed(1)},${(colY + HEADER_H).toFixed(1)} L${(colX + COL_W).toFixed(1)},${(colY + 8).toFixed(1)} Q${(colX + COL_W).toFixed(1)},${colY.toFixed(1)} ${(colX + COL_W - 8).toFixed(1)},${colY.toFixed(1)} Z" fill="${theme.accent}22"/>`)
-    parts.push(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${(colY + 21).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="600">${tt(col.label, 14)}</text>`)
+    const { display: colDisplay, url: colUrl } = parseLink(col.label)
+    parts.push(aWrap(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${(colY + 21).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="600">${tt(colDisplay, 14)}</text>`, colUrl))
 
     if (col.children.length > 0) {
       const bx = colX + COL_W - 18
@@ -79,7 +80,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const cardW = COL_W - PAD * 2
       const isDone = card.attrs.includes('done')
       const maxPerLine = Math.floor((cardW - 20) / 7)
-      const lines = wrapLabel(card.label, maxPerLine)
+      const { display: cardDisplay, url: cardUrl } = parseLink(card.label)
+      const lines = wrapLabel(cardDisplay, maxPerLine)
       const textX = (cardX + 10).toFixed(1)
       const n = lines.length
 
@@ -94,12 +96,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       )
       if (n === 1) {
         parts.push(
-          `<text x="${textX}" y="${y1.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[0])}</text>`,
+          aWrap(`<text x="${textX}" y="${y1.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[0])}</text>`, cardUrl),
         )
       } else {
         parts.push(
-          `<text x="${textX}" y="${y1.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[0])}</text>`,
-          `<text x="${textX}" y="${y2.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[1])}</text>`,
+          aWrap(`<text x="${textX}" y="${y1.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[0])}</text><text x="${textX}" y="${y2.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[1])}</text>`, cardUrl),
         )
       }
     })

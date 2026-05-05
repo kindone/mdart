@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -43,7 +43,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const fs = Math.max(16, Math.round(GW * 0.15))
     parts.push(`<text x="${cx}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${Math.round(val * 100)}%</text>`)
-    parts.push(`<text x="${cx}" y="${(cy + 16).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.label, 16)}</text>`)
+    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    parts.push(aWrap(`<text x="${cx}" y="${(cy + 16).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(itmDisplay, 16)}</text>`, itmUrl))
   })
 
   return svg(W, H, theme, spec.title, parts)

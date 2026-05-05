@@ -7,23 +7,62 @@ export function escapeXml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
+/**
+ * Parse a markdown-style link from a label string.
+ * Supports full-label links `[display](url)` and inline links embedded in text.
+ * Returns the plain display string and the URL (or null if no link found).
+ */
+export function parseLink(label: string): { display: string; url: string | null } {
+  // Full label is a single link: [display text](url)
+  const full = label.match(/^\s*\[([^\]]+)\]\(([^)\s]+)\)\s*$/)
+  if (full) return { display: full[1].trim(), url: full[2].trim() }
+  // Label contains one or more inline links — strip syntax, keep first URL
+  if (/\[[^\]]+\]\([^)]+\)/.test(label)) {
+    const first = label.match(/\[([^\]]+)\]\(([^)\s]+)\)/)
+    const url   = first?.[2]?.trim() ?? null
+    const display = label.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '$1').trim()
+    return { display, url }
+  }
+  return { display: label, url: null }
+}
+
+/**
+ * Wrap SVG element(s) in an `<a>` for a clickable link.
+ * Returns `content` unchanged when `url` is null.
+ * Visual cues applied automatically:
+ *   - underline on all <text> elements inside the link
+ *   - pointer cursor on the whole anchor
+ *   - URL shown as a native tooltip on hover
+ */
+export function aWrap(content: string, url: string | null): string {
+  if (!url) return content
+  // Inject underline into every <text> element inside this link.
+  // CSS style attribute wins over SVG presentation attributes (fill, font-size …)
+  // so the underline appears regardless of which renderer built the text.
+  const styled = content.replace(/<text(?=[\s>])/g, '<text style="text-decoration:underline"')
+  return `<a href="${escapeXml(url)}" target="_blank" style="cursor:pointer"><title>${escapeXml(url)}</title>${styled}</a>`
+}
+
 export function truncate(s: string, max: number): string {
   return s.length > max ? s.slice(0, max - 1) + '…' : s
 }
 
 /**
  * Word-wrap `label` into at most `maxLines` lines of `perLineChars` characters.
- * Returns raw (unescaped) lines and whether any content was dropped.
+ * Automatically strips markdown-link syntax `[text](url)` — `url` is returned
+ * separately so callers can wrap the rendered element with `aWrap(el, url)`.
+ * Returns raw (unescaped) lines, whether content was dropped, and the URL.
  * When truncated === true, callers should emit a <title> child on the <text>
- * element so the full string is visible as an SVG tooltip on hover.
+ * element so the full display string is visible as an SVG tooltip on hover.
  */
 export function wrapLabel(
   label: string,
   perLineChars: number,
   maxLines = 2
-): { lines: string[]; truncated: boolean } {
-  const trimmed = label.trim()
-  if (!trimmed) return { lines: [''], truncated: false }
+): { lines: string[]; truncated: boolean; url: string | null } {
+  const { display, url } = parseLink(label)
+  const trimmed = display.trim()
+  if (!trimmed) return { lines: [''], truncated: false, url }
 
   const words = trimmed.split(/\s+/)
   const lines: string[] = []
@@ -53,7 +92,7 @@ export function wrapLabel(
         : last.slice(0, perLineChars - 1) + '…'
   }
 
-  return { lines: lines.length > 0 ? lines : [''], truncated }
+  return { lines: lines.length > 0 ? lines : [''], truncated, url }
 }
 
 export function tt(s: string, max: number): string {
@@ -142,8 +181,9 @@ export function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: b
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
 
+    const { display: staircaseDisplay, url: staircaseUrl } = parseLink(item.label)
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.2"/>`)
-    parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(item.label, Math.floor(BOX_W / 6))}</text>`)
+    parts.push(aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(staircaseDisplay, Math.floor(BOX_W / 6))}</text>`, staircaseUrl))
     const caption = getCaption(item)
     if (caption) parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 16).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, Math.floor(BOX_W / 5))}</text>`)
 

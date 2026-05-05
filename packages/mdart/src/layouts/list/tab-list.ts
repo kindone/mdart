@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -19,6 +19,7 @@ const SEC_G       = 8    // gap between content sections
 
 interface PanelLayout {
   titleLines: string[]
+  titleUrl:   string | null
   valLines:   string[]
   childLines: string[]
   subLines:   string[]
@@ -34,19 +35,19 @@ function computePanel(item: MdArtItem, W: number): PanelLayout {
   const childMax = Math.max(20, Math.floor(innerW / 4.5))
   const subMax   = Math.max(24, Math.floor(innerW / 4.2))
 
-  const { lines: titleLines } = wrapLabel(item.label, titleMax, 2)
+  const { lines: titleLines, url: titleUrl } = wrapLabel(item.label, titleMax, 5)
   const { lines: valLines }   = item.value
-    ? wrapLabel(item.value, valueMax, 2)
+    ? wrapLabel(item.value, valueMax, 5)
     : { lines: [] }
 
   const childRow = item.children.map(c => c.label).join('  ·  ')
   const { lines: childLines } = childRow
-    ? wrapLabel(childRow, childMax, 2)
+    ? wrapLabel(childRow, childMax, 5)
     : { lines: [] }
 
   const subRow = item.children.flatMap(c => c.children).map(c => c.label).join('  ·  ')
   const { lines: subLines } = subRow
-    ? wrapLabel(subRow, subMax, 2)
+    ? wrapLabel(subRow, subMax, 5)
     : { lines: [] }
 
   let h = titleLines.length * TITLE_LH
@@ -54,7 +55,7 @@ function computePanel(item: MdArtItem, W: number): PanelLayout {
   if (childLines.length > 0) h += SEC_G + childLines.length * CHILD_LH
   if (subLines.length > 0)   h += SEC_G + subLines.length * SUB_LH
 
-  return { titleLines, valLines, childLines, subLines, contentH: PANEL_PAD_T + h + PANEL_PAD_B }
+  return { titleLines, titleUrl, valLines, childLines, subLines, contentH: PANEL_PAD_T + h + PANEL_PAD_B }
 }
 
 // ── Panel content parts ───────────────────────────────────────────────────────
@@ -69,12 +70,12 @@ function tabPanelParts(
   const parts: string[] = []
   let y = panelY + PANEL_PAD_T
 
-  const { titleLines, valLines, childLines, subLines } = layout
+  const { titleLines, titleUrl, valLines, childLines, subLines } = layout
 
   const titleSpans = titleLines
     .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : TITLE_LH}">${escapeXml(l)}</tspan>`)
     .join('')
-  parts.push(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="${TITLE_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${titleSpans}</text>`)
+  parts.push(aWrap(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="${TITLE_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${titleSpans}</text>`, titleUrl))
   y += titleLines.length * TITLE_LH
 
   if (valLines.length > 0) {
@@ -157,7 +158,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     `fill="${activeFill}11" stroke="${activeFill}44" stroke-width="1.2"/>`,
   )
 
-  items.forEach((item, i) => {
+  items.forEach((_item, i) => {
     const vis = i === 0 ? 'visible' : 'hidden'
     parts.push(`<g class="mdart-tab-panel" data-tab="${i}" visibility="${vis}">`)
     parts.push(...tabPanelParts(panels[i], theme, panelY, W))

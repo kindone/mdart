@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -32,20 +32,25 @@ const CHILD_MAX = Math.max(8,  Math.floor((CELL_W - PAD_L - 8) / 5.5) - 2) // ~3
 interface ItemLayout {
   lblLines: string[]
   lblTrunc: boolean
+  lblUrl:   string | null
   valLines: string[]
   valTrunc: boolean
+  valUrl:   string | null
   // Each child's wrapped lines (maxLines=4 to let long sentences flow naturally)
   chdLayouts: Array<{ lines: string[]; truncated: boolean }>
   h: number           // desired cell height for this item
 }
 
 function computeItemLayout(item: MdArtItem): ItemLayout {
-  const { lines: lblLines, truncated: lblTrunc } = wrapLabel(item.label, LABEL_MAX, 2)
-  const { lines: valLines, truncated: valTrunc } = item.value
-    ? wrapLabel(item.value, VALUE_MAX, 2)
-    : { lines: [], truncated: false }
+  const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(item.label, LABEL_MAX, 5)
+  const { lines: valLines, truncated: valTrunc, url: valUrl } = item.value
+    ? wrapLabel(item.value, VALUE_MAX, 5)
+    : { lines: [], truncated: false, url: null }
 
-  const chdLayouts = item.children.map(ch => wrapLabel(ch.label, CHILD_MAX, 4))
+  const chdLayouts = item.children.map(ch => {
+    const text = ch.value ? `${ch.label}: ${ch.value}` : ch.label
+    return wrapLabel(text, CHILD_MAX, 5)
+  })
   const totalChdLines = chdLayouts.reduce((s, cl) => s + cl.lines.length, 0)
 
   let h = PAD_T
@@ -54,7 +59,7 @@ function computeItemLayout(item: MdArtItem): ItemLayout {
   if (totalChdLines > 0)      h += SEC_G + totalChdLines * CHD_LH
   h += PAD_B
 
-  return { lblLines, lblTrunc, valLines, valTrunc, chdLayouts, h: Math.max(56, h) }
+  return { lblLines, lblTrunc, lblUrl, valLines, valTrunc, valUrl, chdLayouts, h: Math.max(56, h) }
 }
 
 // ── Renderer ─────────────────────────────────────────────────────────────────
@@ -98,7 +103,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const cellH = rowHeights[row]
     const t     = items.length > 1 ? i / (items.length - 1) : 0
     const fill  = lerpColor(theme.primary, theme.secondary, t)
-    const { lblLines, lblTrunc, valLines, valTrunc, chdLayouts } = layouts[i]
+    const { lblLines, lblTrunc, lblUrl, valLines, valTrunc, valUrl, chdLayouts } = layouts[i]
 
     // Cell background rect + left accent bar
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CELL_W.toFixed(1)}" height="${cellH}" rx="8" fill="${fill}33" stroke="${fill}88" stroke-width="1.5"/>`)
@@ -108,22 +113,22 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const ctx = (x + PAD_L + 8).toFixed(1)   // continuation indent (past "· ")
 
     // ── Label (bold, up to 2 lines) ──────────────────────────────────────────
-    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${tx}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(`<text x="${tx}" y="${(y + PAD_T).toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${lblTip}${lblSpans}</text>`)
+    parts.push(aWrap(`<text x="${tx}" y="${(y + PAD_T).toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${lblTip}${lblSpans}</text>`, lblUrl))
 
     let textY = y + PAD_T + lblLines.length * LBL_LH
 
     // ── Value (italic muted subtitle, up to 2 lines) ─────────────────────────
     if (valLines.length > 0) {
       textY += SEC_G
-      const valTip   = valTrunc ? `<title>${escapeXml(item.value!)}</title>` : ''
+      const valTip   = valTrunc ? `<title>${escapeXml(valLines.join(' '))}</title>` : ''
       const valSpans = valLines
         .map((l, li) => `<tspan x="${tx}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      parts.push(`<text x="${tx}" y="${textY.toFixed(1)}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-style="italic" font-family="system-ui,sans-serif">${valTip}${valSpans}</text>`)
+      parts.push(aWrap(`<text x="${tx}" y="${textY.toFixed(1)}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-style="italic" font-family="system-ui,sans-serif">${valTip}${valSpans}</text>`, valUrl))
       textY += valLines.length * VAL_LH
     }
 
@@ -132,7 +137,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       textY += SEC_G
       chdLayouts.forEach(({ lines, truncated }, ci) => {
         const child  = item.children[ci]
-        const chTip  = truncated ? `<title>${escapeXml(child.label)}</title>` : ''
+        const childText = child.value ? `${child.label}: ${child.value}` : child.label
+        const chTip  = truncated ? `<title>${escapeXml(childText)}</title>` : ''
         const op     = ci < 2 ? '1' : '0.7'
         // First tspan carries the bullet; continuation lines indent to align with text
         const spans  = lines

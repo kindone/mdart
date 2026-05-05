@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel } from '../shared'
+import { escapeXml, wrapLabel, aWrap } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 // hierarchy-list renders a compact tree outline; rows are intentionally tight.
@@ -24,15 +24,15 @@ const MAX_D2 = Math.max(20, Math.floor((W - PAD * 2 - INDENT * 2) / 5.5)) // ~90
 // ── Renderer ─────────────────────────────────────────────────────────────────
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  interface Row { label: string; truncated: boolean; depth: number; isLast: boolean; parentHasSibling: boolean[] }
+  interface Row { label: string; truncated: boolean; url: string | null; depth: number; isLast: boolean; parentHasSibling: boolean[] }
   const rows: Row[] = []
 
   function flatten(items: MdArtItem[], depth: number, phs: boolean[]) {
     items.forEach((item, i) => {
       const isLast  = i === items.length - 1
       const maxChars = depth === 0 ? MAX_D0 : depth === 1 ? MAX_D1 : MAX_D2
-      const { lines, truncated } = wrapLabel(item.label, maxChars, 1)
-      rows.push({ label: lines[0], truncated, depth, isLast, parentHasSibling: [...phs] })
+      const { lines, truncated, url } = wrapLabel(item.label, maxChars, 1)
+      rows.push({ label: lines[0], truncated, url, depth, isLast, parentHasSibling: [...phs] })
       flatten(item.children, depth + 1, [...phs, !isLast])
     })
   }
@@ -77,7 +77,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fw    = row.depth === 0 ? '700' : '400'
     const tf    = row.depth === 0 ? theme.text : row.depth === 1 ? theme.text : theme.textMuted
     const tip   = row.truncated ? `<title>${escapeXml(row.label)}</title>` : ''
-    parts.push(`<text x="${textX.toFixed(1)}" y="${(y + 4).toFixed(1)}" font-size="${fs}" fill="${tf}" font-family="system-ui,sans-serif" font-weight="${fw}">${tip}${escapeXml(row.label)}</text>`)
+    parts.push(aWrap(`<text x="${textX.toFixed(1)}" y="${(y + 4).toFixed(1)}" font-size="${fs}" fill="${tf}" font-family="system-ui,sans-serif" font-weight="${fw}">${tip}${escapeXml(row.label)}</text>`, row.url))
 
     curY += rowH
   })

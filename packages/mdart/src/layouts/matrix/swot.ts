@@ -1,12 +1,13 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt } from '../shared'
+import { escapeXml, tt, parseLink, aWrap } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // Collect items by prefix char or by group name
+  interface SwotEntry { display: string; url: string | null }
   interface SwotQuadrant {
     label: string
-    items: string[]
+    items: SwotEntry[]
     fill: string
     textColor: string
   }
@@ -56,25 +57,25 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       currentSection = headerKey
       // If children were attached (e.g. non-swot-style nesting), consume immediately.
       if (item.children.length) {
-        quadrantMap[headerKey].items.push(...item.children.map(c => c.label))
+        quadrantMap[headerKey].items.push(...item.children.map(c => parseLink(c.label)))
         currentSection = null
       }
       continue
     }
 
     // 2. Otherwise, route by SWOT prefix char.
-    if (item.prefix === '+') { quadrantMap.S.items.push(item.label); continue }
-    if (item.prefix === '?') { quadrantMap.O.items.push(item.label); continue }
-    if (item.prefix === '!') { quadrantMap.T.items.push(item.label); continue }
+    if (item.prefix === '+') { quadrantMap.S.items.push(parseLink(item.label)); continue }
+    if (item.prefix === '?') { quadrantMap.O.items.push(parseLink(item.label)); continue }
+    if (item.prefix === '!') { quadrantMap.T.items.push(parseLink(item.label)); continue }
     if (item.prefix === '-') {
       // - is the SWOT weakness marker by default, but if a heading was just
       // declared (e.g. `- Threats`), route subsequent items to that section.
-      quadrantMap[currentSection ?? 'W'].items.push(item.label)
+      quadrantMap[currentSection ?? 'W'].items.push(parseLink(item.label))
       continue
     }
 
     // 3. Unprefixed flat sibling — only routes if we're inside a declared section.
-    if (currentSection) quadrantMap[currentSection].items.push(item.label)
+    if (currentSection) quadrantMap[currentSection].items.push(parseLink(item.label))
   }
 
   const W = 500
@@ -112,7 +113,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const maxItems = Math.min(q.items.length, 5)
     for (let i = 0; i < maxItems; i++) {
       const itemY = y + 38 + i * 16
-      svgContent += `<text x="${x + 10}" y="${itemY}" font-size="10" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.85">• ${tt(q.items[i], bulletMax)}</text>`
+      const { display: itDisplay, url: itUrl } = q.items[i]
+      svgContent += aWrap(`<text x="${x + 10}" y="${itemY}" font-size="10" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.85">• ${tt(itDisplay, bulletMax)}</text>`, itUrl)
     }
 
     if (q.items.length > 5) {

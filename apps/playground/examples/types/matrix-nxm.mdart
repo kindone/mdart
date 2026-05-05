@@ -3,10 +3,14 @@ title: Skills Matrix
 columns: Frontend, Backend, DevOps
 
 - Alice
-  - Expert
-  - Proficient
-  - Learning
+  - Expert in React and TypeScript
+  - Proficient with Node.js APIs
+  - Learning container orchestration
 - Bob
-  - Proficient
-  - Expert
-  - Expert
+  - Proficient in Vue and CSS
+  - Expert in distributed systems
+  - Expert with Kubernetes and CI/CD
+- Carol
+  - Learning modern frameworks
+  - Expert in database design
+  - Proficient with cloud infrastructure

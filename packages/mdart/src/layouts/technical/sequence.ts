@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -56,10 +56,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   actors.forEach((actor, i) => {
     const x = ax(i)
     const bw = Math.min(COL_W - 16, 96)
+    const { display: actDisplay, url: actUrl } = parseLink(actor)
     parts.push(
       `<rect x="${(x - bw/2).toFixed(1)}" y="${actorBoxY.toFixed(1)}" width="${bw.toFixed(1)}" height="${ACTOR_H}" rx="5" fill="${theme.accent}22" stroke="${theme.accent}aa" stroke-width="1.5"/>`,
-      `<text x="${x.toFixed(1)}" y="${(actorBoxY + 18).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(actor, 11)}</text>`,
     )
+    parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${(actorBoxY + 18).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(actDisplay, 11)}</text>`, actUrl))
   })
 
   actors.forEach((_, i) => {

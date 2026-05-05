@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -22,13 +22,14 @@ const LABEL_MAX = Math.max(12, Math.floor((W - textX - TAG_W - 8) / 6.0))  // ~4
 interface RowLayout {
   lblLines: string[]
   lblTrunc: boolean
+  lblUrl:   string | null
   rowH:     number
 }
 
 function computeRow(item: MdArtSpec['items'][number]): RowLayout {
-  const { lines: lblLines, truncated: lblTrunc } = wrapLabel(item.label, LABEL_MAX, 2)
+  const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(item.label, LABEL_MAX, 5)
   const rowH = Math.max(MIN_ROW_H, PAD_T + lblLines.length * LBL_LH + PAD_B)
-  return { lblLines, lblTrunc, rowH }
+  return { lblLines, lblTrunc, lblUrl, rowH }
 }
 
 // ── Renderer ─────────────────────────────────────────────────────────────────
@@ -62,13 +63,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   // Spine line
   const spineY1 = TITLE_H + 12 + rows[0].rowH / 2
-  const spineY2 = TITLE_H + 12 + (items.length - 0.5) * rows[0].rowH
   const lastCy  = rowY[items.length - 1] + rows[items.length - 1].rowH / 2
   parts.push(`<line x1="${LINE_X}" y1="${spineY1.toFixed(1)}" x2="${LINE_X}" y2="${lastCy.toFixed(1)}" stroke="${theme.border}" stroke-width="2"/>`)
 
   items.forEach((item, i) => {
     const cy      = rowY[i] + rows[i].rowH / 2
-    const { lblLines, lblTrunc, rowH } = rows[i]
+    const { lblLines, lblTrunc, lblUrl, rowH } = rows[i]
     const done    = item.attrs.includes('done') || item.attrs.includes('complete')
     const active  = item.attrs.includes('active') || item.attrs.includes('current') || item.attrs.includes('now')
     const upcoming = !done && !active
@@ -88,11 +88,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     // Label — vertically centred, up to 2 lines
     const lblStartY = rowY[i] + (rowH - lblLines.length * LBL_LH) / 2 + LBL_FS * 0.75
-    const lblTip    = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
+    const lblTip    = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
     const lblSpans  = lblLines
       .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${labelColor}" font-family="system-ui,sans-serif" font-weight="${fw}">${lblTip}${lblSpans}</text>`)
+    parts.push(aWrap(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${labelColor}" font-family="system-ui,sans-serif" font-weight="${fw}">${lblTip}${lblSpans}</text>`, lblUrl))
 
     // Status tag on the right
     const tag    = done ? 'Done' : active ? 'In Progress' : (item.value ?? 'Upcoming')

@@ -2,10 +2,14 @@ type: comparison
 title: Database Options
 
 - Type
-  - PostgreSQL: Relational
-  - MongoDB: Document
-  - Redis: Key-value
-- ACID
-  - PostgreSQL: Full
-  - MongoDB: Multi-doc
-  - Redis: Single-key
+  - PostgreSQL: Relational, ACID-compliant
+  - MongoDB: Flexible document store
+  - Redis: In-memory key-value cache
+- Horizontal scaling strategy
+  - PostgreSQL: Read replicas and partitioning
+  - MongoDB: Built-in sharding across nodes
+  - Redis: Cluster mode with hash slots
+- Best fit use case
+  - PostgreSQL: Complex queries and joins
+  - MongoDB: Rapidly evolving schema
+  - Redis: Low-latency caching and queues

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt } from '../shared'
+import { escapeXml, tt, parseLink, aWrap } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items.slice(0, 4)
@@ -24,10 +24,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   items.forEach((item, i) => {
     const [col, row] = positions[i]
     const x = col * CELL_W, y = TITLE_H + row * CELL_H
+    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
     svgContent += `<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${fills[i]}" stroke="${theme.border}" stroke-width="0.5"/>`
-    svgContent += `<text x="${x + CELL_W / 2}" y="${y + 26}" text-anchor="middle" font-size="12" fill="${strokes[i]}" font-family="system-ui,sans-serif" font-weight="700">${tt(item.label, headerMax)}</text>`
+    svgContent += aWrap(`<text x="${x + CELL_W / 2}" y="${y + 26}" text-anchor="middle" font-size="12" fill="${strokes[i]}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, headerMax)}</text>`, itmUrl)
     item.children.slice(0, 5).forEach((ch, j) => {
-      svgContent += `<text x="${x + 12}" y="${y + 46 + j * 19}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" opacity="0.85">• ${tt(ch.label, bulletMax)}</text>`
+      const { display: chDisplay, url: chUrl } = parseLink(ch.label)
+      svgContent += aWrap(`<text x="${x + 12}" y="${y + 46 + j * 19}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" opacity="0.85">• ${tt(chDisplay, bulletMax)}</text>`, chUrl)
     })
   })
   // Center axis lines

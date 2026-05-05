@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty } from '../shared'
 
 /**
  * pyramid-list — numbered horizontal bars, widening toward the bottom.
@@ -54,14 +54,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     // Label centred in bar — two lines if needed, capped to ROW_H
     const maxChars = Math.max(5, Math.floor(barW / 7.5))
-    const { lines, truncated } = wrapLabel(item.label, maxChars)
+    const { lines, truncated, url: lblUrl } = wrapLabel(item.label, maxChars)
     const firstY = y + ROW_H / 2 - ((lines.length - 1) * LINE_H) / 2 + 4
-    const tip = truncated ? `<title>${escapeXml(item.label)}</title>` : ''
+    const tip = truncated ? `<title>${escapeXml(lines.join(' '))}</title>` : ''
     const tspans = lines
       .map((l, li) => `<tspan x="${cx.toFixed(1)}" dy="${li === 0 ? 0 : LINE_H}">${escapeXml(l)}</tspan>`)
       .join('')
     parts.push(
-      `<text x="${cx.toFixed(1)}" y="${firstY.toFixed(1)}" text-anchor="middle" font-size="12" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tip}${tspans}</text>`
+      aWrap(`<text x="${cx.toFixed(1)}" y="${firstY.toFixed(1)}" text-anchor="middle" font-size="12" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tip}${tspans}</text>`, lblUrl)
     )
   }
 

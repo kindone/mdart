@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel } from '../shared'
+import { escapeXml, wrapLabel, aWrap } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -19,14 +19,14 @@ const COL_MAX = Math.max(10, Math.floor((HALF - PAD - 14 - 6) / 5.8))  // ~33
 
 function colText(
   item: MdArtItem,
-  layout: { lines: string[]; truncated: boolean },
+  layout: { lines: string[]; truncated: boolean; url: string | null },
   startX: number,
   textX: number,
   textY: number,
   color: string,
   prefix: string,
 ): string {
-  const { lines, truncated } = layout
+  const { lines, truncated, url } = layout
   const tip = truncated ? `<title>${escapeXml(item.label)}</title>` : ''
   // First span carries the prefix; continuation lines align to textX
   const spans = lines
@@ -34,7 +34,7 @@ function colText(
       ? `<tspan x="${startX}">${escapeXml(prefix)}</tspan><tspan x="${textX}">${escapeXml(l)}</tspan>`
       : `<tspan x="${textX}" dy="${LBL_LH}">${escapeXml(l)}</tspan>`)
     .join('')
-  return `<text x="${startX}" y="${textY.toFixed(1)}" font-size="${LBL_FS}" fill="${color}" font-family="system-ui,sans-serif">${tip}${spans}</text>`
+  return aWrap(`<text x="${startX}" y="${textY.toFixed(1)}" font-size="${LBL_FS}" fill="${color}" font-family="system-ui,sans-serif">${tip}${spans}</text>`, url)
 }
 
 // ── Renderer ─────────────────────────────────────────────────────────────────
@@ -72,8 +72,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const maxRows = Math.max(pros.length, cons.length, 1)
 
-  const proLayouts = pros.map(p => wrapLabel(p.label, COL_MAX, 3))
-  const conLayouts = cons.map(c => wrapLabel(c.label, COL_MAX, 3))
+  const proLayouts = pros.map(p => wrapLabel(p.label, COL_MAX, 5))
+  const conLayouts = cons.map(c => wrapLabel(c.label, COL_MAX, 5))
 
   // Per-row height = max of pro and con line counts
   const rowHeights: number[] = []

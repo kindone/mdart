@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, lerpColor, renderEmpty, getCaption } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -24,6 +24,7 @@ const CAP_MAX   = Math.max(12, Math.floor((W - textX - rightM) / 5.2))  // ~84
 interface RowLayout {
   lblLines: string[]
   lblTrunc: boolean
+  lblUrl:   string | null
   capLines: string[]
   capTrunc: boolean
   caption:  string | null
@@ -32,17 +33,17 @@ interface RowLayout {
 }
 
 function computeRowLayout(item: MdArtSpec['items'][number]): RowLayout {
-  const { lines: lblLines, truncated: lblTrunc } = wrapLabel(item.label, LABEL_MAX, 3)
+  const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(item.label, LABEL_MAX, 5)
   const caption = getCaption(item)
   const { lines: capLines, truncated: capTrunc } = caption
-    ? wrapLabel(caption, CAP_MAX, 3)
+    ? wrapLabel(caption, CAP_MAX, 5)
     : { lines: [], truncated: false }
 
   const blockH = lblLines.length * LBL_LH
     + (capLines.length > 0 ? SEC_G + capLines.length * CAP_LH : 0)
   const rowH   = Math.max(MIN_H, PAD_T + blockH + PAD_B)
 
-  return { lblLines, lblTrunc, capLines, capTrunc, caption, blockH, rowH }
+  return { lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, blockH, rowH }
 }
 
 // ── Renderer ─────────────────────────────────────────────────────────────────
@@ -75,9 +76,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<line x1="${LEFT}" y1="${firstCy.toFixed(1)}" x2="${LEFT}" y2="${lastCy.toFixed(1)}" stroke="${theme.border}" stroke-width="2" stroke-dasharray="4,4"/>`)
   }
 
-  items.forEach((item, i) => {
+  items.forEach((_item, i) => {
     const y      = rowY[i]
-    const { lblLines, lblTrunc, capLines, capTrunc, caption, blockH, rowH } = layouts[i]
+    const { lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, blockH, rowH } = layouts[i]
     const t      = items.length > 1 ? i / (items.length - 1) : 0
     const fill   = lerpColor(theme.primary, theme.secondary, t)
     const cy     = y + rowH / 2
@@ -89,11 +90,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Text block vertically centred in rowH
     const lblStartY = y + (rowH - blockH) / 2 + LBL_FS * 0.75
 
-    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`)
+    parts.push(aWrap(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl))
 
     if (capLines.length > 0) {
       const capStartY = lblStartY + lblLines.length * LBL_LH + SEC_G

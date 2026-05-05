@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, parseLink, aWrap } from '../shared'
 
 function wrapText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
@@ -46,11 +46,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lineEndY = above ? LINE_Y - 14 : LINE_Y + 14
     svgContent += `<line x1="${x}" y1="${LINE_Y}" x2="${x}" y2="${lineEndY}" stroke="${fill}" stroke-width="1.5" stroke-dasharray="3,2" />`
 
-    const lines = wrapText(item.label, 12)
+    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    const lines = wrapText(itmDisplay, 12)
+    let lblContent = ''
     lines.forEach((line, li) => {
       const ly = labelY + li * 13
-      svgContent += `<text x="${x}" y="${ly}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+      lblContent += `<text x="${x}" y="${ly}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
     })
+    svgContent += aWrap(lblContent, itmUrl)
 
     if (item.value) {
       svgContent += `<text x="${x}" y="${labelY + lines.length * 13}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value)}</text>`

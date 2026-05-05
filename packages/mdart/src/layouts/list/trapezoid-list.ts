@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, lerpColor, renderEmpty, getCaption } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption } from '../shared'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -15,6 +15,7 @@ const MIN_H  = 26    // minimum band height
 interface BandLayout {
   lblLines: string[]
   lblTrunc: boolean
+  lblUrl:   string | null
   capLines: string[]
   capTrunc: boolean
   caption:  string | null
@@ -33,16 +34,16 @@ function computeBand(
   const captMax  = Math.max(12, Math.floor(innerW / 5.2))
   const caption  = getCaption(item)
 
-  const { lines: lblLines, truncated: lblTrunc } = wrapLabel(item.label, labelMax, 3)
+  const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(item.label, labelMax, 5)
   const { lines: capLines, truncated: capTrunc } = caption
-    ? wrapLabel(caption, captMax, 3)
+    ? wrapLabel(caption, captMax, 5)
     : { lines: [], truncated: false }
 
   const blockH = lblLines.length * LBL_LH
     + (capLines.length > 0 ? SEC_G + capLines.length * VAL_LH : 0)
 
   return {
-    lblLines, lblTrunc,
+    lblLines, lblTrunc, lblUrl,
     capLines, capTrunc,
     caption,
     blockH,
@@ -86,9 +87,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
   }
 
-  items.forEach((item, i) => {
+  items.forEach((_item, i) => {
     const y      = rowY[i]
-    const { lblLines, lblTrunc, capLines, capTrunc, caption, blockH, bandH } = bands[i]
+    const { lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, blockH, bandH } = bands[i]
     const t      = n > 1 ? i / (n - 1) : 0
     const fill   = lerpColor(theme.primary, theme.secondary, t)
 
@@ -110,11 +111,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblStartY = y + (bandH - blockH) / 2 + LBL_FS * 0.75
 
     // ── Label (bold, up to 3 lines) ───────────────────────────────────────────
-    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${W / 2}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(`<text x="${W / 2}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`)
+    parts.push(aWrap(`<text x="${W / 2}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl))
 
     // ── Caption (muted, below label block, up to 3 lines) ────────────────────
     if (capLines.length > 0) {

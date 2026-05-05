@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, tt, titleEl, renderEmpty } from '../shared'
+import { lerpColor, tt, titleEl, renderEmpty, parseLink, aWrap } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -49,13 +49,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const dotR = isLast ? 9 : 7
     const fill = isLast ? theme.accent : lerpColor(theme.primary, theme.secondary, t)
 
+    const { display: lblDisplay, url: lblUrl } = parseLink(items[k].label)
     parts.push(`<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="${dotR}" fill="${fill}"/>`)
 
     // Label on alternating sides
     const cosTheta = Math.cos(theta)
     const labelX = cosTheta >= 0 ? mx + dotR + 4 : mx - dotR - 4
     const anchor = cosTheta >= 0 ? 'start' : 'end'
-    parts.push(`<text x="${labelX.toFixed(1)}" y="${(my + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(items[k].label, 14)}</text>`)
+    parts.push(aWrap(`<text x="${labelX.toFixed(1)}" y="${(my + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 14)}</text>`, lblUrl))
   }
 
   return svgWrap(W, H, theme, parts)

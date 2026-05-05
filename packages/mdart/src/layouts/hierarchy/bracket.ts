@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt } from '../shared'
+import { escapeXml, tt, parseLink, aWrap } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // Each contestant carries a wins counter, summed across three notations:
@@ -8,7 +8,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   //   • `[wN]`                           — compact: e.g. `[w3]` = 3 wins
   //   • `[champion]` / `[final]` / `[semi]` — semantic stage shortcuts
   // Ties go to first-listed (preserves stable bracket on user error).
-  interface Slot { label: string; wins: number }
+  interface Slot { label: string; url: string | null; wins: number }
   const rounds = Math.max(1, Math.ceil(Math.log2(Math.max(spec.items.length, 2))))
   const slots = Math.pow(2, rounds)
   const STAGE: Record<string, number> = { champion: rounds, final: rounds - 1, semi: rounds - 2 }
@@ -23,8 +23,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     }
     return n
   }
-  const contestants: Slot[] = spec.items.map(i => ({ label: i.label, wins: countWins(i.attrs) }))
-  if (contestants.length === 0) contestants.push({ label: 'TBD', wins: 0 })
+  const contestants: Slot[] = spec.items.map(i => { const { display, url } = parseLink(i.label); return { label: display, url, wins: countWins(i.attrs) } })
+  if (contestants.length === 0) contestants.push({ label: 'TBD', url: null, wins: 0 })
   const leaves: (Slot | null)[] = [...contestants]
   while (leaves.length < slots) leaves.push(null)
 
@@ -85,7 +85,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         const fw     = isWinner ? '700' : r === 0 ? '400' : '600'
         const op     = lost ? '0.45' : '1'
         parts.push(`<rect x="${x}" y="${boxY.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="3" fill="${fill}" stroke="${stroke}${isWinner ? '' : 'cc'}" stroke-width="1.2" opacity="${op}"/>`)
-        parts.push(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(nodeY + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isWinner ? theme.bg : theme.text}" font-family="system-ui,sans-serif" font-weight="${fw}" opacity="${op}">${tt(slot.label, 13)}</text>`)
+        parts.push(aWrap(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(nodeY + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isWinner ? theme.bg : theme.text}" font-family="system-ui,sans-serif" font-weight="${fw}" opacity="${op}">${tt(slot.label, 13)}</text>`, slot.url))
       } else {
         // Distinguish two empty-slot reasons:
         //   r === 0  → bye (not enough contestants for a power-of-two field)

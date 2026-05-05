@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, truncate, renderEmpty } from '../shared'
+import { escapeXml, lerpColor, truncate, renderEmpty, parseLink, aWrap } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -56,13 +56,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const ly = cy + labelR * Math.sin(midAngle)
     const cosA = Math.cos(midAngle)
     const anchor = cosA > 0.3 ? 'start' : cosA < -0.3 ? 'end' : 'middle'
-    const labelText = truncate(item.label, 14)
+    const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
+    const labelText = truncate(lblDisplay, 14)
 
     // Connector line from outer edge to label
     const cx1 = cx + connectorR * Math.cos(midAngle)
     const cy1 = cy + connectorR * Math.sin(midAngle)
     parts.push(`<line x1="${cx1.toFixed(1)}" y1="${cy1.toFixed(1)}" x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="${fill}" stroke-width="1" opacity="0.7"/>`)
-    parts.push(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelText)}</text>`)
+    parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelText)}</text>`, lblUrl))
   }
 
   return svgWrap(W, H, theme, parts)

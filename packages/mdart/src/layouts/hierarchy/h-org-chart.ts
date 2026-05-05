@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel } from '../shared'
+import { escapeXml, wrapLabel, aWrap } from '../shared'
 import { countLeaves, maxDepth } from './shared'
 
 // ── Node geometry ─────────────────────────────────────────────────────────────
@@ -8,7 +8,7 @@ import { countLeaves, maxDepth } from './shared'
 const ROW_H  = 44   // vertical space per leaf node
 const COL_W  = 150  // horizontal space per depth level
 const NODE_W = 120  // node rectangle width
-const NODE_H = 36   // node rectangle height (tall enough for 2 lines)
+const NODE_H = 48   // node rectangle height (tall enough for 3 lines)
 const FS     = 10.5
 const LH     = 13
 
@@ -30,6 +30,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     label:    string
     lines:    string[]
     truncated: boolean
+    url:      string | null
     x:        number
     y:        number
     parentX?: number
@@ -45,8 +46,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const span   = (leaves / tot) * totalH
       const ny     = leafY + span / 2
       const nx     = 10 + level * COL_W + NODE_W / 2
-      const { lines, truncated } = wrapLabel(item.label, LABEL_MAX, 2)
-      hnodes.push({ label: item.label, lines, truncated, x: nx, y: ny, parentX: px, parentY: py })
+      const { lines, truncated, url } = wrapLabel(item.label, LABEL_MAX, 3)
+      hnodes.push({ label: item.label, lines, truncated, url, x: nx, y: ny, parentX: px, parentY: py })
       layoutH(item.children, level + 1, leafY, span, nx + NODE_W / 2, ny)
       leafY += span
     }
@@ -73,7 +74,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const spans      = n.lines
       .map((l, li) => `<tspan x="${n.x.toFixed(1)}" dy="${li === 0 ? 0 : LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    boxes.push(`<text x="${n.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${FS}" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${spans}</text>`)
+    boxes.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${FS}" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${spans}</text>`, n.url))
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, tt, titleEl, renderEmpty } from '../shared'
+import { lerpColor, tt, titleEl, renderEmpty, parseLink, aWrap } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -84,17 +84,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<circle cx="${x.toFixed(1)}" cy="${rowY}" r="${nodeR}" fill="${fill}" stroke="${theme.bg}" stroke-width="2.5"/>`)
 
     // Label (one or two lines, bg-coloured text inside node)
-    const words = item.label.split(' ')
+    const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
+    const words = lblDisplay.split(' ')
+    let lblContent: string
     if (words.length <= 1) {
-      parts.push(`<text x="${x.toFixed(1)}" y="${(rowY + fontSize * 0.38).toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="700" font-family="system-ui,sans-serif" fill="${theme.bg}">${tt(item.label, 11)}</text>`)
+      lblContent = `<text x="${x.toFixed(1)}" y="${(rowY + fontSize * 0.38).toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="700" font-family="system-ui,sans-serif" fill="${theme.bg}">${tt(lblDisplay, 11)}</text>`
     } else {
       const mid = Math.ceil(words.length / 2)
       const l1  = words.slice(0, mid).join(' ')
       const l2  = words.slice(mid).join(' ')
       const fh  = fontSize - 1
-      parts.push(`<text x="${x.toFixed(1)}" y="${(rowY - fh * 0.4).toFixed(1)}" text-anchor="middle" font-size="${fh}" font-weight="700" font-family="system-ui,sans-serif" fill="${theme.bg}">${tt(l1, 11)}</text>`)
-      parts.push(`<text x="${x.toFixed(1)}" y="${(rowY + fh * 1.1).toFixed(1)}" text-anchor="middle" font-size="${fh}" font-weight="700" font-family="system-ui,sans-serif" fill="${theme.bg}">${tt(l2, 11)}</text>`)
+      lblContent = `<text x="${x.toFixed(1)}" y="${(rowY - fh * 0.4).toFixed(1)}" text-anchor="middle" font-size="${fh}" font-weight="700" font-family="system-ui,sans-serif" fill="${theme.bg}">${tt(l1, 11)}</text>`
+               + `<text x="${x.toFixed(1)}" y="${(rowY + fh * 1.1).toFixed(1)}" text-anchor="middle" font-size="${fh}" font-weight="700" font-family="system-ui,sans-serif" fill="${theme.bg}">${tt(l2, 11)}</text>`
     }
+    parts.push(aWrap(lblContent, lblUrl))
 
     // Step-number badge (top-right of node)
     const bx = x + nodeR - 4

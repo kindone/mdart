@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -34,11 +34,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const x = startX + i * (ENT_W + GAP)
     const y = TITLE_H + 12
 
+    const { display: entDisplay, url: entUrl } = parseLink(entity.label)
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${ENT_W}" height="${ENT_H}" rx="6" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.5"/>`)
     parts.push(
       `<path d="M${(x + 6).toFixed(1)},${y.toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${x.toFixed(1)},${(y + 6).toFixed(1)} L${x.toFixed(1)},${(y + HEADER_H).toFixed(1)} L${(x + ENT_W).toFixed(1)},${(y + HEADER_H).toFixed(1)} L${(x + ENT_W).toFixed(1)},${(y + 6).toFixed(1)} Q${(x + ENT_W).toFixed(1)},${y.toFixed(1)} ${(x + ENT_W - 6).toFixed(1)},${y.toFixed(1)} Z" fill="${theme.accent}33"/>`,
-      `<text x="${(x + ENT_W / 2).toFixed(1)}" y="${(y + 19).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(entity.label, 14)}</text>`,
     )
+    parts.push(aWrap(`<text x="${(x + ENT_W / 2).toFixed(1)}" y="${(y + 19).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(entDisplay, 14)}</text>`, entUrl))
     parts.push(`<line x1="${x.toFixed(1)}" y1="${(y + HEADER_H).toFixed(1)}" x2="${(x + ENT_W).toFixed(1)}" y2="${(y + HEADER_H).toFixed(1)}" stroke="${theme.accent}44" stroke-width="1"/>`)
 
     entity.children.forEach((field, fi) => {
@@ -47,7 +48,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const isFK = field.attrs.includes('FK')
       const textColor = isPK ? theme.accent : isFK ? `${theme.secondary}ee` : theme.textMuted
 
-      parts.push(`<text x="${(x + 10).toFixed(1)}" y="${fy.toFixed(1)}" font-size="10" fill="${textColor}" font-family="ui-monospace,monospace">${tt(field.label, 16)}</text>`)
+      const { display: fldDisplay, url: fldUrl } = parseLink(field.label)
+      parts.push(aWrap(`<text x="${(x + 10).toFixed(1)}" y="${fy.toFixed(1)}" font-size="10" fill="${textColor}" font-family="ui-monospace,monospace">${tt(fldDisplay, 16)}</text>`, fldUrl))
 
       if (isPK || isFK) {
         const badge = isPK ? 'PK' : 'FK'

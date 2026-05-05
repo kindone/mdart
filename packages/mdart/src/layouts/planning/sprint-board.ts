@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty, aWrap } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -36,6 +36,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   type CardInfo = {
     lines: string[]
     truncated: boolean
+    url: string | null
     pts: number
     done: boolean
     active: boolean
@@ -52,9 +53,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const cw      = COL_W - CARD_PAD * 2
       const ptsW    = pts > 0 ? 30 : 12
       const maxChars = Math.max(8, Math.floor((cw - (active ? 10 : 0) - ptsW) / 6.5))
-      const { lines, truncated } = wrapLabel(card.label, maxChars, 2)
+      const { lines, truncated, url } = wrapLabel(card.label, maxChars, 5)
       const cardH   = CARD_PAD + lines.length * CARD_LH + CARD_PAD
-      return { lines, truncated, pts, done, active, cardH, cw }
+      return { lines, truncated, url, pts, done, active, cardH, cw }
     })
   })
 
@@ -97,7 +98,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let cy = colY + HEADER_H + CARD_PAD
     cards.forEach((info) => {
       const cx      = colX + CARD_PAD
-      const { lines, truncated, pts, done, active, cardH, cw } = info
+      const { lines, truncated, url, pts, done, active, cardH, cw } = info
       const border  = active ? theme.accent : theme.border
       const tx      = cx + (active ? 10 : 6)
 
@@ -112,7 +113,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         .map((l, li) => `<tspan x="${(tx + 2).toFixed(1)}" dy="${li === 0 ? 0 : CARD_LH}">${escapeXml(l)}</tspan>`)
         .join('')
       const textY = cy + CARD_PAD + CARD_LH * 0.75
-      parts.push(`<text x="${(tx + 2).toFixed(1)}" y="${textY.toFixed(1)}" font-size="11" fill="${done ? theme.textMuted : theme.text}" font-family="system-ui,sans-serif" ${done ? 'text-decoration="line-through"' : ''}>${tip}${spans}</text>`)
+      parts.push(aWrap(`<text x="${(tx + 2).toFixed(1)}" y="${textY.toFixed(1)}" font-size="11" fill="${done ? theme.textMuted : theme.text}" font-family="system-ui,sans-serif" ${done ? 'text-decoration="line-through"' : ''}>${tip}${spans}</text>`, url))
 
       if (pts > 0) {
         const bx = cx + cw - 13

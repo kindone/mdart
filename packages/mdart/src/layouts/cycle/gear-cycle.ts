@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, tt, svgWrap, renderEmpty } from '../shared'
+import { lerpColor, tt, svgWrap, renderEmpty, parseLink, aWrap } from '../shared'
 
 function gearPath(cx: number, cy: number, outerR: number, innerR: number, teeth: number, phase: number): string {
   const points: string[] = []
@@ -14,7 +14,7 @@ function gearPath(cx: number, cy: number, outerR: number, innerR: number, teeth:
   return 'M ' + points.join(' L ') + ' Z'
 }
 
-/** Wrap label into up to 2 lines of ≤ maxChars each. Last line truncated with ellipsis if needed. */
+/** Wrap label into up to 3 lines of ≤ maxChars each. Last line truncated with ellipsis if needed. */
 function wrapGearText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
   const words = text.split(' ')
@@ -27,9 +27,9 @@ function wrapGearText(text: string, maxChars: number): string[] {
   }
   if (cur) lines.push(cur)
   if (lines.length === 0) return [tt(text, maxChars)]
-  if (lines.length === 1) return lines
-  // Cap at 2 lines; fold any overflow into line 2 with ellipsis
-  return [lines[0], tt(lines.slice(1).join(' '), maxChars)]
+  if (lines.length <= 3) return lines
+  // Cap at 3 lines; fold any overflow into line 3 with ellipsis
+  return [...lines.slice(0, 2), tt(lines.slice(2).join(' '), maxChars)]
 }
 
 /**
@@ -38,10 +38,11 @@ function wrapGearText(text: string, maxChars: number): string[] {
 function renderGearLabel(
   parts: string[],
   gx: number, gy: number,
-  label: string, value: string | undefined,
+  rawLabel: string, value: string | undefined,
   fontSize: number, maxChars: number,
   labelFill: string, theme: MdArtTheme
 ): void {
+  const { display: label, url: lblUrl } = parseLink(rawLabel)
   const lines = wrapGearText(label, maxChars)
   const lineH = fontSize + 2
   const valueFontSize = Math.max(fontSize - 2, 8)
@@ -51,14 +52,15 @@ function renderGearLabel(
   // 0.72 * lineH ≈ cap-height for the first baseline.
   let y = gy - blockH / 2 + lineH * 0.72
 
+  let lblContent = ''
   for (const line of lines) {
-    parts.push(
+    lblContent +=
       `<text x="${gx.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" ` +
       `font-size="${fontSize}" fill="${labelFill}" ` +
       `font-family="system-ui,sans-serif" font-weight="600">${line}</text>`
-    )
     y += lineH
   }
+  parts.push(aWrap(lblContent, lblUrl))
 
   if (value) {
     parts.push(

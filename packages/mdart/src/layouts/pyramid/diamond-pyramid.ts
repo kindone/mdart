@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap } from '../shared'
 
 /**
  * diamond-pyramid — items arranged in a diamond (rhombus) shape.
@@ -67,15 +67,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const textY = y + LAYER_H / 2 + 4
     const fontSize = midW > 130 ? 12 : midW > 80 ? 11 : 10
     const maxChars = Math.max(4, Math.floor(midW / 7))
+    const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
 
     labels.push(
-      `<text x="${cx.toFixed(1)}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tt(item.label, maxChars)}</text>`
+      aWrap(`<text x="${cx.toFixed(1)}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tt(lblDisplay, maxChars)}</text>`, lblUrl)
     )
 
     if (midW < 70) {
       const sideX = cx + Math.max(topW, botW) / 2 + 8
       labels.push(
-        `<text x="${sideX.toFixed(1)}" y="${textY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.label, 22)}</text>`
+        aWrap(`<text x="${sideX.toFixed(1)}" y="${textY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(lblDisplay, 22)}</text>`, lblUrl)
       )
     }
   }

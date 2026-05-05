@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -110,10 +110,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (isFinal) {
       parts.push(`<rect x="${(x - STATE_W/2 - 4).toFixed(1)}" y="${(y - STATE_H/2 - 4).toFixed(1)}" width="${STATE_W + 8}" height="${STATE_H + 8}" rx="9" fill="none" stroke="${theme.accent}" stroke-width="2"/>`)
     }
+    const { display: stDisplay, url: stUrl } = parseLink(state.label)
     parts.push(
       `<rect x="${(x - STATE_W/2).toFixed(1)}" y="${(y - STATE_H/2).toFixed(1)}" width="${STATE_W}" height="${STATE_H}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`,
-      `<text x="${x.toFixed(1)}" y="${(y + 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(state.label, 12)}</text>`,
     )
+    parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y + 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(stDisplay, 12)}</text>`, stUrl))
   })
 
   return svgWrap(W, H, theme, spec.title, parts)

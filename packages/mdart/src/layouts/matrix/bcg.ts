@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt } from '../shared'
+import { escapeXml, tt, parseLink, aWrap } from '../shared'
 
 const BCG_QUADS = [
   { key: 'stars',     keywords: ['star'],             label: '★ Stars',          sub: 'High growth · High share', fill: '#3730a3', text: '#a5b4fc' },  // indigo-800/300
@@ -9,18 +9,20 @@ const BCG_QUADS = [
   { key: 'dogs',      keywords: ['dog'],              label: '✕ Dogs',           sub: 'Low growth · Low share',   fill: '#9f1239', text: '#fda4af' },  // rose-800/300
 ]
 
+type BcgEntry = { display: string; url: string | null }
+
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const buckets: Record<string, string[]> = Object.fromEntries(BCG_QUADS.map(q => [q.key, []]))
+  const buckets: Record<string, BcgEntry[]> = Object.fromEntries(BCG_QUADS.map(q => [q.key, []]))
   let slotIdx = 0
   for (const item of spec.items) {
     const lower = item.label.toLowerCase()
     const matched = BCG_QUADS.find(q => q.keywords.some(kw => lower.includes(kw)))
     if (matched) {
-      buckets[matched.key].push(...(item.children.length ? item.children.map(c => c.label) : []))
+      buckets[matched.key].push(...(item.children.length ? item.children.map(c => parseLink(c.label)) : []))
     } else {
       // Distribute ungrouped items across quadrants in order
       const slot = BCG_QUADS[slotIdx % 4]
-      buckets[slot.key].push(item.label)
+      buckets[slot.key].push(parseLink(item.label))
       slotIdx++
     }
   }
@@ -39,8 +41,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     svgContent += `<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${q.fill}"/>`
     svgContent += `<text x="${x + CELL_W / 2}" y="${y + 24}" text-anchor="middle" font-size="12" fill="${q.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(q.label)}</text>`
     svgContent += `<text x="${x + CELL_W / 2}" y="${y + 38}" text-anchor="middle" font-size="8" fill="${q.text}" font-family="system-ui,sans-serif" opacity="0.65">${q.sub}</text>`
-    buckets[q.key].slice(0, 4).forEach((label, j) => {
-      svgContent += `<text x="${x + 10}" y="${y + 56 + j * 18}" font-size="10" fill="${q.text}" font-family="system-ui,sans-serif" opacity="0.9">• ${tt(label, 22)}</text>`
+    buckets[q.key].slice(0, 4).forEach(({ display: lbl, url: lblUrl }, j) => {
+      svgContent += aWrap(`<text x="${x + 10}" y="${y + 56 + j * 18}" font-size="10" fill="${q.text}" font-family="system-ui,sans-serif" opacity="0.9">• ${tt(lbl, 22)}</text>`, lblUrl)
     })
   })
   // Grid lines

@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, truncate, wrapLabel } from '../shared'
+import { escapeXml, truncate, wrapLabel, aWrap } from '../shared'
 
 /**
  * Unified Venn renderer.
@@ -162,13 +162,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const ly = c.y + labelOff[i][1]
     const labelFontSize = n === 2 ? 13 : (n === 3 ? 12 : 11)
     const labelMax      = n === 2 ? 14 : (n === 3 ? 13 : 12)
-    const { lines: lblLines, truncated: lblTrunc } = wrapLabel(item.label, labelMax)
+    const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(item.label, labelMax)
     const lblLineH = labelFontSize + 2
-    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${lx.toFixed(1)}" dy="${li === 0 ? 0 : lblLineH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`)
+    parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl))
     const maxChildren  = n === 2 ? 4 : 2
     const childGap     = n === 2 ? 12 : 14
     const childSpacing = n === 2 ? 16 : 13

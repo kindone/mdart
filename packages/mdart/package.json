@@ -22,6 +22,8 @@
     "dist",
     "!dist/**/*.test.d.ts",
     "!dist/**/*.test.d.ts.map",
+    "src",
+    "!src/**/*.test.ts",
     "skills"
   ],
   "scripts": {
