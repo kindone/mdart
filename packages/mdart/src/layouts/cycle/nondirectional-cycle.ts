@@ -42,7 +42,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
     parts.push(`<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${nodeR}" fill="${fill}"/>`)
-    parts.push(aWrap(`<text x="${nx.toFixed(1)}" y="${(ny + (item.value ? -3 : 4)).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10)}</text>`, lblUrl))
+    parts.push(aWrap(`<text x="${nx.toFixed(1)}" y="${(ny + (item.value ? -3 : 4)).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10)}</text>`, lblUrl))
     if (item.value) {
       parts.push(`<text x="${nx.toFixed(1)}" y="${(ny + 9).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.bg}" font-family="system-ui,sans-serif">${tt(item.value, 10)}</text>`)
     }

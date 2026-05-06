@@ -99,6 +99,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
+  // Item text colors: light tints for dark-mode row backgrounds, dark shades for light-mode
+  const isLight  = theme.surface === '#ffffff'
+  const proColor = isLight ? '#065f46' : '#6ee7b7'
+  const conColor = isLight ? '#881337' : '#fda4af'
+
   svgContent += `<rect x="0" y="${baseY}" width="${HALF}" height="${HEADER_H}" fill="#064e3b" />`
   svgContent += `<text x="${HALF / 2}" y="${baseY + 25}" text-anchor="middle" font-size="13" fill="#6ee7b7" font-family="system-ui,sans-serif" font-weight="700">Pros</text>`
   svgContent += `<rect x="${HALF}" y="${baseY}" width="${HALF}" height="${HEADER_H}" fill="#4c0519" />`
@@ -117,10 +122,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const textY = lines > 1 ? rY + PAD_V + LBL_FS * 0.75 : rY + rH / 2 + 4
 
     if (i < pros.length) {
-      svgContent += colText(pros[i], proLayouts[i], PAD, PAD + 14, textY, '#6ee7b7', '✓')
+      svgContent += colText(pros[i], proLayouts[i], PAD, PAD + 14, textY, proColor, '✓')
     }
     if (i < cons.length) {
-      svgContent += colText(cons[i], conLayouts[i], HALF + PAD, HALF + PAD + 14, textY, '#fda4af', '✗')
+      svgContent += colText(cons[i], conLayouts[i], HALF + PAD, HALF + PAD + 14, textY, conColor, '✗')
     }
 
     if (i < maxRows - 1) {

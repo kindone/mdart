@@ -63,7 +63,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const cx1 = cx + connectorR * Math.cos(midAngle)
     const cy1 = cy + connectorR * Math.sin(midAngle)
     parts.push(`<line x1="${cx1.toFixed(1)}" y1="${cy1.toFixed(1)}" x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="${fill}" stroke-width="1" opacity="0.7"/>`)
-    parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelText)}</text>`, lblUrl))
+    if (item.value) {
+      // Two-line: label up, dim value subtitle beneath. Plenty of room
+      // outside the wedges so we render full text without truncation tail.
+      parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelText)}</text>`, lblUrl))
+      parts.push(`<text x="${lx.toFixed(1)}" y="${(ly + 11).toFixed(1)}" text-anchor="${anchor}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(truncate(item.value, 16))}</text>`)
+    } else {
+      parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelText)}</text>`, lblUrl))
+    }
   }
 
   return svgWrap(W, H, theme, parts)

@@ -109,7 +109,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     }
     svgContent += aWrap(lblContent, itmUrl)
     if (hasValue) {
-      svgContent += `<text x="${x + nodeW / 2}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value!)}</text>`
+      svgContent += `<text x="${x + nodeW / 2}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="#ffffffcc" font-family="system-ui,sans-serif">${escapeXml(item.value!)}</text>`
     }
 
     if (i < n - 1) {

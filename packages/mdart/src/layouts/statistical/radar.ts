@@ -33,13 +33,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const a = 2 * Math.PI * i / n - Math.PI / 2
       return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`
     })
-    parts.push(`<polygon points="${pts.join(' ')}" fill="none" stroke="${theme.border}99" stroke-width="0.8"/>`)
+    parts.push(`<polygon points="${pts.join(' ')}" fill="none" stroke="${theme.border}cc" stroke-width="1"/>`)
     parts.push(`<text x="${cx}" y="${(cy - r + 3).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif" opacity="0.7">${ring * 25}%</text>`)
   }
 
   items.forEach((_, i) => {
     const a = 2 * Math.PI * i / n - Math.PI / 2
-    parts.push(`<line x1="${cx}" y1="${cy}" x2="${(cx + R * Math.cos(a)).toFixed(1)}" y2="${(cy + R * Math.sin(a)).toFixed(1)}" stroke="${theme.border}66" stroke-width="1"/>`)
+    parts.push(`<line x1="${cx}" y1="${cy}" x2="${(cx + R * Math.cos(a)).toFixed(1)}" y2="${(cy + R * Math.sin(a)).toFixed(1)}" stroke="${theme.border}99" stroke-width="1"/>`)
   })
 
   const vpts = items.map((_, i) => {

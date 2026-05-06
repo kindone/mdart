@@ -49,7 +49,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (i < n - 1) {
       const op = i === n - 2 ? '=' : '+'
       const opX = x + CARD_W + opW / 2
-      parts.push(`<text x="${opX.toFixed(1)}" y="${(cardY + CARD_H / 2 + 8).toFixed(1)}" text-anchor="middle" font-size="20" fill="${theme.muted}" font-family="system-ui,sans-serif" font-weight="300">${op}</text>`)
+      parts.push(`<text x="${opX.toFixed(1)}" y="${(cardY + CARD_H / 2 + 8).toFixed(1)}" text-anchor="middle" font-size="20" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="400">${op}</text>`)
     }
   })
   return svgWrapProcess(W, H, theme, parts)

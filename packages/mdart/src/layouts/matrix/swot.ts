@@ -4,13 +4,19 @@ import { escapeXml, tt, parseLink, aWrap } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // Collect items by prefix char or by group name
-  interface SwotEntry { display: string; url: string | null }
+  interface SwotEntry { display: string; url: string | null; value?: string }
   interface SwotQuadrant {
     label: string
     items: SwotEntry[]
     fill: string
     textColor: string
   }
+  // Wrap parseLink so we can carry the `value` field through to the bullet
+  // renderer (small dim suffix after the label).
+  const toEntry = (label: string, value?: string): SwotEntry => ({
+    ...parseLink(label),
+    value,
+  })
 
   const quadrantMap: Record<string, SwotQuadrant> = {
     S: { label: 'Strengths',     items: [], fill: '#065f46', textColor: '#34d399' },  // emerald-800/400
@@ -57,25 +63,25 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       currentSection = headerKey
       // If children were attached (e.g. non-swot-style nesting), consume immediately.
       if (item.children.length) {
-        quadrantMap[headerKey].items.push(...item.children.map(c => parseLink(c.label)))
+        quadrantMap[headerKey].items.push(...item.children.map(c => toEntry(c.label, c.value)))
         currentSection = null
       }
       continue
     }
 
     // 2. Otherwise, route by SWOT prefix char.
-    if (item.prefix === '+') { quadrantMap.S.items.push(parseLink(item.label)); continue }
-    if (item.prefix === '?') { quadrantMap.O.items.push(parseLink(item.label)); continue }
-    if (item.prefix === '!') { quadrantMap.T.items.push(parseLink(item.label)); continue }
+    if (item.prefix === '+') { quadrantMap.S.items.push(toEntry(item.label, item.value)); continue }
+    if (item.prefix === '?') { quadrantMap.O.items.push(toEntry(item.label, item.value)); continue }
+    if (item.prefix === '!') { quadrantMap.T.items.push(toEntry(item.label, item.value)); continue }
     if (item.prefix === '-') {
       // - is the SWOT weakness marker by default, but if a heading was just
       // declared (e.g. `- Threats`), route subsequent items to that section.
-      quadrantMap[currentSection ?? 'W'].items.push(parseLink(item.label))
+      quadrantMap[currentSection ?? 'W'].items.push(toEntry(item.label, item.value))
       continue
     }
 
     // 3. Unprefixed flat sibling — only routes if we're inside a declared section.
-    if (currentSection) quadrantMap[currentSection].items.push(parseLink(item.label))
+    if (currentSection) quadrantMap[currentSection].items.push(toEntry(item.label, item.value))
   }
 
   const W = 500
@@ -113,8 +119,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const maxItems = Math.min(q.items.length, 5)
     for (let i = 0; i < maxItems; i++) {
       const itemY = y + 38 + i * 16
-      const { display: itDisplay, url: itUrl } = q.items[i]
-      svgContent += aWrap(`<text x="${x + 10}" y="${itemY}" font-size="10" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.85">• ${tt(itDisplay, bulletMax)}</text>`, itUrl)
+      const { display: itDisplay, url: itUrl, value: itValue } = q.items[i]
+      // Reserve space for the dim value suffix when present so the label
+      // isn't the only thing that gets squeezed.
+      const valueSuffix = itValue ? ` · ${itValue}` : ''
+      const totalBudget = bulletMax
+      const valBudget   = itValue ? Math.min(itValue.length + 3, Math.floor(totalBudget * 0.4)) : 0
+      const lblBudget   = totalBudget - valBudget
+      svgContent += aWrap(
+        `<text x="${x + 10}" y="${itemY}" font-size="10" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.85">` +
+        `<tspan>• ${escapeXml(tt(itDisplay, lblBudget))}</tspan>` +
+        (itValue ? `<tspan opacity="0.7">${escapeXml(tt(valueSuffix, valBudget))}</tspan>` : '') +
+        `</text>`,
+        itUrl,
+      )
     }
 
     if (q.items.length > 5) {

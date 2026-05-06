@@ -62,13 +62,23 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.5"/>`)
-    const lines = wrapText(itmDisplay, Math.floor(BOX_W / 7))
+    const valueText = item.value ?? ''
+    // When a value is present, force the label to a single line and use the
+    // second line for the value subtitle.
+    const lines = wrapText(itmDisplay, Math.floor(BOX_W / 7)).slice(0, valueText ? 1 : 2)
     const cy = y + BOX_H / 2
     let lblContent = ''
-    lines.slice(0, 2).forEach((line, li) => {
-      const ty = lines.length === 1 ? cy + 4 : cy + (li === 0 ? -5 : 8)
-      lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
-    })
+    if (valueText) {
+      lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(cy - 5).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(lines[0] ?? '')}</text>`
+      const valMax = Math.floor(BOX_W / 5.5)
+      const valDisp = valueText.length > valMax ? valueText.slice(0, valMax - 1) + '…' : valueText
+      lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(cy + 8).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(valDisp)}</text>`
+    } else {
+      lines.forEach((line, li) => {
+        const ty = lines.length === 1 ? cy + 4 : cy + (li === 0 ? -5 : 8)
+        lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+      })
+    }
     parts.push(aWrap(lblContent, itmUrl))
   })
 

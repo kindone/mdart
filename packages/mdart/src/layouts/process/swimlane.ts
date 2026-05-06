@@ -18,7 +18,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const H = titleH + items.length * (LANE_H + GAP) + 8
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
-  parts.push(`<defs><marker id="sl-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0,0 6,3 0,6" fill="${theme.muted}"/></marker></defs>`)
+  parts.push(`<defs><marker id="sl-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0,0 6,3 0,6" fill="${theme.primary}"/></marker></defs>`)
 
   items.forEach((item, i) => {
     const y = titleH + i * (LANE_H + GAP)
@@ -41,7 +41,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       parts.push(`<text x="${(sx + stepW / 2).toFixed(1)}" y="${(sy + 17).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isDone ? theme.text : theme.textMuted}" font-family="system-ui,sans-serif" font-weight="${isDone ? '600' : '400'}">${tt(step.label, Math.floor(stepW / 5))}</text>`)
       if (si < steps.length - 1) {
         const ax1 = sx + stepW + 2, ax2 = sx + stepW + stepGap - 4
-        parts.push(`<line x1="${ax1.toFixed(1)}" y1="${(sy + 14).toFixed(1)}" x2="${ax2.toFixed(1)}" y2="${(sy + 14).toFixed(1)}" stroke="${theme.muted}" stroke-width="1" marker-end="url(#sl-arr)"/>`)
+        parts.push(`<line x1="${ax1.toFixed(1)}" y1="${(sy + 14).toFixed(1)}" x2="${ax2.toFixed(1)}" y2="${(sy + 14).toFixed(1)}" stroke="${theme.primary}99" stroke-width="1" marker-end="url(#sl-arr)"/>`)
       }
     })
   })

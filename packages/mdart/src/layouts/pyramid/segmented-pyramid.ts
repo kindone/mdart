@@ -65,15 +65,18 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fontSize = midW > 130 ? 12 : midW > 80 ? 11 : 10
     const maxChars = Math.max(4, Math.floor(midW / 7))
     const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
+    // Inline-append value with bullet separator (segmented bands map naturally
+    // to proportional values — quartiles, share %, etc.).
+    const labelWithValue = item.value ? `${lblDisplay} · ${item.value}` : lblDisplay
 
     labels.push(
-      aWrap(`<text x="${cx.toFixed(1)}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tt(lblDisplay, maxChars)}</text>`, lblUrl)
+      aWrap(`<text x="${cx.toFixed(1)}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tt(labelWithValue, maxChars)}</text>`, lblUrl)
     )
 
     if (midW < 70) {
       const sideX = cx + Math.max(topW, botW) / 2 + 8
       labels.push(
-        aWrap(`<text x="${sideX.toFixed(1)}" y="${textY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(lblDisplay, 22)}</text>`, lblUrl)
+        aWrap(`<text x="${sideX.toFixed(1)}" y="${textY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(labelWithValue, 24)}</text>`, lblUrl)
       )
     }
   }

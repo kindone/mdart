@@ -51,7 +51,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const maxChars = Math.max(4, Math.floor(midW / 7))
     // Allow two lines only when the layer is tall enough
     const maxLines = LAYER_H >= 32 ? 3 : 1
-    const { lines, truncated, url: lblUrl } = wrapLabel(item.label, maxChars, maxLines)
+    // Inline-append value with bullet separator so narrow bands truncate
+    // gracefully and wide bands show the full annotation. Value is the
+    // pyramid's quantitative metric (% share, count, $/yr, etc.).
+    const labelText = item.value ? `${item.label} · ${item.value}` : item.label
+    const { lines, truncated, url: lblUrl } = wrapLabel(labelText, maxChars, maxLines)
     const lineH = fontSize + 2
     const firstY = y + LAYER_H / 2 - ((lines.length - 1) * lineH) / 2 + fontSize * 0.3
     const tip = truncated ? `<title>${escapeXml(lines.join(' '))}</title>` : ''
@@ -66,8 +70,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (midW < 60 && item.label) {
       const sideX = cxPos + Math.max(topW, botW) / 2 + 8
       const sideY = y + LAYER_H / 2 + fontSize * 0.3
+      const sideText = item.value ? `${item.label} · ${item.value}` : item.label
       labels.push(
-        `<text x="${sideX.toFixed(1)}" y="${sideY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(truncate(item.label, 20))}</text>`,
+        `<text x="${sideX.toFixed(1)}" y="${sideY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(truncate(sideText, 24))}</text>`,
       )
     }
   }

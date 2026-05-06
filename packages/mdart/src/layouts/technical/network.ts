@@ -42,7 +42,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const edges: string[] = []
   const nodes: string[] = []
 
-  edges.push(`<defs><marker id="net-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${theme.muted}e6"/></marker></defs>`)
+  edges.push(`<defs><marker id="net-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${theme.textMuted}"/></marker></defs>`)
 
   items.forEach(item => {
     const si = labelIndex.get(item.label) ?? -1
@@ -58,7 +58,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const y1 = src.y + (dy / len) * (NODE_H / 2 + 2)
       const x2 = dst.x - (dx / len) * (NODE_W / 2 + 10)
       const y2 = dst.y - (dy / len) * (NODE_H / 2 + 6)
-      edges.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${theme.muted}d0" stroke-width="1.5" marker-end="url(#net-arr)"/>`)
+      edges.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${theme.textMuted}99" stroke-width="1.5" marker-end="url(#net-arr)"/>`)
     })
   })
 

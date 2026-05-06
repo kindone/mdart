@@ -50,7 +50,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
     parts.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${nodeR}" fill="${fill}" stroke="${theme.bg}" stroke-width="2"/>`)
-    parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10)}</text>`, lblUrl))
+    parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10)}</text>`, lblUrl))
   }
 
   return svgWrap(W, H, theme, parts)

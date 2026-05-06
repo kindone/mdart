@@ -80,19 +80,29 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const badgeX = (bx - hw + 5).toFixed(1)
     const badgeY = (by - hh + 9).toFixed(1)
 
-    // Label — up to 2 wrapped lines, vertically centred in box
+    // Label — up to 2 wrapped lines normally; when a value is present we
+    // limit the label to 1 line and use the second line for the value.
     const { display: itemLabel, url } = parseLink(item.label)
-    const lines = wrapText(itemLabel, Math.floor(BOX_W / 6.8))
+    const maxLabelLines = item.value ? 1 : 2
+    const lines = wrapText(itemLabel, Math.floor(BOX_W / 6.8)).slice(0, maxLabelLines)
     const lineH = 11
-    const totalH = lines.length * lineH
+    const valueLine = item.value ?? ''
+    const totalLines = lines.length + (valueLine ? 1 : 0)
+    const totalH = totalLines * lineH
 
     // Box + label text wrapped in aWrap for clickable node
     let nodeContent = `<rect x="${rx}" y="${ry}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="1.8"/>`
     nodeContent += `<text x="${badgeX}" y="${badgeY}" font-size="8" fill="${fill}" font-family="system-ui,sans-serif" font-weight="800" opacity="0.85">${i + 1}</text>`
-    lines.slice(0, 2).forEach((line, li) => {
+    lines.forEach((line, li) => {
       const ty = (by - totalH / 2 + lineH * li + lineH * 0.8).toFixed(1)
       nodeContent += `<text x="${bx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
     })
+    if (valueLine) {
+      const ty = (by - totalH / 2 + lineH * lines.length + lineH * 0.8).toFixed(1)
+      const valMax = Math.floor(BOX_W / 5.5)   // smaller font → more chars fit
+      const truncated = valueLine.length > valMax ? valueLine.slice(0, valMax - 1) + '…' : valueLine
+      nodeContent += `<text x="${bx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="9" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(truncated)}</text>`
+    }
     parts.push(aWrap(nodeContent, url))
   })
 

@@ -38,13 +38,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const path = `M ${x1} ${y1} L ${x2} ${y2} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x3} ${y3} L ${x4} ${y4} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x1} ${y1} Z`
     svgContent += `<path d="${path}" fill="${fill}" />`
 
-    // Label at wedge midpoint
+    // Label at wedge midpoint. Wedge text room is tight; if a value is set
+    // we render it as a smaller subtitle just below the label, both within
+    // the wedge's labelR ring.
     const midAngle = (startAngle + endAngle) / 2
     const labelR = (outerR + innerR) / 2
     const lx = cx + labelR * Math.cos(midAngle)
     const ly = cy + labelR * Math.sin(midAngle)
     const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
-    svgContent += aWrap(`<text x="${lx}" y="${ly + 4}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10)}</text>`, lblUrl)
+    if (item.value) {
+      svgContent += aWrap(`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10)}</text>`, lblUrl)
+      svgContent += `<text x="${lx}" y="${ly + 11}" text-anchor="middle" font-size="8" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(tt(item.value, 12))}</text>`
+    } else {
+      svgContent += aWrap(`<text x="${lx}" y="${ly + 4}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10)}</text>`, lblUrl)
+    }
   }
 
   // Center label

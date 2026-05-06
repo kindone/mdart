@@ -45,7 +45,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       <path d="M0,0 L7,3.5 L0,7 Z" fill="${theme.accent}"/>
     </marker>
     <marker id="sq-b" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-      <path d="M0,0 L7,3.5 L0,7 Z" fill="${theme.muted}e0"/>
+      <path d="M0,0 L7,3.5 L0,7 Z" fill="${theme.textMuted}"/>
     </marker>
   </defs>`)
 
@@ -92,7 +92,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const midX = (ex1 + ex2) / 2
       const maxChars = Math.max(8, Math.floor(Math.abs(ex2 - ex1) / 7))
       parts.push(
-        `<line x1="${ex1.toFixed(1)}" y1="${y.toFixed(1)}" x2="${ex2.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${isRet ? theme.muted + 'e0' : theme.accent}" stroke-width="1.5"${isRet ? ' stroke-dasharray="5,3"' : ''} marker-end="${isRet ? 'url(#sq-b)' : 'url(#sq-a)'}"/>`,
+        `<line x1="${ex1.toFixed(1)}" y1="${y.toFixed(1)}" x2="${ex2.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${isRet ? theme.textMuted : theme.accent}" stroke-width="1.5"${isRet ? ' stroke-dasharray="5,3"' : ''} marker-end="${isRet ? 'url(#sq-b)' : 'url(#sq-a)'}"/>`,
         msg.msg ? `<text x="${midX.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(msg.msg, maxChars)}</text>` : '',
       )
     }

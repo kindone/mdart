@@ -41,7 +41,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (i < n - 1) {
       const ax = x + STAGE_W + 4
       const ay = stageY + STAGE_H / 2
-      parts.push(`<path d="M${ax.toFixed(1)},${(ay - 6).toFixed(1)} L${(ax + ARROW_W - 4).toFixed(1)},${ay.toFixed(1)} L${ax.toFixed(1)},${(ay + 6).toFixed(1)}" fill="${theme.muted}99" stroke="none"/>`)
+      parts.push(`<path d="M${ax.toFixed(1)},${(ay - 6).toFixed(1)} L${(ax + ARROW_W - 4).toFixed(1)},${ay.toFixed(1)} L${ax.toFixed(1)},${(ay + 6).toFixed(1)}" fill="${theme.textMuted}bb" stroke="none"/>`)
     }
   })
 

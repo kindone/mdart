@@ -69,7 +69,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Header (10px) and body (9px) — slightly tighter px/char = fewer false ellipses
     const headerMaxChars = Math.max(6, Math.floor((BOX_W - 8) / 5.0))
     const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
-    parts.push(aWrap(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, headerMaxChars)}</text>`, lblUrl))
+    parts.push(aWrap(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, headerMaxChars)}</text>`, lblUrl))
 
     // Body content: children or value
     const bodyMaxChars = Math.max(8, Math.floor((BOX_W - 12) / 4.4))
