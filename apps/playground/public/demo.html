@@ -68,7 +68,30 @@ body {
 .btn-claude:hover { background: #2d1f50; border-color: #a78bfa; color: #e9d5ff; }
 .btn-claude.active { background: #2d1f50; border-color: #a78bfa; color: #e9d5ff; }
 
-.sep { flex: 1; min-width: 0; }
+/* Dark/light mode toggle — small icon button.
+   Shows the icon for the *current* mode; click to switch to the other one. */
+.btn-mode-toggle {
+  background: transparent; color: #888; border: 1px solid #555;
+  border-radius: 4px; height: 28px; min-width: 32px; padding: 0 8px;
+  font-size: 14px; line-height: 1; cursor: pointer; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-mode-toggle:hover { background: #3c3c3c; color: #d4d4d4; border-color: #777; }
+
+/* Theme picker — sits next to the dark/light button. */
+#svg-theme {
+  height: 28px; border-radius: 4px; font-size: 12px; cursor: pointer;
+  background: #3c3c3c; color: #d4d4d4; border: 1px solid #555;
+  padding: 0 8px; max-width: 130px; flex-shrink: 0;
+}
+#svg-theme:hover, #svg-theme:focus { border-color: #007acc; outline: none; }
+
+/* Light-mode body styling: only the preview pane swaps to a light background
+   (the editor stays dark — VS Code style). When mode='light', the SVG inside
+   has its own light background already, so the surrounding pane just needs
+   to match. */
+body.svg-light .preview-body { background: #f5f5f5; }
+body.svg-light .preview-body svg { box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 
 .dirty-dot {
   width: 8px; height: 8px; border-radius: 50%; background: #e5c07b;
@@ -673,6 +696,21 @@ pre.int-code {
 
   <button class="btn btn-ghost hidden" id="btn-save-example" title="Save changes to this example file">💾 Save</button>
 
+  <select id="svg-theme" title="Theme (color palette)">
+    <option value="">Default</option>
+    <option value="mono-dark">Mono Dark</option>
+    <option value="mono-light">Mono Light</option>
+    <option value="cyan">Cyan</option>
+    <option value="emerald">Emerald</option>
+    <option value="violet">Violet</option>
+    <option value="lavender">Lavender</option>
+    <option value="amber">Amber</option>
+    <option value="orange">Orange</option>
+    <option value="rose">Rose</option>
+    <option value="blue">Blue</option>
+    <option value="sky">Sky</option>
+  </select>
+  <button class="btn-mode-toggle" id="btn-svg-mode" title="Dark SVG mode — click to switch to light">🌙</button>
   <button class="btn-claude hidden" id="btn-chat-toggle" title="AI assistant (Ctrl+Shift+K)">✦ AI</button>
   <span class="status-badge idle" id="status-badge">ready</span>
   <a href="/" class="nav-link desktop-only">← Docs</a>
@@ -945,6 +983,19 @@ function buildIntegrationHTML(adapter) {
 // ── State ─────────────────────────────────────────────────────────────────────
 
 let mode = 'mdart'           // 'mdart' | 'markdown' | 'renderer'
+// SVG colour-mode for the rendered diagram (NOT the page chrome). Persisted
+// to localStorage so the choice survives reload. The page editor stays dark
+// either way; only the preview pane and the SVG itself flip.
+let svgMode = (localStorage.getItem('mdart-svg-mode') === 'light') ? 'light' : 'dark'
+// Theme override sent as the `theme:` config to the renderer. Empty string
+// means "no override — use category default" (dark/light still applies).
+// Allowlist matches the <select id="svg-theme"> options.
+const SVG_THEMES = new Set([
+  '', 'mono-dark', 'mono-light',
+  'cyan', 'emerald', 'violet', 'lavender', 'amber', 'orange', 'rose', 'blue', 'sky',
+])
+let svgTheme = localStorage.getItem('mdart-svg-theme') ?? ''
+if (!SVG_THEMES.has(svgTheme)) svgTheme = ''
 let monacoEditor = null
 let lastSVG = ''
 let isDirty = false
@@ -1262,7 +1313,7 @@ async function renderMdArt(explicit = false) {
     const res = await fetch('/render', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source }),
+      body: JSON.stringify({ source, mode: svgMode, theme: svgTheme || undefined }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -1288,7 +1339,7 @@ async function renderMarkdown(explicit = false) {
     const res = await fetch('/render/ecosystem', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source, adapter }),
+      body: JSON.stringify({ source, adapter, mode: svgMode, theme: svgTheme || undefined }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -1312,7 +1363,7 @@ async function saveRenderer() {
     const res = await fetch('/lab/apply', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ file: currentFile, content, mdartSource }),
+      body: JSON.stringify({ file: currentFile, content, mdartSource, mode: svgMode, theme: svgTheme || undefined }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -1341,7 +1392,7 @@ async function renderOnly() {
     const res = await fetch('/lab/render', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mdartSource }),
+      body: JSON.stringify({ mdartSource, mode: svgMode, theme: svgTheme || undefined }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -1578,6 +1629,43 @@ document.getElementById('adapter-select').addEventListener('change', function() 
 // Mode toggle
 document.querySelectorAll('.mode-btn').forEach(btn => {
   btn.addEventListener('click', () => setMode(btn.dataset.mode))
+})
+
+// SVG dark/light mode toggle
+function applySvgMode() {
+  document.body.classList.toggle('svg-light', svgMode === 'light')
+  const btn = document.getElementById('btn-svg-mode')
+  // Show the icon that *describes the current mode* — moon for dark, sun for
+  // light. (Status convention: the icon answers "what mode are we in now?"
+  // GitHub / Twitter / OS settings panels use this; reads more literally
+  // than the affordance convention.)
+  btn.textContent = svgMode === 'dark' ? '🌙' : '☀️'
+  btn.title = svgMode === 'dark'
+    ? 'Dark SVG mode — click to switch to light'
+    : 'Light SVG mode — click to switch to dark'
+}
+document.getElementById('btn-svg-mode').addEventListener('click', () => {
+  svgMode = svgMode === 'dark' ? 'light' : 'dark'
+  localStorage.setItem('mdart-svg-mode', svgMode)
+  applySvgMode()
+  // Re-render the currently visible diagram. dispatchRender() handles mdart
+  // and markdown modes; renderer (lab) mode is a no-op there because TS
+  // edits are manual-save, but the mdart source pane *should* re-render
+  // with the new mode — call renderOnly() directly for that.
+  if (mode === 'renderer') renderOnly()
+  else dispatchRender(true)
+})
+applySvgMode()  // initial paint (state already loaded from localStorage)
+
+// Theme picker — orthogonal to dark/light. Empty selection means "no theme
+// override, just use category default + the current dark/light mode".
+const themeSelect = document.getElementById('svg-theme')
+themeSelect.value = svgTheme
+themeSelect.addEventListener('change', () => {
+  svgTheme = themeSelect.value
+  localStorage.setItem('mdart-svg-theme', svgTheme)
+  if (mode === 'renderer') renderOnly()
+  else dispatchRender(true)
 })
 
 // mdart-source textarea events

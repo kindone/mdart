@@ -39,7 +39,7 @@ import { promisify } from 'node:util'
 import { randomUUID } from 'node:crypto'
 import { tmpdir } from 'node:os'
 
-import { renderMdArt, parseMdArt } from 'mdart'
+import { renderMdArt, parseMdArt, configureMdArt, resetMdArtConfig } from 'mdart'
 import { adapters, defaultCliName, getAdapter, normalizeCliName, type CliName } from './cli/index.js'
 
 // Ecosystem adapters — each is a real adapter package (workspace-resolved locally,
@@ -199,15 +199,41 @@ const ALLOWED_LAB_FILES = new Set([
  * Render mdartSource using a freshly built dist — copies dist to a temp file
  * so each call gets an isolated module (no Node ESM cache reuse).
  */
-async function renderFresh(mdartSource: string): Promise<string> {
+async function renderFresh(
+  mdartSource: string,
+  mode?: 'dark' | 'light',
+  theme?: string,
+): Promise<string> {
   const tmp = path.join(tmpdir(), `mdart-lab-${Date.now()}-${Math.random().toString(36).slice(2)}.mjs`)
   await copyFile(DIST_INDEX, tmp)
   try {
     const mod = await import(`file://${tmp}`) as { renderMdArt: typeof renderMdArt }
-    return mod.renderMdArt(mdartSource)
+    const cfg = (mode || theme) ? { mode, theme } : undefined
+    return mod.renderMdArt(mdartSource, undefined, cfg)
   } finally {
     await unlink(tmp).catch(() => {})
   }
+}
+
+/** Coerce arbitrary user input to a valid 'dark' | 'light' or undefined. */
+function parseMode(v: unknown): 'dark' | 'light' | undefined {
+  return v === 'dark' || v === 'light' ? v : undefined
+}
+
+/** Coerce arbitrary user input to a valid theme name or undefined.
+ *  Accepts any non-empty string up to 32 chars; the renderer itself silently
+ *  falls back to category default for unknown theme strings, so the only
+ *  thing we guard here is non-string types and pathological inputs. */
+function parseTheme(v: unknown): string | undefined {
+  if (typeof v !== 'string') return undefined
+  const s = v.trim()
+  return s.length > 0 && s.length <= 32 ? s : undefined
+}
+
+/** Build the optional plugin-config object for renderMdArt. */
+function buildCfg(mode?: 'dark' | 'light', theme?: string) {
+  if (!mode && !theme) return undefined
+  return { mode, theme } as const
 }
 
 // ── Express ───────────────────────────────────────────────────────────────────
@@ -463,12 +489,14 @@ app.get('/lab', (_req, res) => {
  */
 app.post('/render', (req, res) => {
   const { source, hintType } = req.body as { source?: string; hintType?: string }
+  const mode  = parseMode((req.body as { mode?: unknown }).mode)
+  const theme = parseTheme((req.body as { theme?: unknown }).theme)
   if (!source?.trim()) {
     res.status(400).json({ error: 'source is required' }); return
   }
   try {
     const spec = parseMdArt(source, hintType)
-    const svg  = renderMdArt(source, hintType)
+    const svg  = renderMdArt(source, hintType, buildCfg(mode, theme))
     res.json({
       svg,
       type:     spec.type,
@@ -487,12 +515,14 @@ app.post('/render', (req, res) => {
  */
 app.post('/render/states', (req, res) => {
   const { source, hintType } = req.body as { source?: string; hintType?: string }
+  const mode  = parseMode((req.body as { mode?: unknown }).mode)
+  const theme = parseTheme((req.body as { theme?: unknown }).theme)
   if (!source?.trim()) {
     res.status(400).json({ error: 'source is required' }); return
   }
   try {
     const spec   = parseMdArt(source, hintType)
-    const svg    = renderMdArt(source, hintType)
+    const svg    = renderMdArt(source, hintType, buildCfg(mode, theme))
     const states = spec.type === 'tab-list'
       ? spec.items.map(() => svg)
       : [svg]
@@ -508,10 +538,16 @@ app.post('/render/states', (req, res) => {
  */
 app.post('/render/ecosystem', async (req, res) => {
   const { source, adapter } = req.body as { source?: string; adapter?: EcosystemAdapter }
+  const mode  = parseMode((req.body as { mode?: unknown }).mode)
+  const theme = parseTheme((req.body as { theme?: unknown }).theme)
   if (!source?.trim()) {
     res.status(400).json({ error: 'source is required' }); return
   }
   const name: EcosystemAdapter = adapter ?? 'marked'
+  // The local ecosystem adapters import `renderMdArt` directly without a per-
+  // call config, so route the dark/light/theme choices via the global mdart
+  // config. Reset after the call so the next request picks fresh.
+  if (mode || theme) configureMdArt({ mode, theme })
   try {
     let html: string
     if (name === 'marked')            html = await renderWithMarked(source)
@@ -521,6 +557,8 @@ app.post('/render/ecosystem', async (req, res) => {
     res.json({ html, adapter: name })
   } catch (err) {
     res.status(400).json({ error: String(err) })
+  } finally {
+    if (mode || theme) resetMdArtConfig()
   }
 })
 
@@ -554,6 +592,8 @@ app.post('/lab/apply', async (req, res) => {
   const { file, content, mdartSource } = req.body as {
     file?: string; content?: string; mdartSource?: string
   }
+  const mode  = parseMode((req.body as { mode?: unknown }).mode)
+  const theme = parseTheme((req.body as { theme?: unknown }).theme)
   if (!file || !ALLOWED_LAB_FILES.has(file)) {
     res.status(400).json({ error: `invalid file: ${String(file)}` }); return
   }
@@ -574,7 +614,7 @@ app.post('/lab/apply', async (req, res) => {
     const buildMs = Date.now() - t0
 
     // 3. Render with fresh build (isolated via temp-file import)
-    const svg = await renderFresh(mdartSource)
+    const svg = await renderFresh(mdartSource, mode, theme)
     res.json({ svg, buildMs })
   } catch (err) {
     res.status(422).json({ error: String(err) })
@@ -589,11 +629,13 @@ app.post('/lab/apply', async (req, res) => {
  */
 app.post('/lab/render', async (req, res) => {
   const { mdartSource } = req.body as { mdartSource?: string }
+  const mode  = parseMode((req.body as { mode?: unknown }).mode)
+  const theme = parseTheme((req.body as { theme?: unknown }).theme)
   if (!mdartSource?.trim()) {
     res.status(400).json({ error: 'mdartSource required' }); return
   }
   try {
-    const svg = await renderFresh(mdartSource)
+    const svg = await renderFresh(mdartSource, mode, theme)
     res.json({ svg })
   } catch (err) {
     res.status(422).json({ error: String(err) })
