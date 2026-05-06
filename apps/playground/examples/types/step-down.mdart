@@ -1,9 +1,9 @@
 type: step-down
 title: Incident Response
 
-- Detect
-- Alert
-- Triage
-- Mitigate
-- Resolve
-- Post-mortem
+- Detect: T+0
+- Alert: T+1min
+- Triage: T+5min
+- Mitigate: T+15min
+- Resolve: T+30min
+- Post-mortem: +24h

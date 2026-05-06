@@ -1,12 +1,15 @@
 type: bullet-list
 title: Engineering Principles
 
-- Design for testability first: Write code that is easy to verify in isolation, not just in the happy path
+- Design for testability first: Write code easy to verify in isolation
   - Isolate side effects
   - Prefer pure functions
-- Minimal scope per change: One concern per commit, one reason to revert
+- Minimal scope per change: One concern per commit
 - Read before editing
   - Skim the call sites
   - Check for side effects
-- Verify your work: Run the linter, the tests, and review the diff before declaring done
+- Cache hot reads (e.g.: redis): cuts p99 by ~40%
+- Standup at 9:30am sharp
+- Verify your work: Run lint, tests, review diff
+- Note\: this list is not exhaustive
 - Update docs alongside code

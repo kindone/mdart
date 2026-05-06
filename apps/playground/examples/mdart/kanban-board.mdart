@@ -2,14 +2,14 @@ type: kanban
 title: Sprint 14
 
 - Backlog
-  - Write API docs
-  - Set up CI pipeline
-  - Design onboarding flow
+  - Write API docs: 3
+  - Set up CI pipeline: 5 [blocked]
+  - Design onboarding flow: 8
 - In Progress
-  - Auth refresh token logic
-  - Dashboard redesign
+  - Auth refresh token logic: 5 [@alice]
+  - Dashboard redesign: 13 [@bob]
 - Review
-  - Rate limiting middleware
+  - Rate limiting middleware: 3
 - Done
-  - Database migrations
-  - Unit tests for parser
+  - Database migrations [done]
+  - Unit tests for parser [done]

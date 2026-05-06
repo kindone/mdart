@@ -1,7 +1,7 @@
 type: circular-process
 title: Product Lifecycle
 
-- Plan
-- Build
-- Test
+- Plan: 2wk
+- Build: 6wk
+- Test: 2wk
 - Ship

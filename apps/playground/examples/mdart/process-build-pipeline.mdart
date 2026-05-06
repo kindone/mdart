@@ -1,8 +1,8 @@
 type: process
 title: Build Pipeline
 
-- Plan
-- Code
-- Review
-- Test
-- Deploy
+- Plan: 1d
+- Code: 3d
+- Review [2 reviewers]
+- Test: ~45min
+- Deploy [auto]

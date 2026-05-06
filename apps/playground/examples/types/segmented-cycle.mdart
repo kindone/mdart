@@ -1,7 +1,7 @@
 type: segmented-cycle
 title: Budget Allocation
 
-- Engineering
-- Marketing
-- Sales
-- G&A
+- Engineering: 45%
+- Marketing: 25%
+- Sales: 20%
+- G&A: 10%

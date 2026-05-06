@@ -1,7 +1,7 @@
 type: pyramid-list
 title: Testing Trophy
 
-- E2E Tests
-- Integration Tests
-- Unit Tests
-- Static Analysis
+- E2E Tests: 5%
+- Integration Tests: 20%
+- Unit Tests: 60%
+- Static Analysis: 15%

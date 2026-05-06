@@ -1,8 +1,8 @@
 type: process
 title: Deployment Pipeline
 
-- Code Review
+- Code Review: ~30min
 - CI Build
-- Staging Deploy
+- Staging Deploy: 5min
 - Smoke Test
 - Production Deploy

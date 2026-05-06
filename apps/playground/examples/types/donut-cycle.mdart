@@ -1,8 +1,8 @@
 type: donut-cycle
 title: Content Pipeline
 
-- Ideate
-- Draft
-- Edit
-- Publish
-- Promote
+- Ideate: 1d
+- Draft: 3d
+- Edit: 2d
+- Publish: 1d
+- Promote: 1wk

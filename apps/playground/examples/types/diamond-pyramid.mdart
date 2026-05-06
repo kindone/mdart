@@ -1,8 +1,8 @@
 type: diamond-pyramid
 title: Adoption Curve
 
-- Niche
-- Early Adopters
-- Mainstream
-- Late Majority
-- Laggards
+- Niche: 2.5%
+- Early Adopters: 13.5%
+- Mainstream: 34%
+- Late Majority: 34%
+- Laggards: 16%

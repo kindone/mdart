@@ -1,9 +1,9 @@
 type: chevron-list
 title: Interview Stages
 
-- Recruiter screen
-- Technical phone
-- Take-home challenge
-- System design
-- Team fit
+- Recruiter screen: 30min
+- Technical phone: 1h
+- Take-home challenge: ~6h
+- System design: 1h
+- Team fit: 30min
 - Offer

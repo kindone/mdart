@@ -3,7 +3,13 @@ title: Team Norms
 
 - Async by default
   - Prefer written communication
-  - Document decisions
-- Bias to action
-  - Decide with 70% info
-  - Unblock yourself
+  - Document decisions in writing
+- Bias to action: 70% info threshold
+  - Decide with the info you have
+  - Unblock yourself first
+- Daily standup at 9:30am
+  - Keep it under 10min
+  - One blocker per person
+- Aspect ratio 16:9 for screenshares
+  - Resolution: 1920x1080
+  - 30fps minimum

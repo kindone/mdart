@@ -1,8 +1,8 @@
 type: pyramid
-title: Maslow's Hierarchy
+title: Maslow's Hierarchy (~ % reaching level)
 
-- Self-actualisation
-- Esteem
-- Belonging
-- Safety
-- Physiological
+- Self-actualisation: ~5%
+- Esteem: ~30%
+- Belonging: ~70%
+- Safety: ~85%
+- Physiological: 100%

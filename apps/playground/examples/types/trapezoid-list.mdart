@@ -1,8 +1,8 @@
 type: trapezoid-list
 title: Abstraction Layers
 
-- Application
-- Framework
-- Runtime
-- OS
-- Hardware
+- Application: business logic
+- Framework: React
+- Runtime: V8
+- OS: Linux
+- Hardware: x86_64

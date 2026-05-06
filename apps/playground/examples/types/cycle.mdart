@@ -1,7 +1,7 @@
 type: cycle
 title: Agile Sprint
 
-- Plan
-- Build
-- Review
-- Retro
+- Plan: 1d
+- Build: 8d
+- Review: 1d
+- Retro: 0.5d

@@ -1,9 +1,9 @@
 type: hexagon-list
 title: DevOps Practices
 
-- Version control
-- CI/CD
-- Infrastructure as code
-- Monitoring
+- Version control: Git
+- CI/CD: GitHub Actions
+- Infrastructure as code: Terraform
+- Monitoring: Datadog
 - Incident response
 - Blameless post-mortems

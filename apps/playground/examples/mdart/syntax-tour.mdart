@@ -1,0 +1,20 @@
+type: bullet-list
+title: MdArt Syntax Tour
+
+- Plain label
+- Label: value
+- Multiple values formatted nicely: keep colons readable
+- Label with attribute [done]
+- Label with attrs and value [active]: 42
+- Label with multiple attrs [pinned] [urgent]: 8
+- Item with children
+  - Indented child
+  - Child with value: 75
+  - Child with attribute [highlight]
+- Cache (e.g.: redis): in-memory store
+- Standup at 3:30pm runs daily
+- Aspect ratio 16:9 for hero images
+- URL parses fine: https://example.com/docs
+- Note\: escaped colon stays in label
+- aspect-ratio:16:9 — no space, kept whole
+- Says "hello: world" — quoted speech kept whole

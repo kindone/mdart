@@ -1,9 +1,9 @@
 type: waterfall
 title: Project Phases
 
-- Requirements
-- Design
-- Implementation
-- Testing
-- Deployment
+- Requirements: 4wk
+- Design: 6wk
+- Implementation: 12wk
+- Testing: 4wk
+- Deployment: 2wk
 - Maintenance

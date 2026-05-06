@@ -1,7 +1,7 @@
 type: nondirectional-cycle
 title: Team Rituals
 
-- Standup
-- Planning
-- Demo
-- Retro
+- Standup: daily
+- Planning: biweekly
+- Demo: end of sprint
+- Retro: end of sprint

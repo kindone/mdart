@@ -1,8 +1,8 @@
 type: inverted-pyramid
 title: Acquisition Funnel
 
-- Awareness
-- Interest
-- Consideration
-- Intent
-- Purchase
+- Awareness: 100%
+- Interest: 60%
+- Consideration: 30%
+- Intent: 12%
+- Purchase: 4%
