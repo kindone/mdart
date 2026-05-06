@@ -43,13 +43,68 @@ function parseAttrs(segment: string): { cleanLabel: string; attrs: string[] } {
 }
 
 function parseLabelValue(raw: string): { label: string; value?: string } {
-  // Split on first colon that's not part of a URL (://)
-  const colonIdx = raw.indexOf(':')
-  if (colonIdx === -1) return { label: raw.trim() }
-  // Check if it's a URL
-  if (raw[colonIdx + 1] === '/' && raw[colonIdx + 2] === '/') return { label: raw.trim() }
-  const label = raw.slice(0, colonIdx).trim()
-  const value = raw.slice(colonIdx + 1).trim()
+  // Find the first `:` that qualifies as a key/value split. A colon
+  // qualifies only when ALL of the following hold:
+  //
+  //   1. It is not preceded by an escaping backslash (`\:` is literal —
+  //      `\\:` means a literal `\` followed by a free `:`; we don't model
+  //      a `\\` → `\` escape, so backslashes elsewhere stay literal).
+  //   2. It is not the leading `:` of a URL scheme (`://`).
+  //   3. It is followed by whitespace or end-of-line. (YAML-strict.
+  //      Distinguishes `Cache: 5ms` from `3:30pm`, `aspect-ratio:16:9`,
+  //      `:rocket:`, etc.)
+  //   4. It is not flanked by digits on both sides (`3:30`, `16:9`).
+  //   5. It is not nested inside `()`, `[]`, `{}`, or `"…"`. Common
+  //      English-prose constructs like `Cache (e.g.: redis)` or
+  //      `Says "hello: world"` keep the inner `:` as part of the label.
+  //
+  // Apostrophe (`'`) intentionally does NOT toggle a quote scope: it is
+  // far more common as a contraction (`it's`, `don't`) than a quote
+  // delimiter. Use double quotes if you need a literal-quote scope, or
+  // `\:` to escape the colon directly.
+  //
+  // Edge cases that still need `\:` (escape):
+  //   • Sentence-initial labels: `Note: do this later` (still ambiguous —
+  //     the colon does have whitespace after, no parens, no digits).
+  //   • Emoji shortcodes: `:rocket: launches` (second colon has space).
+  //
+  // After the split point is chosen, `\:` sequences are unescaped to `:`
+  // in both the label and value sides.
+  let parenD = 0, brackD = 0, braceD = 0
+  let inDQ = false   // double-quote scope (only)
+  let colonIdx = -1
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw[i]
+    if (c === '"') { inDQ = !inDQ; continue }
+    if (inDQ) continue
+    if (c === '(') { parenD++; continue }
+    if (c === ')') { if (parenD > 0) parenD--; continue }
+    if (c === '[') { brackD++; continue }
+    if (c === ']') { if (brackD > 0) brackD--; continue }
+    if (c === '{') { braceD++; continue }
+    if (c === '}') { if (braceD > 0) braceD--; continue }
+    if (c !== ':') continue
+    // Inside any nested group → keep as label content.
+    if (parenD > 0 || brackD > 0 || braceD > 0) continue
+    // Backslash escape: count consecutive backslashes immediately before.
+    let bs = 0
+    for (let j = i - 1; j >= 0 && raw[j] === '\\'; j--) bs++
+    if (bs % 2 === 1) continue
+    // URL-scheme guard.
+    if (raw[i + 1] === '/' && raw[i + 2] === '/') continue
+    // Digit-on-both-sides guard.
+    const prev = raw[i - 1]
+    const next = raw[i + 1]
+    if (prev !== undefined && /\d/.test(prev) && next !== undefined && /\d/.test(next)) continue
+    // YAML-strict: must be followed by whitespace or end-of-line.
+    if (next !== undefined && !/\s/.test(next)) continue
+    colonIdx = i
+    break
+  }
+  const unescape = (s: string) => s.replace(/\\:/g, ':')
+  if (colonIdx === -1) return { label: unescape(raw.trim()) }
+  const label = unescape(raw.slice(0, colonIdx).trim())
+  const value = unescape(raw.slice(colonIdx + 1).trim())
   return { label, value: value || undefined }
 }
 

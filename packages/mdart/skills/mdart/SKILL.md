@@ -179,7 +179,9 @@ unreadable long before the data becomes complete.
 
 | Node kind | Target | Hard ceiling |
 |---|---|---|
-| Process step / cycle phase / pyramid tier | 1–3 words | ~24 chars |
+| Process step / cycle phase | 1–3 words | ~24 chars |
+| Pyramid tier (narrow band) | 1–2 words | ~14 chars |
+| Pyramid tier (wide band) | 1–4 words | ~32 chars |
 | Tree / org-chart / mind-map node | 1–4 words | ~28 chars |
 | SWOT / pros-cons / matrix-2x2 cell | short phrase, ≤ ~6 words | ~50 chars |
 | `card-list` / `pyramid-list` body | 1 short sentence | ~80 chars |
@@ -195,6 +197,24 @@ unreadable long before the data becomes complete.
 - Move detail into the front-matter `title:` or a paragraph **outside** the fence — never cram it inside a node.
 - For values: prefer `Name: 75%` over `Name (currently at 75%)`.
 - Domain jargon is fine if the audience knows it (`PR review`, `OAuth`, `CDN`).
+
+**Pyramid family — positional width matters.** Pyramid bands are not all the
+same size; the available horizontal space *varies by position in the list*.
+Put your shortest labels where the band is narrowest, longer ones where the
+band is widest:
+
+| Type | Narrow band (keep ≤1–2 words) | Wide band (more room, ≤4–5 words) |
+|---|---|---|
+| `pyramid`, `segmented-pyramid`, `pyramid-list` | first items (top) | last items (bottom) |
+| `inverted-pyramid` | last items (bottom) | first items (top) |
+| `diamond-pyramid` | first **and** last items (top & bottom) | middle items |
+
+A pyramid summit labelled "Self-actualization needs and personal growth"
+truncates to "Self-actu…"; that label belongs at the base, not the apex.
+If the natural data has long text at the narrow end, consider switching
+type — e.g. swap a `pyramid` for an `inverted-pyramid` so the longer items
+sit at the wide top — or use `pyramid-list` (label appears alongside the
+bar, not crammed inside).
 
 **When to split into multiple diagrams:**
 
@@ -317,6 +337,114 @@ For tree-shaped data, the choice is between two distinct types, not a flag:
 
 ---
 
+## §5 — Typed values: use `:` not `-` or `—`
+
+When a node carries a label *and* an associated value (a number, a type, a
+status, a description, a target), the parser splits them on the **first
+unprotected `:`**:
+
+- `Cache: 5ms`     → `{ label: "Cache", value: "5ms" }`
+- `Cache - 5ms`    → `{ label: "Cache - 5ms", value: undefined }`
+- `Cache — 5ms`    → `{ label: "Cache — 5ms", value: undefined }`
+- `Site: https://example.com` → `{ label: "Site", value: "https://example.com" }` (the `://` is protected)
+
+**Many renderers display `value` distinctly from `label`** — as a percentage
+bar, a numeric badge, a second column, a typed field, an event name on an
+arrow, a heatmap intensity, a sankey flow weight, etc. Using `-` or `—`
+collapses both into one undifferentiated text blob, defeating the renderer.
+
+**Types where `key: value` is structural (not just stylistic):**
+
+| Family | Type | What `value` becomes |
+|---|---|---|
+| Statistical | `progress-list`, `bullet-chart`, `gauge`, `radar`, `waffle`, `scorecard` | the numeric magnitude (bar fill, dial angle, etc.) |
+| Statistical | `sankey` | flow volume on `→ Target: 42` |
+| Statistical | `heatmap` | cell colour intensity |
+| Matrix | `comparison`, `matrix-nxm` | the cell content |
+| Technical | `entity` | field type — `name: text [PK]` |
+| Technical | `sequence` | message text on `→ Target: message` |
+| Technical | `state-machine` | event label on `→ NextState: event` |
+| List | `bullet-list`, `numbered-list`, `two-column-list`, `timeline-list`, `card-list` | the right-side / sub-text value |
+| Planning | `gantt-lite`, `milestone`, `timeline` | dates, week ranges |
+
+For these types, **always** prefer `Label: value`. Reserve `-` / `—` only for
+free-text labels with no separable value (e.g. `Brand strength` in a SWOT cell,
+where the dash would be inside a single descriptive phrase).
+
+```mdart
+type: progress-list
+- API tests: 92%      ← good — value parsed, bar fills to 92%
+- UI tests - 78%      ← bad — label is "UI tests - 78%", no bar
+- E2E tests — 60%     ← bad — same problem with em-dash
+```
+
+```mdart
+type: sequence
+- Browser
+  → API: GET /users        ← good — message parsed
+  → API - POST /login      ← bad — entire string is the target name, no message
+```
+
+If you're tempted to write a description with a dash for visual style, ask:
+*does any renderer in this family actually do something with the value?* If
+yes, switch to `:`.
+
+### Inadvertent colons in free text — when the parser splits and when it doesn't
+
+Free-text English routinely contains colons that aren't `key: value` pairs.
+The parser is YAML-strict and skips colons that don't look like a kv split.
+A `:` triggers the split **only when all** of the following hold:
+
+1. It's followed by whitespace or end-of-line (so `3:30pm`, `aspect:value`
+   without a space, and `:rocket:` don't split).
+2. It's not flanked by digits on both sides (`3:30`, `16:9`).
+3. It's not nested inside `()`, `[]`, `{}`, or `"…"` (parentheticals and
+   quoted speech keep their colons).
+4. It's not preceded by `\` (`\:` is an explicit escape).
+5. It's not the leading `:` of a URL scheme (`://`).
+
+Concrete results — these all keep the whole string as one label:
+
+| Input | Why kept whole |
+|---|---|
+| `- Cache (e.g.: redis)` | colon inside `()` |
+| `- Says "hello: world"` | colon inside `"…"` |
+| `- Standup at 3:30pm` | digit:digit |
+| `- Aspect ratio 16:9` | digit:digit |
+| `- aspect-ratio:16:9` | no whitespace after colon |
+| `- :rocket: launches` | first colon has no space; second has space — splits at second |
+| `- Site: https://example.com` | `://` is URL-protected (the **outer** `:` still splits) |
+
+These still split, because the colon has whitespace after, no flanking
+digits, and is at top level:
+
+| Input | Result |
+|---|---|
+| `- key: 75%` | label `key`, value `75%` |
+| `- API tests: passing` | label `API tests`, value `passing` |
+| `- Cache (e.g.: redis): in-memory` | label `Cache (e.g.: redis)`, value `in-memory` |
+
+**The remaining ambiguous case** — sentence-initial labels like `Note: do
+this later` — *will* still split (whitespace after, no parens, no digits).
+For these you have three options:
+
+1. **Reword.** `Note — do this later` (em-dash carries no parser weight).
+2. **Restructure.** Move the "Note" framing into `title:` or move the
+   sentence outside the fence.
+3. **Escape with `\:`.** `Note\: do this later` keeps the whole string as
+   one label. Only the *first* unescaped colon splits, so
+   `key: foo\: bar` ⇒ label `key`, value `foo: bar`.
+
+For agents: prefer option 1 (rewording) over option 3 (escape) — escapes
+are uglier and harder for end-users to read in source. Reach for `\:` only
+when removing the colon would damage the label's meaning.
+
+> **Note on apostrophes:** `'` does **not** open a quote scope (otherwise
+> contractions like `don't` would swallow every following colon). Use
+> double quotes if you need a literal-quote scope, or escape directly.
+
+---
+
 ## Quick anti-pattern reminders
 
 Before emitting a diagram, sanity-check:
@@ -327,6 +455,7 @@ Before emitting a diagram, sanity-check:
 - **Verbose node labels** — sentences inside shapes overflow or shrink the font. Compress to noun phrases (§3).
 - **Single overstuffed diagram** — if you'd need >12 flat nodes or >20 tree nodes, split into multiple fences (§3).
 - **Wrong orientation** — `comparison` with many attributes per item and no `direction: LR`; `matrix-nxm` with the shorter axis as parents; kanban/sequence with too many columns. See §4.
+- **Dashes instead of `:`** — `Item - description` and `Item — description` parse as one big label. Only `:` splits into `{label, value}`, which renderers display distinctly (bar fills, badges, columns, message text). See §5.
 - **Syntax traps** — in `sequence` / `state-machine` / `network`, always use `→ Target: message`, never `- Target` (parses as edge but reads as containment). SWOT/pros-cons headings must be exact words (`Strengths`, `Pros`, etc.) or use the explicit `[strengths]` / `[pros]` attr.
 
 For the full anti-pattern catalog with 7 categories of failure modes, **read `anti-patterns.md` in this skill directory**.
@@ -341,9 +470,10 @@ Before emitting a `mdart` fence:
 2. Cross-check §1 — does the family default fit?
 3. Apply §3 — are any labels too long? Is the diagram too dense to read? Compress or split.
 4. Apply §4 — is the longer axis going to be rows? For `comparison`, default (TB) is row-friendly; add `direction: LR` only if attributes > items. For `matrix-nxm` / `heatmap`, put the longer axis as top-level items.
-5. Skim `anti-patterns.md` — am I about to make a known mistake?
-6. Choose `theme:` only if the user requested a specific look. Otherwise omit.
-7. Add `title:` only when it adds context the labels alone don't carry.
+5. Apply §5 — wherever a node carries a number, type, status, or target, separate it with `:` not `-` / `—`. Renderers in statistical, matrix, technical, list, and planning families key off `value`.
+6. Skim `anti-patterns.md` — am I about to make a known mistake?
+7. Choose `theme:` only if the user requested a specific look. Otherwise omit.
+8. Add `title:` only when it adds context the labels alone don't carry.
 
 ---
 

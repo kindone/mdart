@@ -128,6 +128,18 @@ Even a good type pick can produce a bad diagram if syntax is sloppy.
 - **Using `process` when arrow-chain shorthand fits.** `A → B → C` (one line) is cleaner than `- A` / `- B` / `- C`. Prefer it for short flat sequences.
 - **Forgetting `→ Target` flow children when the type expects edges.** In `sankey`, edges are `→ Target (value)` flow children of the source. In `network` mesh mode, edges go in an explicit `edges:` section.
 - **Numeric values without `key: value`.** For statistical types, `- Item: 75` is required — `- Item 75` won't parse the value. Same for `progress-list` percentages.
+- **Dash or em-dash where a colon belongs.** `- Item — description` and
+  `- Item - description` parse as one big label with `value` undefined. The
+  parser only splits on the first unprotected `:` (URLs are protected via
+  `://`). Renderers across statistical, matrix, technical, list, and
+  planning families key off `value` to draw bars, badges, columns, message
+  labels, dates, types — using a dash collapses the field to plain text and
+  the visual semantics are lost. Examples:
+  - `- API tests: 92%` ✓ (bar fills to 92%) vs `- API tests — 92%` ✗ (no bar)
+  - `- email: text [PK]` ✓ (entity field with type) vs `- email - text [PK]` ✗ (just a label)
+  - `→ API: GET /users` ✓ (sequence message) vs `→ API - GET /users` ✗ (target name = "API - GET /users")
+  - `- Q3 launch: 2026-09-15` ✓ (date parsed) vs `- Q3 launch — 2026-09-15` ✗ (no date)
+  See SKILL.md §5 for the full list of types that consume `value`.
 - **Front-matter values containing colons or arrows.** `direction: A → B` is a key-value (single item with arrow in value), not a chain. The parser handles it, but humans editing the source can find it confusing — prefer separating into multiple fields if possible.
 
 ---

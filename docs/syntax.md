@@ -20,11 +20,29 @@ theme: rose              ← any named theme (see Themes section below)
 ```
 - Label                    plain item
 - Label: value             with value  (text after first colon)
+- Label\: with colon       \: is a literal colon — the whole string stays as label
 - Label [attr] [attr]      with attrs  (text inside brackets)
 - Label [attr]: value      attrs work on either side of the colon
   - Child                  child item  (any consistent indent)
   -> Target: message       flow child  (→ U+2192 or ASCII ->)
 ```
+
+**Colon splitting is YAML-strict** — a `:` only triggers the kv split when
+all of the following hold:
+1. Followed by whitespace or end-of-line (so `key:value` no-space stays as one label).
+2. Not flanked by digits on both sides (`3:30`, `16:9` are kept as labels).
+3. Not nested inside `()`, `[]`, `{}`, or `"…"` (so `Cache (e.g.: redis)` and `Says "hi: world"` keep their colons).
+4. Not preceded by `\` (`\:` is the explicit escape).
+5. Not the leading `:` of a URL scheme (`://` stays in the value).
+
+Apostrophe (`'`) intentionally does **not** open a quote scope — too common
+in contractions (`don't`, `it's`). Use double quotes for literal-quote
+scopes, or `\:` to escape a single colon.
+
+For sentence-initial labels (`Note: do this later`) the split *will* happen
+unless you escape — these are genuinely ambiguous, so the parser prefers
+the kv reading. Reword (`Note — do this later`) or escape (`Note\: do this
+later`) to suppress.
 
 Arrow chain shorthand: `Step 1 -> Step 2 -> Step 3`
 

@@ -144,6 +144,91 @@ describe('parseMdArt', () => {
     expect(spec.items[0].value).toBe('any → any')
   })
 
+  // ── \: escape ────────────────────────────────────────────────────────────
+
+  it('treats \\: as a literal colon and does not split label:value', () => {
+    const spec = parseMdArt('- Note\\: do this later')
+    expect(spec.items).toHaveLength(1)
+    expect(spec.items[0].label).toBe('Note: do this later')
+    expect(spec.items[0].value).toBeUndefined()
+  })
+
+  it('still splits on the first unescaped colon when one exists', () => {
+    // `Cache\: 5ms : fast` — first `:` is escaped, second one is real.
+    const spec = parseMdArt('- Cache\\: 5ms : fast')
+    expect(spec.items[0].label).toBe('Cache: 5ms')
+    expect(spec.items[0].value).toBe('fast')
+  })
+
+  it('unescapes \\: inside the value when it appears after the split', () => {
+    const spec = parseMdArt('- key: value with \\: literal colon')
+    expect(spec.items[0].label).toBe('key')
+    expect(spec.items[0].value).toBe('value with : literal colon')
+  })
+
+  it('keeps URL split working alongside the escape', () => {
+    const spec = parseMdArt('- Site: https://example.com')
+    expect(spec.items[0].label).toBe('Site')
+    expect(spec.items[0].value).toBe('https://example.com')
+  })
+
+  it('lets agents safely write parenthetical colons via escape', () => {
+    // The motivating case: free-text label with an English-style colon in
+    // a parenthetical. Author escapes it to keep the whole string as label.
+    const spec = parseMdArt('- Check redis (e.g.\\: persistence policy)')
+    expect(spec.items[0].label).toBe('Check redis (e.g.: persistence policy)')
+    expect(spec.items[0].value).toBeUndefined()
+  })
+
+  // ── YAML-strict colon (paren / quote / digit / no-space awareness) ───────
+
+  it('does not split on a colon nested inside parentheses', () => {
+    const spec = parseMdArt('- Cache (e.g.: persistence policy)')
+    expect(spec.items[0].label).toBe('Cache (e.g.: persistence policy)')
+    expect(spec.items[0].value).toBeUndefined()
+  })
+
+  it('does not split on a colon nested inside double quotes', () => {
+    const spec = parseMdArt('- Says "hello: world"')
+    expect(spec.items[0].label).toBe('Says "hello: world"')
+    expect(spec.items[0].value).toBeUndefined()
+  })
+
+  it('does not split on clock-time colons (digit:digit)', () => {
+    const spec = parseMdArt('- Standup at 3:30pm')
+    expect(spec.items[0].label).toBe('Standup at 3:30pm')
+    expect(spec.items[0].value).toBeUndefined()
+  })
+
+  it('does not split on ratio colons (digit:digit)', () => {
+    const spec = parseMdArt('- Aspect ratio 16:9')
+    expect(spec.items[0].label).toBe('Aspect ratio 16:9')
+    expect(spec.items[0].value).toBeUndefined()
+  })
+
+  it('does not split on a colon without whitespace after it', () => {
+    // YAML-strict: `key:value` (no space) reads as one label, not a kv pair.
+    const spec = parseMdArt('- aspect-ratio:16:9')
+    expect(spec.items[0].label).toBe('aspect-ratio:16:9')
+    expect(spec.items[0].value).toBeUndefined()
+  })
+
+  it('still splits when an outer colon escapes the parenthetical scope', () => {
+    // Inside-paren colon is skipped, the *outer* colon (with whitespace
+    // after) splits as expected.
+    const spec = parseMdArt('- Cache (e.g.: redis): in-memory store')
+    expect(spec.items[0].label).toBe('Cache (e.g.: redis)')
+    expect(spec.items[0].value).toBe('in-memory store')
+  })
+
+  it('does not let an apostrophe open a quote scope', () => {
+    // Apostrophe is for contractions in English; treating it as a quote
+    // delimiter would swallow every following colon. Verify it doesn't.
+    const spec = parseMdArt("- it's complicated: but workable")
+    expect(spec.items[0].label).toBe("it's complicated")
+    expect(spec.items[0].value).toBe('but workable')
+  })
+
   // ── [attr] extraction ─────────────────────────────────────────────────────
 
   it('extracts single attr', () => {
