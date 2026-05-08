@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -36,7 +36,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const largeArc = endAngle - startAngle > Math.PI ? 1 : 0
 
     const path = `M ${x1} ${y1} L ${x2} ${y2} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x3} ${y3} L ${x4} ${y4} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x1} ${y1} Z`
-    svgContent += `<path d="${path}" fill="${fill}" />`
+    svgContent += `<path d="${path}" fill="${fill}">${itemTitleTag(item)}</path>`
 
     // Label at wedge midpoint. Wedge text room is tight; if a value is set
     // we render it as a smaller subtitle just below the label, both within

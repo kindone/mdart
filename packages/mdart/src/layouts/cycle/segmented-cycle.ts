@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, truncate, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, truncate, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -48,7 +48,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const largeArc = endAngle - startAngle > Math.PI ? 1 : 0
 
     const path = `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x3.toFixed(1)} ${y3.toFixed(1)} L ${x4.toFixed(1)} ${y4.toFixed(1)} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x1.toFixed(1)} ${y1.toFixed(1)} Z`
-    parts.push(`<path d="${path}" fill="${fill}" />`)
+    parts.push(`<path d="${path}" fill="${fill}">${itemTitleTag(item)}</path>`)
 
     // Label OUTSIDE the wedge
     const midAngle = (startAngle + endAngle) / 2

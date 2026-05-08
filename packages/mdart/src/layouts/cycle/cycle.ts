@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -85,7 +85,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.secondary, theme.primary, t)
 
     const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
-    svgContent += `<rect x="${(nx - hw).toFixed(1)}" y="${(ny - hh).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${fill}"/>`
+    svgContent += `<rect x="${(nx - hw).toFixed(1)}" y="${(ny - hh).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${fill}">${itemTitleTag(item)}</rect>`
     if (item.value) {
       // Two-line layout: label up top, value as dimmer subtitle below.
       svgContent += aWrap(`<text x="${nx.toFixed(1)}" y="${(ny - 1).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 14)}</text>`, lblUrl)
