@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, getCaption, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, getCaption, parseLink, aWrap, itemTitleTag } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -27,7 +27,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const d = i === 0
       ? `M0,${y} L${x1},${y} L${W},${mid} L${x1},${y+ROW_H} L0,${y+ROW_H} Z`
       : `M0,${y} L${x1},${y} L${W},${mid} L${x1},${y+ROW_H} L0,${y+ROW_H} L${NOTCH},${mid} Z`
-    parts.push(`<path d="${d}" fill="${fill}33" stroke="${fill}" stroke-width="1"/>`)
+    parts.push(`<path d="${d}" fill="${fill}33" stroke="${fill}" stroke-width="1">${itemTitleTag(item)}</path>`)
     // Reserve ~90 px on the right for the caption badge; shrink label room accordingly
     const caption  = getCaption(item)
     const rightRes = caption ? 96 : 0

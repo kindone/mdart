@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, getCaption, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, getCaption, parseLink, aWrap, itemTitleTag } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -60,7 +60,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const cy = titleH + R + row * ROW_H
     const t = items.length > 1 ? i / (items.length - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
-    parts.push(`<polygon points="${hexPoints(cx, cy)}" fill="${fill}33" stroke="${fill}" stroke-width="1.5"/>`)
+    parts.push(`<polygon points="${hexPoints(cx, cy)}" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</polygon>`)
     const { display: rawLabel, url: lblUrl } = parseLink(item.label)
     const [line1, line2] = wrapLabel(rawLabel)
     const caption = getCaption(item)

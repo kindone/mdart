@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, getCaption, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, getCaption, parseLink, aWrap, itemTitleTag } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -31,7 +31,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Left fold triangle
     parts.push(`<polygon points="0,${y} ${FOLD},${mid} 0,${y+RIB_H}" fill="${dark}"/>`)
     // Main ribbon band
-    parts.push(`<rect x="${FOLD}" y="${y}" width="${W - FOLD - TAIL}" height="${RIB_H}" fill="${fill}"/>`)
+    parts.push(`<rect x="${FOLD}" y="${y}" width="${W - FOLD - TAIL}" height="${RIB_H}" fill="${fill}">${itemTitleTag(item)}</rect>`)
     // Right tail cutout
     parts.push(`<polygon points="${W-TAIL},${y} ${W},${y} ${W-TAIL/2},${mid} ${W},${y+RIB_H} ${W-TAIL},${y+RIB_H}" fill="${fill}"/>`)
     parts.push(`<polygon points="${W-TAIL/2},${mid} ${W},${y} ${W},${y+RIB_H}" fill="${dark}"/>`)

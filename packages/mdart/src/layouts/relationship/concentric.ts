@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -32,7 +32,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const opacityHex = Math.round(12 + (1 - i / n) * 28).toString(16).padStart(2, '0')
 
     parts.push(
-      `<circle cx="${cxPos.toFixed(1)}" cy="${cyPos.toFixed(1)}" r="${r.toFixed(1)}" fill="${theme.primary}${opacityHex}" stroke="${theme.primary}55" stroke-width="1.2"/>`,
+      `<circle cx="${cxPos.toFixed(1)}" cy="${cyPos.toFixed(1)}" r="${r.toFixed(1)}" fill="${theme.primary}${opacityHex}" stroke="${theme.primary}55" stroke-width="1.2">${itemTitleTag(item)}</circle>`,
     )
 
     const labelY = cyPos - (r - MAX_R / n / 2) + 14

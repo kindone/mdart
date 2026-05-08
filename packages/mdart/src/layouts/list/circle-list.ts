@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<line x1="${LEFT}" y1="${firstCy.toFixed(1)}" x2="${LEFT}" y2="${lastCy.toFixed(1)}" stroke="${theme.border}" stroke-width="2" stroke-dasharray="4,4"/>`)
   }
 
-  items.forEach((_item, i) => {
+  items.forEach((item, i) => {
     const y      = rowY[i]
     const { lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, blockH, rowH } = layouts[i]
     const t      = items.length > 1 ? i / (items.length - 1) : 0
@@ -84,7 +84,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const cy     = y + rowH / 2
 
     // Circle + number
-    parts.push(`<circle cx="${LEFT}" cy="${cy.toFixed(1)}" r="${R}" fill="${fill}"/>`)
+    parts.push(`<circle cx="${LEFT}" cy="${cy.toFixed(1)}" r="${R}" fill="${fill}">${itemTitleTag(item)}</circle>`)
     parts.push(`<text x="${LEFT}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${i + 1}</text>`)
 
     // Text block vertically centred in rowH

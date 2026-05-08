@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag } from '../shared'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -87,7 +87,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
   }
 
-  items.forEach((_item, i) => {
+  items.forEach((item, i) => {
     const y      = rowY[i]
     const { lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, blockH, bandH } = bands[i]
     const t      = n > 1 ? i / (n - 1) : 0
@@ -105,7 +105,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       `L${botInset.toFixed(1)},${(y + bandH)}`,
       'Z',
     ].join(' ')
-    parts.push(`<path d="${d}" fill="${fill}33" stroke="${fill}" stroke-width="1"/>`)
+    parts.push(`<path d="${d}" fill="${fill}33" stroke="${fill}" stroke-width="1">${itemTitleTag(item)}</path>`)
 
     // Baseline of first label line, text block vertically centred in bandH
     const lblStartY = y + (bandH - blockH) / 2 + LBL_FS * 0.75

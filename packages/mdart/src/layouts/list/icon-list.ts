@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -74,7 +74,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
   }
 
-  items.forEach((_item, i) => {
+  items.forEach((item, i) => {
     const y      = rowY[i]
     const { displayLabel, icon, lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, blockH, rowH } = layouts[i]
     const t      = items.length > 1 ? i / (items.length - 1) : 0
@@ -82,7 +82,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const cy     = y + rowH / 2
 
     // Circle + icon
-    parts.push(`<circle cx="${LEFT}" cy="${cy.toFixed(1)}" r="${CIRCLE_R}" fill="${fill}"/>`)
+    parts.push(`<circle cx="${LEFT}" cy="${cy.toFixed(1)}" r="${CIRCLE_R}" fill="${fill}">${itemTitleTag(item)}</circle>`)
     if (icon) {
       parts.push(`<text x="${LEFT}" y="${(cy + 5).toFixed(1)}" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">${escapeXml(icon)}</text>`)
     }

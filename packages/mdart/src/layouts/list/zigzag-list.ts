@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, getCaption, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, getCaption, parseLink, aWrap, itemTitleTag } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -26,7 +26,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = items.length > 1 ? i / (items.length - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const bx = left ? SPINE_X - 8 - BOX_W : SPINE_X + 8
-    parts.push(`<rect x="${bx.toFixed(1)}" y="${(cy - BOX_H/2).toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="6" fill="${fill}22" stroke="${fill}" stroke-width="1.2"/>`)
+    parts.push(`<rect x="${bx.toFixed(1)}" y="${(cy - BOX_H/2).toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="6" fill="${fill}22" stroke="${fill}" stroke-width="1.2">${itemTitleTag(item)}</rect>`)
     const { display: zigDisplay, url: zigUrl } = parseLink(item.label)
     parts.push(aWrap(`<text x="${(bx + BOX_W/2).toFixed(1)}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(zigDisplay, 22)}</text>`, zigUrl))
     const caption = getCaption(item)
