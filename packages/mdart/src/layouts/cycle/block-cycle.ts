@@ -21,7 +21,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const W = 560
   const topN = n / 2
   const COLS = topN
-  const GAP_X = 10
+  const GAP_X = 28
   const BOX_W = Math.floor((W - 16 - (COLS - 1) * GAP_X) / COLS)
   const BOX_H = 68
   const HEADER_H = 20

@@ -147,6 +147,9 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
       col.label, hw)
   }
 
+  // Header / data separator
+  svg += `<line x1="0" y1="${baseY + HEADER_H}" x2="${W}" y2="${baseY + HEADER_H}" stroke="${theme.border}" stroke-width="1.5" />`
+
   // Data rows
   for (let ri = 0; ri < rowLabels.length; ri++) {
     const rowLabel = rowLabels[ri]
@@ -280,6 +283,9 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
       `text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
       colLabels[ci], hw)
   }
+
+  // Header / data separator
+  svg += `<line x1="0" y1="${baseY + HEADER_H}" x2="${W}" y2="${baseY + HEADER_H}" stroke="${theme.border}" stroke-width="1.5" />`
 
   // Data rows
   for (let ri = 0; ri < dataRows.length; ri++) {

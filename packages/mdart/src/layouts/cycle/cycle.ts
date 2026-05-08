@@ -28,7 +28,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // Arrowhead marker
   let svgContent = `<defs>
     <marker id="cycle-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L7,3 L0,6 Z" fill="${theme.muted}"/>
+      <path d="M0,0 L7,3 L0,6 Z" fill="${theme.primary}"/>
     </marker>
   </defs>`
 

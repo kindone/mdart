@@ -84,7 +84,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const parts: string[] = []
 
   // Arrow marker for directional indicators
-  parts.push(`<defs><marker id="gear-arr" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${theme.muted}dd"/></marker></defs>`)
+  parts.push(`<defs><marker id="gear-arr" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0.5 L6,3.5 L0,6.5 Z" fill="${theme.primary}"/></marker></defs>`)
 
   if (n === 1) {
     const item = items[0]
@@ -149,7 +149,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const x1 = cx + arcR * Math.cos(startA), y1 = cy + arcR * Math.sin(startA)
       const x2 = cx + arcR * Math.cos(endA),   y2 = cy + arcR * Math.sin(endA)
       const sweep = ((endA - startA + 2 * Math.PI) % (2 * Math.PI)) > Math.PI ? 1 : 0
-      parts.push(`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${arcR.toFixed(1)},${arcR.toFixed(1)} 0 ${sweep},1 ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.muted}bb" stroke-width="1.8" marker-end="url(#gear-arr)"/>`)
+      parts.push(`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${arcR.toFixed(1)},${arcR.toFixed(1)} 0 ${sweep},1 ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.primary}88" stroke-width="1.8" marker-end="url(#gear-arr)"/>`)
     }
 
     for (let i = 0; i < n; i++) {

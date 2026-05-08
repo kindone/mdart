@@ -31,7 +31,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const sx = bx + R2 * Math.cos(sa), sy = by + R2 * Math.sin(sa)
       const { display: subDisplay, url: subUrl } = parseLink(subs[j].label)
       parts.push(`<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.border}88" stroke-width="1.5"/>`)
-      parts.push(`<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="14" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>`)
+      parts.push(`<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="14" fill="${theme.muted}" stroke="${theme.accent}88" stroke-width="1.2"/>`)
       parts.push(aWrap(`<text x="${sx.toFixed(1)}" y="${(sy + 3.5).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(subDisplay, 9)}</text>`, subUrl))
     }
     const { display: brDisplay, url: brUrl } = parseLink(branch.label)

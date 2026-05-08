@@ -87,15 +87,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
     const words = lblDisplay.split(' ')
     let lblContent: string
+    const halo = `fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill"`
     if (words.length <= 1) {
-      lblContent = `<text x="${x.toFixed(1)}" y="${(rowY + fontSize * 0.38).toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="700" font-family="system-ui,sans-serif" fill="${theme.bg}">${tt(lblDisplay, 11)}</text>`
+      lblContent = `<text x="${x.toFixed(1)}" y="${(rowY + fontSize * 0.38).toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="700" font-family="system-ui,sans-serif" ${halo}>${tt(lblDisplay, 11)}</text>`
     } else {
       const mid = Math.ceil(words.length / 2)
       const l1  = words.slice(0, mid).join(' ')
       const l2  = words.slice(mid).join(' ')
       const fh  = fontSize - 1
-      lblContent = `<text x="${x.toFixed(1)}" y="${(rowY - fh * 0.4).toFixed(1)}" text-anchor="middle" font-size="${fh}" font-weight="700" font-family="system-ui,sans-serif" fill="${theme.bg}">${tt(l1, 11)}</text>`
-               + `<text x="${x.toFixed(1)}" y="${(rowY + fh * 1.1).toFixed(1)}" text-anchor="middle" font-size="${fh}" font-weight="700" font-family="system-ui,sans-serif" fill="${theme.bg}">${tt(l2, 11)}</text>`
+      lblContent = `<text x="${x.toFixed(1)}" y="${(rowY - fh * 0.4).toFixed(1)}" text-anchor="middle" font-size="${fh}" font-weight="700" font-family="system-ui,sans-serif" ${halo}>${tt(l1, 11)}</text>`
+               + `<text x="${x.toFixed(1)}" y="${(rowY + fh * 1.1).toFixed(1)}" text-anchor="middle" font-size="${fh}" font-weight="700" font-family="system-ui,sans-serif" ${halo}>${tt(l2, 11)}</text>`
     }
     parts.push(aWrap(lblContent, lblUrl))
 
