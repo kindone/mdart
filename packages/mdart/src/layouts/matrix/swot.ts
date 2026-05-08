@@ -18,11 +18,19 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     value,
   })
 
+  // Mono theme detection — keyed on theme.primary (unique per named mono theme)
+  const MONO_FILLS: Record<string, { fills: string[]; text: string }> = {
+    '#374151': { fills: ['#f1f5f9', '#e2e8f0', '#cbd5e1', '#94a3b8'], text: '#111827' }, // mono-light
+    '#9ca3af': { fills: ['#1e293b', '#334155', '#475569', '#64748b'], text: '#f9fafb' }, // mono-dark
+  }
+  const mono = MONO_FILLS[theme.primary]
+
+  // Quadrant order: S=0, W=1, O=2, T=3 (matches mono fill indices)
   const quadrantMap: Record<string, SwotQuadrant> = {
-    S: { label: 'Strengths',     items: [], fill: '#065f46', textColor: '#34d399' },  // emerald-800/400
-    W: { label: 'Weaknesses',    items: [], fill: '#9f1239', textColor: '#fb7185' },  // rose-800/400
-    O: { label: 'Opportunities', items: [], fill: '#3730a3', textColor: '#818cf8' },  // indigo-800/400
-    T: { label: 'Threats',       items: [], fill: '#92400e', textColor: '#fbbf24' },  // amber-800/400
+    S: { label: 'Strengths',     items: [], fill: mono ? mono.fills[0] : '#047857', textColor: mono ? mono.text : '#ffffff' },  // emerald-700
+    W: { label: 'Weaknesses',    items: [], fill: mono ? mono.fills[1] : '#be123c', textColor: mono ? mono.text : '#ffffff' },  // rose-700
+    O: { label: 'Opportunities', items: [], fill: mono ? mono.fills[2] : '#6d28d9', textColor: mono ? mono.text : '#ffffff' },  // violet-700
+    T: { label: 'Threats',       items: [], fill: mono ? mono.fills[3] : '#b45309', textColor: mono ? mono.text : '#ffffff' },  // amber-700
   }
 
   // Group-heading recognition: exact match (case-insensitive, trailing ':' stripped)
@@ -128,8 +136,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const lblBudget   = totalBudget - valBudget
       svgContent += aWrap(
         `<text x="${x + 10}" y="${itemY}" font-size="10" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.85">` +
-        `<tspan>• ${escapeXml(tt(itDisplay, lblBudget))}</tspan>` +
-        (itValue ? `<tspan opacity="0.7">${escapeXml(tt(valueSuffix, valBudget))}</tspan>` : '') +
+        `<tspan>• ${tt(itDisplay, lblBudget)}</tspan>` +
+        (itValue ? `<tspan opacity="0.7">${tt(valueSuffix, valBudget)}</tspan>` : '') +
         `</text>`,
         itUrl,
       )

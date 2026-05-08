@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, parseLink, aWrap, itemTitleTag } from '../shared'
 import { countLeaves, maxDepth, layoutNodes, flatNodes } from './shared'
 
 const BOX_W = 110
@@ -36,10 +36,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const bx = n.x - BOX_W / 2
     const by = n.y - BOX_H / 2
     const { display: nDisplay, url: nUrl } = parseLink(n.label)
+    const tip = itemTitleTag(n)
     boxes.push(
-      `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="6" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2"/>`,
+      `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="6" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${tip}</rect>`,
     )
-    boxes.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(nDisplay, 15)}</text>`, nUrl))
+    boxes.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${tt(nDisplay, 15)}</text>`, nUrl))
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">

@@ -101,6 +101,55 @@ export function tt(s: string, max: number): string {
   return `<title>${escapeXml(s)}</title>${escapeXml(tr)}`
 }
 
+// ── Item-tooltip helpers ──────────────────────────────────────────────────────
+//
+// Every renderer should expose ALL of an item's data — label, value, attrs —
+// at minimum via a tooltip. Geometric constraints can prevent visible
+// rendering of value or attrs, but they should never silently disappear.
+//
+// Use `itemSummary` to build the textual form and `itemTitleTag` to emit the
+// SVG <title> element. Wrap the per-item primary shape (rect/circle/polygon/
+// path) or its parent <g> with this tag to make the full data hover-revealed.
+//
+// `ellipsisIfDropped` appends a trailing " …" to a label when the renderer
+// is about to omit visible value/attrs — a visual cue that "there's more,
+// hover to see it" so authors notice the silent drop and check.
+
+export interface ItemLike {
+  label: string
+  value?: string
+  attrs?: string[]
+}
+
+/** Human-readable single-line summary: "Label: value [attr1, attr2]" */
+export function itemSummary(item: ItemLike): string {
+  let s = item.label || ''
+  if (item.value)                      s += `: ${item.value}`
+  if (item.attrs && item.attrs.length) s += ` [${item.attrs.join(', ')}]`
+  return s
+}
+
+/** SVG <title> element bearing the full item summary, ready to embed
+ *  inside any graphical element (rect, circle, polygon, path, g, …). */
+export function itemTitleTag(item: ItemLike): string {
+  const s = itemSummary(item)
+  return s ? `<title>${escapeXml(s)}</title>` : ''
+}
+
+/** Append " …" when the renderer is about to drop value or attrs from the
+ *  visible label. Caller passes flags for what *will* render visibly. */
+export function ellipsisIfDropped(
+  label: string,
+  item: ItemLike,
+  shows: { value?: boolean; attrs?: boolean } = {},
+): string {
+  const hasVal   = !!(item.value && item.value.length > 0)
+  const hasAttrs = !!(item.attrs && item.attrs.length > 0)
+  const dropVal  = hasVal   && !shows.value
+  const dropAttr = hasAttrs && !shows.attrs
+  return (dropVal || dropAttr) ? `${label} …` : label
+}
+
 /**
  * Resolve a single-line description for an item, preferring `value` (explicit
  * inline `: desc` form) and falling back to a summary of `children` labels

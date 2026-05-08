@@ -1,14 +1,14 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag } from '../shared'
 import { countLeaves, maxDepth } from './shared'
 
 // ── Node geometry ─────────────────────────────────────────────────────────────
 
-const ROW_H  = 44   // vertical space per leaf node
+const ROW_H  = 56   // vertical space per leaf node (must exceed NODE_H to guarantee gap)
 const COL_W  = 150  // horizontal space per depth level
 const NODE_W = 120  // node rectangle width
-const NODE_H = 48   // node rectangle height (tall enough for 3 lines)
+const NODE_H = 44   // node rectangle height — gap = ROW_H − NODE_H = 12 px
 const FS     = 10.5
 const LH     = 13
 
@@ -28,6 +28,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   interface HNode {
     label:    string
+    value?:   string
+    attrs?:   string[]
     lines:    string[]
     truncated: boolean
     url:      string | null
@@ -47,7 +49,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const ny     = leafY + span / 2
       const nx     = 10 + level * COL_W + NODE_W / 2
       const { lines, truncated, url } = wrapLabel(item.label, LABEL_MAX, 3)
-      hnodes.push({ label: item.label, lines, truncated, url, x: nx, y: ny, parentX: px, parentY: py })
+      hnodes.push({ label: item.label, value: item.value, attrs: item.attrs, lines, truncated, url, x: nx, y: ny, parentX: px, parentY: py })
       layoutH(item.children, level + 1, leafY, span, nx + NODE_W / 2, ny)
       leafY += span
     }
@@ -65,16 +67,19 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const bx = n.x - NODE_W / 2
     const by = n.y - NODE_H / 2
-    boxes.push(`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="5" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2"/>`)
+    // Full-item summary tooltip — surfaces label + value + attrs even when
+    // only the label is rendered visibly. Replaces the older truncation-only
+    // tip so value/attrs aren't silently lost.
+    const itemTip = itemTitleTag({ label: n.label, value: n.value, attrs: n.attrs })
+    boxes.push(`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="5" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${itemTip}</rect>`)
 
     // Multi-line label centred in node
     const textBlockH = n.lines.length * LH
     const startY     = n.y - textBlockH / 2 + FS * 0.75
-    const tip        = n.truncated ? `<title>${escapeXml(n.label)}</title>` : ''
     const spans      = n.lines
       .map((l, li) => `<tspan x="${n.x.toFixed(1)}" dy="${li === 0 ? 0 : LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    boxes.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${FS}" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${spans}</text>`, n.url))
+    boxes.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${FS}" fill="${theme.text}" font-family="system-ui,sans-serif">${itemTip}${spans}</text>`, n.url))
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">

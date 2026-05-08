@@ -12,6 +12,12 @@ export function maxDepth(items: MdArtItem[]): number {
 
 export interface RenderedNode {
   label: string
+  /** Original item.value carried through so consumers can surface it (in
+   *  tooltip if not displayed inline). Hierarchy renderers historically only
+   *  showed the label; this preserves the full data for hover-recovery. */
+  value?: string
+  /** Original item.attrs carried through for the same reason. */
+  attrs?: string[]
   x: number
   y: number
   parentX?: number
@@ -36,6 +42,8 @@ export function layoutNodes(
     const nx = cx + myW / 2
     const node: RenderedNode = {
       label: item.label,
+      value: item.value,
+      attrs: item.attrs,
       x: nx,
       y,
       parentX: parentCx,
