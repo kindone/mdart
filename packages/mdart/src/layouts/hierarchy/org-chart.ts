@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap, itemTitleTag } from '../shared'
+import { escapeXml, tt, aWrap, itemTitleTag, displayLabel } from '../shared'
 import { countLeaves, maxDepth, layoutNodes, flatNodes } from './shared'
 
 const BOX_W = 110
@@ -35,7 +35,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     }
     const bx = n.x - BOX_W / 2
     const by = n.y - BOX_H / 2
-    const { display: nDisplay, url: nUrl } = parseLink(n.label)
+    const { display: nDisplay, url: nUrl } = displayLabel(n)
     const tip = itemTitleTag(n)
     boxes.push(
       `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="6" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${tip}</rect>`,

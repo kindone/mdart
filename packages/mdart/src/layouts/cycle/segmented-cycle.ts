@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, truncate, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
+import { escapeXml, lerpColor, truncate, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -56,7 +56,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const ly = cy + labelR * Math.sin(midAngle)
     const cosA = Math.cos(midAngle)
     const anchor = cosA > 0.3 ? 'start' : cosA < -0.3 ? 'end' : 'middle'
-    const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
+    const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
     const labelText = truncate(lblDisplay, 14)
 
     // Connector line from outer edge to label

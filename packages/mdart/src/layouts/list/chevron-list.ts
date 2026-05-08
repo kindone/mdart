@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, getCaption, parseLink, aWrap, itemTitleTag } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -32,7 +32,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const caption  = getCaption(item)
     const rightRes = caption ? 96 : 0
     const labelMax = Math.floor((W - NOTCH - rightRes - 16) / 6.2)
-    const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
+    const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: !!caption })
     parts.push(aWrap(`<text x="${(x0 + x1) / 2 + NOTCH/2}" y="${(mid + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, labelMax)}</text>`, lblUrl))
     if (caption) parts.push(`<text x="${W - NOTCH - 6}" y="${(mid + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, 16)}</text>`)
   })

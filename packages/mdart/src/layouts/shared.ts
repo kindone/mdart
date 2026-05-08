@@ -150,6 +150,21 @@ export function ellipsisIfDropped(
   return (dropVal || dropAttr) ? `${label} …` : label
 }
 
+/** Combined parseLink + ellipsisIfDropped: extracts URL from a markdown-style
+ *  label and tags the visible string with " …" when value or attrs would
+ *  otherwise be invisible. The trailing " …" is a visual signal that more
+ *  data is recoverable on hover (where itemTitleTag emits the full summary).
+ *
+ *  Drop-in replacement for `parseLink(item.label)` — same return shape,
+ *  but takes the whole item so it can read value/attrs. */
+export function displayLabel(
+  item: ItemLike,
+  shows: { value?: boolean; attrs?: boolean } = {},
+): { display: string; url: string | null } {
+  const { display: raw, url } = parseLink(item.label)
+  return { display: ellipsisIfDropped(raw, item, shows), url }
+}
+
 /**
  * Resolve a single-line description for an item, preferring `value` (explicit
  * inline `: desc` form) and falling back to a summary of `children` labels

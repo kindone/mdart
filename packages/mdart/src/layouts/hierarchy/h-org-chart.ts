@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
 import { countLeaves, maxDepth } from './shared'
 
 // ── Node geometry ─────────────────────────────────────────────────────────────
@@ -48,7 +48,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const span   = (leaves / tot) * totalH
       const ny     = leafY + span / 2
       const nx     = 10 + level * COL_W + NODE_W / 2
-      const { lines, truncated, url } = wrapLabel(item.label, LABEL_MAX, 3)
+      // Pre-process label with ellipsis if value/attrs would be dropped — h-org-chart
+      // shows label only, so ellipsis fires on any non-empty value or attrs.
+      const labelStr = ellipsisIfDropped(item.label, item)
+      const { lines, truncated, url } = wrapLabel(labelStr, LABEL_MAX, 3)
       hnodes.push({ label: item.label, value: item.value, attrs: item.attrs, lines, truncated, url, x: nx, y: ny, parentX: px, parentY: py })
       layoutH(item.children, level + 1, leafY, span, nx + NODE_W / 2, ny)
       leafY += span

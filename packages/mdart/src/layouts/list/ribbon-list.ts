@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, getCaption, parseLink, aWrap, itemTitleTag } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -36,9 +36,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<polygon points="${W-TAIL},${y} ${W},${y} ${W-TAIL/2},${mid} ${W},${y+RIB_H} ${W-TAIL},${y+RIB_H}" fill="${fill}"/>`)
     parts.push(`<polygon points="${W-TAIL/2},${mid} ${W},${y} ${W},${y+RIB_H}" fill="${dark}"/>`)
     // Label + value
-    const { display: ribDisplay, url: ribUrl } = parseLink(item.label)
-    parts.push(aWrap(`<text x="${FOLD + 10}" y="${(mid + 4).toFixed(1)}" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700" letter-spacing="0.06em">${tt(ribDisplay.toUpperCase(), ribLabelMax)}</text>`, ribUrl))
     const caption = getCaption(item)
+    const { display: ribDisplay, url: ribUrl } = displayLabel(item, { value: !!caption })
+    parts.push(aWrap(`<text x="${FOLD + 10}" y="${(mid + 4).toFixed(1)}" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700" letter-spacing="0.06em">${tt(ribDisplay.toUpperCase(), ribLabelMax)}</text>`, ribUrl))
     if (caption) parts.push(`<text x="${W/2}" y="${(y + RIB_H + 12).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, captionMax)}</text>`)
   })
   return svg(W, H, theme, parts)

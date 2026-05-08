@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -36,7 +36,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     )
 
     const labelY = cyPos - (r - MAX_R / n / 2) + 14
-    const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
+    const { display: lblDisplay, url: lblUrl } = displayLabel(item)
     parts.push(
       aWrap(`<text x="${cxPos.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(lblDisplay, 18)}</text>`, lblUrl),
     )

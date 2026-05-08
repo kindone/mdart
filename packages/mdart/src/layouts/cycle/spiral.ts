@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, tt, titleEl, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
+import { lerpColor, tt, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -50,7 +50,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = isLast ? theme.accent : lerpColor(theme.primary, theme.secondary, t)
 
     const item = items[k]
-    const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
+    const { display: lblDisplay, url: lblUrl } = displayLabel(item)
     parts.push(`<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="${dotR}" fill="${fill}">${itemTitleTag(item)}</circle>`)
 
     // Label on alternating sides

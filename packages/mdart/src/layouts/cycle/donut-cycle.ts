@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -45,7 +45,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelR = (outerR + innerR) / 2
     const lx = cx + labelR * Math.cos(midAngle)
     const ly = cy + labelR * Math.sin(midAngle)
-    const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
+    const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
     if (item.value) {
       svgContent += aWrap(`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10)}</text>`, lblUrl)
       svgContent += `<text x="${lx}" y="${ly + 11}" text-anchor="middle" font-size="8" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(tt(item.value, 12))}</text>`

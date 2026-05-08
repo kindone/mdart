@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, tt, titleEl, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
+import { lerpColor, tt, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -48,7 +48,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = i / (n - 1 || 1)
     const fill = lerpColor(theme.primary, theme.secondary, t)
 
-    const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
+    const { display: lblDisplay, url: lblUrl } = displayLabel(item)
     parts.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${nodeR}" fill="${fill}" stroke="${theme.bg}" stroke-width="2">${itemTitleTag(item)}</circle>`)
     parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10)}</text>`, lblUrl))
   }

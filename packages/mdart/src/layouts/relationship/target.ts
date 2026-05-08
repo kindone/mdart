@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -29,7 +29,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fillAlpha = Math.round(14 + (1 - t) * 36).toString(16).padStart(2, '0')
     parts.push(`<circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="${theme.primary}${fillAlpha}" stroke="${theme.primary}66" stroke-width="1.5">${itemTitleTag(item)}</circle>`)
     const bandR = r - MAX_R / n / 2
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item)
     parts.push(aWrap(`<text x="${cx}" y="${(cy - bandR + 5).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="${i === n - 1 ? '700' : '400'}">${tt(itmDisplay, 18)}</text>`, itmUrl))
   }
   return svg(W, H, theme, spec.title, parts)

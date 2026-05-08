@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -84,7 +84,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = i / (n - 1 || 1)
     const fill = lerpColor(theme.secondary, theme.primary, t)
 
-    const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
+    const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
     svgContent += `<rect x="${(nx - hw).toFixed(1)}" y="${(ny - hh).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${fill}">${itemTitleTag(item)}</rect>`
     if (item.value) {
       // Two-line layout: label up top, value as dimmer subtitle below.
