@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -44,8 +44,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const l1x = colX[hasL2 ? 1 : 0]
     const l1y = l1Mid - NH / 2
-    const { display: l1Display, url: l1Url } = parseLink(l1.label)
-    parts.push(`<rect x="${l1x}" y="${l1y.toFixed(1)}" width="${NW}" height="${NH}" rx="5" fill="${theme.primary}2e" stroke="${theme.primary}88" stroke-width="1.5"/>`)
+    const { display: l1Display, url: l1Url } = displayLabel(l1)
+    parts.push(`<rect x="${l1x}" y="${l1y.toFixed(1)}" width="${NW}" height="${NH}" rx="5" fill="${theme.primary}2e" stroke="${theme.primary}88" stroke-width="1.5">${itemTitleTag(l1)}</rect>`)
     parts.push(aWrap(`<text x="${(l1x+NW/2).toFixed(1)}" y="${(l1y+20).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(l1Display, 15)}</text>`, l1Url))
 
     if (hasL2) {
@@ -61,10 +61,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
         parts.push(`<path d="M${midX},${l1Mid.toFixed(1)} H${elbowX} V${l2Mid.toFixed(1)} H${childX}" fill="none" stroke="${theme.border}" stroke-width="1.2"/>`)
 
-        const { display: l2Display, url: l2Url } = parseLink(l2.label)
+        const { display: l2Display, url: l2Url } = displayLabel(l2, { attrs: true })
         const l2Fill = done ? `${theme.accent}22` : theme.surface
         const l2Stroke = done ? theme.accent : active ? `${theme.accent}88` : theme.border
-        parts.push(`<rect x="${childX}" y="${l2y.toFixed(1)}" width="${NW}" height="${NH}" rx="4" fill="${l2Fill}" stroke="${l2Stroke}" stroke-width="${active ? 1.5 : 1}"/>`)
+        parts.push(`<rect x="${childX}" y="${l2y.toFixed(1)}" width="${NW}" height="${NH}" rx="4" fill="${l2Fill}" stroke="${l2Stroke}" stroke-width="${active ? 1.5 : 1}">${itemTitleTag(l2)}</rect>`)
         const l2Col = done ? theme.accent : active ? theme.text : theme.textMuted
         parts.push(aWrap(`<text x="${(childX+NW/2).toFixed(1)}" y="${(l2y+20).toFixed(1)}" text-anchor="middle" font-size="10" fill="${l2Col}" font-family="system-ui,sans-serif" ${done ? 'text-decoration="line-through"' : ''}>${tt(l2Display, 15)}</text>`, l2Url))
       })

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function wrapLabel(label: string, maxPerLine: number): string[] {
   if (label.length <= maxPerLine) return [label];
@@ -59,9 +59,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const colX = GAP + ci * (COL_W + GAP)
     const colY = TITLE_H + 8
 
-    parts.push(`<rect x="${colX.toFixed(1)}" y="${colY.toFixed(1)}" width="${COL_W.toFixed(1)}" height="${COL_H}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>`)
+    parts.push(`<rect x="${colX.toFixed(1)}" y="${colY.toFixed(1)}" width="${COL_W.toFixed(1)}" height="${COL_H}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1">${itemTitleTag(col)}</rect>`)
     parts.push(`<path d="M${(colX + 8).toFixed(1)},${colY.toFixed(1)} Q${colX.toFixed(1)},${colY.toFixed(1)} ${colX.toFixed(1)},${(colY + 8).toFixed(1)} L${colX.toFixed(1)},${(colY + HEADER_H).toFixed(1)} L${(colX + COL_W).toFixed(1)},${(colY + HEADER_H).toFixed(1)} L${(colX + COL_W).toFixed(1)},${(colY + 8).toFixed(1)} Q${(colX + COL_W).toFixed(1)},${colY.toFixed(1)} ${(colX + COL_W - 8).toFixed(1)},${colY.toFixed(1)} Z" fill="${theme.accent}22"/>`)
-    const { display: colDisplay, url: colUrl } = parseLink(col.label)
+    // kanban already shows attrs as visual treatments (line-through, active outline),
+    // so shows.attrs=true on cards. Column header gets the standard treatment.
+    const { display: colDisplay, url: colUrl } = displayLabel(col)
     parts.push(aWrap(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${(colY + 21).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="600">${tt(colDisplay, 14)}</text>`, colUrl))
 
     if (col.children.length > 0) {
@@ -80,7 +82,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const cardW = COL_W - PAD * 2
       const isDone = card.attrs.includes('done')
       const maxPerLine = Math.floor((cardW - 20) / 7)
-      const { display: cardDisplay, url: cardUrl } = parseLink(card.label)
+      // Cards: value would be silently dropped, attrs we partly use (done/active);
+      // include shows.attrs=true since the visual treatment communicates them.
+      const { display: cardDisplay, url: cardUrl } = displayLabel(card, { attrs: true })
       const lines = wrapLabel(cardDisplay, maxPerLine)
       const textX = (cardX + 10).toFixed(1)
       const n = lines.length
@@ -92,7 +96,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const y2 = cardY + 24
 
       parts.push(
-        `<rect x="${cardX.toFixed(1)}" y="${cardY.toFixed(1)}" width="${cardW.toFixed(1)}" height="${CARD_H}" rx="5" fill="${theme.bg}" stroke="${theme.border}" stroke-width="1"/>`,
+        `<rect x="${cardX.toFixed(1)}" y="${cardY.toFixed(1)}" width="${cardW.toFixed(1)}" height="${CARD_H}" rx="5" fill="${theme.bg}" stroke="${theme.border}" stroke-width="1">${itemTitleTag(card)}</rect>`,
       )
       if (n === 1) {
         parts.push(

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, tt, svgWrap, renderEmpty, parseLink, aWrap } from '../shared'
+import { lerpColor, tt, svgWrap, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 function gearPath(cx: number, cy: number, outerR: number, innerR: number, teeth: number, phase: number): string {
   const points: string[] = []
@@ -38,11 +38,14 @@ function wrapGearText(text: string, maxChars: number): string[] {
 function renderGearLabel(
   parts: string[],
   gx: number, gy: number,
-  rawLabel: string, value: string | undefined,
+  rawLabel: string, value: string | undefined, attrs: string[] | undefined,
   fontSize: number, maxChars: number,
   labelFill: string, theme: MdArtTheme
 ): void {
-  const { display: label, url: lblUrl } = parseLink(rawLabel)
+  const { display: rawDisplay, url: lblUrl } = parseLink(rawLabel)
+  // Apply ellipsis cue when attrs would otherwise be invisible (gear-cycle
+  // already renders value as a subtitle line, so shows.value=true).
+  const label = ellipsisIfDropped(rawDisplay, { label: rawLabel, value, attrs }, { value: true })
   const lines = wrapGearText(label, maxChars)
   const lineH = fontSize + 2
   const valueFontSize = Math.max(fontSize - 2, 8)
@@ -89,10 +92,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (n === 1) {
     const item = items[0]
     const fill = theme.primary
-    parts.push(`<path d="${gearPath(cx, cy, 90, 68, 12, 0)}" fill="${fill}" opacity="0.8"/>`)
+    parts.push(`<path d="${gearPath(cx, cy, 90, 68, 12, 0)}" fill="${fill}" opacity="0.8">${itemTitleTag(item)}</path>`)
     parts.push(`<circle cx="${cx}" cy="${cy}" r="52" fill="${theme.bg}"/>`)
     // inner r=52 → usable chord ~88px at font-size 12 → ~12 chars/line
-    renderGearLabel(parts, cx, cy, item.label, item.value, 12, 12, theme.text, theme)
+    renderGearLabel(parts, cx, cy, item.label, item.value, item.attrs, 12, 12, theme.text, theme)
 
   } else if (n === 2) {
     const outerR = 90, innerR = 68, teeth = 12
@@ -103,19 +106,19 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const t = i / (n - 1 || 1)
       const fill = lerpColor(theme.primary, theme.secondary, t)
       const phase = i * (Math.PI / teeth) // alternate phase so teeth interlock visually
-      parts.push(`<path d="${gearPath(gx, cy, outerR, innerR, teeth, phase)}" fill="${fill}" opacity="0.8"/>`)
+      parts.push(`<path d="${gearPath(gx, cy, outerR, innerR, teeth, phase)}" fill="${fill}" opacity="0.8">${itemTitleTag(item)}</path>`)
       parts.push(`<circle cx="${gx}" cy="${cy}" r="52" fill="${theme.bg}"/>`)
       // inner r=52 → ~12 chars/line at font-size 11
-      renderGearLabel(parts, gx, cy, item.label, item.value, 11, 12, theme.text, theme)
+      renderGearLabel(parts, gx, cy, item.label, item.value, item.attrs, 11, 12, theme.text, theme)
     })
 
   } else if (n === 3) {
     // Large center gear + 2 smaller side gears at ±60°
     const centerFill = theme.primary
-    parts.push(`<path d="${gearPath(cx, cy, 80, 60, 12, 0)}" fill="${centerFill}" opacity="0.8"/>`)
+    parts.push(`<path d="${gearPath(cx, cy, 80, 60, 12, 0)}" fill="${centerFill}" opacity="0.8">${itemTitleTag(items[0])}</path>`)
     parts.push(`<circle cx="${cx}" cy="${cy}" r="46" fill="${theme.bg}"/>`)
     // inner r=46 → ~12 chars/line at font-size 11
-    renderGearLabel(parts, cx, cy, items[0].label, items[0].value, 11, 12, theme.text, theme)
+    renderGearLabel(parts, cx, cy, items[0].label, items[0].value, items[0].attrs, 11, 12, theme.text, theme)
 
     const sideAngles = [-Math.PI / 3, Math.PI / 3]
     const dist = 80 + 55 - 5
@@ -127,10 +130,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const gx = cx + dist * Math.cos(angle)
       const gy = cy + dist * Math.sin(angle)
       const phase = Math.PI / 8
-      parts.push(`<path d="${gearPath(gx, gy, 55, 40, 8, phase)}" fill="${fill}" opacity="0.8"/>`)
+      parts.push(`<path d="${gearPath(gx, gy, 55, 40, 8, phase)}" fill="${fill}" opacity="0.8">${itemTitleTag(item)}</path>`)
       parts.push(`<circle cx="${gx}" cy="${gy}" r="32" fill="${theme.bg}"/>`)
       // inner r=32 → ~9 chars/line at font-size 10
-      renderGearLabel(parts, gx, gy, item.label, item.value, 10, 9, theme.text, theme)
+      renderGearLabel(parts, gx, gy, item.label, item.value, item.attrs, 10, 9, theme.text, theme)
     })
 
   } else {
@@ -160,10 +163,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const t = i / (n - 1 || 1)
       const fill = lerpColor(theme.primary, theme.secondary, t)
       const phase = i * (Math.PI / (teeth * n))
-      parts.push(`<path d="${gearPath(gx, gy, outerR, innerR, teeth, phase)}" fill="${fill}" opacity="0.8"/>`)
+      parts.push(`<path d="${gearPath(gx, gy, outerR, innerR, teeth, phase)}" fill="${fill}" opacity="0.8">${itemTitleTag(item)}</path>`)
       parts.push(`<circle cx="${gx}" cy="${gy}" r="24" fill="${theme.bg}"/>`)
       // inner r=24 → ~7 chars/line at font-size 9
-      renderGearLabel(parts, gx, gy, item.label, item.value, 9, 7, theme.text, theme)
+      renderGearLabel(parts, gx, gy, item.label, item.value, item.attrs, 9, 7, theme.text, theme)
     }
   }
 

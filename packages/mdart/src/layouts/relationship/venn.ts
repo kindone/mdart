@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, truncate, wrapLabel, aWrap } from '../shared'
+import { escapeXml, truncate, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 /**
  * Unified Venn renderer.
@@ -150,9 +150,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const parts: string[] = []
 
-  // Circles
+  // Circles — tooltip carries the full circle item (label + value + attrs)
   centres.forEach((c, i) => {
-    parts.push(`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${R}" fill="${colors[i % colors.length]}28" stroke="${colors[i % colors.length]}88" stroke-width="1.5"/>`)
+    const item = circles[i]
+    parts.push(`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${R}" fill="${colors[i % colors.length]}28" stroke="${colors[i % colors.length]}88" stroke-width="1.5">${item ? itemTitleTag(item) : ''}</circle>`)
   })
 
   // Circle labels (+ first 2 children inline)
@@ -162,7 +163,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const ly = c.y + labelOff[i][1]
     const labelFontSize = n === 2 ? 13 : (n === 3 ? 12 : 11)
     const labelMax      = n === 2 ? 14 : (n === 3 ? 13 : 12)
-    const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(item.label, labelMax)
+    // Children rendered inline as small text (the first 2-4); value/attrs are
+    // hover-only, so ellipsis fires when those exist.
+    const labelStr = ellipsisIfDropped(item.label, item)
+    const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(labelStr, labelMax)
     const lblLineH = labelFontSize + 2
     const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
     const lblSpans = lblLines

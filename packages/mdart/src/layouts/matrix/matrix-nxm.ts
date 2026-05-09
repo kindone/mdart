@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty, ellipsisIfDropped, itemTitleTag } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const rows = spec.items
@@ -25,11 +25,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // ── Pre-compute all wraps ─────────────────────────────────────────────────
 
   const colHeaderWraps = colHeaders.map(h => wrapLabel(h, colLabelMax, 5))
-  const rowLabelWraps  = rows.map(r => wrapLabel(r.label, rowLabelMax, 5))
+  // Row labels: append " …" when the row's value/attrs would be invisible.
+  // Cells: same treatment per cell, since children are rendered as just the
+  // label string (no visible value/attrs slot).
+  const rowLabelWraps  = rows.map(r => wrapLabel(ellipsisIfDropped(r.label, r), rowLabelMax, 5))
   const cellWraps      = rows.map(r =>
     Array.from({ length: numCols }, (_, c) => {
       const cell = r.children[c]
-      return cell ? wrapLabel(cell.label, cellMax, 5) : { lines: [] as string[], truncated: false }
+      return cell ? wrapLabel(ellipsisIfDropped(cell.label, cell), cellMax, 5) : { lines: [] as string[], truncated: false }
     })
   )
 
@@ -97,8 +100,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const rH   = rowHeights[r]
     const rowBg = r % 2 === 0 ? theme.surface : theme.bg
 
-    // Row label cell
-    svg += `<rect x="0" y="${ry}" width="${LABEL_W}" height="${rH}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5"/>`
+    // Row label cell — tooltip carries full label + value + attrs
+    svg += `<rect x="0" y="${ry}" width="${LABEL_W}" height="${rH}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`
     const rlW = rowLabelWraps[r]
     svg += lbl(8, centredY(ry, rH, rlW.lines.length),
       `font-size="10.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
@@ -108,7 +111,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     for (let c = 0; c < numCols; c++) {
       const colX = LABEL_W + c * COL_W
       const cell = row.children[c]
-      svg += `<rect x="${colX}" y="${ry}" width="${COL_W}" height="${rH}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5"/>`
+      const cellTip = cell ? itemTitleTag(cell) : ''
+      svg += `<rect x="${colX}" y="${ry}" width="${COL_W}" height="${rH}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5">${cellTip}</rect>`
       if (cell) {
         const cw = cellWraps[r][c]
         svg += lbl(colX + COL_W / 2, centredY(ry, rH, cw.lines.length),

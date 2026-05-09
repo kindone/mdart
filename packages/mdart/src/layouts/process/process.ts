@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function wrapText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
@@ -38,10 +38,10 @@ function renderVerticalProcess(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = n > 1 ? i / (n - 1) : 0.5
     const fill = lerpColor(theme.secondary, theme.primary, t)
     const y = PAD + titleH + i * (ROW_H + ARROW_H)
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
     const cy = y + ROW_H / 2
 
-    svgContent += `<rect x="${nodeX}" y="${y}" width="${NODE_W}" height="${ROW_H}" rx="6" fill="${fill}" />`
+    svgContent += `<rect x="${nodeX}" y="${y}" width="${NODE_W}" height="${ROW_H}" rx="6" fill="${fill}" >${itemTitleTag(item)}</rect>`
     svgContent += aWrap(`<text x="${W / 2}" y="${cy + 5}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(itmDisplay)}</text>`, itmUrl)
 
     if (i < n - 1) {
@@ -88,11 +88,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const y = cy - nodeH / 2
     const t = n > 1 ? i / (n - 1) : 0.5
     const fill = lerpColor(theme.secondary, theme.primary, t)
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
     const label = escapeXml(itmDisplay)
     const lines = wrapText(itmDisplay, Math.floor(nodeW / 7))
 
-    svgContent += `<rect x="${x}" y="${y}" width="${nodeW}" height="${nodeH}" rx="6" fill="${fill}" />`
+    svgContent += `<rect x="${x}" y="${y}" width="${nodeW}" height="${nodeH}" rx="6" fill="${fill}" >${itemTitleTag(item)}</rect>`
 
     // Visual centring: SVG <text y> is the baseline, so add ~font-size * 0.35
     // to nudge the glyph body down to the box midline.

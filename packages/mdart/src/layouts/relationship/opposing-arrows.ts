@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -21,14 +21,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const lx1 = 8, lx2 = W / 2 - gap / 2
   const rx1 = W / 2 + gap / 2, rx2 = W - 8
   const parts: string[] = []
-  const { display: leftDisplay, url: leftUrl } = parseLink(left.label)
-  const { display: rightDisplay, url: rightUrl } = parseLink(right.label)
-  parts.push(`<polygon points="${lx1},${cy - AH/2} ${lx2 - 32},${cy - AH/2} ${lx2},${cy} ${lx2 - 32},${cy + AH/2} ${lx1},${cy + AH/2}" fill="${theme.primary}2a" stroke="${theme.primary}77" stroke-width="1.5"/>`)
+  const { display: leftDisplay, url: leftUrl } = displayLabel(left)
+  const { display: rightDisplay, url: rightUrl } = displayLabel(right)
+  parts.push(`<polygon points="${lx1},${cy - AH/2} ${lx2 - 32},${cy - AH/2} ${lx2},${cy} ${lx2 - 32},${cy + AH/2} ${lx1},${cy + AH/2}" fill="${theme.primary}2a" stroke="${theme.primary}77" stroke-width="1.5">${itemTitleTag(left)}</polygon>`)
   parts.push(aWrap(`<text x="${((lx1 + lx2) / 2 - 14).toFixed(1)}" y="${(cy - 10).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(leftDisplay, 15)}</text>`, leftUrl))
   left.children.slice(0, 3).forEach((ch, i) => {
     parts.push(`<text x="${((lx1 + lx2) / 2 - 14).toFixed(1)}" y="${(cy + 8 + i * 13).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 13)}</text>`)
   })
-  parts.push(`<polygon points="${rx2},${cy - AH/2} ${rx1 + 32},${cy - AH/2} ${rx1},${cy} ${rx1 + 32},${cy + AH/2} ${rx2},${cy + AH/2}" fill="${theme.secondary}2a" stroke="${theme.secondary}77" stroke-width="1.5"/>`)
+  parts.push(`<polygon points="${rx2},${cy - AH/2} ${rx1 + 32},${cy - AH/2} ${rx1},${cy} ${rx1 + 32},${cy + AH/2} ${rx2},${cy + AH/2}" fill="${theme.secondary}2a" stroke="${theme.secondary}77" stroke-width="1.5">${itemTitleTag(right)}</polygon>`)
   parts.push(aWrap(`<text x="${((rx1 + rx2) / 2 + 14).toFixed(1)}" y="${(cy - 10).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(rightDisplay, 15)}</text>`, rightUrl))
   right.children.slice(0, 3).forEach((ch, i) => {
     parts.push(`<text x="${((rx1 + rx2) / 2 + 14).toFixed(1)}" y="${(cy + 8 + i * 13).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 13)}</text>`)

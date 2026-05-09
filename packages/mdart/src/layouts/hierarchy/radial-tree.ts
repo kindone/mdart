@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { tt, parseLink, aWrap } from '../shared'
+import { tt, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const W = 600, H = 500
@@ -29,13 +29,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const spread = Math.min(Math.PI * 0.5, Math.max(0.4, (ns - 1) * 0.38))
       const sa = ns <= 1 ? angle : angle + (j - (ns - 1) / 2) * (spread / Math.max(ns - 1, 1))
       const sx = bx + R2 * Math.cos(sa), sy = by + R2 * Math.sin(sa)
-      const { display: subDisplay, url: subUrl } = parseLink(subs[j].label)
+      const sub = subs[j]
+      const { display: subDisplay, url: subUrl } = displayLabel(sub)
       parts.push(`<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.border}88" stroke-width="1.5"/>`)
-      parts.push(`<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="14" fill="${theme.muted}" stroke="${theme.accent}88" stroke-width="1.2"/>`)
+      parts.push(`<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="14" fill="${theme.muted}" stroke="${theme.accent}88" stroke-width="1.2">${itemTitleTag(sub)}</circle>`)
       parts.push(aWrap(`<text x="${sx.toFixed(1)}" y="${(sy + 3.5).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(subDisplay, 9)}</text>`, subUrl))
     }
-    const { display: brDisplay, url: brUrl } = parseLink(branch.label)
-    parts.push(`<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="22" fill="${theme.primary}" stroke="${theme.bg}" stroke-width="2"/>`)
+    const { display: brDisplay, url: brUrl } = displayLabel(branch)
+    parts.push(`<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="22" fill="${theme.primary}" stroke="${theme.bg}" stroke-width="2">${itemTitleTag(branch)}</circle>`)
     const ws = brDisplay.split(' ')
     if (ws.length === 1) {
       parts.push(aWrap(`<text x="${bx.toFixed(1)}" y="${(by + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.bg}" font-weight="700" font-family="system-ui,sans-serif">${tt(brDisplay, 9)}</text>`, brUrl))

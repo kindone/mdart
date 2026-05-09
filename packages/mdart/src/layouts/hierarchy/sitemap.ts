@@ -1,11 +1,11 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, aWrap, itemTitleTag, displayLabel } from '../shared'
 import { countLeaves, maxDepth } from './shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.items.length === 0) return renderEmpty(theme)
-  interface SNode { label: string; level: number; x: number; y: number; parentX?: number; parentY?: number }
+  interface SNode { label: string; value?: string; attrs?: string[]; level: number; x: number; y: number; parentX?: number; parentY?: number }
   const snodes: SNode[] = []
   const W = 640, levelH = 52, TITLE_H = spec.title ? 28 : 10
   const depth = maxDepth(spec.items)
@@ -23,7 +23,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const myW = (leaves / tot) * (x1 - x0)
       const nx = cx2 + myW / 2
       const ny = TITLE_H + level * levelH + bh(level) / 2
-      snodes.push({ label: item.label, level, x: nx, y: ny, parentX: px, parentY: py })
+      snodes.push({ label: item.label, value: item.value, attrs: item.attrs, level, x: nx, y: ny, parentX: px, parentY: py })
       layout(item.children, level + 1, cx2, cx2 + myW, nx, ny)
       cx2 += myW
     }
@@ -38,8 +38,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       lines.push(`<line x1="${n.parentX.toFixed(1)}" y1="${py.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${cy.toFixed(1)}" stroke="${theme.textMuted}aa" stroke-width="1.2"/>`)
     }
     const fill = n.level === 0 ? theme.accent : n.level === 1 ? theme.primary : theme.secondary
-    const { display: nDisplay, url: nUrl } = parseLink(n.label)
-    boxes.push(`<rect x="${(n.x - bw(n.level)/2).toFixed(1)}" y="${(n.y - bh(n.level)/2).toFixed(1)}" width="${bw(n.level)}" height="${bh(n.level)}" rx="4" fill="${fill}" stroke="${theme.bg}" stroke-width="1.5"/>`)
+    const { display: nDisplay, url: nUrl } = displayLabel(n)
+    boxes.push(`<rect x="${(n.x - bw(n.level)/2).toFixed(1)}" y="${(n.y - bh(n.level)/2).toFixed(1)}" width="${bw(n.level)}" height="${bh(n.level)}" rx="4" fill="${fill}" stroke="${theme.bg}" stroke-width="1.5">${itemTitleTag(n)}</rect>`)
     const fs = n.level === 0 ? 10 : n.level === 1 ? 9 : 8
     boxes.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="600">${tt(nDisplay, 12)}</text>`, nUrl))
   }
