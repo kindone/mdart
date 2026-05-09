@@ -224,12 +224,28 @@ x: Q1, Q2, Q3, Q4
 | `points:` | `points: false` | hide markers (default: auto — on for ≤30 pts) |
 | `line-width:` | `line-width: 4` | default stroke width (also: `lw:`, `stroke-width:`) |
 | `stack:` | `stack: true` | stack bars instead of grouping (bar-chart only) |
+| `grid:` | `grid: false` | hide gridlines (zero line still drawn if data crosses zero) |
+| `ticks:` | `ticks: false` | hide tick labels (the numeric / category text on each axis) |
 | `shade-y:` | `shade-y: 100..300 [warning]` | horizontal band — **repeatable** |
 | `shade-x:` | `shade-x: Mar..Apr [campaign]` | vertical band — **repeatable** |
 | `ref-y:` | `ref-y: 250 [SLA]` | horizontal reference line — **repeatable** |
 | `ref-x:` | `ref-x: 25m [deploy]` | vertical reference line — **repeatable** |
 
+Aliases: `label-x` / `label-y` work as parallels to `x-label` / `y-label` (same field, both forms compile identically).
+
 Range separator: `..` (preferred, works with negatives). `—` and whitespace-padded `-` also accepted.
+
+**Label positioning on reference lines** — by default a `ref-x` label sits at the top of its vertical line and a `ref-y` label sits at the right edge. Override the perpendicular-axis position with `@ <coord>` (data coords):
+
+```
+ref-x: 12 [Plateau]              # default — label at top of plot
+ref-x: 12 @ 65 [Plateau]         # label at y=65 along the line
+
+ref-y: 250 [SLA]                 # default — label at right edge
+ref-y: 250 @ 5 [SLA]             # label at x=5 along the line
+```
+
+`@ <coord>` resolves the same way as the primary `at` value: numeric in continuous-x mode, label or 1-based index in categorical mode.
 
 ### Per-series attributes (in `[brackets]` after the label, before the colon)
 

@@ -34,11 +34,13 @@ export interface MdArtSpec {
   points?: boolean        // line/area: force markers on / off (else auto)
   lineWidth?: number      // default stroke-width for line/area series
   stack?: boolean         // bar-chart: stack series instead of grouping
+  grid?: boolean          // hide gridlines when false (default true)
+  ticks?: boolean         // hide tick labels when false (default true)
   // Shaded bands and reference lines, multi-line keys (each occurrence pushes).
   shadeY?: Array<{ a: string; b: string; label: string }>
   shadeX?: Array<{ a: string; b: string; label: string }>
-  refY?:   Array<{ at: string; label: string }>
-  refX?:   Array<{ at: string; label: string }>
+  refY?:   Array<{ at: string; atLabel?: string; label: string }>
+  refX?:   Array<{ at: string; atLabel?: string; label: string }>
 
   raw: string
 }
@@ -75,11 +77,21 @@ function parseRangeWithLabel(val: string): { a: string; b: string; label: string
   return { a, b, label }
 }
 
-/** Split "250 [SLA]" into at + optional label. */
-function parseRefWithLabel(val: string): { at: string; label: string } | null {
+/** Split "250 [SLA]" into at + optional label.
+ *  Optional `@ <secondary>` syntax positions the label along the perpendicular
+ *  axis: e.g. `ref-x: 12 @ 65 [Plateau]` puts the label at (x=12, y=65) in
+ *  data coordinates instead of pinning it to the top edge.
+ */
+function parseRefWithLabel(val: string): { at: string; atLabel?: string; label: string } | null {
   const m = val.match(/^([^[]+?)\s*(?:\[(.+?)\])?\s*$/)
   if (!m) return null
-  return { at: m[1].trim(), label: (m[2] || '').trim() }
+  const head = m[1].trim()
+  const label = (m[2] || '').trim()
+  const atMatch = head.match(/^(.+?)\s*@\s*(\S.*)$/)
+  if (atMatch) {
+    return { at: atMatch[1].trim(), atLabel: atMatch[2].trim(), label }
+  }
+  return { at: head, label }
 }
 
 function parseAttrs(segment: string): { cleanLabel: string; attrs: string[] } {
@@ -255,9 +267,13 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
   for (let i = 0; i < lines.length; i++) {
     const trimmed = lines[i].trim()
     if (!trimmed) {
-      // blank line ends front-matter
-      bodyStart = i + 1
-      break
+      // Blank lines are tolerated within front-matter — they're often used
+      // for visual grouping. The body still starts at the first body-char
+      // line, colon-less line, or unrecognized key. (Previously a blank line
+      // ended front-matter outright, which surprised users who'd separated
+      // groups of keys with whitespace and then saw later keys appear in the
+      // legend as series.)
+      continue
     }
     if (bodyStartChars.has(trimmed[0]) || sectionHeaders.has(trimmed.toLowerCase())) {
       bodyStart = i
@@ -294,9 +310,9 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
       // ── Plot family front-matter ───────────────────────────────────────
       else if (key === 'x' || key === 'x-axis') {
         spec.xAxis = val.split(',').map(s => s.trim()).filter(Boolean)
-      } else if (key === 'x-label' || key === 'xlabel') {
+      } else if (key === 'x-label' || key === 'xlabel' || key === 'label-x') {
         spec.xLabel = val
-      } else if (key === 'y-label' || key === 'ylabel') {
+      } else if (key === 'y-label' || key === 'ylabel' || key === 'label-y') {
         spec.yLabel = val
       } else if (key === 'smooth') {
         const b = asBool(val); if (b !== null) spec.smooth = b
@@ -307,6 +323,10 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
         if (!isNaN(n)) spec.lineWidth = n
       } else if (key === 'stack' || key === 'stacked') {
         const b = asBool(val); if (b !== null) spec.stack = b
+      } else if (key === 'grid') {
+        const b = asBool(val); if (b !== null) spec.grid = b
+      } else if (key === 'ticks') {
+        const b = asBool(val); if (b !== null) spec.ticks = b
       } else if (key === 'shade-y' || key === 'shade-x') {
         const r = parseRangeWithLabel(val)
         if (r) {

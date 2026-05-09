@@ -726,12 +726,26 @@ If **any** series uses `(x, y)` pairs, the chart auto-switches to a continuous n
 | `points:` | `points: false` | hide markers (default: auto — on for ≤30 points) |
 | `line-width:` / `lw:` | `line-width: 4` | default stroke width for line/area series |
 | `stack:` | `stack: true` | stack bars instead of grouping (bar-chart only) |
+| `grid:` | `grid: false` | hide gridlines (the zero line is still drawn if data crosses zero) |
+| `ticks:` | `ticks: false` | hide tick labels (the numbers / categories along each axis) |
 | `shade-y:` | `shade-y: 100..300 [warning]` | horizontal band — **repeatable** |
 | `shade-x:` | `shade-x: Mar..Apr [campaign]` | vertical band — **repeatable** |
 | `ref-y:` | `ref-y: 250 [SLA]` | horizontal reference line — **repeatable** |
 | `ref-x:` | `ref-x: 25m [deploy]` | vertical reference line — **repeatable** |
 
+Aliases: `label-x` / `label-y` are accepted in place of `x-label` / `y-label`.
+
 Range separator: `..` (preferred — works with negatives). `—` and whitespace-padded ` - ` also accepted.
+
+**Reference-line label positioning** — by default a `ref-x` label hugs the top of its vertical line and a `ref-y` label sits at the right edge of its horizontal line. Add `@ <coord>` before the `[label]` to position the label along the perpendicular axis (data coords):
+
+```
+ref-x: 12 [Plateau]              ← top (default)
+ref-x: 12 @ 65 [Plateau]         ← at y=65 along the line, centred
+
+ref-y: 250 [SLA]                 ← right edge (default)
+ref-y: 250 @ 5 [SLA]             ← at x=5 along the line, centred
+```
 
 #### Per-series attributes
 

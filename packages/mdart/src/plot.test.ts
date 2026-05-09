@@ -94,6 +94,71 @@ ref-y: 0
     expect(spec.refY).toEqual([{ at: '0', label: '' }])
   })
 
+  it('parses ref-x with @ <y> for manual label position', () => {
+    const spec = parseMdArt(`type: line-chart
+ref-x: 12 @ 65 [Plateau]
+ref-x: 3 [Peak]
+
+- A: 1, 2, 3`)
+    expect(spec.refX).toHaveLength(2)
+    expect(spec.refX?.[0]).toEqual({ at: '12', atLabel: '65', label: 'Plateau' })
+    // Without @, atLabel stays undefined (back-compat).
+    expect(spec.refX?.[1]).toEqual({ at: '3', label: 'Peak' })
+    expect(spec.refX?.[1].atLabel).toBeUndefined()
+  })
+
+  it('parses ref-y with @ <x> for manual label position', () => {
+    const spec = parseMdArt(`type: line-chart
+ref-y: 250 @ 5 [SLA]
+
+- A: 100, 200, 300`)
+    expect(spec.refY?.[0]).toEqual({ at: '250', atLabel: '5', label: 'SLA' })
+  })
+
+  it('accepts label-x / label-y as aliases for x-label / y-label', () => {
+    const spec = parseMdArt(`type: line-chart
+label-x: Time (s)
+label-y: Voltage (V)
+
+- A: 1, 2, 3`)
+    expect(spec.xLabel).toBe('Time (s)')
+    expect(spec.yLabel).toBe('Voltage (V)')
+  })
+
+  it('parses grid and ticks boolean front-matter', () => {
+    const spec = parseMdArt(`type: line-chart
+grid: false
+ticks: false
+
+- A: 1, 2, 3`)
+    expect(spec.grid).toBe(false)
+    expect(spec.ticks).toBe(false)
+  })
+
+  it('tolerates blank lines inside front-matter (does not terminate)', () => {
+    // Regression: a blank line used to end front-matter outright, so any
+    // keys after a visual separator were silently parsed as series — and
+    // ended up in the chart legend.
+    const spec = parseMdArt(`type: line-chart
+title: T
+
+grid: false
+ticks: false
+
+label-x: Time
+label-y: Y
+
+- A: 1, 2, 3`)
+    expect(spec.title).toBe('T')
+    expect(spec.grid).toBe(false)
+    expect(spec.ticks).toBe(false)
+    expect(spec.xLabel).toBe('Time')
+    expect(spec.yLabel).toBe('Y')
+    // Only the real series should land as items, not the blank-separated keys.
+    expect(spec.items).toHaveLength(1)
+    expect(spec.items[0].label).toBe('A')
+  })
+
   // ── Series value parsing (renderer-side, but verified end-to-end) ─────────
 
   it('per-series attributes survive parse', () => {
@@ -249,6 +314,24 @@ line-width: 4
     // Two series at width 4
     const m = svg.match(/stroke-width="4"/g) ?? []
     expect(m.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('omits gridlines and tick labels when grid:false and ticks:false', () => {
+    const full = renderMdArt(`type: line-chart
+
+- A: 10, 20, 30, 40`)
+    const minimal = renderMdArt(`type: line-chart
+grid: false
+ticks: false
+
+- A: 10, 20, 30, 40`)
+    // Tick labels (numbers) appear in `full` but not in `minimal`
+    expect(full).toMatch(/>40</)
+    expect(minimal).not.toMatch(/>40</)
+    // The full render has more <line> elements (gridlines) than the minimal one
+    const fullLines    = (full    .match(/<line /g) ?? []).length
+    const minimalLines = (minimal .match(/<line /g) ?? []).length
+    expect(fullLines).toBeGreaterThan(minimalLines)
   })
 
   it('stacks bar series when stack: true', () => {

@@ -373,16 +373,23 @@ export function renderPlot(spec: MdArtSpec, theme: MdArtTheme, kind: PlotKind): 
     if (sh.label) out.push(`<text x="${((lo + hi) / 2).toFixed(2)}" y="${M.top + 12}" text-anchor="middle" fill="${c}" font-size="10" font-style="italic">${escapeXml(sh.label)}</text>`)
   })
 
+  const showGrid  = spec.grid  !== false   // default true
+  const showTicks = spec.ticks !== false   // default true
+
   // Y grid + tick labels
   for (const t of yScale.ticks) {
     const y = yPos(t)
     const isZero = Math.abs(t) < 1e-9 && yMin < 0
-    out.push(`<line x1="${M.left}" y1="${y.toFixed(2)}" x2="${M.left + PW}" y2="${y.toFixed(2)}" stroke="${isZero ? theme.textMuted : theme.border}" stroke-width="1"/>`)
-    out.push(`<text x="${M.left - 8}" y="${(y + 3).toFixed(2)}" text-anchor="end" fill="${theme.textMuted}">${formatNum(t)}</text>`)
+    if (showGrid || isZero) {
+      out.push(`<line x1="${M.left}" y1="${y.toFixed(2)}" x2="${M.left + PW}" y2="${y.toFixed(2)}" stroke="${isZero ? theme.textMuted : theme.border}" stroke-width="1"/>`)
+    }
+    if (showTicks) {
+      out.push(`<text x="${M.left - 8}" y="${(y + 3).toFixed(2)}" text-anchor="end" fill="${theme.textMuted}">${formatNum(t)}</text>`)
+    }
   }
 
   // Numeric X grid (only when continuous x)
-  if (numericX && xScale) {
+  if (showGrid && numericX && xScale) {
     for (const t of xScale.ticks) {
       const x = xPosNum(t)
       out.push(`<line x1="${x.toFixed(2)}" y1="${M.top}" x2="${x.toFixed(2)}" y2="${M.top + PH}" stroke="${theme.border}" stroke-width="1"/>`)
@@ -394,11 +401,11 @@ export function renderPlot(spec: MdArtSpec, theme: MdArtTheme, kind: PlotKind): 
   out.push(`<line x1="${M.left}" y1="${M.top}" x2="${M.left}" y2="${M.top + PH}" stroke="${theme.textMuted}" stroke-width="1"/>`)
 
   // X tick labels
-  if (numericX && xScale) {
+  if (showTicks && numericX && xScale) {
     for (const t of xScale.ticks) {
       out.push(`<text x="${xPosNum(t).toFixed(2)}" y="${M.top + PH + 18}" text-anchor="middle" fill="${theme.textMuted}">${formatNum(t)}</text>`)
     }
-  } else {
+  } else if (showTicks) {
     const stride = N > 24 ? Math.ceil(N / 12) : 1
     for (let i = 0; i < N; i++) {
       if (i % stride !== 0 && i !== N - 1) continue
@@ -507,13 +514,37 @@ export function renderPlot(spec: MdArtSpec, theme: MdArtTheme, kind: PlotKind): 
     if (isNaN(v)) return
     const y = yPos(v)
     out.push(`<line x1="${M.left}" y1="${y.toFixed(2)}" x2="${M.left + PW}" y2="${y.toFixed(2)}" stroke="${theme.text}" stroke-width="1" stroke-dasharray="5 3" opacity="0.55"/>`)
-    if (ref.label) out.push(`<text x="${M.left + PW - 4}" y="${(y - 4).toFixed(2)}" text-anchor="end" fill="${theme.text}" font-size="10" opacity="0.75">${escapeXml(ref.label)}</text>`)
+    if (ref.label) {
+      // Default label position: top-right of the line. `@ <x>` overrides
+      // the x with a data-coords value (resolved like shade-x: numeric in
+      // numeric-x mode, label or 1-based index in categorical mode).
+      let lx = M.left + PW - 4
+      let anchor: 'start' | 'middle' | 'end' = 'end'
+      if (ref.atLabel) {
+        const x = resolveX(ref.atLabel)
+        if (x !== null) { lx = x; anchor = 'middle' }
+      }
+      // Bold + paint-order halo so the label punches through the dashed line.
+      out.push(`<text x="${lx.toFixed(2)}" y="${(y - 4).toFixed(2)}" text-anchor="${anchor}" fill="${theme.text}" font-size="10" font-weight="600" paint-order="stroke" stroke="${theme.bg}" stroke-width="3" stroke-linejoin="round">${escapeXml(ref.label)}</text>`)
+    }
   })
   ;(spec.refX ?? []).forEach(ref => {
     const x = resolveX(ref.at)
     if (x === null) return
     out.push(`<line x1="${x.toFixed(2)}" y1="${M.top}" x2="${x.toFixed(2)}" y2="${M.top + PH}" stroke="${theme.text}" stroke-width="1" stroke-dasharray="5 3" opacity="0.55"/>`)
-    if (ref.label) out.push(`<text x="${(x + 4).toFixed(2)}" y="${M.top + 12}" text-anchor="start" fill="${theme.text}" font-size="10" opacity="0.75">${escapeXml(ref.label)}</text>`)
+    if (ref.label) {
+      // Default label position: top of the line, anchored to its right.
+      // `@ <y>` overrides with a data-coords y, centred on the line.
+      let ly = M.top + 12
+      let lx = x + 4
+      let anchor: 'start' | 'middle' | 'end' = 'start'
+      if (ref.atLabel) {
+        const yv = parseFloat(ref.atLabel)
+        if (!isNaN(yv)) { ly = yPos(yv); lx = x; anchor = 'middle' }
+      }
+      // Bold + paint-order halo so the label punches through the dashed line.
+      out.push(`<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" text-anchor="${anchor}" fill="${theme.text}" font-size="10" font-weight="600" paint-order="stroke" stroke="${theme.bg}" stroke-width="3" stroke-linejoin="round">${escapeXml(ref.label)}</text>`)
+    }
   })
 
   // ── Legend ──────────────────────────────────────────────────────────────
