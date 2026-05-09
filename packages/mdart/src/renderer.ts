@@ -126,6 +126,12 @@ import { render as renderSequence } from './layouts/technical/sequence'
 import { render as renderStateMachine } from './layouts/technical/state-machine'
 import { render as renderClass } from './layouts/technical/class'
 
+// plot family (x-y plots)
+import { render as renderLineChart } from './layouts/plot/line-chart'
+import { render as renderScatter } from './layouts/plot/scatter'
+import { render as renderAreaChart } from './layouts/plot/area-chart'
+import { render as renderBarChart } from './layouts/plot/bar-chart'
+
 type LayoutRenderer = (spec: MdArtSpec, theme: MdArtTheme) => string
 
 const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
@@ -249,6 +255,12 @@ const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
   sequence: renderSequence,
   'state-machine': renderStateMachine,
   class: renderClass,
+
+  // plot family
+  'line-chart': renderLineChart,
+  scatter: renderScatter,
+  'area-chart': renderAreaChart,
+  'bar-chart': renderBarChart,
 }
 
 /**

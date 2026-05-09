@@ -6,12 +6,12 @@
   <path d="M112,204.4 C260,204.4 260,206.0 408,206.0 L408,242.0 C260,242.0 260,244.0 112,244.0 Z" fill="#0596693a" stroke="#05966977" stroke-width="0.5"/>
   <path d="M112,252.0 C260,252.0 260,250.0 408,250.0 L408,274.0 C260,274.0 260,278.4 112,278.4 Z" fill="#34d3993a" stroke="#34d39977" stroke-width="0.5"/>
   <path d="M112,278.4 C260,278.4 260,282.0 408,282.0 L408,318.0 C260,318.0 260,318.0 112,318.0 Z" fill="#34d3993a" stroke="#34d39977" stroke-width="0.5"/>
-  <rect x="0" y="38.0" width="104" height="118.8" rx="4" fill="#10b98144" stroke="#10b98199" stroke-width="1"/>
-  <text x="52" y="101.4" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif">Organic</text>
-  <rect x="0" y="164.8" width="104" height="79.2" rx="4" fill="#05966944" stroke="#05966999" stroke-width="1"/>
-  <text x="52" y="208.4" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif">Paid</text>
-  <rect x="0" y="252.0" width="104" height="66.0" rx="4" fill="#34d39944" stroke="#34d39999" stroke-width="1"/>
-  <text x="52" y="289.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif">Referral</text>
+  <rect x="0" y="38.0" width="104" height="118.8" rx="4" fill="#10b98144" stroke="#10b98199" stroke-width="1"><title>Organic: 45</title></rect>
+  <text x="52" y="101.4" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Organic: 45</title>Organic</text>
+  <rect x="0" y="164.8" width="104" height="79.2" rx="4" fill="#05966944" stroke="#05966999" stroke-width="1"><title>Paid: 30</title></rect>
+  <text x="52" y="208.4" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Paid: 30</title>Paid</text>
+  <rect x="0" y="252.0" width="104" height="66.0" rx="4" fill="#34d39944" stroke="#34d39999" stroke-width="1"><title>Referral: 25</title></rect>
+  <text x="52" y="289.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Referral: 25</title>Referral</text>
   <rect x="416" y="38.0" width="104" height="36.0" rx="4" fill="#0a1a14" stroke="#0e3020" stroke-width="1"/>
   <text x="468" y="60.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif">Blog</text>
   <rect x="416" y="82.0" width="104" height="72.0" rx="4" fill="#0a1a14" stroke="#0e3020" stroke-width="1"/>

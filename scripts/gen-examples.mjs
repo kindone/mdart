@@ -102,6 +102,18 @@ title: Maslow's Hierarchy
 - Safety
 - Physiological`,
   },
+  {
+    file: 'line-chart.svg',
+    source: `type: line-chart
+smooth: true
+title: Quarterly Revenue
+x: Q1, Q2, Q3, Q4
+y-label: USD (M)
+shade-y: 25..35 [target]
+
+- Revenue [bold]: 12, 18, 24, 32
+- Cost [dashed]: 9, 11, 14, 17`,
+  },
 ]
 
 let ok = 0

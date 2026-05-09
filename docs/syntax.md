@@ -61,7 +61,7 @@ Arrow chain shorthand: `Step 1 -> Step 2 -> Step 3`
 
 ## Syntax patterns
 
-Most of the 97 layout types share one of five input patterns. Visual rendering varies; syntax does not.
+Most of the 101 layout types share one of six input patterns. Visual rendering varies; syntax does not.
 
 ---
 
@@ -251,6 +251,12 @@ title: Microservices vs Monolith
   - Operational complexity
   - Network latency
 ```
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/pros-cons-9369cbf16b.svg">
+  <img alt="pros-cons" src="./examples/syntax/pros-cons-9369cbf16b-light.svg">
+</picture>
+
 
 
 #### `comparison`
@@ -561,6 +567,12 @@ title: Hackathon Finals
 - Team Hotel [w2]
 ```
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/bracket-29dc96a01f.svg">
+  <img alt="bracket" src="./examples/syntax/bracket-29dc96a01f-light.svg">
+</picture>
+
+
 
 #### `bullet-list` · `numbered-list`
 These two list types treat `value` and `children` as separate slots (unlike the geometric list family, which folds them into one caption):
@@ -684,6 +696,116 @@ title: Monthly Metrics
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/scorecard-dd3503bb17.svg">
   <img alt="scorecard" src="./examples/syntax/scorecard-dd3503bb17-light.svg">
+</picture>
+
+
+---
+
+### 6 · Plot data — numeric series
+
+The **plot family** (`line-chart`, `scatter`, `area-chart`, `bar-chart`) takes one *series of numbers* per top-level item, plus rich front-matter for axes, shaded zones, and reference lines. This is the only pattern where the value list is parsed as data, not text.
+
+#### Series
+
+```
+- Label: 12, 18, 24, 32                  ← categorical y values along x-axis
+- Label: (1.2, 22), (2.5, 18), (3.7, 26) ← numeric (x, y) pairs (continuous x-axis)
+- Label: 12, , null, 18, na, 22          ← gaps: empty / null / na / -
+```
+
+If **any** series uses `(x, y)` pairs, the chart auto-switches to a continuous numeric x-axis with auto-computed ticks. Mixed series in the same chart promote categorical ones to 1-based indices on the same axis. Bar charts stay categorical regardless.
+
+#### Front-matter for plots
+
+| Key | Example | Effect |
+|---|---|---|
+| `x:` / `x-axis:` | `x: Q1, Q2, Q3, Q4` | x-axis tick labels (categorical) |
+| `x-label:` | `x-label: Time (s)` | x-axis title |
+| `y-label:` | `y-label: Voltage (V)` | y-axis title |
+| `smooth:` | `smooth: true` | Catmull-Rom curves through points (line/area) |
+| `points:` | `points: false` | hide markers (default: auto — on for ≤30 points) |
+| `line-width:` / `lw:` | `line-width: 4` | default stroke width for line/area series |
+| `stack:` | `stack: true` | stack bars instead of grouping (bar-chart only) |
+| `shade-y:` | `shade-y: 100..300 [warning]` | horizontal band — **repeatable** |
+| `shade-x:` | `shade-x: Mar..Apr [campaign]` | vertical band — **repeatable** |
+| `ref-y:` | `ref-y: 250 [SLA]` | horizontal reference line — **repeatable** |
+| `ref-x:` | `ref-x: 25m [deploy]` | vertical reference line — **repeatable** |
+
+Range separator: `..` (preferred — works with negatives). `—` and whitespace-padded ` - ` also accepted.
+
+#### Per-series attributes
+
+Bracketed list right after the label, before the colon. Repeatable; comma-separated.
+
+| Attribute | Effect |
+|---|---|
+| `dashed` / `dotted` | stroke pattern (auto-scales with width) |
+| `thin` / `thick` / `bold` / `heavy` / `extra` | width tier (1 / 3.5 / 5 / 7 / 9 px) |
+| `width=N` (also `w=N`, `stroke=N`, `sw=N`) | explicit numeric stroke width |
+| `smooth` / `straight` | override chart-level `smooth:` |
+| `points` / `markers` / `nopoints` / `nomarkers` | force markers on/off |
+
+```
+- Actual [bold]:               12, 18, 24, 32
+- Forecast [dashed, smooth]:   11, 17, 23, 30
+- Last year [dotted, thin]:    10, 14, 19, 25
+```
+
+#### Examples
+
+```mdart
+type: line-chart
+smooth: true
+points: false
+title: Server response time (ms)
+x: 0h, 4h, 8h, 12h, 16h, 20h, 24h
+y-label: ms
+shade-y: 0..100 [healthy]
+shade-y: 100..300 [warning]
+shade-y: 300..600 [critical]
+ref-y: 250 [SLA target]
+shade-x: 16h..20h [deploy]
+
+- p50 [bold]:    45, 52, 48, 60, 280, 95, 70
+- p99 [dashed]: 110, 120, 105, 140, 420, 220, 180
+```
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/line-chart-edbd09a4c4.svg">
+  <img alt="line-chart" src="./examples/syntax/line-chart-edbd09a4c4-light.svg">
+</picture>
+
+
+```mdart
+type: scatter
+title: Throughput vs cycle time
+x-label: Hours per task
+y-label: Items / hr
+
+- Team A: (1.2, 22), (2.5, 18), (1.8, 26), (3.2, 14), (1.0, 28), (2.1, 21)
+- Team B: (1.5, 18), (2.8, 12), (2.2, 16), (3.5, 9), (1.3, 20), (2.0, 15)
+```
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/scatter-732d690afe.svg">
+  <img alt="scatter" src="./examples/syntax/scatter-732d690afe-light.svg">
+</picture>
+
+
+```mdart
+type: bar-chart
+stack: true
+title: Revenue mix
+x: Q1, Q2, Q3, Q4
+
+- Subscriptions: 40, 50, 65, 75
+- Services:      25, 30, 30, 35
+- Licenses:      15, 15, 15, 20
+```
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/bar-chart-d908807af3.svg">
+  <img alt="bar-chart" src="./examples/syntax/bar-chart-d908807af3-light.svg">
 </picture>
 
 

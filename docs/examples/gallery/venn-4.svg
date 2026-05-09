@@ -1,15 +1,15 @@
 <svg viewBox="0 0 560 388" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#180a0e;border-radius:8px">
   
-  <circle cx="220.0" cy="154.0" r="105" fill="#f43f5e28" stroke="#f43f5e88" stroke-width="1.5"/>
-  <circle cx="340.0" cy="154.0" r="105" fill="#e11d4828" stroke="#e11d4888" stroke-width="1.5"/>
-  <circle cx="220.0" cy="242.0" r="105" fill="#fb718528" stroke="#fb718588" stroke-width="1.5"/>
-  <circle cx="340.0" cy="242.0" r="105" fill="#f43f5e28" stroke="#f43f5e88" stroke-width="1.5"/>
-  <text x="159.1" y="99.4" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Strategy</text>
+  <circle cx="220.0" cy="154.0" r="105" fill="#f43f5e28" stroke="#f43f5e88" stroke-width="1.5"><title>Strategy</title></circle>
+  <circle cx="340.0" cy="154.0" r="105" fill="#e11d4828" stroke="#e11d4888" stroke-width="1.5"><title>Design</title></circle>
+  <circle cx="220.0" cy="242.0" r="105" fill="#fb718528" stroke="#fb718588" stroke-width="1.5"><title>Engineering</title></circle>
+  <circle cx="340.0" cy="242.0" r="105" fill="#f43f5e28" stroke="#f43f5e88" stroke-width="1.5"><title>Data</title></circle>
+  <text x="159.1" y="99.4" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600"><tspan x="159.1" dy="0">Strategy</tspan></text>
   <text x="159.1" y="113.4" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">OKRs</text>
-  <text x="400.9" y="99.4" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Design</text>
+  <text x="400.9" y="99.4" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600"><tspan x="400.9" dy="0">Design</tspan></text>
   <text x="400.9" y="113.4" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">Brand</text>
-  <text x="159.1" y="296.6" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Engineering</text>
+  <text x="159.1" y="296.6" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600"><tspan x="159.1" dy="0">Engineering</tspan></text>
   <text x="159.1" y="310.6" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">Frontend</text>
-  <text x="400.9" y="296.6" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Data</text>
+  <text x="400.9" y="296.6" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600"><tspan x="400.9" dy="0">Data</tspan></text>
   <text x="400.9" y="310.6" text-anchor="middle" font-size="8.5" fill="#fda4af" font-family="system-ui,sans-serif">Analytics</text>
 </svg>

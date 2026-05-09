@@ -1,26 +1,26 @@
-<svg viewBox="0 0 550 228" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#fffbeb;border-radius:8px">
+<svg viewBox="0 0 590 308" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#fffbeb;border-radius:8px">
   
-  <path d="M120.0,118.0 H135.0 V58.0 H150.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
-  <path d="M260.0,58.0 H275.0 V38.0 H290.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
-  <path d="M260.0,58.0 H275.0 V78.0 H290.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
-  <path d="M120.0,118.0 H135.0 V138.0 H150.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
-  <path d="M260.0,138.0 H275.0 V118.0 H290.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
-  <path d="M260.0,138.0 H275.0 V158.0 H290.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
-  <path d="M120.0,118.0 H135.0 V198.0 H150.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
-  <rect x="10.0" y="104.0" width="110" height="28" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"/>
-  <text x="65.0" y="122.0" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif">CEO</text>
-  <rect x="150.0" y="44.0" width="110" height="28" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"/>
-  <text x="205.0" y="62.0" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif">Engineering</text>
-  <rect x="290.0" y="24.0" width="110" height="28" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"/>
-  <text x="345.0" y="42.0" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif">Frontend</text>
-  <rect x="290.0" y="64.0" width="110" height="28" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"/>
-  <text x="345.0" y="82.0" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif">Backend</text>
-  <rect x="150.0" y="124.0" width="110" height="28" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"/>
-  <text x="205.0" y="142.0" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif">Product</text>
-  <rect x="290.0" y="104.0" width="110" height="28" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"/>
-  <text x="345.0" y="122.0" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif">Design</text>
-  <rect x="290.0" y="144.0" width="110" height="28" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"/>
-  <text x="345.0" y="162.0" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif">Research</text>
-  <rect x="150.0" y="184.0" width="110" height="28" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"/>
-  <text x="205.0" y="202.0" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif">Operations</text>
+  <path d="M130.0,158.0 H145.0 V74.0 H160.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
+  <path d="M280.0,74.0 H295.0 V46.0 H310.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
+  <path d="M280.0,74.0 H295.0 V102.0 H310.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
+  <path d="M130.0,158.0 H145.0 V186.0 H160.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
+  <path d="M280.0,186.0 H295.0 V158.0 H310.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
+  <path d="M280.0,186.0 H295.0 V214.0 H310.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
+  <path d="M130.0,158.0 H145.0 V270.0 H160.0" fill="none" stroke="#fde68a" stroke-width="1.5"/>
+  <rect x="10.0" y="136.0" width="120" height="44" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"><title>CEO</title></rect>
+  <text x="70.0" y="159.4" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif"><title>CEO</title><tspan x="70.0" dy="0">CEO</tspan></text>
+  <rect x="160.0" y="52.0" width="120" height="44" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"><title>Engineering</title></rect>
+  <text x="220.0" y="75.4" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif"><title>Engineering</title><tspan x="220.0" dy="0">Engineering</tspan></text>
+  <rect x="310.0" y="24.0" width="120" height="44" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"><title>Frontend</title></rect>
+  <text x="370.0" y="47.4" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif"><title>Frontend</title><tspan x="370.0" dy="0">Frontend</tspan></text>
+  <rect x="310.0" y="80.0" width="120" height="44" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"><title>Backend</title></rect>
+  <text x="370.0" y="103.4" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif"><title>Backend</title><tspan x="370.0" dy="0">Backend</tspan></text>
+  <rect x="160.0" y="164.0" width="120" height="44" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"><title>Product</title></rect>
+  <text x="220.0" y="187.4" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif"><title>Product</title><tspan x="220.0" dy="0">Product</tspan></text>
+  <rect x="310.0" y="136.0" width="120" height="44" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"><title>Design</title></rect>
+  <text x="370.0" y="159.4" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif"><title>Design</title><tspan x="370.0" dy="0">Design</tspan></text>
+  <rect x="310.0" y="192.0" width="120" height="44" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"><title>Research</title></rect>
+  <text x="370.0" y="215.4" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif"><title>Research</title><tspan x="370.0" dy="0">Research</tspan></text>
+  <rect x="160.0" y="248.0" width="120" height="44" rx="5" fill="#ffffff" stroke="#f59e0b88" stroke-width="1.2"><title>Operations</title></rect>
+  <text x="220.0" y="271.4" text-anchor="middle" font-size="10.5" fill="#451a03" font-family="system-ui,sans-serif"><title>Operations</title><tspan x="220.0" dy="0">Operations</tspan></text>
 </svg>

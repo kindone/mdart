@@ -1,0 +1,8 @@
+type: bar-chart
+title: Revenue by quarter
+x: Q1, Q2, Q3, Q4
+y-label: USD (M)
+
+- 2024: 80, 95, 110, 130
+- 2025: 95, 115, 140, 165
+- 2026 (target): 120, 145, 175, 210

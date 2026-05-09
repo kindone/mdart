@@ -1,0 +1,9 @@
+type: area-chart
+smooth: true
+title: Active users by tier
+x: W1, W2, W3, W4, W5, W6, W7, W8
+y-label: Users (k)
+
+- Free: 80, 95, 110, 125, 140, 155, 170, 180
+- Paid: 20, 28, 35, 48, 62, 78, 95, 115
+- Enterprise: 5, 7, 9, 12, 16, 22, 28, 36

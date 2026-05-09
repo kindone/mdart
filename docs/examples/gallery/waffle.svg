@@ -100,14 +100,14 @@
   <rect x="183.5" y="235" width="18" height="18" rx="2" fill="#f59e0b"/>
   <rect x="204.5" y="235" width="18" height="18" rx="2" fill="#f59e0b"/>
   <rect x="225.5" y="235" width="18" height="18" rx="2" fill="#f59e0b"/>
-  <rect x="16" y="262" width="12" height="12" rx="2" fill="#10b981"/>
-  <text x="32" y="272" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif">Engineering (30%)</text>
-  <rect x="16" y="284" width="12" height="12" rx="2" fill="#059669"/>
-  <text x="32" y="294" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif">Marketing (20%)</text>
-  <rect x="16" y="306" width="12" height="12" rx="2" fill="#34d399"/>
-  <text x="32" y="316" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif">Sales (10%)</text>
-  <rect x="16" y="328" width="12" height="12" rx="2" fill="#064e3b"/>
-  <text x="32" y="338" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif">Operations (10%)</text>
-  <rect x="16" y="350" width="12" height="12" rx="2" fill="#f59e0b"/>
-  <text x="32" y="360" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif">Other (30%)</text>
+  <rect x="16" y="262" width="12" height="12" rx="2" fill="#10b981"><title>Engineering: 30%</title></rect>
+  <text x="32" y="272" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Engineering: 30%</title>Engineering (30%)</text>
+  <rect x="16" y="284" width="12" height="12" rx="2" fill="#059669"><title>Marketing: 20%</title></rect>
+  <text x="32" y="294" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Marketing: 20%</title>Marketing (20%)</text>
+  <rect x="16" y="306" width="12" height="12" rx="2" fill="#34d399"><title>Sales: 10%</title></rect>
+  <text x="32" y="316" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Sales: 10%</title>Sales (10%)</text>
+  <rect x="16" y="328" width="12" height="12" rx="2" fill="#064e3b"><title>Operations: 10%</title></rect>
+  <text x="32" y="338" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Operations: 10%</title>Operations (10%)</text>
+  <rect x="16" y="350" width="12" height="12" rx="2" fill="#f59e0b"><title>Other: 30%</title></rect>
+  <text x="32" y="360" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Other: 30%</title>Other (30%)</text>
 </svg>

@@ -5,24 +5,24 @@
       <path d="M0,0 L7,3.5 L0,7 Z" fill="#0ea5e9"/>
     </marker>
     <marker id="sq-b" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-      <path d="M0,0 L7,3.5 L0,7 Z" fill="#e0f2febb"/>
+      <path d="M0,0 L7,3.5 L0,7 Z" fill="#0369a1"/>
     </marker>
   </defs>
-  <rect x="52.0" y="38.0" width="96.0" height="28" rx="5" fill="#0ea5e922" stroke="#0ea5e977" stroke-width="1.5"/>
+  <rect x="52.0" y="38.0" width="96.0" height="28" rx="5" fill="#0ea5e922" stroke="#0ea5e9aa" stroke-width="1.5"><title>Browser</title></rect>
   <text x="100.0" y="56.0" text-anchor="middle" font-size="11" fill="#082f49" font-family="system-ui,sans-serif" font-weight="600">Browser</text>
-  <rect x="252.0" y="38.0" width="96.0" height="28" rx="5" fill="#0ea5e922" stroke="#0ea5e977" stroke-width="1.5"/>
+  <rect x="252.0" y="38.0" width="96.0" height="28" rx="5" fill="#0ea5e922" stroke="#0ea5e9aa" stroke-width="1.5"><title>API</title></rect>
   <text x="300.0" y="56.0" text-anchor="middle" font-size="11" fill="#082f49" font-family="system-ui,sans-serif" font-weight="600">API</text>
-  <rect x="452.0" y="38.0" width="96.0" height="28" rx="5" fill="#0ea5e922" stroke="#0ea5e977" stroke-width="1.5"/>
+  <rect x="452.0" y="38.0" width="96.0" height="28" rx="5" fill="#0ea5e922" stroke="#0ea5e9aa" stroke-width="1.5"><title>DB</title></rect>
   <text x="500.0" y="56.0" text-anchor="middle" font-size="11" fill="#082f49" font-family="system-ui,sans-serif" font-weight="600">DB</text>
-  <line x1="100.0" y1="74.0" x2="100.0" y2="234.0" stroke="#bae6fd" stroke-width="1" stroke-dasharray="4,4"/>
-  <line x1="300.0" y1="74.0" x2="300.0" y2="234.0" stroke="#bae6fd" stroke-width="1" stroke-dasharray="4,4"/>
-  <line x1="500.0" y1="74.0" x2="500.0" y2="234.0" stroke="#bae6fd" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="100.0" y1="74.0" x2="100.0" y2="234.0" stroke="#0369a19a" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="300.0" y1="74.0" x2="300.0" y2="234.0" stroke="#0369a19a" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="500.0" y1="74.0" x2="500.0" y2="234.0" stroke="#0369a19a" stroke-width="1" stroke-dasharray="4,4"/>
   <line x1="104.0" y1="90.0" x2="292.0" y2="90.0" stroke="#0ea5e9" stroke-width="1.5" marker-end="url(#sq-a)"/>
   <text x="198.0" y="86.0" text-anchor="middle" font-size="10" fill="#0369a1" font-family="system-ui,sans-serif">POST /login</text>
   <line x1="304.0" y1="126.0" x2="492.0" y2="126.0" stroke="#0ea5e9" stroke-width="1.5" marker-end="url(#sq-a)"/>
   <text x="398.0" y="122.0" text-anchor="middle" font-size="10" fill="#0369a1" font-family="system-ui,sans-serif">SELECT user</text>
-  <line x1="496.0" y1="162.0" x2="308.0" y2="162.0" stroke="#e0f2febb" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#sq-b)"/>
+  <line x1="496.0" y1="162.0" x2="308.0" y2="162.0" stroke="#0369a1" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#sq-b)"/>
   <text x="402.0" y="158.0" text-anchor="middle" font-size="10" fill="#0369a1" font-family="system-ui,sans-serif">user row</text>
-  <line x1="296.0" y1="198.0" x2="108.0" y2="198.0" stroke="#e0f2febb" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#sq-b)"/>
+  <line x1="296.0" y1="198.0" x2="108.0" y2="198.0" stroke="#0369a1" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#sq-b)"/>
   <text x="202.0" y="194.0" text-anchor="middle" font-size="10" fill="#0369a1" font-family="system-ui,sans-serif">Set-Cookie</text>
 </svg>

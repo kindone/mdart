@@ -2,24 +2,24 @@
     <rect width="600" height="128" fill="#f0fdf4" rx="8"/>
     <line x1="34" y1="68" x2="566" y2="68" stroke="#bbf7d0" stroke-width="2"/>
     <polygon points="564.0,63.0 572.0,68 564.0,73.0" fill="#bbf7d0"/>
-    <circle cx="34.0" cy="68" r="6" fill="#059669"/>
+    <circle cx="34.0" cy="68" r="6" fill="#059669"><title>Kickoff: Jan</title></circle>
     <line x1="34.0" y1="62" x2="34.0" y2="50" stroke="#059669" stroke-width="1"/>
-    <text x="34.0" y="46.0" text-anchor="middle" font-size="10" fill="#059669" font-family="system-ui,sans-serif" font-weight="700">Kickoff</text>
+    <text x="34.0" y="46.0" text-anchor="middle" font-size="10" fill="#059669" font-family="system-ui,sans-serif" font-weight="700"><title>Kickoff: Jan</title>Kickoff</text>
     <text x="34.0" y="35.0" text-anchor="middle" font-size="9" fill="#059669" font-family="system-ui,sans-serif">Jan</text>
-    <circle cx="167.0" cy="68" r="6" fill="#058f65"/>
+    <circle cx="167.0" cy="68" r="6" fill="#058f65"><title>Design: Mar</title></circle>
     <line x1="167.0" y1="74" x2="167.0" y2="86" stroke="#058f65" stroke-width="1"/>
-    <text x="167.0" y="98.0" text-anchor="middle" font-size="10" fill="#058f65" font-family="system-ui,sans-serif" font-weight="700">Design</text>
+    <text x="167.0" y="98.0" text-anchor="middle" font-size="10" fill="#058f65" font-family="system-ui,sans-serif" font-weight="700"><title>Design: Mar</title>Design</text>
     <text x="167.0" y="109.0" text-anchor="middle" font-size="9" fill="#059669" font-family="system-ui,sans-serif">Mar</text>
-    <circle cx="300.0" cy="68" r="6" fill="#058760"/>
+    <circle cx="300.0" cy="68" r="6" fill="#058760"><title>Beta: Jun</title></circle>
     <line x1="300.0" y1="62" x2="300.0" y2="50" stroke="#058760" stroke-width="1"/>
-    <text x="300.0" y="46.0" text-anchor="middle" font-size="10" fill="#058760" font-family="system-ui,sans-serif" font-weight="700">Beta</text>
+    <text x="300.0" y="46.0" text-anchor="middle" font-size="10" fill="#058760" font-family="system-ui,sans-serif" font-weight="700"><title>Beta: Jun</title>Beta</text>
     <text x="300.0" y="35.0" text-anchor="middle" font-size="9" fill="#059669" font-family="system-ui,sans-serif">Jun</text>
-    <circle cx="433.0" cy="68" r="6" fill="#04805c"/>
+    <circle cx="433.0" cy="68" r="6" fill="#04805c"><title>Review: Sep</title></circle>
     <line x1="433.0" y1="74" x2="433.0" y2="86" stroke="#04805c" stroke-width="1"/>
-    <text x="433.0" y="98.0" text-anchor="middle" font-size="10" fill="#04805c" font-family="system-ui,sans-serif" font-weight="700">Review</text>
+    <text x="433.0" y="98.0" text-anchor="middle" font-size="10" fill="#04805c" font-family="system-ui,sans-serif" font-weight="700"><title>Review: Sep</title>Review</text>
     <text x="433.0" y="109.0" text-anchor="middle" font-size="9" fill="#059669" font-family="system-ui,sans-serif">Sep</text>
-    <circle cx="566.0" cy="68" r="6" fill="#10b981"/>
+    <circle cx="566.0" cy="68" r="6" fill="#10b981"><title>Ship: Dec</title></circle>
     <line x1="566.0" y1="62" x2="566.0" y2="50" stroke="#10b981" stroke-width="1"/>
-    <text x="566.0" y="46.0" text-anchor="middle" font-size="10" fill="#10b981" font-family="system-ui,sans-serif" font-weight="700">Ship</text>
+    <text x="566.0" y="46.0" text-anchor="middle" font-size="10" fill="#10b981" font-family="system-ui,sans-serif" font-weight="700"><title>Ship: Dec</title>Ship</text>
     <text x="566.0" y="35.0" text-anchor="middle" font-size="9" fill="#059669" font-family="system-ui,sans-serif">Dec</text>
   </svg>

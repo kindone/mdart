@@ -6,12 +6,12 @@
     <line x1="370.0" y1="200.0" x2="220.0" y2="350.0" stroke="#c4b5fd" stroke-width="1" opacity="0.55"/>
     <line x1="370.0" y1="200.0" x2="70.0" y2="200.0" stroke="#c4b5fd" stroke-width="1" opacity="0.55"/>
     <line x1="220.0" y1="350.0" x2="70.0" y2="200.0" stroke="#c4b5fd" stroke-width="1" opacity="0.55"/>
-    <circle cx="220.0" cy="50.0" r="20" fill="#8b5cf6" stroke="#0e0a1a" stroke-width="2"/>
-    <text x="220.0" y="54.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Strategy</text>
-    <circle cx="370.0" cy="200.0" r="20" fill="#8651f3" stroke="#0e0a1a" stroke-width="2"/>
-    <text x="370.0" y="204.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Design</text>
-    <circle cx="220.0" cy="350.0" r="20" fill="#8145f0" stroke="#0e0a1a" stroke-width="2"/>
-    <text x="220.0" y="354.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600"><title>Engineering</title>Engineeri…</text>
-    <circle cx="70.0" cy="200.0" r="20" fill="#7c3aed" stroke="#0e0a1a" stroke-width="2"/>
-    <text x="70.0" y="204.0" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="system-ui,sans-serif" font-weight="600">Data</text>
+    <circle cx="220.0" cy="50.0" r="20" fill="#8b5cf6" stroke="#0e0a1a" stroke-width="2"><title>Strategy</title></circle>
+    <text x="220.0" y="54.0" text-anchor="middle" font-size="10" fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill" font-family="system-ui,sans-serif" font-weight="600"><title>Strategy</title>Strategy</text>
+    <circle cx="370.0" cy="200.0" r="20" fill="#8651f3" stroke="#0e0a1a" stroke-width="2"><title>Design</title></circle>
+    <text x="370.0" y="204.0" text-anchor="middle" font-size="10" fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill" font-family="system-ui,sans-serif" font-weight="600"><title>Design</title>Design</text>
+    <circle cx="220.0" cy="350.0" r="20" fill="#8145f0" stroke="#0e0a1a" stroke-width="2"><title>Engineering</title></circle>
+    <text x="220.0" y="354.0" text-anchor="middle" font-size="10" fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill" font-family="system-ui,sans-serif" font-weight="600"><title>Engineering</title>Engineeri…</text>
+    <circle cx="70.0" cy="200.0" r="20" fill="#7c3aed" stroke="#0e0a1a" stroke-width="2"><title>Data</title></circle>
+    <text x="70.0" y="204.0" text-anchor="middle" font-size="10" fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill" font-family="system-ui,sans-serif" font-weight="600"><title>Data</title>Data</text>
   </svg>

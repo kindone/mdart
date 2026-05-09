@@ -8,24 +8,24 @@
   <path d="M500.6,40.0 C500.6,59.0 445.4,59.0 445.4,78.0" fill="none" stroke="#fde68acc" stroke-width="1.5"/>
   <path d="M445.4,108.0 C445.4,127.0 445.4,127.0 445.4,146.0" fill="none" stroke="#fde68acc" stroke-width="1.5"/>
   <path d="M500.6,40.0 C500.6,59.0 555.8,59.0 555.8,78.0" fill="none" stroke="#fde68acc" stroke-width="1.5"/>
-  <rect x="169.6" y="10.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="224.6" y="29.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Frontend</text>
-  <rect x="114.4" y="78.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="169.4" y="97.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">React</text>
-  <rect x="59.2" y="146.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="114.2" y="165.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Components</text>
-  <rect x="169.6" y="146.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="224.6" y="165.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Hooks</text>
-  <rect x="280.0" y="78.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="335.0" y="97.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">CSS</text>
-  <rect x="280.0" y="146.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="335.0" y="165.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Tailwind</text>
-  <rect x="445.6" y="10.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="500.6" y="29.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Backend</text>
-  <rect x="390.4" y="78.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="445.4" y="97.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Node</text>
-  <rect x="390.4" y="146.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="445.4" y="165.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Routes</text>
-  <rect x="500.8" y="78.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="555.8" y="97.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Database</text>
+  <rect x="169.6" y="10.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Frontend</title></rect>
+  <text x="224.6" y="29.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Frontend</title><title>Frontend</title>Frontend</text>
+  <rect x="114.4" y="78.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>React</title></rect>
+  <text x="169.4" y="97.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>React</title><title>React</title>React</text>
+  <rect x="59.2" y="146.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Components</title></rect>
+  <text x="114.2" y="165.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Components</title><title>Components</title>Components</text>
+  <rect x="169.6" y="146.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Hooks</title></rect>
+  <text x="224.6" y="165.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Hooks</title><title>Hooks</title>Hooks</text>
+  <rect x="280.0" y="78.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>CSS</title></rect>
+  <text x="335.0" y="97.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>CSS</title><title>CSS</title>CSS</text>
+  <rect x="280.0" y="146.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Tailwind</title></rect>
+  <text x="335.0" y="165.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Tailwind</title><title>Tailwind</title>Tailwind</text>
+  <rect x="445.6" y="10.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Backend</title></rect>
+  <text x="500.6" y="29.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Backend</title><title>Backend</title>Backend</text>
+  <rect x="390.4" y="78.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Node</title></rect>
+  <text x="445.4" y="97.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Node</title><title>Node</title>Node</text>
+  <rect x="390.4" y="146.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Routes</title></rect>
+  <text x="445.4" y="165.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Routes</title><title>Routes</title>Routes</text>
+  <rect x="500.8" y="78.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Database</title></rect>
+  <text x="555.8" y="97.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Database</title><title>Database</title>Database</text>
 </svg>

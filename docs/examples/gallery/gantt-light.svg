@@ -30,15 +30,15 @@
   <text x="584.0" y="44" text-anchor="middle" font-size="10" fill="#7c3aed" font-family="system-ui,sans-serif">14</text>
   <rect x="0" y="52.0" width="600" height="34" fill="#ffffff" opacity="0.5"/>
   <text x="130.0" y="73.0" text-anchor="end" font-size="11" fill="#2e1065" font-family="system-ui,sans-serif">Auth system</text>
-  <rect x="138.0" y="60.0" width="102.9" height="18" rx="4" fill="#a78bfa88" stroke="#a78bfa" stroke-width="1"/>
+  <rect x="138.0" y="60.0" width="102.9" height="18" rx="4" fill="#a78bfa88" stroke="#a78bfa" stroke-width="1"><title>Auth system [wk1-wk3]</title></rect>
   <text x="130.0" y="107.0" text-anchor="end" font-size="11" fill="#2e1065" font-family="system-ui,sans-serif">API v2</text>
-  <rect x="172.3" y="94.0" width="171.5" height="18" rx="4" fill="#a78bfa88" stroke="#a78bfa" stroke-width="1"/>
+  <rect x="172.3" y="94.0" width="171.5" height="18" rx="4" fill="#a78bfa88" stroke="#a78bfa" stroke-width="1"><title>API v2 [wk2-wk6]</title></rect>
   <rect x="0" y="120.0" width="600" height="34" fill="#ffffff" opacity="0.5"/>
   <text x="130.0" y="141.0" text-anchor="end" font-size="11" fill="#2e1065" font-family="system-ui,sans-serif">Dashboard</text>
-  <rect x="240.9" y="128.0" width="171.5" height="18" rx="4" fill="#a78bfa88" stroke="#a78bfa" stroke-width="1"/>
+  <rect x="240.9" y="128.0" width="171.5" height="18" rx="4" fill="#a78bfa88" stroke="#a78bfa" stroke-width="1"><title>Dashboard [wk4-wk8]</title></rect>
   <text x="130.0" y="175.0" text-anchor="end" font-size="11" fill="#2e1065" font-family="system-ui,sans-serif">Mobile app</text>
-  <rect x="309.5" y="162.0" width="240.2" height="18" rx="4" fill="#a78bfa88" stroke="#a78bfa" stroke-width="1"/>
+  <rect x="309.5" y="162.0" width="240.2" height="18" rx="4" fill="#a78bfa88" stroke="#a78bfa" stroke-width="1"><title>Mobile app [wk6-wk12]</title></rect>
   <rect x="0" y="188.0" width="600" height="34" fill="#ffffff" opacity="0.5"/>
   <text x="130.0" y="209.0" text-anchor="end" font-size="11" fill="#2e1065" font-family="system-ui,sans-serif">Launch</text>
-  <rect x="515.4" y="196.0" width="68.6" height="18" rx="4" fill="#a78bfa88" stroke="#a78bfa" stroke-width="1"/>
+  <rect x="515.4" y="196.0" width="68.6" height="18" rx="4" fill="#a78bfa88" stroke="#a78bfa" stroke-width="1"><title>Launch [wk12-wk13]</title></rect>
 </svg>

@@ -21,10 +21,66 @@ export interface MdArtSpec {
   edges?: Array<{from: string, to: string}>
   columns?: string[]      // explicit column headers for grid renderers (matrix-nxm, heatmap)
   colors?: Record<string, string | string[]>  // per-fence color overrides
+
+  // ── Plot family (line-chart, scatter, area-chart, bar-chart) ──────────────
+  // x-axis tick labels: `x: Q1, Q2, Q3, Q4` (categorical); ignored when
+  // any series uses `(x,y)` numeric pair syntax — that switches the axis to
+  // continuous numeric mode with auto-computed ticks.
+  xAxis?: string[]
+  xLabel?: string         // x-axis title (e.g. "USD (M)")
+  yLabel?: string         // y-axis title
+  // Per-chart options.
+  smooth?: boolean        // line/area: Catmull-Rom curves through points
+  points?: boolean        // line/area: force markers on / off (else auto)
+  lineWidth?: number      // default stroke-width for line/area series
+  stack?: boolean         // bar-chart: stack series instead of grouping
+  // Shaded bands and reference lines, multi-line keys (each occurrence pushes).
+  shadeY?: Array<{ a: string; b: string; label: string }>
+  shadeX?: Array<{ a: string; b: string; label: string }>
+  refY?:   Array<{ at: string; label: string }>
+  refX?:   Array<{ at: string; label: string }>
+
   raw: string
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+// ── Plot helpers ─────────────────────────────────────────────────────────────
+
+const TRUTHY = new Set(['true', 'yes', '1', 'on'])
+const FALSY  = new Set(['false', 'no', '0', 'off', 'none', 'hidden'])
+function asBool(v: string): boolean | null {
+  const s = v.toLowerCase().trim()
+  if (TRUTHY.has(s)) return true
+  if (FALSY.has(s))  return false
+  return null
+}
+
+/** Split "100..300 [warning]" / "Mar..Apr [campaign]" into a/b range + optional label.
+ *  Accepts `..`, `—`, or whitespace-padded `-` as separator. */
+function parseRangeWithLabel(val: string): { a: string; b: string; label: string } | null {
+  const m = val.match(/^([^[]+?)\s*(?:\[(.+?)\])?\s*$/)
+  if (!m) return null
+  const range = m[1].trim()
+  const label = (m[2] || '').trim()
+  let a: string, b: string
+  if (range.includes('..'))      [a, b] = range.split('..').map(s => s.trim())
+  else if (range.includes('—'))  [a, b] = range.split('—').map(s => s.trim())
+  else {
+    // Hyphen split — require padding so "−5" / "100-200" with no spaces works.
+    const dash = range.match(/^\s*(\S.*?)\s+-\s+(\S.*?)\s*$/)
+    if (dash) { a = dash[1]; b = dash[2] }
+    else      { a = range; b = range }
+  }
+  return { a, b, label }
+}
+
+/** Split "250 [SLA]" into at + optional label. */
+function parseRefWithLabel(val: string): { at: string; label: string } | null {
+  const m = val.match(/^([^[]+?)\s*(?:\[(.+?)\])?\s*$/)
+  if (!m) return null
+  return { at: m[1].trim(), label: (m[2] || '').trim() }
+}
 
 function parseAttrs(segment: string): { cleanLabel: string; attrs: string[] } {
   // Repeatedly strip trailing [...] groups so multiple separate bracket
@@ -234,6 +290,35 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
       } else if (key === 'columns') {
         // columns: Frontend, Backend, DevOps  (comma-separated column headers)
         spec.columns = val.split(',').map(c => c.trim()).filter(Boolean)
+      }
+      // ── Plot family front-matter ───────────────────────────────────────
+      else if (key === 'x' || key === 'x-axis') {
+        spec.xAxis = val.split(',').map(s => s.trim()).filter(Boolean)
+      } else if (key === 'x-label' || key === 'xlabel') {
+        spec.xLabel = val
+      } else if (key === 'y-label' || key === 'ylabel') {
+        spec.yLabel = val
+      } else if (key === 'smooth') {
+        const b = asBool(val); if (b !== null) spec.smooth = b
+      } else if (key === 'points' || key === 'markers') {
+        const b = asBool(val); if (b !== null) spec.points = b
+      } else if (key === 'line-width' || key === 'linewidth' || key === 'lw' || key === 'stroke-width') {
+        const n = parseFloat(val)
+        if (!isNaN(n)) spec.lineWidth = n
+      } else if (key === 'stack' || key === 'stacked') {
+        const b = asBool(val); if (b !== null) spec.stack = b
+      } else if (key === 'shade-y' || key === 'shade-x') {
+        const r = parseRangeWithLabel(val)
+        if (r) {
+          if (key === 'shade-y') (spec.shadeY ??= []).push(r)
+          else                   (spec.shadeX ??= []).push(r)
+        }
+      } else if (key === 'ref-y' || key === 'ref-x') {
+        const r = parseRefWithLabel(val)
+        if (r) {
+          if (key === 'ref-y') (spec.refY ??= []).push(r)
+          else                 (spec.refX ??= []).push(r)
+        }
       } else {
         // Not a recognized front-matter key — treat as body start
         bodyStart = i

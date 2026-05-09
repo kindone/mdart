@@ -1,29 +1,29 @@
 <svg viewBox="0 0 466 264" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#f5f3ff;border-radius:8px">
   
-  <rect x="174" y="36.0" width="118" height="30" rx="5" fill="#8b5cf62e" stroke="#8b5cf688" stroke-width="1.5"/>
-  <text x="233.0" y="56.0" text-anchor="middle" font-size="10.5" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600">Frontend</text>
+  <rect x="174" y="36.0" width="118" height="30" rx="5" fill="#8b5cf62e" stroke="#8b5cf688" stroke-width="1.5"><title>Frontend</title></rect>
+  <text x="233.0" y="56.0" text-anchor="middle" font-size="10.5" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600"><title>Frontend</title>Frontend</text>
   <path d="M292,51.0 H312 V31.0 H332" fill="none" stroke="#ddd6fe" stroke-width="1.2"/>
-  <rect x="332" y="16.0" width="118" height="30" rx="4" fill="#a78bfa22" stroke="#a78bfa" stroke-width="1"/>
-  <text x="391.0" y="36.0" text-anchor="middle" font-size="10" fill="#a78bfa" font-family="system-ui,sans-serif" text-decoration="line-through">Components</text>
+  <rect x="332" y="16.0" width="118" height="30" rx="4" fill="#a78bfa22" stroke="#a78bfa" stroke-width="1"><title>Components [done]</title></rect>
+  <text x="391.0" y="36.0" text-anchor="middle" font-size="10" fill="#a78bfa" font-family="system-ui,sans-serif" text-decoration="line-through"><title>Components [done]</title>Components</text>
   <path d="M292,51.0 H312 V71.0 H332" fill="none" stroke="#ddd6fe" stroke-width="1.2"/>
-  <rect x="332" y="56.0" width="118" height="30" rx="4" fill="#ffffff" stroke="#ddd6fe" stroke-width="1"/>
-  <text x="391.0" y="76.0" text-anchor="middle" font-size="10" fill="#7c3aed" font-family="system-ui,sans-serif" >State Mgmt</text>
-  <rect x="174" y="116.0" width="118" height="30" rx="5" fill="#8b5cf62e" stroke="#8b5cf688" stroke-width="1.5"/>
-  <text x="233.0" y="136.0" text-anchor="middle" font-size="10.5" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600">Backend</text>
+  <rect x="332" y="56.0" width="118" height="30" rx="4" fill="#ffffff" stroke="#ddd6fe" stroke-width="1"><title>State Mgmt</title></rect>
+  <text x="391.0" y="76.0" text-anchor="middle" font-size="10" fill="#7c3aed" font-family="system-ui,sans-serif" ><title>State Mgmt</title>State Mgmt</text>
+  <rect x="174" y="116.0" width="118" height="30" rx="5" fill="#8b5cf62e" stroke="#8b5cf688" stroke-width="1.5"><title>Backend</title></rect>
+  <text x="233.0" y="136.0" text-anchor="middle" font-size="10.5" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600"><title>Backend</title>Backend</text>
   <path d="M292,131.0 H312 V111.0 H332" fill="none" stroke="#ddd6fe" stroke-width="1.2"/>
-  <rect x="332" y="96.0" width="118" height="30" rx="4" fill="#a78bfa22" stroke="#a78bfa" stroke-width="1"/>
-  <text x="391.0" y="116.0" text-anchor="middle" font-size="10" fill="#a78bfa" font-family="system-ui,sans-serif" text-decoration="line-through">API Design</text>
+  <rect x="332" y="96.0" width="118" height="30" rx="4" fill="#a78bfa22" stroke="#a78bfa" stroke-width="1"><title>API Design [done]</title></rect>
+  <text x="391.0" y="116.0" text-anchor="middle" font-size="10" fill="#a78bfa" font-family="system-ui,sans-serif" text-decoration="line-through"><title>API Design [done]</title>API Design</text>
   <path d="M292,131.0 H312 V151.0 H332" fill="none" stroke="#ddd6fe" stroke-width="1.2"/>
-  <rect x="332" y="136.0" width="118" height="30" rx="4" fill="#ffffff" stroke="#a78bfa88" stroke-width="1.5"/>
-  <text x="391.0" y="156.0" text-anchor="middle" font-size="10" fill="#2e1065" font-family="system-ui,sans-serif" >Auth</text>
-  <rect x="174" y="196.0" width="118" height="30" rx="5" fill="#8b5cf62e" stroke="#8b5cf688" stroke-width="1.5"/>
-  <text x="233.0" y="216.0" text-anchor="middle" font-size="10.5" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600">QA</text>
+  <rect x="332" y="136.0" width="118" height="30" rx="4" fill="#ffffff" stroke="#a78bfa88" stroke-width="1.5"><title>Auth [active]</title></rect>
+  <text x="391.0" y="156.0" text-anchor="middle" font-size="10" fill="#2e1065" font-family="system-ui,sans-serif" ><title>Auth [active]</title>Auth</text>
+  <rect x="174" y="196.0" width="118" height="30" rx="5" fill="#8b5cf62e" stroke="#8b5cf688" stroke-width="1.5"><title>QA</title></rect>
+  <text x="233.0" y="216.0" text-anchor="middle" font-size="10.5" fill="#2e1065" font-family="system-ui,sans-serif" font-weight="600"><title>QA</title>QA</text>
   <path d="M292,211.0 H312 V191.0 H332" fill="none" stroke="#ddd6fe" stroke-width="1.2"/>
-  <rect x="332" y="176.0" width="118" height="30" rx="4" fill="#ffffff" stroke="#ddd6fe" stroke-width="1"/>
-  <text x="391.0" y="196.0" text-anchor="middle" font-size="10" fill="#7c3aed" font-family="system-ui,sans-serif" >Unit Tests</text>
+  <rect x="332" y="176.0" width="118" height="30" rx="4" fill="#ffffff" stroke="#ddd6fe" stroke-width="1"><title>Unit Tests</title></rect>
+  <text x="391.0" y="196.0" text-anchor="middle" font-size="10" fill="#7c3aed" font-family="system-ui,sans-serif" ><title>Unit Tests</title>Unit Tests</text>
   <path d="M292,211.0 H312 V231.0 H332" fill="none" stroke="#ddd6fe" stroke-width="1.2"/>
-  <rect x="332" y="216.0" width="118" height="30" rx="4" fill="#ffffff" stroke="#ddd6fe" stroke-width="1"/>
-  <text x="391.0" y="236.0" text-anchor="middle" font-size="10" fill="#7c3aed" font-family="system-ui,sans-serif" >E2E</text>
+  <rect x="332" y="216.0" width="118" height="30" rx="4" fill="#ffffff" stroke="#ddd6fe" stroke-width="1"><title>E2E</title></rect>
+  <text x="391.0" y="236.0" text-anchor="middle" font-size="10" fill="#7c3aed" font-family="system-ui,sans-serif" ><title>E2E</title>E2E</text>
   <line x1="154" y1="51.0" x2="154" y2="211.0" stroke="#ddd6fe" stroke-width="1.5"/>
   <line x1="154" y1="51.0" x2="174" y2="51.0" stroke="#ddd6fe" stroke-width="1.2"/>
   <line x1="154" y1="131.0" x2="174" y2="131.0" stroke="#ddd6fe" stroke-width="1.2"/>

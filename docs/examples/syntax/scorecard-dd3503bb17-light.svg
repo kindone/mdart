@@ -1,19 +1,19 @@
-<svg viewBox="0 0 600 218" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#f0fdf4;border-radius:8px">
+<svg viewBox="0 0 600 192" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#f0fdf4;border-radius:8px">
   <text x="300" y="20" text-anchor="middle" font-size="13" fill="#059669" font-family="system-ui,sans-serif" font-weight="600">Monthly Metrics</text>
-  <rect x="12.0" y="42.0" width="282.0" height="76" rx="8" fill="#ffffff" stroke="#bbf7d0" stroke-width="1"/>
-  <text x="153.0" y="74.0" text-anchor="middle" font-size="22" fill="#10b981" font-family="system-ui,sans-serif" font-weight="700">$128K</text>
-  <text x="153.0" y="92.0" text-anchor="middle" font-size="11" fill="#059669" font-family="system-ui,sans-serif">MRR</text>
-  <text x="153.0" y="107.0" text-anchor="middle" font-size="10" fill="#10b981" font-family="system-ui,sans-serif">+12%</text>
-  <rect x="306.0" y="42.0" width="282.0" height="76" rx="8" fill="#ffffff" stroke="#bbf7d0" stroke-width="1"/>
-  <text x="447.0" y="74.0" text-anchor="middle" font-size="22" fill="#10b981" font-family="system-ui,sans-serif" font-weight="700">2.1%</text>
-  <text x="447.0" y="92.0" text-anchor="middle" font-size="11" fill="#059669" font-family="system-ui,sans-serif">Churn</text>
-  <text x="447.0" y="107.0" text-anchor="middle" font-size="10" fill="#dc2626" font-family="system-ui,sans-serif">-0.3%</text>
-  <rect x="12.0" y="130.0" width="282.0" height="76" rx="8" fill="#ffffff" stroke="#bbf7d0" stroke-width="1"/>
-  <text x="153.0" y="162.0" text-anchor="middle" font-size="22" fill="#10b981" font-family="system-ui,sans-serif" font-weight="700">48,200</text>
-  <text x="153.0" y="180.0" text-anchor="middle" font-size="11" fill="#059669" font-family="system-ui,sans-serif">MAU</text>
-  <text x="153.0" y="195.0" text-anchor="middle" font-size="10" fill="#10b981" font-family="system-ui,sans-serif">+8%</text>
-  <rect x="306.0" y="130.0" width="282.0" height="76" rx="8" fill="#ffffff" stroke="#bbf7d0" stroke-width="1"/>
-  <text x="447.0" y="162.0" text-anchor="middle" font-size="22" fill="#10b981" font-family="system-ui,sans-serif" font-weight="700">72</text>
-  <text x="447.0" y="180.0" text-anchor="middle" font-size="11" fill="#059669" font-family="system-ui,sans-serif">NPS</text>
-  <text x="447.0" y="195.0" text-anchor="middle" font-size="10" fill="#10b981" font-family="system-ui,sans-serif">+5</text>
+  <rect x="12.0" y="42.0" width="282.0" height="63" rx="8" fill="#ffffff" stroke="#bbf7d0" stroke-width="1"><title>MRR: $128K [+12%]</title></rect>
+  <text x="153.0" y="72.0" text-anchor="middle" font-size="22" fill="#10b981" font-family="system-ui,sans-serif" font-weight="700">$128K</text>
+  <text x="153.0" y="86.0" text-anchor="middle" font-size="11" fill="#059669" font-family="system-ui,sans-serif"><tspan x="153.0" dy="0">MRR</tspan></text>
+  <text x="153.0" y="97.0" text-anchor="middle" font-size="10" fill="#10b981" font-family="system-ui,sans-serif">+12%</text>
+  <rect x="306.0" y="42.0" width="282.0" height="63" rx="8" fill="#ffffff" stroke="#bbf7d0" stroke-width="1"><title>Churn: 2.1% [-0.3%]</title></rect>
+  <text x="447.0" y="72.0" text-anchor="middle" font-size="22" fill="#10b981" font-family="system-ui,sans-serif" font-weight="700">2.1%</text>
+  <text x="447.0" y="86.0" text-anchor="middle" font-size="11" fill="#059669" font-family="system-ui,sans-serif"><tspan x="447.0" dy="0">Churn</tspan></text>
+  <text x="447.0" y="97.0" text-anchor="middle" font-size="10" fill="#dc2626" font-family="system-ui,sans-serif">-0.3%</text>
+  <rect x="12.0" y="117.0" width="282.0" height="63" rx="8" fill="#ffffff" stroke="#bbf7d0" stroke-width="1"><title>MAU: 48,200 [+8%]</title></rect>
+  <text x="153.0" y="147.0" text-anchor="middle" font-size="22" fill="#10b981" font-family="system-ui,sans-serif" font-weight="700">48,200</text>
+  <text x="153.0" y="161.0" text-anchor="middle" font-size="11" fill="#059669" font-family="system-ui,sans-serif"><tspan x="153.0" dy="0">MAU</tspan></text>
+  <text x="153.0" y="172.0" text-anchor="middle" font-size="10" fill="#10b981" font-family="system-ui,sans-serif">+8%</text>
+  <rect x="306.0" y="117.0" width="282.0" height="63" rx="8" fill="#ffffff" stroke="#bbf7d0" stroke-width="1"><title>NPS: 72 [+5]</title></rect>
+  <text x="447.0" y="147.0" text-anchor="middle" font-size="22" fill="#10b981" font-family="system-ui,sans-serif" font-weight="700">72</text>
+  <text x="447.0" y="161.0" text-anchor="middle" font-size="11" fill="#059669" font-family="system-ui,sans-serif"><tspan x="447.0" dy="0">NPS</tspan></text>
+  <text x="447.0" y="172.0" text-anchor="middle" font-size="10" fill="#10b981" font-family="system-ui,sans-serif">+5</text>
 </svg>

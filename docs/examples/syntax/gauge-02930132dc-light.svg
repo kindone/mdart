@@ -4,15 +4,15 @@
   <path d="M23.400000000000006,128.208 A66.6,66.6 0 0,1 156.5,124.0" fill="none" stroke="#10b981" stroke-width="11.322" stroke-linecap="round"/>
   <circle cx="156.5" cy="124.0" r="5.7" fill="#10b981"/>
   <text x="90" y="122.2" text-anchor="middle" font-size="27" fill="#052e16" font-family="system-ui,sans-serif" font-weight="700">98%</text>
-  <text x="90" y="144.2" text-anchor="middle" font-size="10" fill="#059669" font-family="system-ui,sans-serif">Uptime</text>
+  <text x="90" y="144.2" text-anchor="middle" font-size="10" fill="#059669" font-family="system-ui,sans-serif"><title>Uptime: 98</title><title>Uptime: 98</title>Uptime</text>
   <path d="M203.4,128.208 A66.6,66.6 0 0,1 336.6,128.208" fill="none" stroke="#d1fae544" stroke-width="11.322" stroke-linecap="round"/>
   <path d="M203.4,128.208 A66.6,66.6 0 0,1 298.4,67.9" fill="none" stroke="#d97706" stroke-width="11.322" stroke-linecap="round"/>
   <circle cx="298.4" cy="67.9" r="5.7" fill="#d97706"/>
   <text x="270" y="122.2" text-anchor="middle" font-size="27" fill="#052e16" font-family="system-ui,sans-serif" font-weight="700">64%</text>
-  <text x="270" y="144.2" text-anchor="middle" font-size="10" fill="#059669" font-family="system-ui,sans-serif">Coverage</text>
+  <text x="270" y="144.2" text-anchor="middle" font-size="10" fill="#059669" font-family="system-ui,sans-serif"><title>Coverage: 64</title><title>Coverage: 64</title>Coverage</text>
   <path d="M383.4,128.208 A66.6,66.6 0 0,1 516.6,128.208" fill="none" stroke="#d1fae544" stroke-width="11.322" stroke-linecap="round"/>
   <path d="M383.4,128.208 A66.6,66.6 0 0,1 398.7,85.8" fill="none" stroke="#dc2626" stroke-width="11.322" stroke-linecap="round"/>
   <circle cx="398.7" cy="85.8" r="5.7" fill="#dc2626"/>
   <text x="450" y="122.2" text-anchor="middle" font-size="27" fill="#052e16" font-family="system-ui,sans-serif" font-weight="700">22%</text>
-  <text x="450" y="144.2" text-anchor="middle" font-size="10" fill="#059669" font-family="system-ui,sans-serif">Error Rate</text>
+  <text x="450" y="144.2" text-anchor="middle" font-size="10" fill="#059669" font-family="system-ui,sans-serif"><title>Error Rate: 22</title><title>Error Rate: 22</title>Error Rate</text>
 </svg>

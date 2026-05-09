@@ -672,9 +672,16 @@ pre.int-code {
         <option value="layouts/technical/state-machine.ts">state-machine</option>
         <option value="layouts/technical/class.ts">class</option>
       </optgroup>
+      <optgroup label="— plot —">
+        <option value="layouts/plot/line-chart.ts">line-chart</option>
+        <option value="layouts/plot/scatter.ts">scatter</option>
+        <option value="layouts/plot/area-chart.ts">area-chart</option>
+        <option value="layouts/plot/bar-chart.ts">bar-chart</option>
+      </optgroup>
       <optgroup label="— shared —">
         <option value="layouts/shared.ts">shared</option>
         <option value="layouts/hierarchy/shared.ts">hierarchy/shared</option>
+        <option value="layouts/plot/shared.ts">plot/shared</option>
       </optgroup>
       <option value="theme.ts">theme.ts</option>
     </select>
@@ -860,6 +867,7 @@ const families = {
   statistical: ['progress-list','bullet-chart','scorecard','treemap','sankey','waffle','gauge','radar','heatmap'],
   planning: ['kanban','gantt','sprint-board','timeline','milestone','wbs'],
   technical: ['layered-arch','entity','network','pipeline','sequence','state-machine','class'],
+  plot: ['line-chart','scatter','area-chart','bar-chart'],
 }
 for (const [fam, types] of Object.entries(families)) {
   for (const t of types) TYPE_TO_FILE[t] = `layouts/${fam}/${t}.ts`
@@ -1122,7 +1130,7 @@ function populateExampleSelect() {
   while (sel.options.length > 1) sel.remove(1)
 
   if (mode === 'renderer') {
-    // 97 types grouped by family; `— family —` decorates the optgroup label
+    // 101 types grouped by family; `— family —` decorates the optgroup label
     // so it reads as a header, matching the toolbar's left file-select.
     for (const [fam, types] of Object.entries(families)) {
       const grp = document.createElement('optgroup')
@@ -1217,7 +1225,7 @@ function updateSourceDirty() {
   document.getElementById('btn-source-reset').classList.toggle('hidden', !dirty)
 }
 
-// Populate type example select in source pane — 97 types grouped by family.
+// Populate type example select in source pane — 101 types grouped by family.
 // Match the left file-select's `— family —` label format so optgroup headers
 // read as headers (and don't blend into options like `process`, `cycle`).
 ;(function() {
@@ -1236,7 +1244,7 @@ function updateSourceDirty() {
 
 // ── Renderer file select ──────────────────────────────────────────────────────
 
-// Linear prev/next navigation through the 97 type files (skips shared/theme).
+// Linear prev/next navigation through the 101 type files (skips shared/theme).
 function getOrderedTypeFiles() {
   const opts = document.getElementById('file-select').options
   return Array.from(opts)

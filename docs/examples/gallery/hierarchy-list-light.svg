@@ -1,35 +1,35 @@
-<svg viewBox="0 0 560 204" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#fffbeb;border-radius:8px">
-  <circle cx="19.0" cy="19.5" r="5" fill="#f59e0b"/>
-  <text x="28.0" y="23.5" font-size="12" fill="#451a03" font-family="system-ui,sans-serif" font-weight="700">Platform</text>
-  <line x1="28" y1="31.0" x2="28" y2="42.5" stroke="#fde68a35" stroke-width="1"/>
-  <line x1="28" y1="42.5" x2="28" y2="54.0" stroke="#fde68a35" stroke-width="1"/>
-  <line x1="28" y1="42.5" x2="30.0" y2="42.5" stroke="#fde68a35" stroke-width="1"/>
-  <circle cx="35.5" cy="42.5" r="3.5" fill="#d97706"/>
-  <text x="43.0" y="46.5" font-size="11" fill="#451a03" font-family="system-ui,sans-serif" font-weight="400">Frontend</text>
-  <line x1="46" y1="54.0" x2="46" y2="65.5" stroke="#fde68a35" stroke-width="1"/>
-  <line x1="46" y1="65.5" x2="46" y2="77.0" stroke="#fde68a35" stroke-width="1"/>
-  <line x1="46" y1="65.5" x2="48.0" y2="65.5" stroke="#fde68a35" stroke-width="1"/>
-  <circle cx="52.5" cy="65.5" r="2.5" fill="#b45309"/>
-  <text x="59.0" y="69.5" font-size="10" fill="#b45309" font-family="system-ui,sans-serif" font-weight="400">React App</text>
-  <line x1="46" y1="77.0" x2="46" y2="88.5" stroke="#fde68a35" stroke-width="1"/>
-  <line x1="46" y1="88.5" x2="48.0" y2="88.5" stroke="#fde68a35" stroke-width="1"/>
-  <circle cx="52.5" cy="88.5" r="2.5" fill="#b45309"/>
-  <text x="59.0" y="92.5" font-size="10" fill="#b45309" font-family="system-ui,sans-serif" font-weight="400">Design System</text>
-  <line x1="28" y1="100.0" x2="28" y2="111.5" stroke="#fde68a35" stroke-width="1"/>
-  <line x1="28" y1="111.5" x2="28" y2="123.0" stroke="#fde68a35" stroke-width="1"/>
-  <line x1="28" y1="111.5" x2="30.0" y2="111.5" stroke="#fde68a35" stroke-width="1"/>
-  <circle cx="35.5" cy="111.5" r="3.5" fill="#d97706"/>
-  <text x="43.0" y="115.5" font-size="11" fill="#451a03" font-family="system-ui,sans-serif" font-weight="400">Backend</text>
-  <line x1="46" y1="123.0" x2="46" y2="134.5" stroke="#fde68a35" stroke-width="1"/>
-  <line x1="46" y1="134.5" x2="48.0" y2="134.5" stroke="#fde68a35" stroke-width="1"/>
-  <circle cx="52.5" cy="134.5" r="2.5" fill="#b45309"/>
-  <text x="59.0" y="138.5" font-size="10" fill="#b45309" font-family="system-ui,sans-serif" font-weight="400">API Server</text>
-  <line x1="28" y1="146.0" x2="28" y2="157.5" stroke="#fde68a35" stroke-width="1"/>
-  <line x1="28" y1="157.5" x2="30.0" y2="157.5" stroke="#fde68a35" stroke-width="1"/>
-  <circle cx="35.5" cy="157.5" r="3.5" fill="#d97706"/>
-  <text x="43.0" y="161.5" font-size="11" fill="#451a03" font-family="system-ui,sans-serif" font-weight="400">Infrastructure</text>
-  <line x1="46" y1="169.0" x2="46" y2="180.5" stroke="#fde68a35" stroke-width="1"/>
-  <line x1="46" y1="180.5" x2="48.0" y2="180.5" stroke="#fde68a35" stroke-width="1"/>
-  <circle cx="52.5" cy="180.5" r="2.5" fill="#b45309"/>
-  <text x="59.0" y="184.5" font-size="10" fill="#b45309" font-family="system-ui,sans-serif" font-weight="400">nginx</text>
+<svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#fffbeb;border-radius:8px">
+  <circle cx="19.0" cy="21.0" r="5" fill="#f59e0b"><title>Platform</title></circle>
+  <text x="28.0" y="25.0" font-size="12" fill="#451a03" font-family="system-ui,sans-serif" font-weight="700">Platform</text>
+  <line x1="28" y1="34.0" x2="28" y2="45.0" stroke="#fde68a35" stroke-width="1"/>
+  <line x1="28" y1="45.0" x2="28" y2="56.0" stroke="#fde68a35" stroke-width="1"/>
+  <line x1="28" y1="45.0" x2="30.0" y2="45.0" stroke="#fde68a35" stroke-width="1"/>
+  <circle cx="35.5" cy="45.0" r="3.5" fill="#d97706"><title>Frontend</title></circle>
+  <text x="43.0" y="49.0" font-size="11" fill="#451a03" font-family="system-ui,sans-serif" font-weight="400">Frontend</text>
+  <line x1="46" y1="56.0" x2="46" y2="67.0" stroke="#fde68a35" stroke-width="1"/>
+  <line x1="46" y1="67.0" x2="46" y2="78.0" stroke="#fde68a35" stroke-width="1"/>
+  <line x1="46" y1="67.0" x2="48.0" y2="67.0" stroke="#fde68a35" stroke-width="1"/>
+  <circle cx="52.5" cy="67.0" r="2.5" fill="#b45309"><title>React App</title></circle>
+  <text x="59.0" y="71.0" font-size="10" fill="#b45309" font-family="system-ui,sans-serif" font-weight="400">React App</text>
+  <line x1="46" y1="78.0" x2="46" y2="89.0" stroke="#fde68a35" stroke-width="1"/>
+  <line x1="46" y1="89.0" x2="48.0" y2="89.0" stroke="#fde68a35" stroke-width="1"/>
+  <circle cx="52.5" cy="89.0" r="2.5" fill="#b45309"><title>Design System</title></circle>
+  <text x="59.0" y="93.0" font-size="10" fill="#b45309" font-family="system-ui,sans-serif" font-weight="400">Design System</text>
+  <line x1="28" y1="100.0" x2="28" y2="111.0" stroke="#fde68a35" stroke-width="1"/>
+  <line x1="28" y1="111.0" x2="28" y2="122.0" stroke="#fde68a35" stroke-width="1"/>
+  <line x1="28" y1="111.0" x2="30.0" y2="111.0" stroke="#fde68a35" stroke-width="1"/>
+  <circle cx="35.5" cy="111.0" r="3.5" fill="#d97706"><title>Backend</title></circle>
+  <text x="43.0" y="115.0" font-size="11" fill="#451a03" font-family="system-ui,sans-serif" font-weight="400">Backend</text>
+  <line x1="46" y1="122.0" x2="46" y2="133.0" stroke="#fde68a35" stroke-width="1"/>
+  <line x1="46" y1="133.0" x2="48.0" y2="133.0" stroke="#fde68a35" stroke-width="1"/>
+  <circle cx="52.5" cy="133.0" r="2.5" fill="#b45309"><title>API Server</title></circle>
+  <text x="59.0" y="137.0" font-size="10" fill="#b45309" font-family="system-ui,sans-serif" font-weight="400">API Server</text>
+  <line x1="28" y1="144.0" x2="28" y2="155.0" stroke="#fde68a35" stroke-width="1"/>
+  <line x1="28" y1="155.0" x2="30.0" y2="155.0" stroke="#fde68a35" stroke-width="1"/>
+  <circle cx="35.5" cy="155.0" r="3.5" fill="#d97706"><title>Infrastructure</title></circle>
+  <text x="43.0" y="159.0" font-size="11" fill="#451a03" font-family="system-ui,sans-serif" font-weight="400">Infrastructure</text>
+  <line x1="46" y1="166.0" x2="46" y2="177.0" stroke="#fde68a35" stroke-width="1"/>
+  <line x1="46" y1="177.0" x2="48.0" y2="177.0" stroke="#fde68a35" stroke-width="1"/>
+  <circle cx="52.5" cy="177.0" r="2.5" fill="#b45309"><title>nginx</title></circle>
+  <text x="59.0" y="181.0" font-size="10" fill="#b45309" font-family="system-ui,sans-serif" font-weight="400">nginx</text>
 </svg>

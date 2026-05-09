@@ -8,22 +8,22 @@
   <path d="M335.0,40.0 C335.0,68.0 500.6,68.0 500.6,96.0" fill="none" stroke="#fde68acc" stroke-width="1.5"/>
   <path d="M500.6,126.0 C500.6,154.0 445.4,154.0 445.4,182.0" fill="none" stroke="#fde68acc" stroke-width="1.5"/>
   <path d="M500.6,126.0 C500.6,154.0 555.8,154.0 555.8,182.0" fill="none" stroke="#fde68acc" stroke-width="1.5"/>
-  <rect x="280.0" y="10.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="335.0" y="29.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">CEO</text>
-  <rect x="114.4" y="96.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="169.4" y="115.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">CTO</text>
-  <rect x="59.2" y="182.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="114.2" y="201.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Engineering Lead</title>Engineering Le…</text>
-  <rect x="169.6" y="182.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="224.6" y="201.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Architect</text>
-  <rect x="280.0" y="96.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="335.0" y="115.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">CFO</text>
-  <rect x="280.0" y="182.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="335.0" y="201.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Controller</text>
-  <rect x="445.6" y="96.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="500.6" y="115.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">CMO</text>
-  <rect x="390.4" y="182.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="445.4" y="201.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Brand</text>
-  <rect x="500.8" y="182.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"/>
-  <text x="555.8" y="201.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif">Growth</text>
+  <rect x="280.0" y="10.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>CEO</title></rect>
+  <text x="335.0" y="29.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>CEO</title><title>CEO</title>CEO</text>
+  <rect x="114.4" y="96.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>CTO</title></rect>
+  <text x="169.4" y="115.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>CTO</title><title>CTO</title>CTO</text>
+  <rect x="59.2" y="182.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Engineering Lead</title></rect>
+  <text x="114.2" y="201.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Engineering Lead</title><title>Engineering Lead</title>Engineering Le…</text>
+  <rect x="169.6" y="182.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Architect</title></rect>
+  <text x="224.6" y="201.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Architect</title><title>Architect</title>Architect</text>
+  <rect x="280.0" y="96.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>CFO</title></rect>
+  <text x="335.0" y="115.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>CFO</title><title>CFO</title>CFO</text>
+  <rect x="280.0" y="182.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Controller</title></rect>
+  <text x="335.0" y="201.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Controller</title><title>Controller</title>Controller</text>
+  <rect x="445.6" y="96.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>CMO</title></rect>
+  <text x="500.6" y="115.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>CMO</title><title>CMO</title>CMO</text>
+  <rect x="390.4" y="182.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Brand</title></rect>
+  <text x="445.4" y="201.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Brand</title><title>Brand</title>Brand</text>
+  <rect x="500.8" y="182.0" width="110" height="30" rx="6" fill="#1a1408" stroke="#fbbf2488" stroke-width="1.2"><title>Growth</title></rect>
+  <text x="555.8" y="201.0" text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="system-ui,sans-serif"><title>Growth</title><title>Growth</title>Growth</text>
 </svg>

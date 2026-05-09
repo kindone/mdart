@@ -1,0 +1,11 @@
+type: line-chart
+smooth: true
+title: Quarterly Revenue
+x: Q1, Q2, Q3, Q4, Q5, Q6
+y-label: USD (millions)
+shade-y: 25..40 [target band]
+ref-y: 30 [forecast]
+
+- Revenue [bold]: 12, 18, 24, 32, 38, 44
+- Cost [dashed]: 9, 11, 14, 17, 21, 26
+- Last year [dotted, thin]: 10, 14, 19, 25, 31, 36

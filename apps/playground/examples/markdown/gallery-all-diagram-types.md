@@ -1,6 +1,6 @@
 # MdArt Diagram Gallery
 
-Every layout type (97 total across 10 families) with its mdart source.
+Every layout type (101 total across 11 families) with its mdart source.
 
 ## Process
 
@@ -1281,4 +1281,55 @@ title: Domain Model
 - Cat [interface]
   - + purr()
   - + scratch()
+```
+
+## Plot
+
+### `line-chart`
+
+```mdart
+type: line-chart
+smooth: true
+title: Quarterly Revenue
+x: Q1, Q2, Q3, Q4
+y-label: USD (M)
+shade-y: 25..35 [target]
+
+- Revenue [bold]: 12, 18, 24, 32
+- Cost [dashed]: 9, 11, 14, 17
+```
+
+### `scatter`
+
+```mdart
+type: scatter
+title: Throughput vs cycle time
+x-label: Hours per task
+y-label: Items / hr
+
+- Team A: (1.2, 22), (2.5, 18), (1.8, 26), (3.2, 14), (1.0, 28), (2.1, 21)
+- Team B: (1.5, 18), (2.8, 12), (2.2, 16), (3.5, 9), (1.3, 20), (2.0, 15)
+```
+
+### `area-chart`
+
+```mdart
+type: area-chart
+smooth: true
+title: Active users by tier
+x: W1, W2, W3, W4, W5, W6, W7, W8
+
+- Free: 80, 95, 110, 125, 140, 155, 170, 180
+- Paid: 20, 28, 35, 48, 62, 78, 95, 115
+```
+
+### `bar-chart`
+
+```mdart
+type: bar-chart
+title: Revenue by quarter
+x: Q1, Q2, Q3, Q4
+
+- 2024: 80, 95, 110, 130
+- 2025: 95, 115, 140, 165
 ```

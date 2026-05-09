@@ -1,6 +1,6 @@
 ---
 name: mdart
-description: Generate MdArt diagrams from structured intent — pick the right diagram type from 101+ layouts (process, list, hierarchy, comparison, cycle, matrix, pyramid, relationship, statistical, planning, technical) and produce valid syntax. Use when the user asks for a diagram, chart, flowchart, mind map, comparison, org chart, timeline, kanban board, swot analysis, sequence diagram, state machine, gantt, funnel, sankey, treemap, or any visual representation of structured information. Also use when generating ```mdart fenced blocks. Prefer mermaid only for complex conditional flow charts.
+description: Generate MdArt diagrams from structured intent — pick the right diagram type from 105+ layouts (process, list, hierarchy, comparison, cycle, matrix, pyramid, relationship, statistical, planning, technical, plot) and produce valid syntax. Use when the user asks for a diagram, chart, flowchart, mind map, comparison, org chart, timeline, kanban board, swot analysis, sequence diagram, state machine, gantt, funnel, sankey, treemap, line chart, scatter plot, bar chart, area chart, or any visual representation of structured information. Also use when generating ```mdart fenced blocks. Prefer mermaid only for complex conditional flow charts.
 ---
 
 # MdArt diagram generation
@@ -31,7 +31,7 @@ For deep anti-pattern catalog: read `anti-patterns.md` in this skill directory b
 
 ## §1 — Family cheat sheet
 
-Ten families. **101 type names**, of which **97 are distinct renderers** — 4 are pure aliases kept for backward compatibility (see "Aliases" at the bottom of this section). **Pick the family first**; escalate from the default to a specialised type only when a trigger is met.
+Eleven families. **105 type names**, of which **101 are distinct renderers** — 4 are pure aliases kept for backward compatibility (see "Aliases" at the bottom of this section). **Pick the family first**; escalate from the default to a specialised type only when a trigger is met.
 
 | Family | Default | Escalate when … |
 |---|---|---|
@@ -45,6 +45,7 @@ Ten families. **101 type names**, of which **97 are distinct renderers** — 4 a
 | **Statistical** (data viz) | `progress-list` | composite KPI → `bullet-chart` · multi-metric → `scorecard` · area=quantity → `treemap` · flows with volumes → `sankey` · share of 100 → `waffle` · single dial → `gauge` · multi-axis profile → `radar` · 2-D matrix of values → `heatmap` |
 | **Planning** (project/time) | `gantt-lite` | full board → `kanban` · sprint → `sprint-board` · pure schedule → `gantt` · milestone list → `milestone` · work breakdown → `wbs` · chronological log → `timeline` |
 | **Technical** (system) | `network` | tiered system → `layered-arch` · DB schema → `entity` · message flow → `sequence` · state transitions → `state-machine` · OOP class → `class` · build/CI stages → `pipeline` |
+| **Plot** (x-y data viz) | `line-chart` | discrete points → `scatter` · filled below line → `area-chart` · grouped/stacked categories → `bar-chart` |
 
 ### Aliases
 
@@ -72,7 +73,8 @@ Apply rules **in order**. The first match wins.
 
 ### 1. Quantitative data attached?
 If the user supplies numbers paired with labels (counts, %, $, scores, durations):
-- Simple bars → `progress-list` or `bullet-chart`
+- Series of values along an x-axis (time, sample, category) → **plot family** — see rule 1a
+- Simple bars (one number per item, no x-axis) → `progress-list` or `bullet-chart`
 - Composite KPI with target line → `bullet-chart`
 - Many KPIs together → `scorecard`
 - Sizes form a treemap → `treemap`
@@ -83,6 +85,21 @@ If the user supplies numbers paired with labels (counts, %, $, scores, durations
 - Share of a whole, ≤100 cells → `waffle`
 
 **Do not** use `bullet-list` or `process` for quantitative data — the statistical family makes the numbers visible.
+
+### 1a. X-Y plot (series of values across an x-axis)?
+When the data is one or more **series of numbers indexed along the same axis** — typical for time series, sensor readings, forecasts, A/B comparisons, function curves:
+- Connected line → `line-chart`  *(default for any series-over-time)*
+- Discrete points, no connecting line → `scatter`  *(also for non-uniform `(x,y)` pairs)*
+- Filled below the line, emphasising area → `area-chart`
+- Categorical comparison with bars → `bar-chart` *(grouped by default; `stack: true` for stacked)*
+
+Triggers worth memorising:
+- "trend over time", "growth", "monthly/quarterly/weekly" → `line-chart`
+- "throughput vs cycle time", "two metrics correlated", "irregular x" → `scatter`
+- "active users by tier", "stacked over time" → `area-chart`
+- "compare A vs B by quarter", "revenue mix by year" → `bar-chart`
+
+**Do not** use `progress-list` for a multi-point series — it's one bar per row, not a sequence. Reach for `line-chart` the moment you have ≥3 values per label.
 
 ### 2. Comparison of 2+ named things?
 If the user says "compare", "vs", "differences between", "tradeoffs":
@@ -166,6 +183,118 @@ If items reference each other ("A sends to B", "X depends on Y"):
 - Items with status → `checklist`
 
 If your pick feels generic, walk back up rules 1–5 to check for a domain-specific type that preserves more of the user's information.
+
+---
+
+## §2.5 — Plot family syntax reference
+
+The plot family (`line-chart`, `scatter`, `area-chart`, `bar-chart`) has its own data shape — series of numbers, not just labels. Get this right and the diagram is trivial to author.
+
+### Series shape
+
+Each top-level `- Label: …` is one series. The value list is comma-separated, parsed at render time:
+
+```mdart
+type: line-chart
+title: Quarterly revenue
+x: Q1, Q2, Q3, Q4
+
+- Revenue: 12, 18, 24, 32
+- Cost:    9, 11, 14, 17
+```
+
+**Numeric `(x, y)` pairs** for irregular x-spacing (the chart auto-switches to a continuous numeric x-axis):
+```mdart
+- Team A: (1.2, 22), (2.5, 18), (3.7, 26), (5.1, 14)
+```
+
+**Gaps** — empty between commas, `null`, `na`, or `-` all break the line:
+```mdart
+- Sensor A: 12, 14, , null, 18, 22, na, 19
+```
+
+### Front-matter (chart-wide)
+
+| Key | Example | Effect |
+|---|---|---|
+| `x:` / `x-axis:` | `x: Q1, Q2, Q3, Q4` | x-axis tick labels |
+| `x-label:` | `x-label: Time (s)` | x-axis title |
+| `y-label:` | `y-label: Voltage (V)` | y-axis title |
+| `smooth:` | `smooth: true` | Catmull-Rom curves through points (line/area) |
+| `points:` | `points: false` | hide markers (default: auto — on for ≤30 pts) |
+| `line-width:` | `line-width: 4` | default stroke width (also: `lw:`, `stroke-width:`) |
+| `stack:` | `stack: true` | stack bars instead of grouping (bar-chart only) |
+| `shade-y:` | `shade-y: 100..300 [warning]` | horizontal band — **repeatable** |
+| `shade-x:` | `shade-x: Mar..Apr [campaign]` | vertical band — **repeatable** |
+| `ref-y:` | `ref-y: 250 [SLA]` | horizontal reference line — **repeatable** |
+| `ref-x:` | `ref-x: 25m [deploy]` | vertical reference line — **repeatable** |
+
+Range separator: `..` (preferred, works with negatives). `—` and whitespace-padded `-` also accepted.
+
+### Per-series attributes (in `[brackets]` after the label, before the colon)
+
+| Attribute | Effect |
+|---|---|
+| `dashed` / `dotted` | stroke pattern |
+| `thin` / `thick` / `bold` / `heavy` / `extra` | width tier (1 / 3.5 / 5 / 7 / 9 px) |
+| `width=N` (also `w=N`) | explicit numeric stroke width |
+| `smooth` / `straight` | override chart-level smoothing |
+| `points` / `nopoints` | force markers on / off |
+
+```mdart
+- Actual [bold]:                12, 18, 24, 32
+- Forecast [dashed, smooth]:    11, 17, 23, 30
+- Last year [dotted, thin]:     10, 14, 19, 25
+```
+
+### Common patterns
+
+**SLA monitoring** (zones + reference lines + smooth lines):
+```mdart
+type: line-chart
+smooth: true
+points: false
+title: API latency
+y-label: ms
+shade-y: 0..100 [healthy]
+shade-y: 100..300 [warning]
+shade-y: 300..600 [critical]
+ref-y: 250 [SLA target]
+x: 0m, 5m, 10m, 15m, 20m, 25m, 30m
+
+- p50: 80, 92, 105, 118, 130, 220, 95
+- p99: 180, 210, 245, 280, 310, 580, 240
+```
+
+**Forecast vs actual** (per-series styles):
+```mdart
+type: line-chart
+title: Forecast vs Actual
+x: Q1, Q2, Q3, Q4
+
+- Actual [bold]:               12, 18, 24, 32
+- Forecast [dashed, smooth]:   11, 17, 23, 30
+```
+
+**Stacked bars**:
+```mdart
+type: bar-chart
+stack: true
+x: Q1, Q2, Q3, Q4
+
+- Subscriptions: 40, 50, 65, 75
+- Services:      25, 30, 30, 35
+- Licenses:      15, 15, 15, 20
+```
+
+### What plot is NOT for
+
+- A single percent or KPI → `gauge` / `bullet-chart`
+- A few labels with one number each → `progress-list`
+- Categorical breakdown of a whole → `waffle` / `treemap`
+- Flow volumes between named nodes → `sankey`
+
+If the data is "one number per row, ≤8 rows", it's almost always `progress-list`, not a `bar-chart` with one series.
 
 ---
 

@@ -1,11 +1,11 @@
-<svg viewBox="0 0 500 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="500" height="140" fill="#f0fdf4" rx="8"/>
-    <path d="M90.0,8 L410.0,8 L440.0,36 L60.0,36 Z" fill="#05966933" stroke="#059669" stroke-width="1"/>
-    <text x="250" y="26.0" text-anchor="middle" font-size="11" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Executive</text>
-    <path d="M60.0,39 L440.0,39 L470.0,67 L30.0,67 Z" fill="#058c6333" stroke="#058c63" stroke-width="1"/>
-    <text x="250" y="57.0" text-anchor="middle" font-size="11" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Management</text>
-    <path d="M30.0,70 L470.0,70 L500.0,98 L0.0,98 Z" fill="#04825d33" stroke="#04825d" stroke-width="1"/>
-    <text x="250" y="88.0" text-anchor="middle" font-size="11" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Operations</text>
-    <path d="M0.0,101 L500.0,101 L500.0,129 L0.0,129 Z" fill="#04785733" stroke="#047857" stroke-width="1"/>
-    <text x="250" y="119.0" text-anchor="middle" font-size="11" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600">Foundation</text>
+<svg viewBox="0 0 500 145" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="500" height="145" fill="#f0fdf4" rx="8"/>
+    <path d="M90.0,8 L410.0,8 L440.0,38 L60.0,38 Z" fill="#05966933" stroke="#059669" stroke-width="1"><title>Executive</title></path>
+    <text x="250" y="24.3" text-anchor="middle" font-size="11" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600"><tspan x="250" dy="0">Executive</tspan></text>
+    <path d="M60.0,41 L440.0,41 L470.0,71 L30.0,71 Z" fill="#058c6333" stroke="#058c63" stroke-width="1"><title>Management</title></path>
+    <text x="250" y="57.3" text-anchor="middle" font-size="11" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600"><tspan x="250" dy="0">Management</tspan></text>
+    <path d="M30.0,74 L470.0,74 L500.0,104 L0.0,104 Z" fill="#04825d33" stroke="#04825d" stroke-width="1"><title>Operations</title></path>
+    <text x="250" y="90.3" text-anchor="middle" font-size="11" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600"><tspan x="250" dy="0">Operations</tspan></text>
+    <path d="M0.0,107 L500.0,107 L500.0,137 L0.0,137 Z" fill="#04785733" stroke="#047857" stroke-width="1"><title>Foundation</title></path>
+    <text x="250" y="123.3" text-anchor="middle" font-size="11" fill="#052e16" font-family="system-ui,sans-serif" font-weight="600"><tspan x="250" dy="0">Foundation</tspan></text>
   </svg>

@@ -181,6 +181,17 @@ const FAMILIES = [
       { name: 'class', source: `type: class\ntitle: Domain Model\n- Animal [abstract]\n  - + name\n  - + species\n  - + speak() [abstract]\n- Dog\n  - - breed\n  - + speak()\n  - + fetch()\n- Cat [interface]\n  - + purr()\n  - + scratch()` },
     ],
   },
+  {
+    name: 'Plot',
+    slug: 'plot',
+    desc: 'X-Y plots: series of values across an axis with optional shaded zones and reference lines.',
+    layouts: [
+      { name: 'line-chart', source: `type: line-chart\nsmooth: true\ntitle: Quarterly Revenue\nx: Q1, Q2, Q3, Q4\ny-label: USD (M)\nshade-y: 25..35 [target]\n\n- Revenue [bold]: 12, 18, 24, 32\n- Cost [dashed]: 9, 11, 14, 17` },
+      { name: 'scatter', source: `type: scatter\ntitle: Throughput vs cycle time\nx-label: Hours per task\ny-label: Items / hr\n\n- Team A: (1.2, 22), (2.5, 18), (1.8, 26), (3.2, 14), (1.0, 28), (2.1, 21)\n- Team B: (1.5, 18), (2.8, 12), (2.2, 16), (3.5, 9), (1.3, 20), (2.0, 15)` },
+      { name: 'area-chart', source: `type: area-chart\nsmooth: true\ntitle: Active users by tier\nx: W1, W2, W3, W4, W5, W6, W7, W8\n\n- Free: 80, 95, 110, 125, 140, 155, 170, 180\n- Paid: 20, 28, 35, 48, 62, 78, 95, 115` },
+      { name: 'bar-chart', source: `type: bar-chart\ntitle: Revenue by quarter\nx: Q1, Q2, Q3, Q4\n\n- 2024: 80, 95, 110, 130\n- 2025: 95, 115, 140, 165` },
+    ],
+  },
 ]
 
 // ── Render all SVGs ───────────────────────────────────────────────────────────

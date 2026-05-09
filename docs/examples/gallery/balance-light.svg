@@ -4,14 +4,14 @@
   <rect x="230" y="128" width="60" height="8" rx="2" fill="#ffffff" stroke="#be123c" stroke-width="1"/>
   <rect x="60.0" y="80.0" width="400" height="8" rx="3" fill="#ffffff" stroke="#be123c" stroke-width="1.5"/>
   <line x1="119" y1="84" x2="119" y2="122" stroke="#be123c99" stroke-width="1.5"/>
-  <rect x="54.0" y="122.0" width="130" height="18" rx="4" fill="#e11d4830" stroke="#e11d4877" stroke-width="1.2"/>
-  <text x="119.0" y="134.0" text-anchor="middle" font-size="10" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="600">Benefits</text>
+  <rect x="54.0" y="122.0" width="130" height="18" rx="4" fill="#e11d4830" stroke="#e11d4877" stroke-width="1.2"><title>Benefits</title></rect>
+  <text x="119.0" y="134.0" text-anchor="middle" font-size="10" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="600"><title>Benefits</title>Benefits</text>
   <text x="119.0" y="150.0" text-anchor="middle" font-size="9" fill="#be123c" font-family="system-ui,sans-serif">Speed</text>
   <text x="119.0" y="164.0" text-anchor="middle" font-size="9" fill="#be123c" font-family="system-ui,sans-serif">Flexibility</text>
   <text x="119.0" y="178.0" text-anchor="middle" font-size="9" fill="#be123c" font-family="system-ui,sans-serif">Cost</text>
   <line x1="401" y1="84" x2="401" y2="122" stroke="#be123c99" stroke-width="1.5"/>
-  <rect x="336.0" y="122.0" width="130" height="18" rx="4" fill="#be123c30" stroke="#be123c77" stroke-width="1.2"/>
-  <text x="401.0" y="134.0" text-anchor="middle" font-size="10" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="600">Risks</text>
+  <rect x="336.0" y="122.0" width="130" height="18" rx="4" fill="#be123c30" stroke="#be123c77" stroke-width="1.2"><title>Risks</title></rect>
+  <text x="401.0" y="134.0" text-anchor="middle" font-size="10" fill="#4c0519" font-family="system-ui,sans-serif" font-weight="600"><title>Risks</title>Risks</text>
   <text x="401.0" y="150.0" text-anchor="middle" font-size="9" fill="#be123c" font-family="system-ui,sans-serif">Complexity</text>
   <text x="401.0" y="164.0" text-anchor="middle" font-size="9" fill="#be123c" font-family="system-ui,sans-serif">Dependencies</text>
   <text x="401.0" y="178.0" text-anchor="middle" font-size="9" fill="#be123c" font-family="system-ui,sans-serif">Maintenance</text>

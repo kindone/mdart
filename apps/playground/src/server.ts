@@ -188,9 +188,15 @@ const ALLOWED_LAB_FILES = new Set([
   'layouts/technical/sequence.ts',
   'layouts/technical/state-machine.ts',
   'layouts/technical/class.ts',
+  // plot family
+  'layouts/plot/line-chart.ts',
+  'layouts/plot/scatter.ts',
+  'layouts/plot/area-chart.ts',
+  'layouts/plot/bar-chart.ts',
   // shared helpers
   'layouts/shared.ts',
   'layouts/hierarchy/shared.ts',
+  'layouts/plot/shared.ts',
   // theme
   'theme.ts',
 ])
