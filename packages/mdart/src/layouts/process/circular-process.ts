@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, svgWrap, titleEl, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, svgWrap, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function wrapText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
@@ -82,7 +82,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     // Label — up to 2 wrapped lines normally; when a value is present we
     // limit the label to 1 line and use the second line for the value.
-    const { display: itemLabel, url } = parseLink(item.label)
+    const { display: itemLabel, url } = displayLabel(item, { value: !!item.value })
     const maxLabelLines = item.value ? 1 : 2
     const lines = wrapText(itemLabel, Math.floor(BOX_W / 6.8)).slice(0, maxLabelLines)
     const lineH = 11
@@ -91,7 +91,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const totalH = totalLines * lineH
 
     // Box + label text wrapped in aWrap for clickable node
-    let nodeContent = `<rect x="${rx}" y="${ry}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="1.8"/>`
+    let nodeContent = `<rect x="${rx}" y="${ry}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="1.8">${itemTitleTag(item)}</rect>`
     nodeContent += `<text x="${badgeX}" y="${badgeY}" font-size="8" fill="${fill}" font-family="system-ui,sans-serif" font-weight="800" opacity="0.85">${i + 1}</text>`
     lines.forEach((line, li) => {
       const ty = (by - totalH / 2 + lineH * li + lineH * 0.8).toFixed(1)

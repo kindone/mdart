@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -89,7 +89,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   svgContent += `<line x1="${HALF}" y1="${PAD + titleH}" x2="${HALF}" y2="${H - PAD}" stroke="${theme.border}" stroke-width="1" />`
 
   const renderColItem = (
-    _item: typeof items[number],
+    item: typeof items[number],
     layout: ItemLayout,
     colStartX: number,
     rowH: number,
@@ -105,7 +105,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const dotCy  = topY + LBL_FS * 0.4
     const lblY   = topY + LBL_FS * 0.75
 
-    svgContent += `<circle cx="${colStartX + 8}" cy="${dotCy.toFixed(1)}" r="4" fill="${fill}" />`
+    svgContent += `<circle cx="${colStartX + 8}" cy="${dotCy.toFixed(1)}" r="4" fill="${fill}" >${itemTitleTag(item)}</circle>`
 
     const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
     const lblSpans = lblLines

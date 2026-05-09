@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag } from '../shared'
 
 const DONE_ATTRS = ['done', '✓', 'complete']
 const isDone = (it: { attrs: string[] }) => it.attrs.some(a => DONE_ATTRS.includes(a))
@@ -117,7 +117,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     // ── Main checkbox ──────────────────────────────────────────────────────────
     const boxY = yCur + TOP_PAD
-    svgContent += `<rect x="${PAD}" y="${boxY}" width="18" height="18" rx="3" fill="none" stroke="${theme.primary}" stroke-width="1.5" />`
+    svgContent += `<rect x="${PAD}" y="${boxY}" width="18" height="18" rx="3" fill="none" stroke="${theme.primary}" stroke-width="1.5" >${itemTitleTag(item)}</rect>`
     if (done) {
       const cy = boxY + 9
       svgContent += `<polyline points="${PAD + 4},${cy} ${PAD + 8},${cy + 4} ${PAD + 14},${cy - 4}" fill="none" stroke="${theme.accent}" stroke-width="2" stroke-linecap="round" />`

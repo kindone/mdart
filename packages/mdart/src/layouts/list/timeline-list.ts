@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -93,8 +93,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const cardX = left ? LINE_X - 14 - CARD_W : LINE_X + 14
     const cy0   = cardY[i]
 
-    // Card rect
-    svgContent += `<rect x="${cardX}" y="${cy0}" width="${CARD_W}" height="${cardH}" rx="6" fill="${theme.surface}" stroke="${fill}" stroke-width="1.5" />`
+    // Card rect — tooltip carries full item summary
+    svgContent += `<rect x="${cardX}" y="${cy0}" width="${CARD_W}" height="${cardH}" rx="6" fill="${theme.surface}" stroke="${fill}" stroke-width="1.5" >${itemTitleTag(item)}</rect>`
 
     // Timeline dot
     svgContent += `<circle cx="${LINE_X}" cy="${cy}" r="${DOT_R}" fill="${fill}" />`

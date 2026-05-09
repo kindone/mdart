@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -105,7 +105,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const badgeCy = labelBL - 4
 
     // ── Number badge ─────────────────────────────────────────────────────────
-    svg += `<rect x="${mainBadgeX}" y="${(badgeCy - BADGE_H / 2).toFixed(1)}" width="${BADGE_W}" height="${BADGE_H}" rx="4" fill="${fill}" />`
+    svg += `<rect x="${mainBadgeX}" y="${(badgeCy - BADGE_H / 2).toFixed(1)}" width="${BADGE_W}" height="${BADGE_H}" rx="4" fill="${fill}" >${itemTitleTag(item)}</rect>`
     svg += `<text x="${(mainBadgeX + BADGE_W / 2).toFixed(1)}" y="${(badgeCy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${i + 1}</text>`
 
     // ── Main label (bold, up to 2 lines) ─────────────────────────────────────

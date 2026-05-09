@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function wrapText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
@@ -60,8 +60,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const y = startY + i * STEP_Y
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
-    parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.5"/>`)
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
+    parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</rect>`)
     const valueText = item.value ?? ''
     // When a value is present, force the label to a single line and use the
     // second line for the value subtitle.

@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -105,8 +105,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill  = lerpColor(theme.primary, theme.secondary, t)
     const { lblLines, lblTrunc, lblUrl, valLines, valTrunc, valUrl, chdLayouts } = layouts[i]
 
-    // Cell background rect + left accent bar
-    parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CELL_W.toFixed(1)}" height="${cellH}" rx="8" fill="${fill}33" stroke="${fill}88" stroke-width="1.5"/>`)
+    // Cell background rect + left accent bar — tooltip carries full item
+    parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CELL_W.toFixed(1)}" height="${cellH}" rx="8" fill="${fill}33" stroke="${fill}88" stroke-width="1.5">${itemTitleTag(item)}</rect>`)
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="6" height="${cellH}" rx="3" fill="${fill}"/>`)
 
     const tx  = (x + PAD_L).toFixed(1)       // first-line x

@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -143,6 +143,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { lines: tabLines } = wrapLabel(item.label, tabLabelMax, 1)
     parts.push(
       `<g class="mdart-tab-hit" data-tab="${i}" data-color="${fill}" style="cursor:pointer">` +
+        itemTitleTag(item) +
         `<rect class="mdart-tab-rect" x="${tx}" y="${ty}" width="${TAB_W}" height="${TAB_H}" rx="5" ` +
         `fill="${isActive ? fill : `${fill}22`}" ` +
         `${isActive ? '' : `stroke="${fill}55" stroke-width="1"`}/>` +

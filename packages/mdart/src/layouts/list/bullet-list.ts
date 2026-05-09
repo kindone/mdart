@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -98,7 +98,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const markerCy = labelBL - 4
 
     // ── Main bullet ───────────────────────────────────────────────────────────
-    svg += `<circle cx="${mainMarkerX}" cy="${markerCy}" r="5" fill="${fill}" />`
+    svg += `<circle cx="${mainMarkerX}" cy="${markerCy}" r="5" fill="${fill}" >${itemTitleTag(item)}</circle>`
 
     // ── Main label (bold, up to 2 lines) ─────────────────────────────────────
     const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
