@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, parseLink, aWrap, itemTitleTag, type ItemLike } from '../shared'
 
 const BCG_QUADS = [
   { key: 'stars',     keywords: ['star'],             label: '★ Stars',          sub: 'High growth · High share', fill: '#6d28d9', text: '#ffffff' },  // violet-700
@@ -9,7 +9,7 @@ const BCG_QUADS = [
   { key: 'dogs',      keywords: ['dog'],              label: '✕ Dogs',           sub: 'Low growth · Low share',   fill: '#be123c', text: '#ffffff' },  // rose-700
 ]
 
-type BcgEntry = { display: string; url: string | null }
+type BcgEntry = { display: string; url: string | null; src: ItemLike }
 
 // Neutral grey ramps for mono-light / mono-dark themes
 const MONO_FILLS: Record<string, { fills: string[]; text: string }> = {
@@ -24,11 +24,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lower = item.label.toLowerCase()
     const matched = BCG_QUADS.find(q => q.keywords.some(kw => lower.includes(kw)))
     if (matched) {
-      buckets[matched.key].push(...(item.children.length ? item.children.map(c => parseLink(c.label)) : []))
+      buckets[matched.key].push(...(item.children.length ? item.children.map(c => ({ ...parseLink(c.label), src: c })) : []))
     } else {
       // Distribute ungrouped items across quadrants in order
       const slot = BCG_QUADS[slotIdx % 4]
-      buckets[slot.key].push(parseLink(item.label))
+      buckets[slot.key].push({ ...parseLink(item.label), src: item })
       slotIdx++
     }
   }
@@ -50,8 +50,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     svgContent += `<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${fill}"/>`
     svgContent += `<text x="${x + CELL_W / 2}" y="${y + 24}" text-anchor="middle" font-size="12" fill="${text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(q.label)}</text>`
     svgContent += `<text x="${x + CELL_W / 2}" y="${y + 38}" text-anchor="middle" font-size="8" fill="${text}" font-family="system-ui,sans-serif" opacity="0.65">${q.sub}</text>`
-    buckets[q.key].slice(0, 4).forEach(({ display: lbl, url: lblUrl }, j) => {
-      svgContent += aWrap(`<text x="${x + 10}" y="${y + 56 + j * 18}" font-size="10" fill="${text}" font-family="system-ui,sans-serif" opacity="0.9">• ${tt(lbl, 22)}</text>`, lblUrl)
+    buckets[q.key].slice(0, 4).forEach(({ display: lbl, url: lblUrl, src }, j) => {
+      svgContent += aWrap(`<text x="${x + 10}" y="${y + 56 + j * 18}" font-size="10" fill="${text}" font-family="system-ui,sans-serif" opacity="0.9">${itemTitleTag(src)}• ${tt(lbl, 22)}</text>`, lblUrl)
     })
   })
   // Grid lines

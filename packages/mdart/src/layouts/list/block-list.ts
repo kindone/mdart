@@ -113,7 +113,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const ctx = (x + PAD_L + 8).toFixed(1)   // continuation indent (past "· ")
 
     // ── Label (bold, up to 2 lines) ──────────────────────────────────────────
-    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${tx}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
@@ -124,7 +124,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // ── Value (italic muted subtitle, up to 2 lines) ─────────────────────────
     if (valLines.length > 0) {
       textY += SEC_G
-      const valTip   = valTrunc ? `<title>${escapeXml(valLines.join(' '))}</title>` : ''
+      const valTip   = valTrunc ? `<title>${escapeXml(item.value ?? '')}</title>` : ''
       const valSpans = valLines
         .map((l, li) => `<tspan x="${tx}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')

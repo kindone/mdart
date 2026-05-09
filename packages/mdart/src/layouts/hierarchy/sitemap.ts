@@ -41,7 +41,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { display: nDisplay, url: nUrl } = displayLabel(n)
     boxes.push(`<rect x="${(n.x - bw(n.level)/2).toFixed(1)}" y="${(n.y - bh(n.level)/2).toFixed(1)}" width="${bw(n.level)}" height="${bh(n.level)}" rx="4" fill="${fill}" stroke="${theme.bg}" stroke-width="1.5">${itemTitleTag(n)}</rect>`)
     const fs = n.level === 0 ? 10 : n.level === 1 ? 9 : 8
-    boxes.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="600">${tt(nDisplay, 12)}</text>`, nUrl))
+    boxes.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="600">${tt(nDisplay, 12, n)}</text>`, nUrl))
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">

@@ -49,7 +49,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true })
     const ly = legY + i * 22
     parts.push(`<rect x="${PAD}" y="${ly}" width="12" height="12" rx="2" fill="${colors[i % colors.length]}">${itemTitleTag(item)}</rect>`)
-    parts.push(aWrap(`<text x="${PAD + 16}" y="${ly + 10}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, 22)} (${squares[i]}%)</text>`, itmUrl))
+    parts.push(aWrap(`<text x="${PAD + 16}" y="${ly + 10}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, 22, item)} (${squares[i]}%)</text>`, itmUrl))
   })
 
   return svg(W, H, theme, spec.title, parts)

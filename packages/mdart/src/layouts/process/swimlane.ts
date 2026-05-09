@@ -28,7 +28,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (i > 0) parts.push(`<line x1="0" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" stroke="${theme.border}" stroke-width="0.5"/>`)
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { attrs: true })
     parts.push(`<rect x="2" y="${(y + 2).toFixed(1)}" width="${LABEL_W - 4}" height="${LANE_H - 4}" rx="4" fill="${fill}33" stroke="${fill}66" stroke-width="1">${itemTitleTag(item)}</rect>`)
-    parts.push(aWrap(`<text x="${(LABEL_W / 2).toFixed(1)}" y="${(y + LANE_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, 9)}</text>`, itmUrl))
+    parts.push(aWrap(`<text x="${(LABEL_W / 2).toFixed(1)}" y="${(y + LANE_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, 9, item)}</text>`, itmUrl))
     const steps = item.children
     const stepW = steps.length > 0 ? Math.min(90, (W - LABEL_W - 8) / steps.length - 6) : 0
     const stepGap = steps.length > 1 ? ((W - LABEL_W - 8) - steps.length * stepW) / (steps.length - 1) : 0

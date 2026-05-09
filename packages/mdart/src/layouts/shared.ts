@@ -95,8 +95,17 @@ export function wrapLabel(
   return { lines: lines.length > 0 ? lines : [''], truncated, url }
 }
 
-export function tt(s: string, max: number): string {
+/**
+ * Visible-truncate text with a hover-revealed full version.
+ *
+ * - When `item` is provided, the SVG `<title>` always carries `itemSummary(item)`
+ *   so label + value + attrs are surfaced on hover (no silent drops).
+ * - Otherwise, falls back to the legacy behaviour: emit a title only when the
+ *   string was actually truncated, using the original raw `s` inside.
+ */
+export function tt(s: string, max: number, item?: ItemLike): string {
   const tr = truncate(s, max)
+  if (item) return `<title>${escapeXml(itemSummary(item))}</title>${escapeXml(tr)}`
   if (tr === s) return escapeXml(s)
   return `<title>${escapeXml(s)}</title>${escapeXml(tr)}`
 }
@@ -248,7 +257,7 @@ export function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: b
     const caption = getCaption(item)
     const { display: staircaseDisplay, url: staircaseUrl } = displayLabel(item, { value: !!caption })
     parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.2">${itemTitleTag(item)}</rect>`)
-    parts.push(aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(staircaseDisplay, Math.floor(BOX_W / 6))}</text>`, staircaseUrl))
+    parts.push(aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(staircaseDisplay, Math.floor(BOX_W / 6), item)}</text>`, staircaseUrl))
     if (caption) parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 16).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, Math.floor(BOX_W / 5))}</text>`)
 
     if (i < n - 1) {

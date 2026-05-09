@@ -36,7 +36,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<rect x="${x.toFixed(1)}" y="${cardY.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${CARD_H}" rx="7" fill="${fill}22" stroke="${fill}88" stroke-width="1.5">${itemTitleTag(item)}</rect>`)
     parts.push(`<rect x="${x.toFixed(1)}" y="${cardY.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="22" rx="7" fill="${fill}"/>`)
     parts.push(`<rect x="${x.toFixed(1)}" y="${(cardY + 14).toFixed(1)}" width="${CARD_W.toFixed(1)}" height="8" fill="${fill}"/>`)
-    parts.push(aWrap(`<text x="${(x + CARD_W / 2).toFixed(1)}" y="${(cardY + 14).toFixed(1)}" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, 14)}</text>`, itmUrl))
+    parts.push(aWrap(`<text x="${(x + CARD_W / 2).toFixed(1)}" y="${(cardY + 14).toFixed(1)}" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, 14, item)}</text>`, itmUrl))
     const subs = item.children.length ? item.children.map(c => c.label) : item.value ? [item.value] : []
     // Centre the sub-list block in the body area (between header band at
     // cardY+22 and card bottom at cardY+CARD_H). Cap at 4 rows — that's the

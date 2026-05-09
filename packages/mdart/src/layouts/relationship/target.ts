@@ -30,7 +30,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="${theme.primary}${fillAlpha}" stroke="${theme.primary}66" stroke-width="1.5">${itemTitleTag(item)}</circle>`)
     const bandR = r - MAX_R / n / 2
     const { display: itmDisplay, url: itmUrl } = displayLabel(item)
-    parts.push(aWrap(`<text x="${cx}" y="${(cy - bandR + 5).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="${i === n - 1 ? '700' : '400'}">${tt(itmDisplay, 18)}</text>`, itmUrl))
+    parts.push(aWrap(`<text x="${cx}" y="${(cy - bandR + 5).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="${i === n - 1 ? '700' : '400'}">${tt(itmDisplay, 18, item)}</text>`, itmUrl))
   }
   return svg(W, H, theme, spec.title, parts)
 }

@@ -45,7 +45,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<text x="${cx}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${Math.round(val * 100)}%</text>`)
     // value renders as the dial reading; attrs would otherwise be invisible
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true })
-    parts.push(aWrap(`<text x="${cx}" y="${(cy + 16).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${itemTitleTag(item)}${tt(itmDisplay, 16)}</text>`, itmUrl))
+    parts.push(aWrap(`<text x="${cx}" y="${(cy + 16).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${itemTitleTag(item)}${tt(itmDisplay, 16, item)}</text>`, itmUrl))
   })
 
   return svg(W, H, theme, spec.title, parts)

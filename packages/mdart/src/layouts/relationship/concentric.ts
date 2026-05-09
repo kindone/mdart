@@ -38,7 +38,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelY = cyPos - (r - MAX_R / n / 2) + 14
     const { display: lblDisplay, url: lblUrl } = displayLabel(item)
     parts.push(
-      aWrap(`<text x="${cxPos.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(lblDisplay, 18)}</text>`, lblUrl),
+      aWrap(`<text x="${cxPos.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(lblDisplay, 18, item)}</text>`, lblUrl),
     )
   }
 

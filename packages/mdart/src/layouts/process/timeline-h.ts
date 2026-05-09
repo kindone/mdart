@@ -70,7 +70,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (above) {
       // Stack (top → bottom reading): value_line1, value_line2, label, tick, spine
       const labelY = tickEnd - 4
-      parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="10" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, maxChars)}</text>`, itmUrl))
+      parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="10" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, maxChars, item)}</text>`, itmUrl))
       // Draw value lines so line[0] ends up at the top.
       const L = valueLines.length
       valueLines.forEach((line, j) => {
@@ -80,7 +80,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     } else {
       // Stack (top → bottom reading): spine, tick, label, value_line1, value_line2
       const labelY = tickEnd + 12
-      parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="10" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, maxChars)}</text>`, itmUrl))
+      parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="10" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, maxChars, item)}</text>`, itmUrl))
       valueLines.forEach((line, j) => {
         const vy = labelY + 11 + j * 10
         parts.push(`<text x="${x.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(line, maxChars)}</text>`)

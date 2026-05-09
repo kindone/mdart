@@ -61,7 +61,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { lines, truncated, url: lblUrl } = wrapLabel(labelText, maxChars, maxLines)
     const lineH = fontSize + 2
     const firstY = y + LAYER_H / 2 - ((lines.length - 1) * lineH) / 2 + fontSize * 0.3
-    const tip = truncated ? `<title>${escapeXml(lines.join(' '))}</title>` : ''
+    const tip = truncated ? `<title>${escapeXml(baseLabel)}</title>` : ''
     const tspans = lines
       .map((l, li) => `<tspan x="${cxPos.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
       .join('')
@@ -74,8 +74,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const sideX = cxPos + Math.max(topW, botW) / 2 + 8
       const sideY = y + LAYER_H / 2 + fontSize * 0.3
       const sideText = item.value ? `${item.label} · ${item.value}` : item.label
+      const sideTrunc = truncate(sideText, 24)
+      const sideTip   = sideTrunc !== sideText ? `<title>${escapeXml(sideText)}</title>` : ''
       labels.push(
-        `<text x="${sideX.toFixed(1)}" y="${sideY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(truncate(sideText, 24))}</text>`,
+        `<text x="${sideX.toFixed(1)}" y="${sideY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${sideTip}${escapeXml(sideTrunc)}</text>`,
       )
     }
   }

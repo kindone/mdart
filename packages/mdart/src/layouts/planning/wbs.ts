@@ -46,7 +46,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const l1y = l1Mid - NH / 2
     const { display: l1Display, url: l1Url } = displayLabel(l1)
     parts.push(`<rect x="${l1x}" y="${l1y.toFixed(1)}" width="${NW}" height="${NH}" rx="5" fill="${theme.primary}2e" stroke="${theme.primary}88" stroke-width="1.5">${itemTitleTag(l1)}</rect>`)
-    parts.push(aWrap(`<text x="${(l1x+NW/2).toFixed(1)}" y="${(l1y+20).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(l1Display, 15)}</text>`, l1Url))
+    parts.push(aWrap(`<text x="${(l1x+NW/2).toFixed(1)}" y="${(l1y+20).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(l1Display, 15, l1)}</text>`, l1Url))
 
     if (hasL2) {
       const midX = colX[1] + NW
@@ -66,7 +66,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         const l2Stroke = done ? theme.accent : active ? `${theme.accent}88` : theme.border
         parts.push(`<rect x="${childX}" y="${l2y.toFixed(1)}" width="${NW}" height="${NH}" rx="4" fill="${l2Fill}" stroke="${l2Stroke}" stroke-width="${active ? 1.5 : 1}">${itemTitleTag(l2)}</rect>`)
         const l2Col = done ? theme.accent : active ? theme.text : theme.textMuted
-        parts.push(aWrap(`<text x="${(childX+NW/2).toFixed(1)}" y="${(l2y+20).toFixed(1)}" text-anchor="middle" font-size="10" fill="${l2Col}" font-family="system-ui,sans-serif" ${done ? 'text-decoration="line-through"' : ''}>${tt(l2Display, 15)}</text>`, l2Url))
+        parts.push(aWrap(`<text x="${(childX+NW/2).toFixed(1)}" y="${(l2y+20).toFixed(1)}" text-anchor="middle" font-size="10" fill="${l2Col}" font-family="system-ui,sans-serif" ${done ? 'text-decoration="line-through"' : ''}>${tt(l2Display, 15, l2)}</text>`, l2Url))
       })
     }
 

@@ -48,7 +48,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true })
     parts.push(`<path d="${segPath(curX, BAR_Y, segW, BAR_H, rl, rr)}" fill="${fill}">${itemTitleTag(item)}</path>`)
     const lx = curX + segW / 2
-    parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(BAR_Y + BAR_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, Math.floor(segW / 7))}</text>`, itmUrl))
+    parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(BAR_Y + BAR_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, Math.floor(segW / 7), item)}</text>`, itmUrl))
     parts.push(`<text x="${lx.toFixed(1)}" y="${(BAR_Y + BAR_H + 14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${fill}" font-family="system-ui,sans-serif">${item.value ?? Math.round(weights[i] / total * 100) + '%'}</text>`)
     curX += segW
   })

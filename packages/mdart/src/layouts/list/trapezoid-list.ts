@@ -111,7 +111,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblStartY = y + (bandH - blockH) / 2 + LBL_FS * 0.75
 
     // ── Label (bold, up to 3 lines) ───────────────────────────────────────────
-    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${W / 2}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')

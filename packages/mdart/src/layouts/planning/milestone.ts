@@ -90,7 +90,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     // Label — vertically centred, up to 2 lines
     const lblStartY = rowY[i] + (rowH - lblLines.length * LBL_LH) / 2 + LBL_FS * 0.75
-    const lblTip    = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
+    const lblTip    = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans  = lblLines
       .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
@@ -99,7 +99,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Status tag on the right
     const tag    = done ? 'Done' : active ? 'In Progress' : (item.value ?? 'Upcoming')
     const tagCol = done ? theme.accent : active ? '#fbbf24' : theme.textMuted
-    parts.push(`<text x="${W - 10}" y="${(cy + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${tagCol}" font-family="system-ui,sans-serif">${escapeXml(tag.slice(0, 16))}</text>`)
+    const tagTip = tag.length > 16 ? `<title>${escapeXml(tag)}</title>` : ''
+    parts.push(`<text x="${W - 10}" y="${(cy + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${tagCol}" font-family="system-ui,sans-serif">${tagTip}${escapeXml(tag.slice(0, 16))}</text>`)
   })
 
   return svgWrap(W, H, theme, spec.title, parts)

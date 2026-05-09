@@ -93,7 +93,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const item = items[i]
     const { display: srcDisplay, url: srcUrl } = displayLabel(item, { value: !!item.value, attrs: !!item.attrs?.length })
     parts.push(`<rect x="0" y="${n.y.toFixed(1)}" width="${BOX_W - 8}" height="${n.h.toFixed(1)}" rx="4" fill="${col}44" stroke="${col}99" stroke-width="1">${itemTitleTag(item)}</rect>`)
-    if (n.h >= 14) parts.push(aWrap(`<text x="${(BOX_W - 8) / 2}" y="${(n.y + n.h / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(srcDisplay, 13)}</text>`, srcUrl))
+    if (n.h >= 14) parts.push(aWrap(`<text x="${(BOX_W - 8) / 2}" y="${(n.y + n.h / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(srcDisplay, 13, item)}</text>`, srcUrl))
   })
 
   dstNames.forEach(name => {

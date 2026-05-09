@@ -112,7 +112,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       }
 
       // Card label (multi-line)
-      const tip   = truncated ? `<title>${escapeXml(lines.join(' '))}</title>` : ''
+      const tip   = truncated ? `<title>${escapeXml(src.label)}</title>` : ''
       const spans = lines
         .map((l, li) => `<tspan x="${(tx + 2).toFixed(1)}" dy="${li === 0 ? 0 : CARD_LH}">${escapeXml(l)}</tspan>`)
         .join('')

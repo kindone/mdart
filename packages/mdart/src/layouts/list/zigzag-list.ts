@@ -29,7 +29,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(`<rect x="${bx.toFixed(1)}" y="${(cy - BOX_H/2).toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="6" fill="${fill}22" stroke="${fill}" stroke-width="1.2">${itemTitleTag(item)}</rect>`)
     const caption = getCaption(item)
     const { display: zigDisplay, url: zigUrl } = displayLabel(item, { value: !!caption })
-    parts.push(aWrap(`<text x="${(bx + BOX_W/2).toFixed(1)}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(zigDisplay, 22)}</text>`, zigUrl))
+    parts.push(aWrap(`<text x="${(bx + BOX_W/2).toFixed(1)}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(zigDisplay, 22, item)}</text>`, zigUrl))
     if (caption) parts.push(`<text x="${(bx + BOX_W/2).toFixed(1)}" y="${(cy + 16).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, 26)}</text>`)
     // connector dot
     parts.push(`<circle cx="${SPINE_X}" cy="${cy}" r="4" fill="${fill}"/>`)

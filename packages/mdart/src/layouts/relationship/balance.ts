@@ -28,14 +28,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const { display: leftDisplay, url: leftUrl } = displayLabel(left)
   const { display: rightDisplay, url: rightUrl } = displayLabel(right)
   parts.push(`<rect x="${(lx - plateW / 2).toFixed(1)}" y="${(beamY + 38).toFixed(1)}" width="${plateW}" height="${plateH}" rx="4" fill="${theme.primary}30" stroke="${theme.primary}77" stroke-width="1.2">${itemTitleTag(left)}</rect>`)
-  parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(beamY + 38 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(leftDisplay, 16)}</text>`, leftUrl))
+  parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(beamY + 38 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(leftDisplay, 16, left)}</text>`, leftUrl))
   left.children.slice(0, 4).forEach((ch, i) => {
     parts.push(`<text x="${lx.toFixed(1)}" y="${(beamY + 66 + i * 14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 16)}</text>`)
   })
   const rx = bx + beamW / 2 - plateW / 2 + 6
   parts.push(`<line x1="${rx}" y1="${beamY}" x2="${rx}" y2="${beamY + 38}" stroke="${theme.textMuted}99" stroke-width="1.5"/>`)
   parts.push(`<rect x="${(rx - plateW / 2).toFixed(1)}" y="${(beamY + 38).toFixed(1)}" width="${plateW}" height="${plateH}" rx="4" fill="${theme.secondary}30" stroke="${theme.secondary}77" stroke-width="1.2">${itemTitleTag(right)}</rect>`)
-  parts.push(aWrap(`<text x="${rx.toFixed(1)}" y="${(beamY + 38 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(rightDisplay, 16)}</text>`, rightUrl))
+  parts.push(aWrap(`<text x="${rx.toFixed(1)}" y="${(beamY + 38 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(rightDisplay, 16, right)}</text>`, rightUrl))
   right.children.slice(0, 4).forEach((ch, i) => {
     parts.push(`<text x="${rx.toFixed(1)}" y="${(beamY + 66 + i * 14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 16)}</text>`)
   })

@@ -168,7 +168,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelStr = ellipsisIfDropped(item.label, item)
     const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(labelStr, labelMax)
     const lblLineH = labelFontSize + 2
-    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${lx.toFixed(1)}" dy="${li === 0 ? 0 : lblLineH}">${escapeXml(l)}</tspan>`)
       .join('')
@@ -179,7 +179,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const childBaseY   = ly + (lblLines.length - 1) * lblLineH + childGap
     item.children.slice(0, maxChildren).forEach((ch, j) => {
       const fs = n === 2 ? 10 : 8.5
-      parts.push(`<text x="${lx.toFixed(1)}" y="${(childBaseY + j * childSpacing).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(truncate(ch.label, n === 2 ? 13 : 10))}</text>`)
+      const max = n === 2 ? 13 : 10
+      const trunc = truncate(ch.label, max)
+      const chTip = trunc !== ch.label ? `<title>${escapeXml(ch.label)}</title>` : ''
+      parts.push(`<text x="${lx.toFixed(1)}" y="${(childBaseY + j * childSpacing).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${chTip}${escapeXml(trunc)}</text>`)
     })
   })
 

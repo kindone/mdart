@@ -41,12 +41,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (n.children.length > 0) {
       const { display: ndDisplay, url: ndUrl } = displayLabel(n)
       shapes.push(`<polygon points="${x},${(y-DH).toFixed(1)} ${(x+DW).toFixed(1)},${y} ${x},${(y+DH).toFixed(1)} ${(x-DW).toFixed(1)},${y}" fill="${theme.surface}" stroke="${theme.primary}aa" stroke-width="1.5">${itemTip}</polygon>`)
-      shapes.push(aWrap(`<text x="${x}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${itemTip}${tt(ndDisplay, 10)}</text>`, ndUrl))
+      shapes.push(aWrap(`<text x="${x}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${itemTip}${tt(ndDisplay, 10, n)}</text>`, ndUrl))
     } else {
       const { display: ndDisplay, url: ndUrl } = displayLabel(n)
       const bx = x - LW / 2, by = y - LH / 2
       shapes.push(`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${LW}" height="${LH}" rx="5" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${itemTip}</rect>`)
-      shapes.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${itemTip}${tt(ndDisplay, 13)}</text>`, ndUrl))
+      shapes.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${itemTip}${tt(ndDisplay, 13, n)}</text>`, ndUrl))
     }
   }
 

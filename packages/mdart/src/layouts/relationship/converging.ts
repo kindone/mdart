@@ -36,7 +36,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const sy = n === 1 ? cy : TITLE_H + 20 + i * (H - TITLE_H - 40) / (n - 1)
     const { display: srcDisplay, url: srcUrl } = displayLabel(item)
     parts.push(`<rect x="${SRC_X}" y="${(sy - 16).toFixed(1)}" width="112" height="32" rx="5" fill="${theme.surface}" stroke="${theme.primary}66" stroke-width="1.2">${itemTitleTag(item)}</rect>`)
-    parts.push(aWrap(`<text x="${(SRC_X + 56).toFixed(1)}" y="${(sy + 5).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(srcDisplay, 13)}</text>`, srcUrl))
+    parts.push(aWrap(`<text x="${(SRC_X + 56).toFixed(1)}" y="${(sy + 5).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(srcDisplay, 13, item)}</text>`, srcUrl))
     const x1 = SRC_X + 112, x2 = TGT_X - 4
     const mid = (x1 + x2) / 2
     parts.push(`<path d="M${x1},${sy.toFixed(1)} C${mid},${sy.toFixed(1)} ${mid},${cy.toFixed(1)} ${x2},${cy.toFixed(1)}" fill="none" stroke="${theme.primary}66" stroke-width="1.5" marker-end="url(#arr-c)"/>`)

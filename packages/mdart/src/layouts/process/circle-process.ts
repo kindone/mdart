@@ -29,7 +29,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
     parts.push(`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${R}" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</circle>`)
-    parts.push(aWrap(`<text x="${cx.toFixed(1)}" y="${(cy - (item.value ? 5 : 0)).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, Math.floor(R / 4))}</text>`, itmUrl))
+    parts.push(aWrap(`<text x="${cx.toFixed(1)}" y="${(cy - (item.value ? 5 : 0)).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, Math.floor(R / 4), item)}</text>`, itmUrl))
     if (item.value) parts.push(`<text x="${cx.toFixed(1)}" y="${(cy + 10).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, Math.floor(R / 3.5))}</text>`)
     if (i < n - 1) {
       const x1 = cx + R + 2, x2 = cx + spacing - R - 6

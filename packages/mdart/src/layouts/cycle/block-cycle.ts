@@ -71,7 +71,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Body shows children OR value; pass shows so ellipsis only fires if attrs are dropped.
     const showsValue = item.children.length > 0 || !!item.value
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: showsValue })
-    parts.push(aWrap(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, headerMaxChars)}</text>`, lblUrl))
+    parts.push(aWrap(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, headerMaxChars, item)}</text>`, lblUrl))
 
     // Body content: children or value
     const bodyMaxChars = Math.max(8, Math.floor((BOX_W - 12) / 4.4))

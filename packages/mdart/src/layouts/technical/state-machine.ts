@@ -115,7 +115,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(
       `<rect x="${(x - STATE_W/2).toFixed(1)}" y="${(y - STATE_H/2).toFixed(1)}" width="${STATE_W}" height="${STATE_H}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="1.5">${itemTitleTag(state)}</rect>`,
     )
-    parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y + 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(stDisplay, 12)}</text>`, stUrl))
+    parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y + 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(stDisplay, 12, state)}</text>`, stUrl))
   })
 
   return svgWrap(W, H, theme, spec.title, parts)

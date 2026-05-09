@@ -58,6 +58,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const anchor = cosA > 0.3 ? 'start' : cosA < -0.3 ? 'end' : 'middle'
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
     const labelText = truncate(lblDisplay, 14)
+    const lblTip    = labelText !== lblDisplay ? `<title>${escapeXml(item.label)}</title>` : ''
 
     // Connector line from outer edge to label
     const cx1 = cx + connectorR * Math.cos(midAngle)
@@ -66,10 +67,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (item.value) {
       // Two-line: label up, dim value subtitle beneath. Plenty of room
       // outside the wedges so we render full text without truncation tail.
-      parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelText)}</text>`, lblUrl))
-      parts.push(`<text x="${lx.toFixed(1)}" y="${(ly + 11).toFixed(1)}" text-anchor="${anchor}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(truncate(item.value, 16))}</text>`)
+      parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${escapeXml(labelText)}</text>`, lblUrl))
+      const valTrunc = truncate(item.value, 16)
+      const valTip   = valTrunc !== item.value ? `<title>${escapeXml(item.value)}</title>` : ''
+      parts.push(`<text x="${lx.toFixed(1)}" y="${(ly + 11).toFixed(1)}" text-anchor="${anchor}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${valTip}${escapeXml(valTrunc)}</text>`)
     } else {
-      parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelText)}</text>`, lblUrl))
+      parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${escapeXml(labelText)}</text>`, lblUrl))
     }
   }
 

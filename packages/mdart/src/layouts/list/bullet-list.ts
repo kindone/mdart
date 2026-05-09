@@ -101,7 +101,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     svg += `<circle cx="${mainMarkerX}" cy="${markerCy}" r="5" fill="${fill}" >${itemTitleTag(item)}</circle>`
 
     // ── Main label (bold, up to 2 lines) ─────────────────────────────────────
-    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${mainTextStart}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
@@ -110,7 +110,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // ── Value subtitle (italic muted, up to 2 lines) ──────────────────────────
     if (valLines.length > 0) {
       const valBL    = y + firstValBL
-      const valTip   = valTrunc ? `<title>${escapeXml(valLines.join(' '))}</title>` : ''
+      const valTip   = valTrunc ? `<title>${escapeXml(item.value ?? '')}</title>` : ''
       const valSpans = valLines
         .map((l, li) => `<tspan x="${mainTextStart}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')

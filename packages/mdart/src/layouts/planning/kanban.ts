@@ -64,7 +64,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // kanban already shows attrs as visual treatments (line-through, active outline),
     // so shows.attrs=true on cards. Column header gets the standard treatment.
     const { display: colDisplay, url: colUrl } = displayLabel(col)
-    parts.push(aWrap(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${(colY + 21).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="600">${tt(colDisplay, 14)}</text>`, colUrl))
+    parts.push(aWrap(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${(colY + 21).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="600">${tt(colDisplay, 14, col)}</text>`, colUrl))
 
     if (col.children.length > 0) {
       const bx = colX + COL_W - 18

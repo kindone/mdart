@@ -68,7 +68,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const nameY = isSpecial ? y + 24 : y + 19
     const { display: clsDisplay, url: clsUrl } = displayLabel(cls, { attrs: true })
     parts.push(
-      aWrap(`<text x="${(x + CLASS_W/2).toFixed(1)}" y="${nameY.toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="ui-monospace,monospace" font-weight="700"${isSpecial ? ' font-style="italic"' : ''}>${tt(clsDisplay, Math.floor(CLASS_W / 7))}</text>`, clsUrl),
+      aWrap(`<text x="${(x + CLASS_W/2).toFixed(1)}" y="${nameY.toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="ui-monospace,monospace" font-weight="700"${isSpecial ? ' font-style="italic"' : ''}>${tt(clsDisplay, Math.floor(CLASS_W / 7), cls)}</text>`, clsUrl),
       `<line x1="${x.toFixed(1)}" y1="${(y + HEADER_H).toFixed(1)}" x2="${(x + CLASS_W).toFixed(1)}" y2="${(y + HEADER_H).toFixed(1)}" stroke="${theme.accent}44" stroke-width="1"/>`,
     )
 

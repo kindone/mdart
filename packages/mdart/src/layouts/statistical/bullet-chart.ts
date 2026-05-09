@@ -47,7 +47,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     // value renders as % bar + numeric on right; attrs (target, etc.) used selectively
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true, attrs: true })
-    parts.push(aWrap(`<text x="${LABEL_W}" y="${(midY + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, 20)}</text>`, itmUrl))
+    parts.push(aWrap(`<text x="${LABEL_W}" y="${(midY + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, 20, item)}</text>`, itmUrl))
     parts.push(`<text x="${BAR_X + BAR_W + 8}" y="${(midY + 4).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${Math.round(val * 100)}%</text>`)
   })
 

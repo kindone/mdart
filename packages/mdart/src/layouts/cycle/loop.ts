@@ -89,7 +89,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let lblContent: string
     const halo = `fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill"`
     if (words.length <= 1) {
-      lblContent = `<text x="${x.toFixed(1)}" y="${(rowY + fontSize * 0.38).toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="700" font-family="system-ui,sans-serif" ${halo}>${tt(lblDisplay, 11)}</text>`
+      lblContent = `<text x="${x.toFixed(1)}" y="${(rowY + fontSize * 0.38).toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="700" font-family="system-ui,sans-serif" ${halo}>${tt(lblDisplay, 11, item)}</text>`
     } else {
       const mid = Math.ceil(words.length / 2)
       const l1  = words.slice(0, mid).join(' ')

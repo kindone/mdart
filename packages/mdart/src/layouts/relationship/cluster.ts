@@ -29,7 +29,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const color = colors[i % colors.length]
     const { display: grpDisplay, url: grpUrl } = displayLabel(group)
     parts.push(`<ellipse cx="${gx.toFixed(1)}" cy="${gy.toFixed(1)}" rx="${(clW / 2).toFixed(1)}" ry="${(clH / 2).toFixed(1)}" fill="${color}14" stroke="${color}55" stroke-width="1.5">${itemTitleTag(group)}</ellipse>`)
-    parts.push(aWrap(`<text x="${gx.toFixed(1)}" y="${(gy - clH / 2 + 16).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(grpDisplay, 16)}</text>`, grpUrl))
+    parts.push(aWrap(`<text x="${gx.toFixed(1)}" y="${(gy - clH / 2 + 16).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(grpDisplay, 16, group)}</text>`, grpUrl))
     // Layout adapts to member count: 1–3 in a single row, 4–6 in two rows.
     // Circles are pushed outward toward the ellipse boundary instead of
     // sitting in the middle third of the cell.
@@ -90,7 +90,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const my = firstRowY + mr * rowSpacing
       const { display: mDisplay } = displayLabel(m)
       parts.push(`<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="${mR}" fill="${color}2a" stroke="${color}66" stroke-width="1">${itemTitleTag(m)}</circle>`)
-      parts.push(`<text x="${mx.toFixed(1)}" y="${(my + 4).toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(mDisplay, labelMax)}</text>`)
+      parts.push(`<text x="${mx.toFixed(1)}" y="${(my + 4).toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(mDisplay, labelMax, m)}</text>`)
     })
   })
   return svg(W, H, theme, spec.title, parts)

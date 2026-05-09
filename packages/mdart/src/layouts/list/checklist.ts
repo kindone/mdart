@@ -128,7 +128,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelStyle = done
       ? `fill="${theme.text}" fill-opacity="0.62" font-style="italic"`
       : `fill="${theme.text}"`
-    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${PAD + 26}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
@@ -142,7 +142,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // ── Value / description (up to 2 lines) ────────────────────────────────────
     if (valLines.length > 0) {
       const valY   = yCur + firstValBL
-      const valTip = valTrunc ? `<title>${escapeXml(valLines.join(' '))}</title>` : ''
+      const valTip = valTrunc ? `<title>${escapeXml(item.value ?? '')}</title>` : ''
       const valSpans = valLines
         .map((l, li) => `<tspan x="${PAD + 26}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')

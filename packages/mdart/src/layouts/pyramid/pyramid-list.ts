@@ -86,7 +86,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelStr = ellipsisIfDropped(item.label, item, { value: !!valueText })
     const { lines, truncated, url: lblUrl } = wrapLabel(labelStr, maxChars)
     const firstY = y + ROW_H / 2 - ((lines.length - 1) * LINE_H) / 2 + 4
-    const tip    = truncated ? `<title>${escapeXml(lines.join(' '))}</title>` : ''
+    const tip    = truncated ? `<title>${escapeXml(item.label)}</title>` : ''
     const tspans = lines
       .map((l, li) => `<tspan x="${cx.toFixed(1)}" dy="${li === 0 ? 0 : LINE_H}">${escapeXml(l)}</tspan>`)
       .join('')

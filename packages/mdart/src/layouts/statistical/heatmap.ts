@@ -51,7 +51,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const rowY = TITLE_H + HEADER_H + r * CELL_H
     const { display: rowDisplay, url: rowUrl } = displayLabel(row)
     parts.push(`<rect x="0" y="${rowY}" width="${LABEL_W}" height="${CELL_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`)
-    parts.push(aWrap(`<text x="8" y="${(rowY + 25).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(rowDisplay, 12)}</text>`, rowUrl))
+    parts.push(aWrap(`<text x="8" y="${(rowY + 25).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(rowDisplay, 12, row)}</text>`, rowUrl))
     row.children.slice(0, numCols).forEach((cell, c) => {
       const colX = LABEL_W + c * CELL_W
       const raw = (cell.value ?? cell.attrs[0] ?? cell.label.match(/[\d.]+/)?.[0] ?? '0').replace('%', '')

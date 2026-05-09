@@ -107,7 +107,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let textY   = cy0 + (cardH - blockH) / 2 + LBL_FS * 0.75
 
     // Label
-    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')

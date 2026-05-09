@@ -29,10 +29,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // here means "value is not rendered visibly on the header" (it isn't).
     const { display: itmDisplay, url: itmUrl } = displayLabel(item)
     svgContent += `<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${fills[i]}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(item)}</rect>`
-    svgContent += aWrap(`<text x="${x + CELL_W / 2}" y="${y + 26}" text-anchor="middle" font-size="12" fill="${strokes[i]}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, headerMax)}</text>`, itmUrl)
+    svgContent += aWrap(`<text x="${x + CELL_W / 2}" y="${y + 26}" text-anchor="middle" font-size="12" fill="${strokes[i]}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, headerMax, item)}</text>`, itmUrl)
     item.children.slice(0, 5).forEach((ch, j) => {
       const { display: chDisplay, url: chUrl } = displayLabel(ch)
-      svgContent += aWrap(`<text x="${x + 12}" y="${y + 46 + j * 19}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" opacity="0.85">${itemTitleTag(ch)}• ${tt(chDisplay, bulletMax)}</text>`, chUrl)
+      svgContent += aWrap(`<text x="${x + 12}" y="${y + 46 + j * 19}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" opacity="0.85">${itemTitleTag(ch)}• ${tt(chDisplay, bulletMax, ch)}</text>`, chUrl)
     })
   })
   // Center axis lines

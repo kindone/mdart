@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, parseLink, aWrap, itemTitleTag } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // Collect items by prefix char or by group name
-  interface SwotEntry { display: string; url: string | null; value?: string }
+  interface SwotEntry { display: string; url: string | null; value?: string; attrs?: string[]; rawLabel: string }
   interface SwotQuadrant {
     label: string
     items: SwotEntry[]
@@ -13,9 +13,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
   // Wrap parseLink so we can carry the `value` field through to the bullet
   // renderer (small dim suffix after the label).
-  const toEntry = (label: string, value?: string): SwotEntry => ({
+  const toEntry = (label: string, value?: string, attrs?: string[]): SwotEntry => ({
     ...parseLink(label),
     value,
+    attrs,
+    rawLabel: label,
   })
 
   // Mono theme detection — keyed on theme.primary (unique per named mono theme)
@@ -71,25 +73,25 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       currentSection = headerKey
       // If children were attached (e.g. non-swot-style nesting), consume immediately.
       if (item.children.length) {
-        quadrantMap[headerKey].items.push(...item.children.map(c => toEntry(c.label, c.value)))
+        quadrantMap[headerKey].items.push(...item.children.map(c => toEntry(c.label, c.value, c.attrs)))
         currentSection = null
       }
       continue
     }
 
     // 2. Otherwise, route by SWOT prefix char.
-    if (item.prefix === '+') { quadrantMap.S.items.push(toEntry(item.label, item.value)); continue }
-    if (item.prefix === '?') { quadrantMap.O.items.push(toEntry(item.label, item.value)); continue }
-    if (item.prefix === '!') { quadrantMap.T.items.push(toEntry(item.label, item.value)); continue }
+    if (item.prefix === '+') { quadrantMap.S.items.push(toEntry(item.label, item.value, item.attrs)); continue }
+    if (item.prefix === '?') { quadrantMap.O.items.push(toEntry(item.label, item.value, item.attrs)); continue }
+    if (item.prefix === '!') { quadrantMap.T.items.push(toEntry(item.label, item.value, item.attrs)); continue }
     if (item.prefix === '-') {
       // - is the SWOT weakness marker by default, but if a heading was just
       // declared (e.g. `- Threats`), route subsequent items to that section.
-      quadrantMap[currentSection ?? 'W'].items.push(toEntry(item.label, item.value))
+      quadrantMap[currentSection ?? 'W'].items.push(toEntry(item.label, item.value, item.attrs))
       continue
     }
 
     // 3. Unprefixed flat sibling — only routes if we're inside a declared section.
-    if (currentSection) quadrantMap[currentSection].items.push(toEntry(item.label, item.value))
+    if (currentSection) quadrantMap[currentSection].items.push(toEntry(item.label, item.value, item.attrs))
   }
 
   const W = 500
@@ -127,15 +129,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const maxItems = Math.min(q.items.length, 5)
     for (let i = 0; i < maxItems; i++) {
       const itemY = y + 38 + i * 16
-      const { display: itDisplay, url: itUrl, value: itValue } = q.items[i]
+      const entry = q.items[i]
+      const { display: itDisplay, url: itUrl, value: itValue } = entry
       // Reserve space for the dim value suffix when present so the label
       // isn't the only thing that gets squeezed.
       const valueSuffix = itValue ? ` · ${itValue}` : ''
       const totalBudget = bulletMax
       const valBudget   = itValue ? Math.min(itValue.length + 3, Math.floor(totalBudget * 0.4)) : 0
       const lblBudget   = totalBudget - valBudget
+      // Tooltip carries full label + value + attrs even though attrs aren't
+      // visually displayed in the bullet text.
+      const fullTip = itemTitleTag({ label: entry.rawLabel, value: itValue, attrs: entry.attrs })
       svgContent += aWrap(
         `<text x="${x + 10}" y="${itemY}" font-size="10" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.85">` +
+        fullTip +
         `<tspan>• ${tt(itDisplay, lblBudget)}</tspan>` +
         (itValue ? `<tspan opacity="0.7">${tt(valueSuffix, valBudget)}</tspan>` : '') +
         `</text>`,

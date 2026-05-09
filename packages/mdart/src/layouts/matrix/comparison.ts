@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, type ItemLike } from '../shared'
 
 function lerpColorLocal(c1: string, c2: string, t: number): string {
   const hexToRgb = (hex: string) => {
@@ -25,9 +25,12 @@ function labelText(
   label: string,
   wrap: { lines: string[]; truncated: boolean; url?: string | null },
   lineH = LINE_H,
+  item?: ItemLike,
 ): string {
   const { lines, truncated, url = null } = wrap
-  const tip   = truncated ? `<title>${escapeXml(label)}</title>` : ''
+  // Prefer full item summary (label + value + attrs) so attrs are never silently dropped.
+  // Fall back to label-on-truncation when no item context is available.
+  const tip   = item ? itemTitleTag(item) : (truncated ? `<title>${escapeXml(label)}</title>` : '')
   const spans = lines
     .map((l, i) => `<tspan x="${cx}" dy="${i === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
     .join('')
@@ -105,6 +108,12 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
       return child?.value ?? (child ? '✓' : '—')
     })
   )
+  const cellItems: (ItemLike | undefined)[][] = rowLabels.map((rowLabel, ri) =>
+    dataCols.map(col => {
+      if (isPositional) return col.children[ri]
+      return col.children.find(ch => ch.label === rowLabel)
+    })
+  )
   const rowLabelWraps = rowLabels.map(rl => wrapLabel(rl, rowMax, 5))
   const cellWraps     = cellValues.map(row => row.map(v => wrapLabel(v, cellMax, 5)))
 
@@ -144,7 +153,7 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
     const hy   = centerY(baseY, HEADER_H, hw.lines.length)
     svg += labelText(colX + COL_W / 2, hy,
       `text-anchor="middle" font-size="12" fill="#bfdbfe" font-family="system-ui,sans-serif" font-weight="700"`,
-      col.label, hw)
+      col.label, hw, LINE_H, col)
   }
 
   // Header / data separator
@@ -170,9 +179,10 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
       const colX = LABEL_W + ci * COL_W
       const val  = cellValues[ri][ci]
       const cw   = cellWraps[ri][ci]
+      const ci_  = cellItems[ri][ci]
       svg += labelText(colX + COL_W / 2, centerY(ry, rH, cw.lines.length),
         `text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif"`,
-        val, cw)
+        val, cw, LINE_H, ci_)
     }
 
     svg += `<line x1="0" y1="${ry + rH}" x2="${W}" y2="${ry + rH}" stroke="${theme.border}" stroke-width="0.5" />`
@@ -245,6 +255,12 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
       return row.children[ci]?.label ?? '—'
     })
   )
+  const cellItems: (ItemLike | undefined)[][] = dataRows.map(row =>
+    colLabels.map((colLabel, ci) => {
+      const kvChild = row.children.find(ch => ch.label === colLabel)
+      return kvChild ?? row.children[ci]
+    })
+  )
   const rowLabelWraps = dataRows.map(r => wrapLabel(r.label, rowMax, 5))
   const cellWraps     = cellValues.map(row => row.map(v => wrapLabel(v, cellMax, 5)))
 
@@ -300,7 +316,7 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
     const rlW = rowLabelWraps[ri]
     svg += labelText(LABEL_W / 2, centerY(ry, rH, rlW.lines.length),
       `text-anchor="middle" font-size="11" fill="#bfdbfe" font-family="system-ui,sans-serif" font-weight="700"`,
-      row.label, rlW)
+      row.label, rlW, LINE_H, row)
 
     const rowBg = ri % 2 === 0 ? theme.surface : theme.bg
     svg += `<rect x="${LABEL_W}" y="${ry}" width="${W - LABEL_W}" height="${rH}" fill="${rowBg}" />`
@@ -309,10 +325,11 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
       const colX = LABEL_W + ci * COL_W
       const val  = cellValues[ri][ci]
       const cw   = cellWraps[ri][ci]
+      const ci_  = cellItems[ri][ci]
       svg += `<rect x="${colX}" y="${ry}" width="${COL_W}" height="${rH}" fill="${rowBg}" />`
       svg += labelText(colX + COL_W / 2, centerY(ry, rH, cw.lines.length),
         `text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif"`,
-        val, cw)
+        val, cw, LINE_H, ci_)
     }
 
     svg += `<line x1="0" y1="${ry + rH}" x2="${W}" y2="${ry + rH}" stroke="${theme.border}" stroke-width="0.5" />`

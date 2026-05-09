@@ -58,7 +58,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const anchor = Math.cos(a) > 0.15 ? 'start' : Math.cos(a) < -0.15 ? 'end' : 'middle'
     // value renders as the polygon vertex distance; attrs need ellipsis cue
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true })
-    parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, 12)}</text>`, itmUrl))
+    parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, 12, item)}</text>`, itmUrl))
   })
 
   return svg(W, H, theme, spec.title, parts)

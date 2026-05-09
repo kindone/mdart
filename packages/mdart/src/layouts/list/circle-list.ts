@@ -90,7 +90,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Text block vertically centred in rowH
     const lblStartY = y + (rowH - blockH) / 2 + LBL_FS * 0.75
 
-    const lblTip   = lblTrunc ? `<title>${escapeXml(lblLines.join(' '))}</title>` : ''
+    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')

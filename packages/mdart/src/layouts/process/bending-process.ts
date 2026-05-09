@@ -46,10 +46,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
     if (item.value) {
       // Two-line stack: bold label above midline, muted value below.
-      parts.push(aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 17).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, Math.floor(BOX_W / 6))}</text>`, itmUrl))
+      parts.push(aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 17).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, Math.floor(BOX_W / 6), item)}</text>`, itmUrl))
       parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 32).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, Math.floor(BOX_W / 5))}</text>`)
     } else {
-      parts.push(aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, Math.floor(BOX_W / 6))}</text>`, itmUrl))
+      parts.push(aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, Math.floor(BOX_W / 6), item)}</text>`, itmUrl))
     }
 
     if (i < n - 1) {

@@ -45,7 +45,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     rows.push(
       `<rect x="${BAR_X}" y="${barY}" width="${BAR_W}" height="16" rx="8" fill="${theme.muted}33">${itemTitleTag(item)}</rect>`,
       `<rect x="${BAR_X}" y="${barY}" width="${fillW.toFixed(1)}" height="16" rx="8" fill="${barColor}">${itemTitleTag(item)}</rect>`,
-      aWrap(`<text x="${LABEL_W}" y="${barY + 11}" text-anchor="end" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, 20)}</text>`, itmUrl),
+      aWrap(`<text x="${LABEL_W}" y="${barY + 11}" text-anchor="end" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, 20, item)}</text>`, itmUrl),
       `<text x="${BAR_X + BAR_W + 8}" y="${barY + 11}" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${pct % 1 === 0 ? pct : pct.toFixed(1)}%</text>`,
     )
   }

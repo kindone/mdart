@@ -39,7 +39,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(
       `<path d="M${(x + 6).toFixed(1)},${y.toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${x.toFixed(1)},${(y + 6).toFixed(1)} L${x.toFixed(1)},${(y + HEADER_H).toFixed(1)} L${(x + ENT_W).toFixed(1)},${(y + HEADER_H).toFixed(1)} L${(x + ENT_W).toFixed(1)},${(y + 6).toFixed(1)} Q${(x + ENT_W).toFixed(1)},${y.toFixed(1)} ${(x + ENT_W - 6).toFixed(1)},${y.toFixed(1)} Z" fill="${theme.accent}33"/>`,
     )
-    parts.push(aWrap(`<text x="${(x + ENT_W / 2).toFixed(1)}" y="${(y + 19).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(entDisplay, 14)}</text>`, entUrl))
+    parts.push(aWrap(`<text x="${(x + ENT_W / 2).toFixed(1)}" y="${(y + 19).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(entDisplay, 14, entity)}</text>`, entUrl))
     parts.push(`<line x1="${x.toFixed(1)}" y1="${(y + HEADER_H).toFixed(1)}" x2="${(x + ENT_W).toFixed(1)}" y2="${(y + HEADER_H).toFixed(1)}" stroke="${theme.accent}44" stroke-width="1"/>`)
 
     entity.children.forEach((field, fi) => {
@@ -51,7 +51,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       // Field already shows attrs as PK/FK badges where applicable, so
       // shows.attrs=true; value (e.g. type after `name: text`) is dropped.
       const { display: fldDisplay, url: fldUrl } = displayLabel(field, { attrs: true })
-      parts.push(aWrap(`<text x="${(x + 10).toFixed(1)}" y="${fy.toFixed(1)}" font-size="10" fill="${textColor}" font-family="ui-monospace,monospace">${itemTitleTag(field)}${tt(fldDisplay, 16)}</text>`, fldUrl))
+      parts.push(aWrap(`<text x="${(x + 10).toFixed(1)}" y="${fy.toFixed(1)}" font-size="10" fill="${textColor}" font-family="ui-monospace,monospace">${itemTitleTag(field)}${tt(fldDisplay, 16, field)}</text>`, fldUrl))
 
       if (isPK || isFK) {
         const badge = isPK ? 'PK' : 'FK'

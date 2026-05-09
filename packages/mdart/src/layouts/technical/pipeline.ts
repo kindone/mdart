@@ -36,7 +36,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(
       `<rect x="${x.toFixed(1)}" y="${stageY.toFixed(1)}" width="${STAGE_W.toFixed(1)}" height="${STAGE_H}" rx="6" fill="${fill}33" stroke="${fill}99" stroke-width="1.5">${itemTitleTag(item)}</rect>`,
     )
-    parts.push(aWrap(`<text x="${(x + STAGE_W / 2).toFixed(1)}" y="${(stageY + STAGE_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, Math.floor(STAGE_W / 7))}</text>`, itmUrl))
+    parts.push(aWrap(`<text x="${(x + STAGE_W / 2).toFixed(1)}" y="${(stageY + STAGE_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, Math.floor(STAGE_W / 7), item)}</text>`, itmUrl))
 
     if (i < n - 1) {
       const ax = x + STAGE_W + 4

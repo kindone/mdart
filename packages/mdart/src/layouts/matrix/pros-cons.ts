@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -27,7 +27,9 @@ function colText(
   prefix: string,
 ): string {
   const { lines, truncated, url } = layout
-  const tip = truncated ? `<title>${escapeXml(item.label)}</title>` : ''
+  // Always emit a tooltip with the full item summary (label + value + attrs);
+  // the truncation tip is now subsumed by it.
+  const tip = itemTitleTag(item) || (truncated ? `<title>${escapeXml(item.label)}</title>` : '')
   // First span carries the prefix; continuation lines align to textX
   const spans = lines
     .map((l, li) => li === 0

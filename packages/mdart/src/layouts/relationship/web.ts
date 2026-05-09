@@ -40,7 +40,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const [nx, ny] = pos[i]
     const { display: itmDisplay, url: itmUrl } = displayLabel(item)
     parts.push(`<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${nodeR}" fill="${theme.surface}" stroke="${theme.primary}99" stroke-width="1.8">${itemTitleTag(item)}</circle>`)
-    parts.push(aWrap(`<text x="${nx.toFixed(1)}" y="${(ny + 4).toFixed(1)}" text-anchor="middle" font-size="${Math.max(8, Math.min(10, nodeR * 0.5)).toFixed(0)}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, 9)}</text>`, itmUrl))
+    parts.push(aWrap(`<text x="${nx.toFixed(1)}" y="${(ny + 4).toFixed(1)}" text-anchor="middle" font-size="${Math.max(8, Math.min(10, nodeR * 0.5)).toFixed(0)}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, 9, item)}</text>`, itmUrl))
   })
   return svg(W, H, theme, spec.title, parts)
 }

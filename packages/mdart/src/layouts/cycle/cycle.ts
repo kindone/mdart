@@ -88,10 +88,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     svgContent += `<rect x="${(nx - hw).toFixed(1)}" y="${(ny - hh).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${fill}">${itemTitleTag(item)}</rect>`
     if (item.value) {
       // Two-line layout: label up top, value as dimmer subtitle below.
-      svgContent += aWrap(`<text x="${nx.toFixed(1)}" y="${(ny - 1).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 14)}</text>`, lblUrl)
+      svgContent += aWrap(`<text x="${nx.toFixed(1)}" y="${(ny - 1).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 14, item)}</text>`, lblUrl)
       svgContent += `<text x="${nx.toFixed(1)}" y="${(ny + 12).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(tt(item.value, 18))}</text>`
     } else {
-      svgContent += aWrap(`<text x="${nx.toFixed(1)}" y="${(ny + 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 14)}</text>`, lblUrl)
+      svgContent += aWrap(`<text x="${nx.toFixed(1)}" y="${(ny + 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 14, item)}</text>`, lblUrl)
     }
   }
 

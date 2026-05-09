@@ -57,7 +57,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const cosTheta = Math.cos(theta)
     const labelX = cosTheta >= 0 ? mx + dotR + 4 : mx - dotR - 4
     const anchor = cosTheta >= 0 ? 'start' : 'end'
-    parts.push(aWrap(`<text x="${labelX.toFixed(1)}" y="${(my + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 14)}</text>`, lblUrl))
+    parts.push(aWrap(`<text x="${labelX.toFixed(1)}" y="${(my + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 14, item)}</text>`, lblUrl))
   }
 
   return svgWrap(W, H, theme, parts)

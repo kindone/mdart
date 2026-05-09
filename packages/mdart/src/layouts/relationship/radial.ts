@@ -21,7 +21,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (item) {
       const { display: itmDisplay, url: itmUrl } = displayLabel(item)
       parts.push(`<rect x="${(sx - 52).toFixed(1)}" y="${(sy - 18).toFixed(1)}" width="104" height="36" rx="5" fill="${theme.surface}" stroke="${theme.primary}66" stroke-width="1.2">${itemTitleTag(item)}</rect>`)
-      parts.push(aWrap(`<text x="${sx.toFixed(1)}" y="${(sy + 5).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, 12)}</text>`, itmUrl))
+      parts.push(aWrap(`<text x="${sx.toFixed(1)}" y="${(sy + 5).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, 12, item)}</text>`, itmUrl))
       // Render children on the OUTER side of the box (away from the hub) so
       // they never sit on top of the connector line. For upper-half boxes the
       // outer side is above; for lower-half (or pure horizontal) it stays below.

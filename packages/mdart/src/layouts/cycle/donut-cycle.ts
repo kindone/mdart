@@ -47,10 +47,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const ly = cy + labelR * Math.sin(midAngle)
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
     if (item.value) {
-      svgContent += aWrap(`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10)}</text>`, lblUrl)
+      svgContent += aWrap(`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10, item)}</text>`, lblUrl)
       svgContent += `<text x="${lx}" y="${ly + 11}" text-anchor="middle" font-size="8" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(tt(item.value, 12))}</text>`
     } else {
-      svgContent += aWrap(`<text x="${lx}" y="${ly + 4}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10)}</text>`, lblUrl)
+      svgContent += aWrap(`<text x="${lx}" y="${ly + 4}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10, item)}</text>`, lblUrl)
     }
   }
 
