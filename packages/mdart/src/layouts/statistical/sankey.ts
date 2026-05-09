@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -33,7 +33,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       flows.push({ si, dst: ch.label, w: fw })
       dstMap.set(ch.label, (dstMap.get(ch.label) ?? 0) + fw)
       if (!dstDisplayMap.has(ch.label)) {
-        const { display, url } = parseLink(ch.label)
+        // ch already exposes value/attrs — apply ellipsis cue when value/attrs
+        // would otherwise be hidden in the dst column (only label is shown).
+        const { display, url } = displayLabel(ch, { value: !!ch.value })
         dstDisplayMap.set(ch.label, display)
         dstUrlMap.set(ch.label, url)
       }
@@ -88,8 +90,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   srcNodes.forEach((n, i) => {
     const col = colors[i % colors.length]
-    const { display: srcDisplay, url: srcUrl } = parseLink(items[i].label)
-    parts.push(`<rect x="0" y="${n.y.toFixed(1)}" width="${BOX_W - 8}" height="${n.h.toFixed(1)}" rx="4" fill="${col}44" stroke="${col}99" stroke-width="1"/>`)
+    const item = items[i]
+    const { display: srcDisplay, url: srcUrl } = displayLabel(item, { value: !!item.value, attrs: !!item.attrs?.length })
+    parts.push(`<rect x="0" y="${n.y.toFixed(1)}" width="${BOX_W - 8}" height="${n.h.toFixed(1)}" rx="4" fill="${col}44" stroke="${col}99" stroke-width="1">${itemTitleTag(item)}</rect>`)
     if (n.h >= 14) parts.push(aWrap(`<text x="${(BOX_W - 8) / 2}" y="${(n.y + n.h / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(srcDisplay, 13)}</text>`, srcUrl))
   })
 

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -49,15 +49,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   rows.forEach((row, r) => {
     const rowY = TITLE_H + HEADER_H + r * CELL_H
-    const { display: rowDisplay, url: rowUrl } = parseLink(row.label)
-    parts.push(`<rect x="0" y="${rowY}" width="${LABEL_W}" height="${CELL_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
+    const { display: rowDisplay, url: rowUrl } = displayLabel(row)
+    parts.push(`<rect x="0" y="${rowY}" width="${LABEL_W}" height="${CELL_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`)
     parts.push(aWrap(`<text x="8" y="${(rowY + 25).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(rowDisplay, 12)}</text>`, rowUrl))
     row.children.slice(0, numCols).forEach((cell, c) => {
       const colX = LABEL_W + c * CELL_W
       const raw = (cell.value ?? cell.attrs[0] ?? cell.label.match(/[\d.]+/)?.[0] ?? '0').replace('%', '')
       const v = Math.min((parseFloat(raw) || 0) / maxVal, 1)
       const alpha = Math.round(18 + v * 210).toString(16).padStart(2, '0')
-      parts.push(`<rect x="${colX}" y="${rowY}" width="${CELL_W}" height="${CELL_H}" fill="${theme.primary}${alpha}" stroke="${theme.border}55" stroke-width="0.5"/>`)
+      parts.push(`<rect x="${colX}" y="${rowY}" width="${CELL_W}" height="${CELL_H}" fill="${theme.primary}${alpha}" stroke="${theme.border}55" stroke-width="0.5">${itemTitleTag(cell)}</rect>`)
       const textFill = v > 0.55 ? theme.bg : theme.text
       // Prefer the cell's value (e.g. "5"); fall back to label when absent.
       const cellText = cell.value ?? cell.label

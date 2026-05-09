@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, titleEl, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { lerpColor, titleEl, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -30,8 +30,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const isResult = i === n - 1
     const t = n > 1 ? i / (n - 1) : 0
     const fill = isResult ? theme.accent : lerpColor(theme.primary, theme.secondary, t)
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
-    parts.push(`<rect x="${x.toFixed(1)}" y="${cardY.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${CARD_H}" rx="7" fill="${fill}22" stroke="${fill}88" stroke-width="1.5"/>`)
+    // shows.value=true when value is the body, shows.children=true when children are body
+    const showsBody = !!(item.children.length || item.value)
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: showsBody })
+    parts.push(`<rect x="${x.toFixed(1)}" y="${cardY.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${CARD_H}" rx="7" fill="${fill}22" stroke="${fill}88" stroke-width="1.5">${itemTitleTag(item)}</rect>`)
     parts.push(`<rect x="${x.toFixed(1)}" y="${cardY.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="22" rx="7" fill="${fill}"/>`)
     parts.push(`<rect x="${x.toFixed(1)}" y="${(cardY + 14).toFixed(1)}" width="${CARD_W.toFixed(1)}" height="8" fill="${fill}"/>`)
     parts.push(aWrap(`<text x="${(x + CARD_W / 2).toFixed(1)}" y="${(cardY + 14).toFixed(1)}" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, 14)}</text>`, itmUrl))

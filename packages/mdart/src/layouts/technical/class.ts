@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, truncate, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, truncate, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -55,7 +55,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const isSpecial = isAbstract || isInterface
 
     parts.push(
-      `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CLASS_W}" height="${totalH}" rx="5" fill="${theme.surface}" stroke="${theme.accent}77" stroke-width="1.5"/>`,
+      // Class container — tooltip carries full label/value/attrs (interface,
+      // abstract, etc. already shown as «stereo» but other attrs would drop)
+      `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CLASS_W}" height="${totalH}" rx="5" fill="${theme.surface}" stroke="${theme.accent}77" stroke-width="1.5">${itemTitleTag(cls)}</rect>`,
       `<path d="M${(x+5).toFixed(1)},${y.toFixed(1)} L${(x+CLASS_W-5).toFixed(1)},${y.toFixed(1)} Q${(x+CLASS_W).toFixed(1)},${y.toFixed(1)} ${(x+CLASS_W).toFixed(1)},${(y+5).toFixed(1)} L${(x+CLASS_W).toFixed(1)},${(y+HEADER_H).toFixed(1)} L${x.toFixed(1)},${(y+HEADER_H).toFixed(1)} L${x.toFixed(1)},${(y+5).toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${(x+5).toFixed(1)},${y.toFixed(1)} Z" fill="${theme.accent}22"/>`,
     )
 
@@ -64,7 +66,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       parts.push(`<text x="${(x + CLASS_W/2).toFixed(1)}" y="${(y + 11).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.accent}99" font-family="system-ui,sans-serif">${stereo}</text>`)
     }
     const nameY = isSpecial ? y + 24 : y + 19
-    const { display: clsDisplay, url: clsUrl } = parseLink(cls.label)
+    const { display: clsDisplay, url: clsUrl } = displayLabel(cls, { attrs: true })
     parts.push(
       aWrap(`<text x="${(x + CLASS_W/2).toFixed(1)}" y="${nameY.toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="ui-monospace,monospace" font-weight="700"${isSpecial ? ' font-style="italic"' : ''}>${tt(clsDisplay, Math.floor(CLASS_W / 7))}</text>`, clsUrl),
       `<line x1="${x.toFixed(1)}" y1="${(y + HEADER_H).toFixed(1)}" x2="${(x + CLASS_W).toFixed(1)}" y2="${(y + HEADER_H).toFixed(1)}" stroke="${theme.accent}44" stroke-width="1"/>`,

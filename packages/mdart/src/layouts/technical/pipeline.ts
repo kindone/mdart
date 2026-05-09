@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -32,9 +32,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = i / Math.max(n - 1, 1)
     const fill = lerpColor(theme.primary, theme.secondary, t)
 
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item)
     parts.push(
-      `<rect x="${x.toFixed(1)}" y="${stageY.toFixed(1)}" width="${STAGE_W.toFixed(1)}" height="${STAGE_H}" rx="6" fill="${fill}33" stroke="${fill}99" stroke-width="1.5"/>`,
+      `<rect x="${x.toFixed(1)}" y="${stageY.toFixed(1)}" width="${STAGE_W.toFixed(1)}" height="${STAGE_H}" rx="6" fill="${fill}33" stroke="${fill}99" stroke-width="1.5">${itemTitleTag(item)}</rect>`,
     )
     parts.push(aWrap(`<text x="${(x + STAGE_W / 2).toFixed(1)}" y="${(stageY + STAGE_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, Math.floor(STAGE_W / 7))}</text>`, itmUrl))
 

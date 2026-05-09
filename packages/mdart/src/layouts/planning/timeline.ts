@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -45,12 +45,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const stemY2 = above ? LINE_Y - r - stemH : LINE_Y + r + stemH
 
     parts.push(`<line x1="${x.toFixed(1)}" y1="${stemY1.toFixed(1)}" x2="${x.toFixed(1)}" y2="${stemY2.toFixed(1)}" stroke="${theme.border}" stroke-width="1"/>`)
-    parts.push(`<circle cx="${x.toFixed(1)}" cy="${LINE_Y}" r="${r}" fill="${dotFill}" stroke="${dotStroke}" stroke-width="${active ? 2 : 1.5}"/>`)
+    parts.push(`<circle cx="${x.toFixed(1)}" cy="${LINE_Y}" r="${r}" fill="${dotFill}" stroke="${dotStroke}" stroke-width="${active ? 2 : 1.5}">${itemTitleTag(item)}</circle>`)
     if (done && !active) {
       parts.push(`<text x="${x.toFixed(1)}" y="${(LINE_Y+4).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.accent}" font-family="system-ui,sans-serif">✓</text>`)
     }
 
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    // value rendered as the date/sublabel; active/done shown via dot styling.
+    // Other attrs would silently drop without ellipsis cue.
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value, attrs: true })
     const mainLabel = itmDisplay
     const subLabel = item.value ?? ''
     const anchor = i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'

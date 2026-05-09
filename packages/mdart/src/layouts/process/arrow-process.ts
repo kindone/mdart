@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, tt, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, tt, aWrap, itemTitleTag, displayLabel } from '../shared'
 import { render as renderVerticalFallback } from './process'
 
 function wrapText(text: string, maxChars: number): string[] {
@@ -47,10 +47,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const x = startX + i * (BOX_W + ARROW_W)
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
-    parts.push(`<rect x="${x.toFixed(1)}" y="${bY}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="2"/>`)
+    parts.push(`<rect x="${x.toFixed(1)}" y="${bY}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="2">${itemTitleTag(item)}</rect>`)
     const cy = bY + BOX_H / 2
     const hasValue = !!item.value
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: hasValue })
     const lines = wrapText(itmDisplay, Math.floor(BOX_W / 7))
     // When a value is present, cap the label at 2 lines to leave room for it.
     const labelLines = lines.slice(0, hasValue ? 2 : 3)

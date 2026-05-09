@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, type ItemLike } from '../shared'
 
 // ── Node geometry ────────────────────────────────────────────────────────────
 // Three tiers, each an ellipse. rx/ry chosen so 2 wrapped lines fit.
@@ -35,8 +35,11 @@ function mlText(
   lineH: number,
   fill: string,
   weight = 'normal',
+  ellipsisItem?: ItemLike,
 ): string {
-  const { lines, truncated, url } = wrapLabel(label, maxChars, 3)
+  // Apply ellipsis cue when value/attrs would otherwise be invisible.
+  const labelStr = ellipsisItem ? ellipsisIfDropped(label, ellipsisItem) : label
+  const { lines, truncated, url } = wrapLabel(labelStr, maxChars, 3)
   // Shift baseline up by half the total text-block height so it centers in the ellipse
   const startY = y - (lines.length - 1) * lineH / 2 + fontSize * 0.32
   const tip    = truncated ? `<title>${escapeXml(label)}</title>` : ''
@@ -81,8 +84,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const branch = branches[i]
 
     connectors.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${theme.accent}99" stroke-width="2"/>`)
-    shapes.push(`<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="${BRANCH_RX}" ry="${BRANCH_RY}" fill="${theme.surface}" stroke="${theme.accent}cc" stroke-width="1"/>`)
-    texts.push(mlText(bx, by, branch.label, BRANCH_MC, BRANCH_FS, BRANCH_LH, theme.text))
+    shapes.push(`<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="${BRANCH_RX}" ry="${BRANCH_RY}" fill="${theme.surface}" stroke="${theme.accent}cc" stroke-width="1">${itemTitleTag(branch)}</ellipse>`)
+    texts.push(mlText(bx, by, branch.label, BRANCH_MC, BRANCH_FS, BRANCH_LH, theme.text, 'normal', branch))
 
     // ── Sub-nodes ──────────────────────────────────────────────────────────────
     const subs = branch.children
@@ -98,8 +101,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const sy = by + R2 * Math.sin(subAngle)
 
       connectors.push(`<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1" opacity="0.7"/>`)
-      shapes.push(`<ellipse cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" rx="${SUB_RX}" ry="${SUB_RY}" fill="${theme.surface}" stroke="${theme.textMuted}aa" stroke-width="1"/>`)
-      texts.push(mlText(sx, sy, subs[j].label, SUB_MC, SUB_FS, SUB_LH, theme.textMuted))
+      shapes.push(`<ellipse cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" rx="${SUB_RX}" ry="${SUB_RY}" fill="${theme.surface}" stroke="${theme.textMuted}aa" stroke-width="1">${itemTitleTag(subs[j])}</ellipse>`)
+      texts.push(mlText(sx, sy, subs[j].label, SUB_MC, SUB_FS, SUB_LH, theme.textMuted, 'normal', subs[j]))
     }
   }
 

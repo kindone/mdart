@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -62,15 +62,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     })
   })
 
+  // Find the original item for each label so we can carry value/attrs
+  const itemByLabel = new Map(items.map(it => [it.label, it]))
   const topLevelSet = new Set(items.map(it => it.label))
   allLabels.forEach((label, i) => {
     const { x, y } = positions[i]
     const isTop = topLevelSet.has(label)
     const stroke = isTop ? `${theme.accent}bb` : `${theme.muted}aa`
     const fill = isTop ? theme.surface : `${theme.surface}cc`
-    const { display: lblDisplay, url: lblUrl } = parseLink(label)
+    const sourceItem = itemByLabel.get(label)
+    const { display: rawDisplay, url: lblUrl } = parseLink(label)
+    const lblDisplay = sourceItem ? ellipsisIfDropped(rawDisplay, sourceItem) : rawDisplay
+    const tip = sourceItem ? itemTitleTag(sourceItem) : ''
     nodes.push(
-      `<rect x="${(x - NODE_W / 2).toFixed(1)}" y="${(y - NODE_H / 2).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="1.2"/>`,
+      `<rect x="${(x - NODE_W / 2).toFixed(1)}" y="${(y - NODE_H / 2).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="1.2">${tip}</rect>`,
     )
     nodes.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(lblDisplay, 13)}</text>`, lblUrl))
   })

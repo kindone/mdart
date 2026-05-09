@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 // hierarchy-list renders a compact tree outline; rows are intentionally tight.
@@ -24,15 +24,16 @@ const MAX_D2 = Math.max(20, Math.floor((W - PAD * 2 - INDENT * 2) / 5.5)) // ~90
 // ── Renderer ─────────────────────────────────────────────────────────────────
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  interface Row { label: string; truncated: boolean; url: string | null; depth: number; isLast: boolean; parentHasSibling: boolean[] }
+  interface Row { label: string; truncated: boolean; url: string | null; depth: number; isLast: boolean; parentHasSibling: boolean[]; src: MdArtItem }
   const rows: Row[] = []
 
   function flatten(items: MdArtItem[], depth: number, phs: boolean[]) {
     items.forEach((item, i) => {
       const isLast  = i === items.length - 1
       const maxChars = depth === 0 ? MAX_D0 : depth === 1 ? MAX_D1 : MAX_D2
-      const { lines, truncated, url } = wrapLabel(item.label, maxChars, 1)
-      rows.push({ label: lines[0], truncated, url, depth, isLast, parentHasSibling: [...phs] })
+      const labelStr = ellipsisIfDropped(item.label, item)
+      const { lines, truncated, url } = wrapLabel(labelStr, maxChars, 1)
+      rows.push({ label: lines[0], truncated, url, depth, isLast, parentHasSibling: [...phs], src: item })
       flatten(item.children, depth + 1, [...phs, !isLast])
     })
   }
@@ -70,7 +71,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const bR   = row.depth === 0 ? 5 : row.depth === 1 ? 3.5 : 2.5
     const bFill = row.depth === 0 ? theme.accent : row.depth === 1 ? theme.primary : theme.secondary
-    parts.push(`<circle cx="${(bulletX + bR).toFixed(1)}" cy="${y.toFixed(1)}" r="${bR}" fill="${bFill}"/>`)
+    parts.push(`<circle cx="${(bulletX + bR).toFixed(1)}" cy="${y.toFixed(1)}" r="${bR}" fill="${bFill}">${itemTitleTag(row.src)}</circle>`)
 
     const textX = bulletX + bR * 2 + 4
     const fs    = row.depth === 0 ? FS_D0 : row.depth === 1 ? FS_D1 : FS_D2

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -34,8 +34,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const x = startX + i * (ENT_W + GAP)
     const y = TITLE_H + 12
 
-    const { display: entDisplay, url: entUrl } = parseLink(entity.label)
-    parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${ENT_W}" height="${ENT_H}" rx="6" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.5"/>`)
+    const { display: entDisplay, url: entUrl } = displayLabel(entity)
+    parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${ENT_W}" height="${ENT_H}" rx="6" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.5">${itemTitleTag(entity)}</rect>`)
     parts.push(
       `<path d="M${(x + 6).toFixed(1)},${y.toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${x.toFixed(1)},${(y + 6).toFixed(1)} L${x.toFixed(1)},${(y + HEADER_H).toFixed(1)} L${(x + ENT_W).toFixed(1)},${(y + HEADER_H).toFixed(1)} L${(x + ENT_W).toFixed(1)},${(y + 6).toFixed(1)} Q${(x + ENT_W).toFixed(1)},${y.toFixed(1)} ${(x + ENT_W - 6).toFixed(1)},${y.toFixed(1)} Z" fill="${theme.accent}33"/>`,
     )
@@ -48,8 +48,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const isFK = field.attrs.includes('FK')
       const textColor = isPK ? theme.accent : isFK ? `${theme.secondary}ee` : theme.textMuted
 
-      const { display: fldDisplay, url: fldUrl } = parseLink(field.label)
-      parts.push(aWrap(`<text x="${(x + 10).toFixed(1)}" y="${fy.toFixed(1)}" font-size="10" fill="${textColor}" font-family="ui-monospace,monospace">${tt(fldDisplay, 16)}</text>`, fldUrl))
+      // Field already shows attrs as PK/FK badges where applicable, so
+      // shows.attrs=true; value (e.g. type after `name: text`) is dropped.
+      const { display: fldDisplay, url: fldUrl } = displayLabel(field, { attrs: true })
+      parts.push(aWrap(`<text x="${(x + 10).toFixed(1)}" y="${fy.toFixed(1)}" font-size="10" fill="${textColor}" font-family="ui-monospace,monospace">${itemTitleTag(field)}${tt(fldDisplay, 16)}</text>`, fldUrl))
 
       if (isPK || isFK) {
         const badge = isPK ? 'PK' : 'FK'

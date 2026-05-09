@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -27,7 +27,9 @@ interface RowLayout {
 }
 
 function computeRow(item: MdArtSpec['items'][number]): RowLayout {
-  const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(item.label, LABEL_MAX, 5)
+  // Status tag uses value or attrs; other attrs would drop silently.
+  const labelStr = ellipsisIfDropped(item.label, item, { value: !!item.value, attrs: true })
+  const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(labelStr, LABEL_MAX, 5)
   const rowH = Math.max(MIN_ROW_H, PAD_T + lblLines.length * LBL_LH + PAD_B)
   return { lblLines, lblTrunc, lblUrl, rowH }
 }
@@ -78,7 +80,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const stroke = done || active ? theme.accent : theme.border
     const sw     = active ? 2.5 : 1.5
 
-    parts.push(`<rect x="${(LINE_X - s).toFixed(1)}" y="${(cy - s).toFixed(1)}" width="${(s * 2).toFixed(1)}" height="${(s * 2).toFixed(1)}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" transform="rotate(45 ${LINE_X} ${cy})"/>`)
+    parts.push(`<rect x="${(LINE_X - s).toFixed(1)}" y="${(cy - s).toFixed(1)}" width="${(s * 2).toFixed(1)}" height="${(s * 2).toFixed(1)}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" transform="rotate(45 ${LINE_X} ${cy})">${itemTitleTag(item)}</rect>`)
     if (done) {
       parts.push(`<text x="${LINE_X}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="700">✓</text>`)
     }

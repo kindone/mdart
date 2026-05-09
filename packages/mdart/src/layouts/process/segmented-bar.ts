@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, titleEl, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { lerpColor, titleEl, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -45,8 +45,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const isFirst = i === 0, isLast = i === items.length - 1
     const rl = isFirst ? 5 : 0, rr = isLast ? 5 : 0
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
-    parts.push(`<path d="${segPath(curX, BAR_Y, segW, BAR_H, rl, rr)}" fill="${fill}"/>`)
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true })
+    parts.push(`<path d="${segPath(curX, BAR_Y, segW, BAR_H, rl, rr)}" fill="${fill}">${itemTitleTag(item)}</path>`)
     const lx = curX + segW / 2
     parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(BAR_Y + BAR_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, Math.floor(segW / 7))}</text>`, itmUrl))
     parts.push(`<text x="${lx.toFixed(1)}" y="${(BAR_Y + BAR_H + 14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${fill}" font-family="system-ui,sans-serif">${item.value ?? Math.round(weights[i] / total * 100) + '%'}</text>`)

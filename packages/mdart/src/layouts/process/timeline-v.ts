@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, titleEl, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, titleEl, renderEmpty, itemTitleTag } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -125,8 +125,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t    = n > 1 ? i / (n - 1) : 0
     const fill = i === n - 1 ? theme.accent : lerpColor(theme.primary, theme.secondary, t)
 
-    // Dot on spine
-    parts.push(`<circle cx="${SPINE_X}" cy="${cy.toFixed(1)}" r="${DOT_R}" fill="${fill}"/>`)
+    // Dot on spine — tooltip carries full item summary
+    parts.push(`<circle cx="${SPINE_X}" cy="${cy.toFixed(1)}" r="${DOT_R}" fill="${fill}">${itemTitleTag(item)}</circle>`)
 
     // ── Left column: short tag (item.label), centred at dot, right-aligned ───
     if (tagLines.length > 0) {

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, renderEmpty, aWrap } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -34,6 +34,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   // Pre-compute card label wrapping for each column's cards
   type CardInfo = {
+    src: MdArtSpec['items'][0]['children'][0]
     lines: string[]
     truncated: boolean
     url: string | null
@@ -53,9 +54,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const cw      = COL_W - CARD_PAD * 2
       const ptsW    = pts > 0 ? 30 : 12
       const maxChars = Math.max(8, Math.floor((cw - (active ? 10 : 0) - ptsW) / 6.5))
-      const { lines, truncated, url } = wrapLabel(card.label, maxChars, 5)
+      // pts come from value or first numeric attr; done/active are visible.
+      // Ellipsis cue when other attrs would be invisible.
+      const cardLbl = ellipsisIfDropped(card.label, card, { value: pts > 0, attrs: true })
+      const { lines, truncated, url } = wrapLabel(cardLbl, maxChars, 5)
       const cardH   = CARD_PAD + lines.length * CARD_LH + CARD_PAD
-      return { lines, truncated, url, pts, done, active, cardH, cw }
+      return { src: card, lines, truncated, url, pts, done, active, cardH, cw }
     })
   })
 
@@ -79,7 +83,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const cards   = colCards[ci]
 
     // Column background + header
-    parts.push(`<rect x="${colX.toFixed(1)}" y="${colY}" width="${COL_W.toFixed(1)}" height="${colH}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>`)
+    parts.push(`<rect x="${colX.toFixed(1)}" y="${colY}" width="${COL_W.toFixed(1)}" height="${colH}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1">${itemTitleTag(col)}</rect>`)
     parts.push(`<path d="M${(colX + 8).toFixed(1)},${colY} Q${colX},${colY} ${colX},${colY + 8} L${colX},${colY + HEADER_H} L${(colX + COL_W).toFixed(1)},${colY + HEADER_H} L${(colX + COL_W).toFixed(1)},${colY + 8} Q${(colX + COL_W).toFixed(1)},${colY} ${(colX + COL_W - 8).toFixed(1)},${colY} Z" fill="${theme.accent}22"/>`)
 
     const colLabelMax = Math.max(6, Math.floor((COL_W - 10) / 6.5))
@@ -98,11 +102,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let cy = colY + HEADER_H + CARD_PAD
     cards.forEach((info) => {
       const cx      = colX + CARD_PAD
-      const { lines, truncated, url, pts, done, active, cardH, cw } = info
+      const { src, lines, truncated, url, pts, done, active, cardH, cw } = info
       const border  = active ? theme.accent : theme.border
       const tx      = cx + (active ? 10 : 6)
 
-      parts.push(`<rect x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" width="${cw.toFixed(1)}" height="${cardH}" rx="5" fill="${theme.bg}" stroke="${border}" stroke-width="${active ? 1.5 : 1}"/>`)
+      parts.push(`<rect x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" width="${cw.toFixed(1)}" height="${cardH}" rx="5" fill="${theme.bg}" stroke="${border}" stroke-width="${active ? 1.5 : 1}">${itemTitleTag(src)}</rect>`)
       if (active) {
         parts.push(`<rect x="${cx.toFixed(1)}" y="${(cy + 4).toFixed(1)}" width="3" height="${cardH - 8}" rx="1.5" fill="${theme.accent}"/>`)
       }

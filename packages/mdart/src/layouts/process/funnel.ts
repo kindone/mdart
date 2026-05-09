@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 /** Parse a strictly-numeric string (allowing commas, underscores, whitespace). */
 function parseNum(s: string): number | null {
@@ -62,12 +62,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const nextW = maxW - (maxW - minW) * nextT
     const nextX = (W - nextW) / 2
     const points = `${x},${y} ${x + w},${y} ${nextX + nextW},${y + STEP_H} ${nextX},${y + STEP_H}`
-    svg += `<polygon points="${points}" fill="${fill}"/>`
+    svg += `<polygon points="${points}" fill="${fill}">${itemTitleTag(item)}</polygon>`
 
     const m      = metrics[i]
     const bandCx = W / 2
 
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: m.raw !== null })
     if (m.raw !== null) {
       // Label small uppercase on top, metric BIG and bold below
       svg += aWrap(`<text x="${bandCx}" y="${y + 24}" text-anchor="middle" font-size="10" fill="#fff" fill-opacity="0.85" font-family="system-ui,sans-serif" font-weight="700" letter-spacing="0.08em">${escapeXml(itmDisplay.toUpperCase())}</text>`, itmUrl)

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 /**
  * pyramid-list — numbered horizontal bars, widening toward the bottom.
@@ -61,9 +61,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const barX = cx - barW / 2
     const fill = lerpColor(theme.primary, theme.muted, t * 0.65)
 
-    // Bar
+    // Bar — tooltip carries full item summary (label + value + attrs)
     parts.push(
-      `<rect x="${barX.toFixed(1)}" y="${y}" width="${barW.toFixed(1)}" height="${ROW_H}" rx="5" fill="${fill}"/>`
+      `<rect x="${barX.toFixed(1)}" y="${y}" width="${barW.toFixed(1)}" height="${ROW_H}" rx="5" fill="${fill}">${itemTitleTag(item)}</rect>`
     )
 
     // Number badge — fixed to left edge of bar
@@ -80,7 +80,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const valueW    = valueText ? valueText.length * 7 + 12 : 0
     const labelW    = Math.max(40, barW - valueW)
     const maxChars  = Math.max(5, Math.floor(labelW / 7.5))
-    const { lines, truncated, url: lblUrl } = wrapLabel(item.label, maxChars)
+    // value badge is drawn separately to the right; children render as a
+    // description below the bar. So shows.value=!!valueText and shows.children
+    // is implicit. Ellipsis fires when attrs are non-empty.
+    const labelStr = ellipsisIfDropped(item.label, item, { value: !!valueText })
+    const { lines, truncated, url: lblUrl } = wrapLabel(labelStr, maxChars)
     const firstY = y + ROW_H / 2 - ((lines.length - 1) * LINE_H) / 2 + 4
     const tip    = truncated ? `<title>${escapeXml(lines.join(' '))}</title>` : ''
     const tspans = lines

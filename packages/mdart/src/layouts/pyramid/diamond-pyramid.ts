@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 /**
  * diamond-pyramid — items arranged in a diamond (rhombus) shape.
@@ -59,7 +59,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.muted, theme.primary, 0.3 + midness * 0.7)
 
     shapes.push(
-      `<polygon points="${tL.toFixed(1)},${y.toFixed(1)} ${tR.toFixed(1)},${y.toFixed(1)} ${bR.toFixed(1)},${(y + LAYER_H).toFixed(1)} ${bL.toFixed(1)},${(y + LAYER_H).toFixed(1)}" fill="${fill}" stroke="${theme.bg}" stroke-width="2"/>`
+      `<polygon points="${tL.toFixed(1)},${y.toFixed(1)} ${tR.toFixed(1)},${y.toFixed(1)} ${bR.toFixed(1)},${(y + LAYER_H).toFixed(1)} ${bL.toFixed(1)},${(y + LAYER_H).toFixed(1)}" fill="${fill}" stroke="${theme.bg}" stroke-width="2">${itemTitleTag(item)}</polygon>`
     )
 
     // Label — inline if there's room, side label otherwise
@@ -70,7 +70,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
     // Inline-append value (% share, weight, etc.) — the diamond's narrow
     // top/bottom bands truncate gracefully when there's not enough room.
-    const labelWithValue = item.value ? `${lblDisplay} · ${item.value}` : lblDisplay
+    // Ellipsis cue when attrs would otherwise be invisible.
+    const baseWithValue = item.value ? `${lblDisplay} · ${item.value}` : lblDisplay
+    const labelWithValue = ellipsisIfDropped(baseWithValue, item, { value: true })
 
     labels.push(
       aWrap(`<text x="${cx.toFixed(1)}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tt(labelWithValue, maxChars)}</text>`, lblUrl)

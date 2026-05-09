@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, tt, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, tt, aWrap, itemTitleTag, displayLabel } from '../shared'
 import { render as renderProcess } from './process'
 
 function wrapText(text: string, maxChars: number): string[] {
@@ -61,13 +61,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     } else {
       pts = `${x},${y} ${x + chevW - P},${y} ${x + chevW},${cy} ${x + chevW - P},${y + chevH} ${x},${y + chevH} ${x + P},${cy}`
     }
-    parts.push(`<polygon points="${pts}" fill="${fill}ee" stroke="${theme.bg}" stroke-width="2.5"/>`)
+    parts.push(`<polygon points="${pts}" fill="${fill}ee" stroke="${theme.bg}" stroke-width="2.5">${itemTitleTag(item)}</polygon>`)
 
     const bodyX = x + (isFirst ? 0 : P / 2)
     const bodyW = chevW - (isFirst ? P : 0) - (isLast ? 0 : P)
     const tx = bodyX + bodyW / 2
     const hasValue = !!item.value
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: hasValue })
     const lines = wrapText(itmDisplay, Math.max(4, Math.floor(bodyW / 7)))
     // When a value is present, restrict the label to a single line so the
     // value can sit beneath it; otherwise fall back to the prior 2-line wrap.

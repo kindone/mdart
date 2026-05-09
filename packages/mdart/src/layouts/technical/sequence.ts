@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -52,13 +52,19 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const lifeY1 = TITLE_H + ACTOR_H + PAD_V
   const lifeY2 = H - 16
 
+  // Find original item per actor (some actors are added by flowChildren so
+  // may not have a top-level item — for those, we just render the label).
+  const itemByActor = new Map(spec.items.map(it => [it.label, it]))
   const actorBoxY = TITLE_H + 8
   actors.forEach((actor, i) => {
     const x = ax(i)
     const bw = Math.min(COL_W - 16, 96)
-    const { display: actDisplay, url: actUrl } = parseLink(actor)
+    const sourceItem = itemByActor.get(actor)
+    const { display: rawDisplay, url: actUrl } = parseLink(actor)
+    const actDisplay = sourceItem ? ellipsisIfDropped(rawDisplay, sourceItem, { value: false }) : rawDisplay
+    const tip = sourceItem ? itemTitleTag(sourceItem) : ''
     parts.push(
-      `<rect x="${(x - bw/2).toFixed(1)}" y="${actorBoxY.toFixed(1)}" width="${bw.toFixed(1)}" height="${ACTOR_H}" rx="5" fill="${theme.accent}22" stroke="${theme.accent}aa" stroke-width="1.5"/>`,
+      `<rect x="${(x - bw/2).toFixed(1)}" y="${actorBoxY.toFixed(1)}" width="${bw.toFixed(1)}" height="${ACTOR_H}" rx="5" fill="${theme.accent}22" stroke="${theme.accent}aa" stroke-width="1.5">${tip}</rect>`,
     )
     parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${(actorBoxY + 18).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(actDisplay, 11)}</text>`, actUrl))
   })

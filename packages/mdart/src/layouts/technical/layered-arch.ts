@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, lerpColor, renderEmpty, aWrap } from '../shared'
+import { escapeXml, wrapLabel, lerpColor, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ function computeLayer(
   // ── No-children: label spans full width ───────────────────────────────────
   if (!hasChildren) {
     const { lines: labelLines, truncated: labelTrunc, url: labelUrl } =
-      wrapLabel(layer.label, LABEL_FULL_MAX, MAX_LABEL_LINES)
+      wrapLabel(ellipsisIfDropped(layer.label, layer), LABEL_FULL_MAX, MAX_LABEL_LINES)
     const layerH = Math.max(MIN_LAYER_H, PAD_V + labelLines.length * LBL_LH + PAD_V)
     return { fill, labelLines, labelTrunc, labelUrl, hasChildren: false,
              cols: 0, chipW: 0, chipH: 0, numRows: 0, chips: [], layerH }
@@ -84,7 +84,7 @@ function computeLayer(
 
   // ── With children: label in left column, chips on right ───────────────────
   const { lines: labelLines, truncated: labelTrunc, url: labelUrl } =
-    wrapLabel(layer.label, LABEL_MAX, MAX_LABEL_LINES)
+    wrapLabel(ellipsisIfDropped(layer.label, layer), LABEL_MAX, MAX_LABEL_LINES)
 
   // Determine how many chips fit per row
   const n       = layer.children.length
@@ -143,8 +143,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { fill, labelLines, labelTrunc, labelUrl,
             hasChildren, cols, chipW, chipH, numRows, chips, layerH } = lc
 
-    // Band background
-    parts.push(`<rect x="${LAYER_LEFT}" y="${y.toFixed(1)}" width="${W - LAYER_LEFT - LAYER_RIGHT}" height="${layerH}" rx="8" fill="${fill}22" stroke="${fill}66" stroke-width="1.2"/>`)
+    // Band background — tooltip carries full layer item summary
+    parts.push(`<rect x="${LAYER_LEFT}" y="${y.toFixed(1)}" width="${W - LAYER_LEFT - LAYER_RIGHT}" height="${layerH}" rx="8" fill="${fill}22" stroke="${fill}66" stroke-width="1.2">${itemTitleTag(layers[i])}</rect>`)
 
     // ── Layer label (vertically centred in band) ─────────────────────────────
     const labelH    = labelLines.length * LBL_LH

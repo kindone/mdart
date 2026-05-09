@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -44,9 +44,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const legY = TITLE_H + PAD + GRID * (SQ + GAP) + 6
   items.forEach((item, i) => {
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    // Legend swatch + label. value (% share) is visible in the legend text;
+    // attrs would be silently dropped otherwise so ellipsis cue applies.
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true })
     const ly = legY + i * 22
-    parts.push(`<rect x="${PAD}" y="${ly}" width="12" height="12" rx="2" fill="${colors[i % colors.length]}"/>`)
+    parts.push(`<rect x="${PAD}" y="${ly}" width="12" height="12" rx="2" fill="${colors[i % colors.length]}">${itemTitleTag(item)}</rect>`)
     parts.push(aWrap(`<text x="${PAD + 16}" y="${ly + 10}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, 22)} (${squares[i]}%)</text>`, itmUrl))
   })
 

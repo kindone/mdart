@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
 
 function svgOut(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -73,7 +73,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const cards: string[] = []
 
-  items.forEach((_item, i) => {
+  items.forEach((item, i) => {
     const col   = i % cols
     const row   = Math.floor(i / cols)
     const x     = GAP + col * (CARD_W + GAP)
@@ -83,8 +83,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const cx = (x + CARD_W / 2).toFixed(1)
 
-    // Card background
-    cards.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${cardH}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>`)
+    // Card background — tooltip carries full label/value/attrs
+    cards.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${cardH}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1">${itemTitleTag(item)}</rect>`)
 
     // Big metric value
     cards.push(`<text x="${cx}" y="${(y + VAL_BL).toFixed(1)}" text-anchor="middle" font-size="${VAL_FS}" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(value)}</text>`)

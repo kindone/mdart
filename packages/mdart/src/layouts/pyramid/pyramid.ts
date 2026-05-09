@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, truncate, wrapLabel, aWrap, lerpColor, renderEmpty } from '../shared'
+import { escapeXml, truncate, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -43,7 +43,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.muted, narrowT * 0.7)
 
     shapes.push(
-      `<polygon points="${topLeft.toFixed(1)},${y.toFixed(1)} ${topRight.toFixed(1)},${y.toFixed(1)} ${botRight.toFixed(1)},${(y + LAYER_H).toFixed(1)} ${botLeft.toFixed(1)},${(y + LAYER_H).toFixed(1)}" fill="${fill}" stroke="${theme.bg}" stroke-width="2"/>`,
+      `<polygon points="${topLeft.toFixed(1)},${y.toFixed(1)} ${topRight.toFixed(1)},${y.toFixed(1)} ${botRight.toFixed(1)},${(y + LAYER_H).toFixed(1)} ${botLeft.toFixed(1)},${(y + LAYER_H).toFixed(1)}" fill="${fill}" stroke="${theme.bg}" stroke-width="2">${itemTitleTag(item)}</polygon>`,
     )
 
     const midW = (topW + botW) / 2
@@ -54,7 +54,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Inline-append value with bullet separator so narrow bands truncate
     // gracefully and wide bands show the full annotation. Value is the
     // pyramid's quantitative metric (% share, count, $/yr, etc.).
-    const labelText = item.value ? `${item.label} · ${item.value}` : item.label
+    // Apply ellipsis cue when attrs would otherwise be invisible (value is
+    // already visible inline via the bullet suffix).
+    const baseLabel = item.value ? `${item.label} · ${item.value}` : item.label
+    const labelText = ellipsisIfDropped(baseLabel, item, { value: true })
     const { lines, truncated, url: lblUrl } = wrapLabel(labelText, maxChars, maxLines)
     const lineH = fontSize + 2
     const firstY = y + LAYER_H / 2 - ((lines.length - 1) * lineH) / 2 + fontSize * 0.3

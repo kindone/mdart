@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -32,7 +32,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const targetRaw = item.attrs[1] ?? item.attrs.find(a => a !== item.attrs[0] && /^\d/.test(a))
     const target = targetRaw ? Math.min(parseFloat(targetRaw.replace('%', '')) || 0, 100) / 100 : null
 
-    parts.push(`<rect x="${BAR_X}" y="${barY}" width="${BAR_W}" height="${BAR_H}" rx="3" fill="${theme.muted}40"/>`)
+    parts.push(`<rect x="${BAR_X}" y="${barY}" width="${BAR_W}" height="${BAR_H}" rx="3" fill="${theme.muted}40">${itemTitleTag(item)}</rect>`)
     parts.push(`<rect x="${BAR_X}" y="${barY}" width="${(BAR_W * 0.7).toFixed(1)}" height="${BAR_H}" rx="3" fill="${theme.muted}5a"/>`)
     parts.push(`<rect x="${BAR_X}" y="${barY}" width="${(BAR_W * 0.4).toFixed(1)}" height="${BAR_H}" rx="3" fill="${theme.muted}80"/>`)
 
@@ -45,7 +45,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       parts.push(`<rect x="${(tx - 1.5).toFixed(1)}" y="${barY}" width="3" height="${BAR_H}" rx="1" fill="${theme.text}cc"/>`)
     }
 
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    // value renders as % bar + numeric on right; attrs (target, etc.) used selectively
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true, attrs: true })
     parts.push(aWrap(`<text x="${LABEL_W}" y="${(midY + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, 20)}</text>`, itmUrl))
     parts.push(`<text x="${BAR_X + BAR_W + 8}" y="${(midY + 4).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${Math.round(val * 100)}%</text>`)
   })

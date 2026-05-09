@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, titleEl, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { lerpColor, titleEl, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 /** Greedy word-wrap into lines of ~maxChars each. */
 function wrapText(text: string, maxChars: number): string[] {
@@ -58,7 +58,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const above = i % 2 === 0
 
     // Dot on spine + perpendicular tick
-    parts.push(`<circle cx="${x.toFixed(1)}" cy="${SPINE_Y}" r="6" fill="${fill}"/>`)
+    parts.push(`<circle cx="${x.toFixed(1)}" cy="${SPINE_Y}" r="6" fill="${fill}">${itemTitleTag(item)}</circle>`)
     const tickStart = above ? SPINE_Y - 6  : SPINE_Y + 6
     const tickEnd   = above ? SPINE_Y - 18 : SPINE_Y + 18
     parts.push(`<line x1="${x.toFixed(1)}" y1="${tickStart}" x2="${x.toFixed(1)}" y2="${tickEnd}" stroke="${fill}" stroke-width="1"/>`)
@@ -66,7 +66,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Wrap value into up to 2 lines if present
     const valueLines = item.value ? wrapText(item.value, maxChars).slice(0, 2) : []
 
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
     if (above) {
       // Stack (top → bottom reading): value_line1, value_line2, label, tick, spine
       const labelY = tickEnd - 4

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -16,7 +16,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
 
-  interface GanttRow { label: string; start: number; end: number; url: string | null }
+  interface GanttRow { label: string; start: number; end: number; url: string | null; src: typeof items[0] }
 
   let maxEnd = 0
   const rows: GanttRow[] = items.map(item => {
@@ -31,8 +31,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       end = parseInt(rangeStr)
     }
     maxEnd = Math.max(maxEnd, end)
+    // gantt already shows the week range visibly via the bar position, and
+    // the value/attr is used as the range source. Ellipsis only fires for
+    // additional non-range attrs.
     const { display, url } = parseLink(item.label)
-    return { label: display, start, end, url }
+    const lbl = ellipsisIfDropped(display, item, { value: true, attrs: true })
+    return { label: lbl, start, end, url, src: item }
   })
   if (maxEnd === 0) maxEnd = 8
 
@@ -65,7 +69,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const barX = LABEL_W + (row.start / maxEnd) * BAR_AREA
     const barW = Math.max(6, ((row.end - row.start) / maxEnd) * BAR_AREA)
-    parts.push(`<rect x="${barX.toFixed(1)}" y="${(y + 8).toFixed(1)}" width="${barW.toFixed(1)}" height="18" rx="4" fill="${theme.accent}88" stroke="${theme.accent}" stroke-width="1"/>`)
+    parts.push(`<rect x="${barX.toFixed(1)}" y="${(y + 8).toFixed(1)}" width="${barW.toFixed(1)}" height="18" rx="4" fill="${theme.accent}88" stroke="${theme.accent}" stroke-width="1">${itemTitleTag(row.src)}</rect>`)
   })
 
   return svgWrap(W, H, theme, spec.title, parts)

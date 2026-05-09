@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -52,11 +52,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   items.forEach((item, i) => {
     const a = 2 * Math.PI * i / n - Math.PI / 2
     const vr = R * vals[i]
-    parts.push(`<circle cx="${(cx + vr * Math.cos(a)).toFixed(1)}" cy="${(cy + vr * Math.sin(a)).toFixed(1)}" r="4" fill="${theme.accent}"/>`)
+    parts.push(`<circle cx="${(cx + vr * Math.cos(a)).toFixed(1)}" cy="${(cy + vr * Math.sin(a)).toFixed(1)}" r="4" fill="${theme.accent}">${itemTitleTag(item)}</circle>`)
     const la = R + 26
     const lx = cx + la * Math.cos(a), ly = cy + la * Math.sin(a)
     const anchor = Math.cos(a) > 0.15 ? 'start' : Math.cos(a) < -0.15 ? 'end' : 'middle'
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    // value renders as the polygon vertex distance; attrs need ellipsis cue
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true })
     parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, 12)}</text>`, itmUrl))
   })
 

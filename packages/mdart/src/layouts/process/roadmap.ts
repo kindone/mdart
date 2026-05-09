@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
 
 function wrapText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
@@ -40,13 +40,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const above = i % 2 === 0
     const labelY = above ? LINE_Y - 22 : LINE_Y + 36
 
-    svgContent += `<circle cx="${x}" cy="${LINE_Y}" r="${DOT_R}" fill="${fill}" />`
+    svgContent += `<circle cx="${x}" cy="${LINE_Y}" r="${DOT_R}" fill="${fill}" >${itemTitleTag(item)}</circle>`
     svgContent += `<circle cx="${x}" cy="${LINE_Y}" r="${DOT_R - 3}" fill="${theme.bg}" />`
 
     const lineEndY = above ? LINE_Y - 14 : LINE_Y + 14
     svgContent += `<line x1="${x}" y1="${LINE_Y}" x2="${x}" y2="${lineEndY}" stroke="${fill}" stroke-width="1.5" stroke-dasharray="3,2" />`
 
-    const { display: itmDisplay, url: itmUrl } = parseLink(item.label)
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
     const lines = wrapText(itmDisplay, 12)
     let lblContent = ''
     lines.forEach((line, li) => {

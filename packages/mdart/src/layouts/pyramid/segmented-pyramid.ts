@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap } from '../shared'
+import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 /**
  * segmented-pyramid — classic pyramid shape but each layer is a visually
@@ -51,7 +51,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     // Filled trapezoid with border
     shapes.push(
-      `<polygon points="${tL.toFixed(1)},${y.toFixed(1)} ${tR.toFixed(1)},${y.toFixed(1)} ${bR.toFixed(1)},${(y + LAYER_H).toFixed(1)} ${bL.toFixed(1)},${(y + LAYER_H).toFixed(1)}" fill="${fill}cc" stroke="${border}" stroke-width="1.8" stroke-linejoin="round"/>`
+      `<polygon points="${tL.toFixed(1)},${y.toFixed(1)} ${tR.toFixed(1)},${y.toFixed(1)} ${bR.toFixed(1)},${(y + LAYER_H).toFixed(1)} ${bL.toFixed(1)},${(y + LAYER_H).toFixed(1)}" fill="${fill}cc" stroke="${border}" stroke-width="1.8" stroke-linejoin="round">${itemTitleTag(item)}</polygon>`
     )
 
     // Subtle inner highlight on top edge
@@ -67,7 +67,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { display: lblDisplay, url: lblUrl } = parseLink(item.label)
     // Inline-append value with bullet separator (segmented bands map naturally
     // to proportional values — quartiles, share %, etc.).
-    const labelWithValue = item.value ? `${lblDisplay} · ${item.value}` : lblDisplay
+    // Ellipsis cue when attrs would otherwise be invisible.
+    const baseWithValue = item.value ? `${lblDisplay} · ${item.value}` : lblDisplay
+    const labelWithValue = ellipsisIfDropped(baseWithValue, item, { value: true })
 
     labels.push(
       aWrap(`<text x="${cx.toFixed(1)}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tt(labelWithValue, maxChars)}</text>`, lblUrl)
