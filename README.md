@@ -2,7 +2,15 @@
 
 A markdown-native diagram DSL that renders structured diagrams as inline SVG directly from fenced code blocks.
 
-## Examples
+> Eleven layout families, 100+ diagram types, all driven by a tiny indented-bullet syntax. Drop a ` ```mdart ` fence into any markdown file and you have a diagram.
+
+## A diagram per family
+
+One representative example for each of the eleven families. Skim what feels useful — every example is a real, valid `mdart` fence you can copy.
+
+### Process — `chevron-process`
+
+Sequential steps, pipelines, flows.
 
 ````markdown
 ```mdart
@@ -20,46 +28,53 @@ Discovery → Design → Build → Test → Deploy
 
 ---
 
+### List — `checklist`
+
+Items with distinct visual treatments — bullets, numbers, cards, ribbons, hexagons, checklists.
+
 ````markdown
 ```mdart
-type: org-chart
-title: Engineering Team
+type: checklist
+title: Release Checklist
 
-- CTO
-  - Frontend
-  - Backend
-  - Platform
+- Run full test suite [done]
+- Update CHANGELOG [done]
+- Bump version
+- Tag release
+- Announce in #engineering
 ```
 ````
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/org-chart.svg">
-  <img alt="Org chart" src="./docs/examples/org-chart-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/checklist.svg">
+  <img alt="Checklist" src="./docs/examples/checklist-light.svg">
 </picture>
 
 ---
 
+### Cycle — `cycle`
+
+Closed loops and recurring flows.
+
 ````markdown
 ```mdart
-type: kanban
-title: Sprint Board
+type: cycle
+title: Build–Measure–Learn
 
-- Backlog
-  - Write docs
-  - Fix bug #42
-- In Progress
-  - Add tests
-- Done
-  - Initial release
+Plan → Build → Measure → Learn
 ```
 ````
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/kanban.svg">
-  <img alt="Kanban" src="./docs/examples/kanban-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/cycle.svg">
+  <img alt="Cycle" src="./docs/examples/cycle-light.svg">
 </picture>
 
 ---
+
+### Matrix — `swot`
+
+Quadrant views and 2-axis comparisons. Prefix chars give SWOT its four quadrants: `+` strength, `-` weakness, `?` opportunity, `!` threat.
 
 ````markdown
 ```mdart
@@ -84,6 +99,131 @@ title: Product Analysis
 
 ---
 
+### Hierarchy — `org-chart`
+
+Org charts, trees, mind maps, decision trees.
+
+````markdown
+```mdart
+type: org-chart
+title: Engineering Team
+
+- CTO
+  - Frontend
+  - Backend
+  - Platform
+```
+````
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/org-chart.svg">
+  <img alt="Org chart" src="./docs/examples/org-chart-light.svg">
+</picture>
+
+---
+
+### Pyramid — `pyramid`
+
+Stacked tiers from base to apex.
+
+````markdown
+```mdart
+type: pyramid
+title: Maslow's Hierarchy
+
+- Self-actualisation
+- Esteem
+- Love & Belonging
+- Safety
+- Physiological
+```
+````
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/pyramid.svg">
+  <img alt="Pyramid" src="./docs/examples/pyramid-light.svg">
+</picture>
+
+---
+
+### Relationship — `venn`
+
+Connections and overlaps between sets. Use `∩` to declare an intersection peer.
+
+````markdown
+```mdart
+type: venn
+title: Product–Market Fit
+
+- Desirable
+- Feasible
+- Viable
+- Desirable ∩ Feasible
+- Feasible ∩ Viable
+- Desirable ∩ Viable
+- Desirable ∩ Feasible ∩ Viable
+```
+````
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/venn.svg">
+  <img alt="Venn diagram" src="./docs/examples/venn-light.svg">
+</picture>
+
+---
+
+### Statistical — `progress-list`
+
+Numeric values rendered as bars, gauges, treemaps, sankeys, heatmaps.
+
+````markdown
+```mdart
+type: progress-list
+title: Sprint Progress
+
+- Planning: 100
+- Design: 90
+- Implementation: 65
+- Code review: 30
+- Deployment: 0
+```
+````
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/progress-list.svg">
+  <img alt="Progress list" src="./docs/examples/progress-list-light.svg">
+</picture>
+
+---
+
+### Planning — `gantt-lite`
+
+Project timelines, kanban boards, work breakdown.
+
+````markdown
+```mdart
+type: gantt-lite
+title: Q3 Roadmap
+
+- Research     [wk1–wk2]
+- Design       [wk2–wk4]
+- Development  [wk3–wk8]
+- Testing      [wk7–wk9]
+* Launch       [wk10]
+```
+````
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/gantt.svg">
+  <img alt="Gantt chart" src="./docs/examples/gantt-light.svg">
+</picture>
+
+---
+
+### Technical — `sequence`
+
+System diagrams: sequence, state-machine, network, layered architecture, ER, class.
+
 ````markdown
 ```mdart
 type: sequence
@@ -102,28 +242,35 @@ title: Auth Flow
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/sequence.svg">
-  <img alt="Sequence" src="./docs/examples/sequence-light.svg">
+  <img alt="Sequence diagram" src="./docs/examples/sequence-light.svg">
 </picture>
 
 ---
 
+### Plot — `line-chart`
+
+Basic x–y plots: line, scatter, area, bar. Multi-series, smoothing, shaded regions, reference lines.
+
 ````markdown
 ```mdart
-type: gantt-lite
-title: Q3 Roadmap
+type: line-chart
+smooth: true
+title: Quarterly Revenue
+x: Q1, Q2, Q3, Q4
+y-label: USD (M)
+shade-y: 25..35 [target]
 
-- Research     [wk1–wk2]
-- Design       [wk2–wk4]
-- Development  [wk3–wk8]
-- Testing      [wk7–wk9]
-* Launch       [wk10]
+- Revenue [bold]: 12, 18, 24, 32
+- Cost [dashed]: 9, 11, 14, 17
 ```
 ````
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/gantt.svg">
-  <img alt="Gantt" src="./docs/examples/gantt-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/examples/line-chart.svg">
+  <img alt="Line chart" src="./docs/examples/line-chart-light.svg">
 </picture>
+
+---
 
 ## Packages
 
@@ -133,14 +280,6 @@ title: Q3 Roadmap
 | [`mdart-marked`](./packages/mdart-marked) | [marked](https://marked.js.org) v15 extension |
 | [`mdart-markdown-it`](./packages/mdart-markdown-it) | [markdown-it](https://github.com/markdown-it/markdown-it) v14 plugin |
 | [`mdart-remark`](./packages/mdart-remark) | [unified](https://unifiedjs.com)/remark plugin |
-
-## Layout families
-
-MdArt supports 10 diagram families out of the box:
-
-**Process** · **List** · **Cycle** · **Matrix** · **Hierarchy** · **Pyramid** · **Relationship** · **Statistical** · **Planning** · **Technical**
-
-Each family has multiple layout types (97 total) — org charts, kanban boards, Gantt charts, sequence diagrams, SWOT analyses, Sankey flows, and much more.
 
 ## Quick start
 
@@ -202,13 +341,12 @@ npm run build
 npm run gen-examples
 ```
 
-## Gallery
+## Gallery & syntax reference
 
-Browse all 97 layout types with source + rendered SVG: **[docs/gallery.md](./docs/gallery.md)** (GitHub-friendly) or [docs/gallery.html](./docs/gallery.html) (richer standalone viewer — clone the repo).
-
-## Syntax reference
-
-Full syntax documentation with rendered examples for all 97 layout types, color overrides, and modifier attrs: **[docs/syntax.md](./docs/syntax.md)**
+- **[docs/gallery.md](./docs/gallery.md)** — every layout type with source + rendered SVG (GitHub-friendly)
+- **[docs/syntax.md](./docs/syntax.md)** — full syntax reference: front-matter keys, value types, modifier attrs, theme overrides
+- **[docs/renderer-principles.md](./docs/renderer-principles.md)** — design principles for contributors building new renderers
+- **[CHANGELOG.md](./CHANGELOG.md)** — release history
 
 ## License
 

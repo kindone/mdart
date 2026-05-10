@@ -114,6 +114,41 @@ shade-y: 25..35 [target]
 - Revenue [bold]: 12, 18, 24, 32
 - Cost [dashed]: 9, 11, 14, 17`,
   },
+  {
+    file: 'checklist.svg',
+    source: `type: checklist
+title: Release Checklist
+
+- Run full test suite [done]
+- Update CHANGELOG [done]
+- Bump version
+- Tag release
+- Announce in #engineering`,
+  },
+  {
+    file: 'venn.svg',
+    source: `type: venn
+title: Product–Market Fit
+
+- Desirable
+- Feasible
+- Viable
+- Desirable ∩ Feasible
+- Feasible ∩ Viable
+- Desirable ∩ Viable
+- Desirable ∩ Feasible ∩ Viable`,
+  },
+  {
+    file: 'progress-list.svg',
+    source: `type: progress-list
+title: Sprint Progress
+
+- Planning: 100
+- Design: 90
+- Implementation: 65
+- Code review: 30
+- Deployment: 0`,
+  },
 ]
 
 let ok = 0
