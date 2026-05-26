@@ -1,7 +1,10 @@
-src/
-node_modules/
-build.mjs
-tsconfig.json
-**/*.map
-**/*.ts
-!dist/
+# Allowlist approach — exclude everything, then explicitly re-include what the VSIX needs.
+# This prevents monorepo parent directories and workspace deps from leaking in.
+**
+
+!dist/**
+!icon.png
+!package.json
+!README.md
+!LICENSE
+!CHANGELOG.md

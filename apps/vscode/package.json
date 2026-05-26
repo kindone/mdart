@@ -35,8 +35,8 @@
     "build": "node build.mjs",
     "watch": "node build.mjs --watch",
     "check": "tsc --noEmit",
-    "package": "vsce package",
-    "publish": "vsce publish"
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@types/markdown-it": "^14.1.2",
