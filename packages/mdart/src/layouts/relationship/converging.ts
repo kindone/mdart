@@ -15,8 +15,13 @@ function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined,
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
-  const sources = items.length > 1 ? items.slice(0, -1) : items
-  const target  = items.length > 1 ? items[items.length - 1] : { label: spec.title ?? 'Result', children: [] as typeof items[0]['children'] }
+  // Preferred: hub as parent, spokes as children  (- Hub\n  - Spoke1\n  - Spoke2).
+  // Fallback:  flat list where last item is hub and the rest are spokes (legacy).
+  const target  = items[0].children.length > 0 ? items[0]
+    : items.length > 1 ? items[items.length - 1]
+    : { label: spec.title ?? 'Result', children: [] as typeof items[0]['children'], attrs: [] as string[], flowChildren: [] as typeof items[0]['flowChildren'], value: undefined as string | undefined }
+  const sources = items[0].children.length > 0 ? items[0].children
+    : items.length > 1 ? items.slice(0, -1) : items
   const n = sources.length
   const W = 520, TITLE_H = spec.title ? 28 : 8
   const ROW_H = Math.max(44, Math.min(60, 300 / n))

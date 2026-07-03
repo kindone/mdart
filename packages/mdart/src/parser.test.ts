@@ -18,6 +18,20 @@ describe('parseMdArt', () => {
     expect(spec.type).toBe('process')
   })
 
+  it('parses root-level leading arrows as process continuations', () => {
+    const spec = parseMdArt(`cached snapshot says updating
+→ client now does a short follow-up poll
+→ fresh snapshot arrives
+→ updating badge clears quickly`, 'process')
+
+    expect(spec.items.map(item => item.label)).toEqual([
+      'cached snapshot says updating',
+      'client now does a short follow-up poll',
+      'fresh snapshot arrives',
+      'updating badge clears quickly',
+    ])
+  })
+
   it('parses arrow chain with value annotations', () => {
     const spec = parseMdArt('Alpha: First → Beta: Second → Gamma: Third')
     expect(spec.items).toHaveLength(3)

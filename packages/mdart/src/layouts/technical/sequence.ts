@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, tt, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -31,13 +31,32 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const n = actors.length
   const W = 600
   const TITLE_H = spec.title ? 30 : 8
-  const ACTOR_H = 28
   const MSG_GAP = 36
   const PAD_V = 16
-  const H = TITLE_H + ACTOR_H + PAD_V + Math.max(messages.length, 1) * MSG_GAP + PAD_V + 16
 
   const COL_W = W / n
   const ax = (i: number) => (i + 0.5) * COL_W
+  const bw = Math.min(COL_W - 16, 96)
+
+  // ── Pre-wrap actor names (need max line count before computing H) ─────────
+  const ACTOR_LH = 13, ACTOR_VPAD = 7
+  const charBudgetActor = Math.max(8, Math.floor((bw - 10) / 6.5))
+  const itemByActor = new Map(spec.items.map(it => [it.label, it]))
+  const actorRenders = actors.map(actor => {
+    const sourceItem = itemByActor.get(actor)
+    const { display: rawDisplay, url: actUrl } = parseLink(actor)
+    const actDisplay = sourceItem ? ellipsisIfDropped(rawDisplay, sourceItem, { value: false }) : rawDisplay
+    const { lines, truncated } = wrapLabel(actDisplay, charBudgetActor, 2)
+    const tip = sourceItem ? itemTitleTag(sourceItem) : ''
+    return { actDisplay, lines, url: actUrl, tip, truncated }
+  })
+  const maxActorLines = actorRenders.reduce((m, a) => Math.max(m, a.lines.length), 1)
+  const ACTOR_H = ACTOR_VPAD * 2 + maxActorLines * ACTOR_LH
+
+  const H = TITLE_H + ACTOR_H + PAD_V + Math.max(messages.length, 1) * MSG_GAP + PAD_V + 16
+  const actorBoxY = TITLE_H + 8
+  const lifeY1 = TITLE_H + ACTOR_H + PAD_V
+  const lifeY2 = H - 16
 
   const parts: string[] = []
   parts.push(`<defs>
@@ -49,24 +68,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     </marker>
   </defs>`)
 
-  const lifeY1 = TITLE_H + ACTOR_H + PAD_V
-  const lifeY2 = H - 16
-
-  // Find original item per actor (some actors are added by flowChildren so
-  // may not have a top-level item — for those, we just render the label).
-  const itemByActor = new Map(spec.items.map(it => [it.label, it]))
-  const actorBoxY = TITLE_H + 8
-  actors.forEach((actor, i) => {
+  actorRenders.forEach(({ actDisplay, lines, url: actUrl, tip, truncated }, i) => {
     const x = ax(i)
-    const bw = Math.min(COL_W - 16, 96)
-    const sourceItem = itemByActor.get(actor)
-    const { display: rawDisplay, url: actUrl } = parseLink(actor)
-    const actDisplay = sourceItem ? ellipsisIfDropped(rawDisplay, sourceItem, { value: false }) : rawDisplay
-    const tip = sourceItem ? itemTitleTag(sourceItem) : ''
+    const textBlockH = lines.length * ACTOR_LH
+    const textStartY = actorBoxY + (ACTOR_H - textBlockH) / 2 + ACTOR_LH - 2
+    const fullTip = truncated ? `<title>${escapeXml(actDisplay)}</title>` : ''
+    const spans = lines.map((l, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : ACTOR_LH}">${escapeXml(l)}</tspan>`).join('')
     parts.push(
       `<rect x="${(x - bw/2).toFixed(1)}" y="${actorBoxY.toFixed(1)}" width="${bw.toFixed(1)}" height="${ACTOR_H}" rx="5" fill="${theme.accent}22" stroke="${theme.accent}aa" stroke-width="1.5">${tip}</rect>`,
     )
-    parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${(actorBoxY + 18).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(actDisplay, 11)}</text>`, actUrl))
+    parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${textStartY.toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${fullTip}${spans}</text>`, actUrl))
   })
 
   actors.forEach((_, i) => {
@@ -85,10 +96,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const isSelf = fi === ti
 
     if (isSelf) {
-      const lx = x1 + COL_W * 0.28
+      const loopExt = COL_W * 0.38
+      const lx = x1 + loopExt
+      // Left-align label from the lifeline axis (x1). Extend budget all the
+      // way to the next lifeline (or SVG right edge) — self-loop rows have no
+      // horizontal elements competing for that space.
+      const nextLifeline = fi < n - 1 ? ax(fi + 1) : W - 8
+      const maxCharsLoop = Math.max(12, Math.floor((nextLifeline - x1 - 8) / 5.0))
       parts.push(
         `<path d="M${x1.toFixed(1)},${y.toFixed(1)} C${lx.toFixed(1)},${(y - 10).toFixed(1)} ${lx.toFixed(1)},${(y + 10).toFixed(1)} ${x1.toFixed(1)},${(y + MSG_GAP * 0.55).toFixed(1)}" fill="none" stroke="${theme.accent}cc" stroke-width="1.5" marker-end="url(#sq-a)"/>`,
-        msg.msg ? `<text x="${(lx + 4).toFixed(1)}" y="${(y - 1).toFixed(1)}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(msg.msg, 11)}</text>` : '',
+        msg.msg ? `<text x="${(x1 + 4).toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="start" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(msg.msg, maxCharsLoop)}</text>` : '',
       )
     } else {
       const isRet = ti < fi

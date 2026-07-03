@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, titleEl, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, wrapLabel, escapeXml, parseLink } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -13,7 +13,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
   const W = 560
-  const LABEL_W = 56, LANE_H = 44, GAP = 1
+  const LABEL_W = 56, LANE_H = 52, STEP_H = 34, GAP = 1
   const titleH = spec.title ? 28 : 8
   const H = titleH + items.length * (LANE_H + GAP) + 8
   const parts: string[] = []
@@ -28,22 +28,65 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (i > 0) parts.push(`<line x1="0" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" stroke="${theme.border}" stroke-width="0.5"/>`)
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { attrs: true })
     parts.push(`<rect x="2" y="${(y + 2).toFixed(1)}" width="${LABEL_W - 4}" height="${LANE_H - 4}" rx="4" fill="${fill}33" stroke="${fill}66" stroke-width="1">${itemTitleTag(item)}</rect>`)
-    parts.push(aWrap(`<text x="${(LABEL_W / 2).toFixed(1)}" y="${(y + LANE_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, 9, item)}</text>`, itmUrl))
+    const laneLabel = wrapLabel(itmDisplay, 9, 2)
+    parts.push(aWrap(renderCenteredLines({
+      x: LABEL_W / 2,
+      centerY: y + LANE_H / 2 + 3,
+      lines: laneLabel.lines,
+      truncated: laneLabel.truncated,
+      fullText: itmDisplay,
+      fontSize: 9,
+      lineGap: 10,
+      fill: theme.text,
+      fontWeight: '700',
+    }), itmUrl))
     const steps = item.children
     const stepW = steps.length > 0 ? Math.min(90, (W - LABEL_W - 8) / steps.length - 6) : 0
     const stepGap = steps.length > 1 ? ((W - LABEL_W - 8) - steps.length * stepW) / (steps.length - 1) : 0
     steps.forEach((step, si) => {
       const sx = LABEL_W + 4 + si * (stepW + stepGap)
-      const sy = y + (LANE_H - 28) / 2
+      const sy = y + (LANE_H - STEP_H) / 2
       const isDone = step.attrs.includes('done')
       const stepFill = isDone ? theme.accent : fill
-      parts.push(`<rect x="${sx.toFixed(1)}" y="${sy.toFixed(1)}" width="${stepW.toFixed(1)}" height="28" rx="4" fill="${stepFill}${isDone ? '44' : '22'}" stroke="${stepFill}${isDone ? '99' : '66'}" stroke-width="1">${itemTitleTag(step)}</rect>`)
-      parts.push(`<text x="${(sx + stepW / 2).toFixed(1)}" y="${(sy + 17).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isDone ? theme.text : theme.textMuted}" font-family="system-ui,sans-serif" font-weight="${isDone ? '600' : '400'}">${tt(step.label, Math.floor(stepW / 5))}</text>`)
+      const { display: stepLabelDisplay, url: stepUrl } = parseLink(step.label)
+      const stepDisplay = step.value ? `${stepLabelDisplay}: ${step.value}` : stepLabelDisplay
+      const stepText = wrapLabel(stepDisplay, Math.max(8, Math.floor((stepW - 10) / 5)), 2)
+      parts.push(`<rect x="${sx.toFixed(1)}" y="${sy.toFixed(1)}" width="${stepW.toFixed(1)}" height="${STEP_H}" rx="4" fill="${stepFill}${isDone ? '44' : '22'}" stroke="${stepFill}${isDone ? '99' : '66'}" stroke-width="1">${itemTitleTag(step)}</rect>`)
+      parts.push(aWrap(renderCenteredLines({
+        x: sx + stepW / 2,
+        centerY: sy + STEP_H / 2 + 3,
+        lines: stepText.lines,
+        truncated: stepText.truncated,
+        fullText: stepDisplay,
+        fontSize: 9,
+        lineGap: 10,
+        fill: isDone ? theme.text : theme.textMuted,
+        fontWeight: isDone ? '600' : '400',
+      }), stepUrl))
       if (si < steps.length - 1) {
         const ax1 = sx + stepW + 2, ax2 = sx + stepW + stepGap - 4
-        parts.push(`<line x1="${ax1.toFixed(1)}" y1="${(sy + 14).toFixed(1)}" x2="${ax2.toFixed(1)}" y2="${(sy + 14).toFixed(1)}" stroke="${theme.primary}99" stroke-width="1" marker-end="url(#sl-arr)"/>`)
+        parts.push(`<line x1="${ax1.toFixed(1)}" y1="${(sy + STEP_H / 2).toFixed(1)}" x2="${ax2.toFixed(1)}" y2="${(sy + STEP_H / 2).toFixed(1)}" stroke="${theme.primary}99" stroke-width="1" marker-end="url(#sl-arr)"/>`)
       }
     })
   })
   return svgWrapProcess(W, H, theme, parts)
+}
+
+function renderCenteredLines(opts: {
+  x: number
+  centerY: number
+  lines: string[]
+  truncated: boolean
+  fullText: string
+  fontSize: number
+  lineGap: number
+  fill: string
+  fontWeight: string
+}): string {
+  const { x, centerY, lines, truncated, fullText, fontSize, lineGap, fill, fontWeight } = opts
+  return lines.map((line, idx) => {
+    const y = centerY + (idx - (lines.length - 1) / 2) * lineGap
+    const tip = idx === 0 && truncated ? `<title>${escapeXml(fullText)}</title>` : ''
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="${fontWeight}">${tip}${escapeXml(line)}</text>`
+  }).join('')
 }

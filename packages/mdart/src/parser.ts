@@ -464,6 +464,20 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
     if (trimmed.startsWith('→ ')) {
       const raw = trimmed.slice(2).trim()
       const item = parseItem(raw)
+      // At root level, a leading arrow continues a flat process:
+      //
+      //   First step
+      //   → Second step
+      //   → Third step
+      //
+      // There is no shallower parent at depth 0, and process renderers consume
+      // top-level items. Treating these as children made every continuation
+      // disappear from a basic process diagram.
+      if (spec.type === 'process' && depth === 0 && spec.items.length > 0) {
+        spec.items.push(item)
+        stack.length = 0
+        continue
+      }
       // Find the nearest ancestor at a shallower depth
       let parentItem: MdArtItem | null = null
       for (let si = stack.length - 1; si >= 0; si--) {

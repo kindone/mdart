@@ -47,7 +47,12 @@ function rowH(maxLines: number): number {
 }
 
 function validateComparisonSpec(spec: MdArtSpec): boolean {
-  return spec.items.some(item => item.children.length > 0)
+  const children = spec.items.flatMap(item => item.children)
+  if (children.length === 0) return false
+
+  const hasKeyedChildren = children.some(child => child.value !== undefined)
+  const hasUnkeyedChildren = children.some(child => child.value === undefined)
+  return !(hasKeyedChildren && hasUnkeyedChildren)
 }
 
 function renderComparisonError(theme: MdArtTheme): string {
@@ -56,14 +61,14 @@ function renderComparisonError(theme: MdArtTheme): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
     <text x="${W / 2}" y="${titleY}" text-anchor="middle" font-size="15" fill="${theme.danger}" font-family="system-ui,sans-serif" font-weight="700">Invalid comparison diagram syntax</text>
-    <text x="${W / 2}" y="${descY}" text-anchor="middle" font-size="12" fill="${theme.textMuted}" font-family="system-ui,sans-serif">Comparison needs parent items with children:</text>
+    <text x="${W / 2}" y="${descY}" text-anchor="middle" font-size="12" fill="${theme.textMuted}" font-family="system-ui,sans-serif">Comparison needs all children keyed or all children unkeyed:</text>
     <rect x="80" y="${boxY}" width="${W - 160}" height="${lineH * 6 + pad * 2}" rx="6" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>
     <text x="96" y="${boxY + pad + 14}" font-size="12" fill="${theme.text}" font-family="ui-monospace,monospace">- Option A</text>
-    <text x="112" y="${boxY + pad + 14 + lineH}" font-size="12" fill="${theme.text}">  - Feature 1</text>
-    <text x="112" y="${boxY + pad + 14 + lineH * 2}" font-size="12" fill="${theme.text}">  - Feature 2</text>
+    <text x="112" y="${boxY + pad + 14 + lineH}" font-size="12" fill="${theme.text}">  - Start: CLI command</text>
+    <text x="112" y="${boxY + pad + 14 + lineH * 2}" font-size="12" fill="${theme.text}">  - Fit: Human-facing</text>
     <text x="96" y="${boxY + pad + 14 + lineH * 3}" font-size="12" fill="${theme.text}" font-family="ui-monospace,monospace">- Option B</text>
-    <text x="112" y="${boxY + pad + 14 + lineH * 4}" font-size="12" fill="${theme.text}">  - Feature 1</text>
-    <text x="112" y="${boxY + pad + 14 + lineH * 5}" font-size="12" fill="${theme.text}">  - Feature 3</text>
+    <text x="112" y="${boxY + pad + 14 + lineH * 4}" font-size="12" fill="${theme.text}">  - Start: API call</text>
+    <text x="112" y="${boxY + pad + 14 + lineH * 5}" font-size="12" fill="${theme.text}">  - Fit: Automation</text>
   </svg>`
 }
 

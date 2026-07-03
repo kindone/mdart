@@ -14,7 +14,8 @@ const MIN_LAYER_H   = 44
 const TITLE_COL     = 120    // right edge of left label column
 const DIVIDER_X     = 128
 const CHIPS_X       = 140    // chips start here
-const CHIPS_W       = W - LAYER_RIGHT - CHIPS_X   // 444 px of chip area
+const CHIP_PAD_R    = 10     // gap between rightmost chip and band right edge
+const CHIPS_W       = W - LAYER_RIGHT - CHIPS_X - CHIP_PAD_R   // 434 px of chip area
 
 const CHIP_GAP      = 8      // horizontal gap between chips in a row
 const CHIP_ROW_GAP  = 7      // vertical gap between chip rows
@@ -136,7 +137,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.title) {
     parts.push(`<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`)
   }
-  parts.push(`<defs><marker id="la-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${theme.muted}"/></marker></defs>`)
+  parts.push(`<defs><marker id="la-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${theme.textMuted}"/></marker></defs>`)
 
   precomps.forEach((lc, i) => {
     const y = layerY[i]
@@ -161,7 +162,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (!hasChildren) {
       if (i < layers.length - 1) {
         const ax = W / 2, ay1 = y + layerH
-        parts.push(`<line x1="${ax}" y1="${ay1.toFixed(1)}" x2="${ax}" y2="${(ay1 + GAP).toFixed(1)}" stroke="${theme.muted}" stroke-width="1.5" marker-end="url(#la-arr)"/>`)
+        parts.push(`<line x1="${ax}" y1="${ay1.toFixed(1)}" x2="${ax}" y2="${(ay1 + GAP).toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1.5" marker-end="url(#la-arr)"/>`)
       }
       return
     }
@@ -197,7 +198,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Arrow to next layer
     if (i < layers.length - 1) {
       const ax = W / 2, ay1 = y + layerH
-      parts.push(`<line x1="${ax}" y1="${ay1.toFixed(1)}" x2="${ax}" y2="${(ay1 + GAP).toFixed(1)}" stroke="${theme.muted}" stroke-width="1.5" marker-end="url(#la-arr)"/>`)
+      parts.push(`<line x1="${ax}" y1="${ay1.toFixed(1)}" x2="${ax}" y2="${(ay1 + GAP).toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1.5" marker-end="url(#la-arr)"/>`)
     }
   })
 
