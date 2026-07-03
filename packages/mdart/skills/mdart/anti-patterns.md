@@ -122,6 +122,10 @@ When the user uses metaphor language, lean into the corresponding type.
 
 Even a good type pick can produce a bad diagram if syntax is sloppy.
 
+- **Deeply nesting consecutive `layered-arch` layers.** The renderer uses
+  top-level items as layer bands and immediate children as component chips.
+  Keep each layer as a top-level sibling; reserve one child level for the
+  components inside that layer.
 - **`-` children in `sequence` / `state-machine` / `network`.** These three types treat children as edges/messages. Soft exchangeability means `- Target` parses but reads as containment to a human editor. Always use `→ Target: message`.
 - **Headings other than the canonical words in `swot` / `pros-cons`.** Headers are matched as exact words (case-insensitive): `Strengths` / `Weaknesses` / `Opportunities` / `Threats`, `Pros` / `Cons` (singular/plural variants OK). For domain-specific labels, use the explicit attr: `- Internal positives [strengths]`.
 - **Inconsistent indent within one fence.** Pick one of 2-space, 4-space, or 1-tab and stay with it; the parser auto-detects the unit but cannot reconcile a mix.

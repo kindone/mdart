@@ -7,12 +7,16 @@ description: Generate MdArt diagrams from structured intent — pick the right d
 
 Produce MdArt fenced code blocks that pick the *right* diagram type for the user's intent. Optimise for **selection judgment**, not just syntactically valid output. Defaulting to `process` or `bullet-list` for everything is the most common failure.
 
-**Fence form:**
+**Fence form (the type is required):**
 ````
 ```mdart <type>
 - Item
 ```
 ````
+
+Always declare the type either in the fence header or as `type:` front
+matter. Do not emit a bare ` ```mdart ` fence without `type:` even though the
+renderer has a compatibility fallback.
 Or with front-matter:
 ````
 ```mdart
@@ -46,6 +50,10 @@ Eleven families. **105 type names**, of which **101 are distinct renderers** —
 | **Planning** (project/time) | `gantt-lite` | full board → `kanban` · sprint → `sprint-board` · pure schedule → `gantt` · milestone list → `milestone` · work breakdown → `wbs` · chronological log → `timeline` |
 | **Technical** (system) | `network` | tiered system → `layered-arch` · DB schema → `entity` · message flow → `sequence` · state transitions → `state-machine` · OOP class → `class` · build/CI stages → `pipeline` |
 | **Plot** (x-y data viz) | `line-chart` | discrete points → `scatter` · filled below line → `area-chart` · grouped/stacked categories → `bar-chart` |
+
+For `layered-arch`, each top-level item is a layer band and its immediate
+children are component chips. Keep consecutive layers as top-level siblings;
+do not encode the layer stack as one deeply nested chain.
 
 ### Aliases
 
@@ -456,7 +464,7 @@ top-level (parents) vs children. Put the **longer** axis as parents.
 |---|---|---|---|
 | `matrix-nxm` | rows | columns | put more-numerous axis as top-level |
 | `heatmap` | rows | columns | put more-numerous axis as top-level |
-| `swimlane` | rows (lanes) | tasks in lane | already row-oriented; many lanes are fine |
+| `swimlane` | `- Lane` (bullet items) | `- Task` (bullet items) | already row-oriented; many lanes are fine |
 
 For `matrix-nxm` / `heatmap`: if you're plotting "10 people × 4 skills", the people are top-level (10 rows), skills are children (4 columns) — *not* the other way around.
 
@@ -515,6 +523,10 @@ collapses both into one undifferentiated text blob, defeating the renderer.
 For these types, **always** prefer `Label: value`. Reserve `-` / `—` only for
 free-text labels with no separable value (e.g. `Brand strength` in a SWOT cell,
 where the dash would be inside a single descriptive phrase).
+For `comparison`, keep this consistent within the whole table: use shared
+`key: value` children for every option, or use entirely unkeyed feature bullets.
+Never mix keyed children such as `Start: claude` with row-specific free-text
+bullets such as `Human TUI`.
 
 ```mdart
 type: progress-list

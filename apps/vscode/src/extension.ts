@@ -18,8 +18,8 @@ import type MarkdownIt           from 'markdown-it'
 
 import { mdartPlugin } from 'mdart-markdown-it'
 
-export function activate(_ctx: ExtensionContext): void {
-  // Nothing to initialise — the markdown preview hook is sufficient.
+export function activate(_ctx: ExtensionContext): { extendMarkdownIt(md: MarkdownIt): MarkdownIt } {
+  return { extendMarkdownIt }
 }
 
 export function deactivate(): void {}
