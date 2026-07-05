@@ -1,10 +1,11 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 import { countLeaves, maxDepth } from './shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
   interface SNode { label: string; value?: string; attrs?: string[]; level: number; x: number; y: number; parentX?: number; parentY?: number }
   const snodes: SNode[] = []
   const W = 640, levelH = 52, TITLE_H = spec.title ? 28 : 10
@@ -30,24 +31,26 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
   layout(spec.items, 0, 0, W)
 
-  const lines: string[] = [], boxes: string[] = []
-  for (const n of snodes) {
+  const parts: string[] = []
+  for (const [i, n] of snodes.entries()) {
+    const unit: string[] = []
     if (n.parentX !== undefined && n.parentY !== undefined) {
       const py = n.parentY + bh(n.level - 1) / 2
       const cy = n.y - bh(n.level) / 2
-      lines.push(`<line x1="${n.parentX.toFixed(1)}" y1="${py.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${cy.toFixed(1)}" stroke="${theme.textMuted}aa" stroke-width="1.2"/>`)
+      unit.push(`<line x1="${n.parentX.toFixed(1)}" y1="${py.toFixed(1)}" x2="${n.x.toFixed(1)}" y2="${cy.toFixed(1)}" stroke="${theme.textMuted}aa" stroke-width="1.2"/>`)
     }
     const fill = n.level === 0 ? theme.accent : n.level === 1 ? theme.primary : theme.secondary
     const { display: nDisplay, url: nUrl } = displayLabel(n)
-    boxes.push(`<rect x="${(n.x - bw(n.level)/2).toFixed(1)}" y="${(n.y - bh(n.level)/2).toFixed(1)}" width="${bw(n.level)}" height="${bh(n.level)}" rx="4" fill="${fill}" stroke="${theme.bg}" stroke-width="1.5">${itemTitleTag(n)}</rect>`)
+    unit.push(`<rect x="${(n.x - bw(n.level)/2).toFixed(1)}" y="${(n.y - bh(n.level)/2).toFixed(1)}" width="${bw(n.level)}" height="${bh(n.level)}" rx="4" fill="${fill}" stroke="${theme.bg}" stroke-width="1.5">${itemTitleTag(n)}</rect>`)
     const fs = n.level === 0 ? 10 : n.level === 1 ? 9 : 8
-    boxes.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="600">${tt(nDisplay, 12, n)}</text>`, nUrl))
+    unit.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="600">${tt(nDisplay, 12, n)}</text>`, nUrl))
+    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   }
+  if (animate) parts.unshift(seqSpotlightCSS(snodes.length, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${spec.title ? `<text x="${W/2}" y="18" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>` : ''}
-  ${lines.join('\n  ')}
-  ${boxes.join('\n  ')}
+  ${parts.join('\n  ')}
 </svg>`
 }
 

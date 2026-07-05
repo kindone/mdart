@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 /**
  * pyramid-list — numbered horizontal bars, widening toward the bottom.
@@ -9,6 +9,7 @@ import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, elli
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const n = items.length
   const W = 600
@@ -54,6 +55,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
 
   for (let i = 0; i < n; i++) {
+    const unit: string[] = []
     const item = items[i]
     const t    = n > 1 ? i / (n - 1) : 1
     const barW = BAR_MAX * (MIN_FRAC + (1 - MIN_FRAC) * t)
@@ -62,14 +64,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.muted, t * 0.65)
 
     // Bar — tooltip carries full item summary (label + value + attrs)
-    parts.push(
+    unit.push(
       `<rect x="${barX.toFixed(1)}" y="${y}" width="${barW.toFixed(1)}" height="${ROW_H}" rx="5" fill="${fill}">${itemTitleTag(item)}</rect>`
     )
 
     // Number badge — fixed to left edge of bar
     const badgeCx = barX - BADGE_R - 5
     const badgeCy = y + ROW_H / 2
-    parts.push(
+    unit.push(
       `<circle cx="${badgeCx.toFixed(1)}" cy="${badgeCy.toFixed(1)}" r="${BADGE_R}" fill="${fill}"/>`,
       `<text x="${badgeCx.toFixed(1)}" y="${(badgeCy + 4).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="${theme.bg}" font-family="system-ui,sans-serif">${i + 1}</text>`
     )
@@ -90,7 +92,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const tspans = lines
       .map((l, li) => `<tspan x="${cx.toFixed(1)}" dy="${li === 0 ? 0 : LINE_H}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(
+    unit.push(
       aWrap(`<text x="${cx.toFixed(1)}" y="${firstY.toFixed(1)}" text-anchor="middle" font-size="12" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tip}${tspans}</text>`, lblUrl)
     )
 
@@ -98,7 +100,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (valueText) {
       const valX = barX + barW - 10
       const valY = y + ROW_H / 2 + 4
-      parts.push(
+      unit.push(
         `<text x="${valX.toFixed(1)}" y="${valY.toFixed(1)}" text-anchor="end" font-size="11" font-weight="700" fill="${theme.bg}" opacity="0.8" font-family="system-ui,sans-serif">${escapeXml(valueText)}</text>`
       )
     }
@@ -111,11 +113,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const dSpans = dw.lines
         .map((l, li) => `<tspan x="${cx.toFixed(1)}" dy="${li === 0 ? 0 : DESC_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      parts.push(
+      unit.push(
         `<text x="${cx.toFixed(1)}" y="${descY.toFixed(1)}" text-anchor="middle" font-size="${DESC_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${dTip}${dSpans}</text>`
       )
     }
+    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   }
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${parts.join('\n  ')}

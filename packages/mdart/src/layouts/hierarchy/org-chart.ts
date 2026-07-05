@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 import { countLeaves, maxDepth, layoutNodes, flatNodes } from './shared'
 
 const BOX_W = 110
@@ -8,6 +8,7 @@ const BOX_H = 30
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const depth = maxDepth(spec.items)
   const totalLeaves = spec.items.reduce((s, i) => s + countLeaves(i), 0) || 1
@@ -21,15 +22,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const nodes = layoutNodes(spec.items, HPAD, startY, W - HPAD * 2, levelH)
   const flat = flatNodes(nodes)
 
-  const lines: string[] = []
-  const boxes: string[] = []
+  const parts: string[] = []
 
-  for (const n of flat) {
+  for (const [i, n] of flat.entries()) {
+    const unit: string[] = []
     if (n.parentX !== undefined && n.parentY !== undefined) {
       const x1 = n.parentX, y1 = n.parentY + BOX_H / 2
       const x2 = n.x,       y2 = n.y - BOX_H / 2
       const mid = (y1 + y2) / 2
-      lines.push(
+      unit.push(
         `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} C${x1.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.textMuted}cc" stroke-width="1.5"/>`
       )
     }
@@ -37,16 +38,17 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const by = n.y - BOX_H / 2
     const { display: nDisplay, url: nUrl } = displayLabel(n)
     const tip = itemTitleTag(n)
-    boxes.push(
+    unit.push(
       `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="6" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${tip}</rect>`,
     )
-    boxes.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${tt(nDisplay, 15, n)}</text>`, nUrl))
+    unit.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${tt(nDisplay, 15, n)}</text>`, nUrl))
+    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   }
+  if (animate) parts.unshift(seqSpotlightCSS(flat.length, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${spec.title ? `<text x="${(W / 2).toFixed(1)}" y="18" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>` : ''}
-  ${lines.join('\n  ')}
-  ${boxes.join('\n  ')}
+  ${parts.join('\n  ')}
 </svg>`
 }
 

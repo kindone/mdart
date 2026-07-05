@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -42,6 +42,7 @@ function colText(
 // ── Renderer ─────────────────────────────────────────────────────────────────
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  const animate = shouldAnimate(spec)
   let pros: MdArtItem[] = []
   let cons: MdArtItem[] = []
   let currentSection: 'pros' | 'cons' | null = null
@@ -106,36 +107,42 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const proColor = isLight ? '#065f46' : '#6ee7b7'
   const conColor = isLight ? '#881337' : '#fda4af'
 
-  svgContent += `<rect x="0" y="${baseY}" width="${HALF}" height="${HEADER_H}" fill="#064e3b" />`
-  svgContent += `<text x="${HALF / 2}" y="${baseY + 25}" text-anchor="middle" font-size="13" fill="#6ee7b7" font-family="system-ui,sans-serif" font-weight="700">Pros</text>`
-  svgContent += `<rect x="${HALF}" y="${baseY}" width="${HALF}" height="${HEADER_H}" fill="#4c0519" />`
-  svgContent += `<text x="${HALF + HALF / 2}" y="${baseY + 25}" text-anchor="middle" font-size="13" fill="#fda4af" font-family="system-ui,sans-serif" font-weight="700">Cons</text>`
+  const headerUnit = [
+    `<rect x="0" y="${baseY}" width="${HALF}" height="${HEADER_H}" fill="#064e3b" />`,
+    `<text x="${HALF / 2}" y="${baseY + 25}" text-anchor="middle" font-size="13" fill="#6ee7b7" font-family="system-ui,sans-serif" font-weight="700">Pros</text>`,
+    `<rect x="${HALF}" y="${baseY}" width="${HALF}" height="${HEADER_H}" fill="#4c0519" />`,
+    `<text x="${HALF + HALF / 2}" y="${baseY + 25}" text-anchor="middle" font-size="13" fill="#fda4af" font-family="system-ui,sans-serif" font-weight="700">Cons</text>`,
+  ].join('')
+  svgContent += animate ? `<g class="mdart-n0">${headerUnit}</g>` : headerUnit
 
   for (let i = 0; i < maxRows; i++) {
+    const unit: string[] = []
     const rY   = rowY[i]
     const rH   = rowHeights[i]
     const rowBg = i % 2 === 0 ? theme.surface : theme.bg
 
-    svgContent += `<rect x="0" y="${rY}" width="${HALF}" height="${rH}" fill="${rowBg}" />`
-    svgContent += `<rect x="${HALF}" y="${rY}" width="${HALF}" height="${rH}" fill="${rowBg}" />`
+    unit.push(`<rect x="0" y="${rY}" width="${HALF}" height="${rH}" fill="${rowBg}" />`)
+    unit.push(`<rect x="${HALF}" y="${rY}" width="${HALF}" height="${rH}" fill="${rowBg}" />`)
 
     // Top-align multi-line, vertically centre single-line
     const lines = Math.max(proLayouts[i]?.lines.length ?? 0, conLayouts[i]?.lines.length ?? 0, 1)
     const textY = lines > 1 ? rY + PAD_V + LBL_FS * 0.75 : rY + rH / 2 + 4
 
     if (i < pros.length) {
-      svgContent += colText(pros[i], proLayouts[i], PAD, PAD + 14, textY, proColor, '✓')
+      unit.push(colText(pros[i], proLayouts[i], PAD, PAD + 14, textY, proColor, '✓'))
     }
     if (i < cons.length) {
-      svgContent += colText(cons[i], conLayouts[i], HALF + PAD, HALF + PAD + 14, textY, conColor, '✗')
+      unit.push(colText(cons[i], conLayouts[i], HALF + PAD, HALF + PAD + 14, textY, conColor, '✗'))
     }
 
     if (i < maxRows - 1) {
-      svgContent += `<line x1="0" y1="${rY + rH}" x2="${W}" y2="${rY + rH}" stroke="${theme.border}" stroke-width="0.5" />`
+      unit.push(`<line x1="0" y1="${rY + rH}" x2="${W}" y2="${rY + rH}" stroke="${theme.border}" stroke-width="0.5" />`)
     }
+    svgContent += animate ? `<g class="mdart-n${i + 1}">${unit.join('')}</g>` : unit.join('')
   }
 
   svgContent += `<line x1="${HALF}" y1="${baseY}" x2="${HALF}" y2="${H}" stroke="${theme.bg}" stroke-width="2" />`
+  if (animate) svgContent = seqSpotlightCSS(maxRows + 1, spec, { scale: false }) + svgContent
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>

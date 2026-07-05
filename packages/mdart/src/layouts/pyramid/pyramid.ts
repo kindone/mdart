@@ -1,10 +1,11 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, truncate, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, truncate, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const inverted = spec.type === 'inverted-pyramid' || spec.type === 'inverted'
   const n = items.length
@@ -16,10 +17,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const MAX_W = W - 40
   const MIN_W = 44
 
-  const shapes: string[] = []
-  const labels: string[] = []
+  const parts: string[] = []
 
   for (let i = 0; i < n; i++) {
+    const unit: string[] = []
     const item = items[i]
 
     let topW: number, botW: number
@@ -42,7 +43,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const narrowT = inverted ? 1 - i / Math.max(n - 1, 1) : i / Math.max(n - 1, 1)
     const fill = lerpColor(theme.primary, theme.muted, narrowT * 0.7)
 
-    shapes.push(
+    unit.push(
       `<polygon points="${topLeft.toFixed(1)},${y.toFixed(1)} ${topRight.toFixed(1)},${y.toFixed(1)} ${botRight.toFixed(1)},${(y + LAYER_H).toFixed(1)} ${botLeft.toFixed(1)},${(y + LAYER_H).toFixed(1)}" fill="${fill}" stroke="${theme.bg}" stroke-width="2">${itemTitleTag(item)}</polygon>`,
     )
 
@@ -65,7 +66,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const tspans = lines
       .map((l, li) => `<tspan x="${cxPos.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
       .join('')
-    labels.push(
+    unit.push(
       aWrap(`<text x="${cxPos.toFixed(1)}" y="${firstY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${tspans}</text>`, lblUrl),
     )
 
@@ -76,15 +77,17 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const sideText = item.value ? `${item.label} · ${item.value}` : item.label
       const sideTrunc = truncate(sideText, 24)
       const sideTip   = sideTrunc !== sideText ? `<title>${escapeXml(sideText)}</title>` : ''
-      labels.push(
+      unit.push(
         `<text x="${sideX.toFixed(1)}" y="${sideY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${sideTip}${escapeXml(sideTrunc)}</text>`,
       )
     }
+    const animIndex = inverted ? i : n - 1 - i
+    parts.push(animate ? `<g class="mdart-n${animIndex}">${unit.join('')}</g>` : unit.join(''))
   }
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${spec.title ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>` : ''}
-  ${shapes.join('\n  ')}
-  ${labels.join('\n  ')}
+  ${parts.join('\n  ')}
 </svg>`
 }

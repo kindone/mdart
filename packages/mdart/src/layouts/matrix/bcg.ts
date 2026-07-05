@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap, itemTitleTag, type ItemLike } from '../shared'
+import { escapeXml, tt, parseLink, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS, type ItemLike } from '../shared'
 
 const BCG_QUADS = [
   { key: 'stars',     keywords: ['star'],             label: '★ Stars',          sub: 'High growth · High share', fill: '#6d28d9', text: '#ffffff' },  // violet-700
@@ -18,6 +18,7 @@ const MONO_FILLS: Record<string, { fills: string[]; text: string }> = {
 }
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  const animate = shouldAnimate(spec)
   const buckets: Record<string, BcgEntry[]> = Object.fromEntries(BCG_QUADS.map(q => [q.key, []]))
   let slotIdx = 0
   for (const item of spec.items) {
@@ -43,16 +44,18 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const positions = [[0, 0], [1, 0], [0, 1], [1, 1]]
   BCG_QUADS.forEach((q, i) => {
+    const unit: string[] = []
     const [col, row] = positions[i]
     const x = col * CELL_W, y = TITLE_H + row * CELL_H
     const fill = mono ? mono.fills[i] : q.fill
     const text = mono ? mono.text : q.text
-    svgContent += `<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${fill}"/>`
-    svgContent += `<text x="${x + CELL_W / 2}" y="${y + 24}" text-anchor="middle" font-size="12" fill="${text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(q.label)}</text>`
-    svgContent += `<text x="${x + CELL_W / 2}" y="${y + 38}" text-anchor="middle" font-size="8" fill="${text}" font-family="system-ui,sans-serif" opacity="0.65">${q.sub}</text>`
+    unit.push(`<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${fill}"/>`)
+    unit.push(`<text x="${x + CELL_W / 2}" y="${y + 24}" text-anchor="middle" font-size="12" fill="${text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(q.label)}</text>`)
+    unit.push(`<text x="${x + CELL_W / 2}" y="${y + 38}" text-anchor="middle" font-size="8" fill="${text}" font-family="system-ui,sans-serif" opacity="0.65">${q.sub}</text>`)
     buckets[q.key].slice(0, 4).forEach(({ display: lbl, url: lblUrl, src }, j) => {
-      svgContent += aWrap(`<text x="${x + 10}" y="${y + 56 + j * 18}" font-size="10" fill="${text}" font-family="system-ui,sans-serif" opacity="0.9">${itemTitleTag(src)}• ${tt(lbl, 22)}</text>`, lblUrl)
+      unit.push(aWrap(`<text x="${x + 10}" y="${y + 56 + j * 18}" font-size="10" fill="${text}" font-family="system-ui,sans-serif" opacity="0.9">${itemTitleTag(src)}• ${tt(lbl, 22)}</text>`, lblUrl))
     })
+    svgContent += animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join('')
   })
   // Grid lines
   svgContent += `<line x1="${W / 2}" y1="${TITLE_H}" x2="${W / 2}" y2="${TITLE_H + CELL_H * 2}" stroke="${theme.bg}" stroke-width="2"/>`
@@ -61,6 +64,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const axY = TITLE_H + CELL_H * 2 + 14
   svgContent += `<text x="${CELL_W / 2}" y="${axY}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">← High Market Share</text>`
   svgContent += `<text x="${CELL_W + CELL_W / 2}" y="${axY}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">Low Market Share →</text>`
+  if (animate) svgContent = seqSpotlightCSS(BCG_QUADS.length, spec, { scale: false }) + svgContent
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>

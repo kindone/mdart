@@ -1,8 +1,9 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap, itemTitleTag } from '../shared'
+import { escapeXml, tt, parseLink, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  const animate = shouldAnimate(spec)
   // Collect items by prefix char or by group name
   interface SwotEntry { display: string; url: string | null; value?: string; attrs?: string[]; rawLabel: string }
   interface SwotQuadrant {
@@ -119,12 +120,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   ]
 
   for (const { key, col, row } of quadrants) {
+    const unit: string[] = []
     const q = quadrantMap[key]
     const x = col * CELL_W
     const y = contentTop + row * CELL_H
 
-    svgContent += `<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${q.fill}" />`
-    svgContent += `<text x="${x + CELL_W / 2}" y="${y + 22}" text-anchor="middle" font-size="12" fill="${q.textColor}" font-family="system-ui,sans-serif" font-weight="700">${q.label}</text>`
+    unit.push(`<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${q.fill}" />`)
+    unit.push(`<text x="${x + CELL_W / 2}" y="${y + 22}" text-anchor="middle" font-size="12" fill="${q.textColor}" font-family="system-ui,sans-serif" font-weight="700">${q.label}</text>`)
 
     const maxItems = Math.min(q.items.length, 5)
     for (let i = 0; i < maxItems; i++) {
@@ -140,24 +142,26 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       // Tooltip carries full label + value + attrs even though attrs aren't
       // visually displayed in the bullet text.
       const fullTip = itemTitleTag({ label: entry.rawLabel, value: itValue, attrs: entry.attrs })
-      svgContent += aWrap(
+      unit.push(aWrap(
         `<text x="${x + 10}" y="${itemY}" font-size="10" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.85">` +
         fullTip +
         `<tspan>• ${tt(itDisplay, lblBudget)}</tspan>` +
         (itValue ? `<tspan opacity="0.7">${tt(valueSuffix, valBudget)}</tspan>` : '') +
         `</text>`,
         itUrl,
-      )
+      ))
     }
 
     if (q.items.length > 5) {
-      svgContent += `<text x="${x + 10}" y="${y + 38 + 5 * 16}" font-size="9" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.6">+${q.items.length - 5} more</text>`
+      unit.push(`<text x="${x + 10}" y="${y + 38 + 5 * 16}" font-size="9" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.6">+${q.items.length - 5} more</text>`)
     }
+    svgContent += animate ? `<g class="mdart-n${quadrants.findIndex(qd => qd.key === key)}">${unit.join('')}</g>` : unit.join('')
   }
 
   // Grid lines
   svgContent += `<line x1="${W / 2}" y1="${contentTop}" x2="${W / 2}" y2="${H}" stroke="${theme.bg}" stroke-width="2" />`
   svgContent += `<line x1="0" y1="${contentTop + CELL_H}" x2="${W}" y2="${contentTop + CELL_H}" stroke="${theme.bg}" stroke-width="2" />`
+  if (animate) svgContent = seqSpotlightCSS(quadrants.length, spec, { scale: false }) + svgContent
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>

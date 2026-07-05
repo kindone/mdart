@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 import { countLeaves, maxDepth } from './shared'
 
 // ── Node geometry ─────────────────────────────────────────────────────────────
@@ -19,6 +19,7 @@ const LABEL_MAX = Math.max(8, Math.floor((NODE_W - 8) / 5.5))  // ~20
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const depth       = maxDepth(spec.items)
   const totalLeaves = spec.items.reduce((s, i) => s + countLeaves(i), 0) || 1
@@ -59,13 +60,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
   layoutH(spec.items, 0, TITLE_H + 10, H - TITLE_H - 20)
 
-  const lines: string[] = []
-  const boxes: string[] = []
+  const parts: string[] = []
 
-  for (const n of hnodes) {
+  for (const [i, n] of hnodes.entries()) {
+    const unit: string[] = []
     if (n.parentX !== undefined && n.parentY !== undefined) {
       const mid = (n.parentX + n.x - NODE_W / 2) / 2
-      lines.push(`<path d="M${n.parentX.toFixed(1)},${n.parentY.toFixed(1)} H${mid.toFixed(1)} V${n.y.toFixed(1)} H${(n.x - NODE_W / 2).toFixed(1)}" fill="none" stroke="${theme.border}" stroke-width="1.5"/>`)
+      unit.push(`<path d="M${n.parentX.toFixed(1)},${n.parentY.toFixed(1)} H${mid.toFixed(1)} V${n.y.toFixed(1)} H${(n.x - NODE_W / 2).toFixed(1)}" fill="none" stroke="${theme.border}" stroke-width="1.5"/>`)
     }
 
     const bx = n.x - NODE_W / 2
@@ -74,7 +75,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // only the label is rendered visibly. Replaces the older truncation-only
     // tip so value/attrs aren't silently lost.
     const itemTip = itemTitleTag({ label: n.label, value: n.value, attrs: n.attrs })
-    boxes.push(`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="5" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${itemTip}</rect>`)
+    unit.push(`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="5" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${itemTip}</rect>`)
 
     // Multi-line label centred in node
     const textBlockH = n.lines.length * LH
@@ -82,13 +83,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const spans      = n.lines
       .map((l, li) => `<tspan x="${n.x.toFixed(1)}" dy="${li === 0 ? 0 : LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    boxes.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${FS}" fill="${theme.text}" font-family="system-ui,sans-serif">${itemTip}${spans}</text>`, n.url))
+    unit.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${FS}" fill="${theme.text}" font-family="system-ui,sans-serif">${itemTip}${spans}</text>`, n.url))
+    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   }
+  if (animate) parts.unshift(seqSpotlightCSS(hnodes.length, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${spec.title ? `<text x="${(W / 2).toFixed(1)}" y="18" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>` : ''}
-  ${lines.join('\n  ')}
-  ${boxes.join('\n  ')}
+  ${parts.join('\n  ')}
 </svg>`
 }
 

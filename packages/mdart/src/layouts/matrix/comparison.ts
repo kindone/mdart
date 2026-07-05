@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, type ItemLike } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, type ItemLike } from '../shared'
 
 function lerpColorLocal(c1: string, c2: string, t: number): string {
   const hexToRgb = (hex: string) => {
@@ -81,6 +81,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
   const cols = spec.items
   if (cols.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const allChildrenPositional = cols.every(col => col.children.every(ch => !ch.value))
   const isPositional = allChildrenPositional && cols.length >= 2
@@ -141,11 +142,13 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const baseY = PAD + titleH
 
+  const headerUnit: string[] = []
+
   // Row label column header (corner)
-  svg += `<rect x="0" y="${baseY}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" />`
-  svg += labelText(LABEL_W / 2, centerY(baseY, HEADER_H, cornerWrap.lines.length),
+  headerUnit.push(`<rect x="0" y="${baseY}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" />`)
+  headerUnit.push(labelText(LABEL_W / 2, centerY(baseY, HEADER_H, cornerWrap.lines.length),
     `text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
-    rowLabelColHeader, cornerWrap)
+    rowLabelColHeader, cornerWrap))
 
   // Data column headers
   for (let ci = 0; ci < dataCols.length; ci++) {
@@ -153,31 +156,33 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
     const colX = LABEL_W + ci * COL_W
     const t    = dataCols.length > 1 ? ci / (dataCols.length - 1) : 0.5
     const fill = lerpColorLocal('#1e3a8a', '#1d4ed8', t)
-    svg += `<rect x="${colX}" y="${baseY}" width="${COL_W}" height="${HEADER_H}" fill="${fill}" />`
+    headerUnit.push(`<rect x="${colX}" y="${baseY}" width="${COL_W}" height="${HEADER_H}" fill="${fill}" />`)
     const hw   = colHeaderWraps[ci]
     const hy   = centerY(baseY, HEADER_H, hw.lines.length)
-    svg += labelText(colX + COL_W / 2, hy,
+    headerUnit.push(labelText(colX + COL_W / 2, hy,
       `text-anchor="middle" font-size="12" fill="#bfdbfe" font-family="system-ui,sans-serif" font-weight="700"`,
-      col.label, hw, LINE_H, col)
+      col.label, hw, LINE_H, col))
   }
+  svg += animate ? `<g class="mdart-n0">${headerUnit.join('')}</g>` : headerUnit.join('')
 
   // Header / data separator
   svg += `<line x1="0" y1="${baseY + HEADER_H}" x2="${W}" y2="${baseY + HEADER_H}" stroke="${theme.border}" stroke-width="1.5" />`
 
   // Data rows
   for (let ri = 0; ri < rowLabels.length; ri++) {
+    const rowUnit: string[] = []
     const rowLabel = rowLabels[ri]
     const ry       = dataRowY[ri]
     const rH       = dataRowHeights[ri]
     const rowBg    = ri % 2 === 0 ? theme.surface : theme.bg
 
-    svg += `<rect x="0" y="${ry}" width="${W}" height="${rH}" fill="${rowBg}" />`
+    rowUnit.push(`<rect x="0" y="${ry}" width="${W}" height="${rH}" fill="${rowBg}" />`)
 
     // Row label
     const rlW = rowLabelWraps[ri]
-    svg += labelText(PAD, centerY(ry, rH, rlW.lines.length),
+    rowUnit.push(labelText(PAD, centerY(ry, rH, rlW.lines.length),
       `font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif"`,
-      rowLabel, rlW)
+      rowLabel, rlW))
 
     // Data cells
     for (let ci = 0; ci < dataCols.length; ci++) {
@@ -185,12 +190,13 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
       const val  = cellValues[ri][ci]
       const cw   = cellWraps[ri][ci]
       const ci_  = cellItems[ri][ci]
-      svg += labelText(colX + COL_W / 2, centerY(ry, rH, cw.lines.length),
+      rowUnit.push(labelText(colX + COL_W / 2, centerY(ry, rH, cw.lines.length),
         `text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif"`,
-        val, cw, LINE_H, ci_)
+        val, cw, LINE_H, ci_))
     }
 
-    svg += `<line x1="0" y1="${ry + rH}" x2="${W}" y2="${ry + rH}" stroke="${theme.border}" stroke-width="0.5" />`
+    rowUnit.push(`<line x1="0" y1="${ry + rH}" x2="${W}" y2="${ry + rH}" stroke="${theme.border}" stroke-width="0.5" />`)
+    svg += animate ? `<g class="mdart-n${ri + 1}">${rowUnit.join('')}</g>` : rowUnit.join('')
   }
 
   // Column dividers
@@ -199,6 +205,7 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
     svg += `<line x1="${lx}" y1="${baseY}" x2="${lx}" y2="${H - PAD}" stroke="${theme.border}" stroke-width="0.5" />`
   }
   svg += `<line x1="${LABEL_W}" y1="${baseY}" x2="${LABEL_W}" y2="${H - PAD}" stroke="${theme.border}" stroke-width="1" />`
+  if (animate) svg = seqSpotlightCSS(rowLabels.length + 1, spec, { scale: false }) + svg
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
@@ -210,6 +217,7 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
 function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const allChildrenPositional = items.every(it => it.children.every(ch => !ch.value))
   const useFirstRowHeaders    = allChildrenPositional && items.length >= 2 && !spec.columns
@@ -288,28 +296,32 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const baseY = PAD + titleH
 
+  const headerUnit: string[] = []
+
   // Top-left corner + column headers
-  svg += `<rect x="0" y="${baseY}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" />`
+  headerUnit.push(`<rect x="0" y="${baseY}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" />`)
   if (topLeftHeader && cornerWrap) {
-    svg += labelText(LABEL_W / 2, centerY(baseY, HEADER_H, cornerWrap.lines.length),
+    headerUnit.push(labelText(LABEL_W / 2, centerY(baseY, HEADER_H, cornerWrap.lines.length),
       `text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
-      topLeftHeader, cornerWrap)
+      topLeftHeader, cornerWrap))
   }
   for (let ci = 0; ci < numCols; ci++) {
     const colX = LABEL_W + ci * COL_W
-    svg += `<rect x="${colX}" y="${baseY}" width="${COL_W}" height="${HEADER_H}" fill="${theme.surface}" />`
+    headerUnit.push(`<rect x="${colX}" y="${baseY}" width="${COL_W}" height="${HEADER_H}" fill="${theme.surface}" />`)
     const hw   = colHeaderWraps[ci]
     const hy   = centerY(baseY, HEADER_H, hw.lines.length)
-    svg += labelText(colX + COL_W / 2, hy,
+    headerUnit.push(labelText(colX + COL_W / 2, hy,
       `text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
-      colLabels[ci], hw)
+      colLabels[ci], hw))
   }
+  svg += animate ? `<g class="mdart-n0">${headerUnit.join('')}</g>` : headerUnit.join('')
 
   // Header / data separator
   svg += `<line x1="0" y1="${baseY + HEADER_H}" x2="${W}" y2="${baseY + HEADER_H}" stroke="${theme.border}" stroke-width="1.5" />`
 
   // Data rows
   for (let ri = 0; ri < dataRows.length; ri++) {
+    const rowUnit: string[] = []
     const row  = dataRows[ri]
     const ry   = dataRowY[ri]
     const rH   = dataRowHeights[ri]
@@ -317,27 +329,28 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColorLocal('#1e3a8a', '#1d4ed8', t)
 
     // Colored row label cell
-    svg += `<rect x="0" y="${ry}" width="${LABEL_W}" height="${rH}" fill="${fill}" />`
+    rowUnit.push(`<rect x="0" y="${ry}" width="${LABEL_W}" height="${rH}" fill="${fill}" />`)
     const rlW = rowLabelWraps[ri]
-    svg += labelText(LABEL_W / 2, centerY(ry, rH, rlW.lines.length),
+    rowUnit.push(labelText(LABEL_W / 2, centerY(ry, rH, rlW.lines.length),
       `text-anchor="middle" font-size="11" fill="#bfdbfe" font-family="system-ui,sans-serif" font-weight="700"`,
-      row.label, rlW, LINE_H, row)
+      row.label, rlW, LINE_H, row))
 
     const rowBg = ri % 2 === 0 ? theme.surface : theme.bg
-    svg += `<rect x="${LABEL_W}" y="${ry}" width="${W - LABEL_W}" height="${rH}" fill="${rowBg}" />`
+    rowUnit.push(`<rect x="${LABEL_W}" y="${ry}" width="${W - LABEL_W}" height="${rH}" fill="${rowBg}" />`)
 
     for (let ci = 0; ci < numCols; ci++) {
       const colX = LABEL_W + ci * COL_W
       const val  = cellValues[ri][ci]
       const cw   = cellWraps[ri][ci]
       const ci_  = cellItems[ri][ci]
-      svg += `<rect x="${colX}" y="${ry}" width="${COL_W}" height="${rH}" fill="${rowBg}" />`
-      svg += labelText(colX + COL_W / 2, centerY(ry, rH, cw.lines.length),
+      rowUnit.push(`<rect x="${colX}" y="${ry}" width="${COL_W}" height="${rH}" fill="${rowBg}" />`)
+      rowUnit.push(labelText(colX + COL_W / 2, centerY(ry, rH, cw.lines.length),
         `text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif"`,
-        val, cw, LINE_H, ci_)
+        val, cw, LINE_H, ci_))
     }
 
-    svg += `<line x1="0" y1="${ry + rH}" x2="${W}" y2="${ry + rH}" stroke="${theme.border}" stroke-width="0.5" />`
+    rowUnit.push(`<line x1="0" y1="${ry + rH}" x2="${W}" y2="${ry + rH}" stroke="${theme.border}" stroke-width="0.5" />`)
+    svg += animate ? `<g class="mdart-n${ri + 1}">${rowUnit.join('')}</g>` : rowUnit.join('')
   }
 
   // Vertical dividers
@@ -346,6 +359,7 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
     svg += `<line x1="${lx}" y1="${baseY}" x2="${lx}" y2="${H - PAD}" stroke="${theme.border}" stroke-width="0.5" />`
   }
   svg += `<line x1="${LABEL_W}" y1="${baseY}" x2="${LABEL_W}" y2="${H - PAD}" stroke="${theme.border}" stroke-width="1" />`
+  if (animate) svg = seqSpotlightCSS(dataRows.length + 1, spec, { scale: false }) + svg
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>

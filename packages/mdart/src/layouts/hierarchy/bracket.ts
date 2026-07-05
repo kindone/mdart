@@ -1,8 +1,9 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, tt, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  const animate = shouldAnimate(spec)
   // Each contestant carries a wins counter, summed across three notations:
   //   • `[w]` (or `[win]`, `[winner]`)   — repetition: each occurrence = 1 win
   //   • `[wN]`                           — compact: e.g. `[w3]` = 3 wins
@@ -74,10 +75,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const leafH = slots * ROW_H
   const H = TITLE_H + leafH + 22
 
+  const titlePart = spec.title
+    ? `<text x="${(W/2).toFixed(1)}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`
+    : ''
+  const connectorParts: string[] = []
   const parts: string[] = []
-  if (spec.title) parts.push(`<text x="${(W/2).toFixed(1)}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`)
 
   for (let r = 0; r < allRounds.length; r++) {
+    const roundUnit: string[] = []
     const round = allRounds[r], x = 10 + r * COL_W
     const slotH = leafH / round.length
     const isWinner = r === allRounds.length - 1
@@ -91,22 +96,25 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         const fw     = isWinner ? '700' : r === 0 ? '400' : '600'
         const op     = lost ? '0.45' : '1'
         const tip = slot.src ? itemTitleTag(slot.src) : ''
-        parts.push(`<rect x="${x}" y="${boxY.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="3" fill="${fill}" stroke="${stroke}${isWinner ? '' : 'cc'}" stroke-width="1.2" opacity="${op}">${tip}</rect>`)
-        parts.push(aWrap(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(nodeY + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isWinner ? theme.bg : theme.text}" font-family="system-ui,sans-serif" font-weight="${fw}" opacity="${op}">${tt(slot.label, 13)}</text>`, slot.url))
+        roundUnit.push(`<rect x="${x}" y="${boxY.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="3" fill="${fill}" stroke="${stroke}${isWinner ? '' : 'cc'}" stroke-width="1.2" opacity="${op}">${tip}</rect>`)
+        roundUnit.push(aWrap(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(nodeY + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isWinner ? theme.bg : theme.text}" font-family="system-ui,sans-serif" font-weight="${fw}" opacity="${op}">${tt(slot.label, 13)}</text>`, slot.url))
       } else {
         // Distinguish two empty-slot reasons:
         //   r === 0  → bye (not enough contestants for a power-of-two field)
         //   r  >  0  → match pending (winner not yet declared via [w] attrs)
         const placeholder = r === 0 ? 'bye' : 'TBD'
-        parts.push(`<rect x="${x}" y="${boxY.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="3" fill="none" stroke="${theme.textMuted}55" stroke-width="1" stroke-dasharray="3,2"/>`)
-        parts.push(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(nodeY + 4).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}77" font-family="system-ui,sans-serif">${placeholder}</text>`)
+        roundUnit.push(`<rect x="${x}" y="${boxY.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="3" fill="none" stroke="${theme.textMuted}55" stroke-width="1" stroke-dasharray="3,2"/>`)
+        roundUnit.push(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(nodeY + 4).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}77" font-family="system-ui,sans-serif">${placeholder}</text>`)
       }
       if (!isWinner && s % 2 === 0 && s + 1 < round.length) {
         const yA = nodeY, yB = TITLE_H + (s + 1) * slotH + slotH / 2, yMid = (yA + yB) / 2
         const armX = x + BOX_W + GAP, nextX = x + COL_W
-        parts.push(`<polyline points="${x+BOX_W},${yA.toFixed(1)} ${armX},${yA.toFixed(1)} ${armX},${yMid.toFixed(1)}" fill="none" stroke="${theme.textMuted}aa" stroke-width="1.5"/>`)
-        parts.push(`<polyline points="${x+BOX_W},${yB.toFixed(1)} ${armX},${yB.toFixed(1)} ${armX},${yMid.toFixed(1)}" fill="none" stroke="${theme.textMuted}aa" stroke-width="1.5"/>`)
-        parts.push(`<line x1="${armX}" y1="${yMid.toFixed(1)}" x2="${nextX}" y2="${yMid.toFixed(1)}" stroke="${theme.textMuted}aa" stroke-width="1.5"/>`)
+        const connectorUnit = [
+          `<polyline points="${x+BOX_W},${yA.toFixed(1)} ${armX},${yA.toFixed(1)} ${armX},${yMid.toFixed(1)}" fill="none" stroke="${theme.textMuted}aa" stroke-width="1.5"/>`,
+          `<polyline points="${x+BOX_W},${yB.toFixed(1)} ${armX},${yB.toFixed(1)} ${armX},${yMid.toFixed(1)}" fill="none" stroke="${theme.textMuted}aa" stroke-width="1.5"/>`,
+          `<line x1="${armX}" y1="${yMid.toFixed(1)}" x2="${nextX}" y2="${yMid.toFixed(1)}" stroke="${theme.textMuted}aa" stroke-width="1.5"/>`,
+        ].join('')
+        connectorParts.push(animate ? `<g class="mdart-n${r + 1}">${connectorUnit}</g>` : connectorUnit)
       }
     }
     const tot = allRounds.length - 1
@@ -114,10 +122,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lbl = isWinner
       ? (champCrowned ? '🏆 Champion' : 'Champion')
       : r === tot - 1 ? 'Final' : r === tot - 2 && tot >= 3 ? 'Semi' : `Round ${r + 1}`
-    parts.push(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(TITLE_H + leafH + 16).toFixed(1)}" text-anchor="middle" font-size="8" fill="${champCrowned ? theme.accent : theme.textMuted}" font-family="system-ui,sans-serif">${lbl}</text>`)
+    roundUnit.push(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(TITLE_H + leafH + 16).toFixed(1)}" text-anchor="middle" font-size="8" fill="${champCrowned ? theme.accent : theme.textMuted}" font-family="system-ui,sans-serif">${lbl}</text>`)
+    parts.push(animate ? `<g class="mdart-n${r}">${roundUnit.join('')}</g>` : roundUnit.join(''))
   }
+  const style = animate ? seqSpotlightCSS(allRounds.length, spec, { scale: false }) : ''
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
+  ${style}
+  ${titlePart}
+  ${connectorParts.join('\n  ')}
   ${parts.join('\n  ')}
 </svg>`
 }

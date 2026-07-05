@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, type ItemLike } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, type ItemLike } from '../shared'
 
 // ── Node geometry ────────────────────────────────────────────────────────────
 // Three tiers, each an ellipse. rx/ry chosen so 2 wrapped lines fit.
@@ -52,6 +52,7 @@ function mlText(
 // ── Renderer ─────────────────────────────────────────────────────────────────
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  const animate = shouldAnimate(spec)
   let centerLabel: string
   let branches: MdArtSpec['items']
 
@@ -68,16 +69,19 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const n = branches.length
 
-  const connectors: string[] = []
-  const shapes:     string[] = []
-  const texts:      string[] = []
+  const parts: string[] = []
 
   // ── Center node ─────────────────────────────────────────────────────────────
-  shapes.push(`<ellipse cx="${cx}" cy="${cy}" rx="${CENTER_RX}" ry="${CENTER_RY}" fill="${theme.surface}" stroke="${theme.accent}" stroke-width="1.5"/>`)
-  texts.push(mlText(cx, cy, centerLabel, CENTER_MC, CENTER_FS, CENTER_LH, theme.text, '600'))
+  const centerUnit = [
+    `<ellipse cx="${cx}" cy="${cy}" rx="${CENTER_RX}" ry="${CENTER_RY}" fill="${theme.surface}" stroke="${theme.accent}" stroke-width="1.5"/>`,
+    mlText(cx, cy, centerLabel, CENTER_MC, CENTER_FS, CENTER_LH, theme.text, '600'),
+  ].join('')
 
   // ── Branches ────────────────────────────────────────────────────────────────
   for (let i = 0; i < n; i++) {
+    const connectors: string[] = []
+    const shapes: string[] = []
+    const texts: string[] = []
     const angle = (2 * Math.PI * i / n) - Math.PI / 2
     const bx = cx + R1 * Math.cos(angle)
     const by = cy + R1 * Math.sin(angle)
@@ -104,9 +108,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       shapes.push(`<ellipse cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" rx="${SUB_RX}" ry="${SUB_RY}" fill="${theme.surface}" stroke="${theme.textMuted}aa" stroke-width="1">${itemTitleTag(subs[j])}</ellipse>`)
       texts.push(mlText(sx, sy, subs[j].label, SUB_MC, SUB_FS, SUB_LH, theme.textMuted, 'normal', subs[j]))
     }
+    const unit = [...connectors, ...shapes, ...texts].join('')
+    parts.push(animate ? `<g class="mdart-n${i + 1}">${unit}</g>` : unit)
   }
+  parts.push(animate ? `<g class="mdart-n0">${centerUnit}</g>` : centerUnit)
+  if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${[...connectors, ...shapes, ...texts].join('\n  ')}
+  ${parts.join('\n  ')}
 </svg>`
 }

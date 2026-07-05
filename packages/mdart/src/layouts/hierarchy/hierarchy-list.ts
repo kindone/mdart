@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 // hierarchy-list renders a compact tree outline; rows are intentionally tight.
@@ -24,6 +24,7 @@ const MAX_D2 = Math.max(20, Math.floor((W - PAD * 2 - INDENT * 2) / 5.5)) // ~90
 // ── Renderer ─────────────────────────────────────────────────────────────────
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  const animate = shouldAnimate(spec)
   interface Row { label: string; truncated: boolean; url: string | null; depth: number; isLast: boolean; parentHasSibling: boolean[]; src: MdArtItem }
   const rows: Row[] = []
 
@@ -48,7 +49,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
 
   let curY = TITLE_H
-  rows.forEach((row) => {
+  rows.forEach((row, i) => {
+    const unit: string[] = []
     const rowH   = row.depth === 0 ? ROW_H_D0 : ROW_H
     const y      = curY + rowH / 2
     const bulletX = PAD + row.depth * INDENT
@@ -58,30 +60,32 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       for (let d = 0; d < row.depth - 1; d++) {
         if (row.parentHasSibling[d]) {
           const lx = PAD + d * INDENT + INDENT - 4
-          parts.push(`<line x1="${lx}" y1="${(y - rowH / 2).toFixed(1)}" x2="${lx}" y2="${(y + rowH / 2).toFixed(1)}" stroke="${theme.border}35" stroke-width="1"/>`)
+          unit.push(`<line x1="${lx}" y1="${(y - rowH / 2).toFixed(1)}" x2="${lx}" y2="${(y + rowH / 2).toFixed(1)}" stroke="${theme.border}35" stroke-width="1"/>`)
         }
       }
       const px = PAD + (row.depth - 1) * INDENT + INDENT - 4
-      parts.push(`<line x1="${px}" y1="${(y - rowH / 2).toFixed(1)}" x2="${px}" y2="${y.toFixed(1)}" stroke="${theme.border}35" stroke-width="1"/>`)
+      unit.push(`<line x1="${px}" y1="${(y - rowH / 2).toFixed(1)}" x2="${px}" y2="${y.toFixed(1)}" stroke="${theme.border}35" stroke-width="1"/>`)
       if (!row.isLast) {
-        parts.push(`<line x1="${px}" y1="${y.toFixed(1)}" x2="${px}" y2="${(y + rowH / 2).toFixed(1)}" stroke="${theme.border}35" stroke-width="1"/>`)
+        unit.push(`<line x1="${px}" y1="${y.toFixed(1)}" x2="${px}" y2="${(y + rowH / 2).toFixed(1)}" stroke="${theme.border}35" stroke-width="1"/>`)
       }
-      parts.push(`<line x1="${px}" y1="${y.toFixed(1)}" x2="${(bulletX - 2).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${theme.border}35" stroke-width="1"/>`)
+      unit.push(`<line x1="${px}" y1="${y.toFixed(1)}" x2="${(bulletX - 2).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${theme.border}35" stroke-width="1"/>`)
     }
 
     const bR   = row.depth === 0 ? 5 : row.depth === 1 ? 3.5 : 2.5
     const bFill = row.depth === 0 ? theme.accent : row.depth === 1 ? theme.primary : theme.secondary
-    parts.push(`<circle cx="${(bulletX + bR).toFixed(1)}" cy="${y.toFixed(1)}" r="${bR}" fill="${bFill}">${itemTitleTag(row.src)}</circle>`)
+    unit.push(`<circle cx="${(bulletX + bR).toFixed(1)}" cy="${y.toFixed(1)}" r="${bR}" fill="${bFill}">${itemTitleTag(row.src)}</circle>`)
 
     const textX = bulletX + bR * 2 + 4
     const fs    = row.depth === 0 ? FS_D0 : row.depth === 1 ? FS_D1 : FS_D2
     const fw    = row.depth === 0 ? '700' : '400'
     const tf    = row.depth === 0 ? theme.text : row.depth === 1 ? theme.text : theme.textMuted
     const tip   = row.truncated ? `<title>${escapeXml(row.label)}</title>` : ''
-    parts.push(aWrap(`<text x="${textX.toFixed(1)}" y="${(y + 4).toFixed(1)}" font-size="${fs}" fill="${tf}" font-family="system-ui,sans-serif" font-weight="${fw}">${tip}${escapeXml(row.label)}</text>`, row.url))
+    unit.push(aWrap(`<text x="${textX.toFixed(1)}" y="${(y + 4).toFixed(1)}" font-size="${fs}" fill="${tf}" font-family="system-ui,sans-serif" font-weight="${fw}">${tip}${escapeXml(row.label)}</text>`, row.url))
+    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
 
     curY += rowH
   })
+  if (animate) parts.unshift(seqSpotlightCSS(rows.length, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${parts.join('\n  ')}

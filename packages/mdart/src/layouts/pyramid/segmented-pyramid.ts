@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 /**
  * segmented-pyramid — classic pyramid shape but each layer is a visually
@@ -10,6 +10,7 @@ import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap, itemTitleTag, 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const n = items.length
   const W = 600
@@ -21,16 +22,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const MIN_W = 40
   const cx = W / 2
 
-  const shapes: string[] = []
-  const labels: string[] = []
+  const parts: string[] = []
 
   if (spec.title) {
-    shapes.push(
+    parts.push(
       `<text x="${cx}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`
     )
   }
 
   for (let i = 0; i < n; i++) {
+    const unit: string[] = []
     const item = items[i]
     const t = n > 1 ? i / (n - 1) : 1   // 0 = top/narrow, 1 = bottom/wide
 
@@ -50,12 +51,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const border = lerpColor(theme.primary, theme.accent, t * 0.5)
 
     // Filled trapezoid with border
-    shapes.push(
+    unit.push(
       `<polygon points="${tL.toFixed(1)},${y.toFixed(1)} ${tR.toFixed(1)},${y.toFixed(1)} ${bR.toFixed(1)},${(y + LAYER_H).toFixed(1)} ${bL.toFixed(1)},${(y + LAYER_H).toFixed(1)}" fill="${fill}cc" stroke="${border}" stroke-width="1.8" stroke-linejoin="round">${itemTitleTag(item)}</polygon>`
     )
 
     // Subtle inner highlight on top edge
-    shapes.push(
+    unit.push(
       `<line x1="${(tL + 2).toFixed(1)}" y1="${(y + 1).toFixed(1)}" x2="${(tR - 2).toFixed(1)}" y2="${(y + 1).toFixed(1)}" stroke="${theme.bg}55" stroke-width="1.5"/>`
     )
 
@@ -71,20 +72,21 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const baseWithValue = item.value ? `${lblDisplay} · ${item.value}` : lblDisplay
     const labelWithValue = ellipsisIfDropped(baseWithValue, item, { value: true })
 
-    labels.push(
+    unit.push(
       aWrap(`<text x="${cx.toFixed(1)}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tt(labelWithValue, maxChars)}</text>`, lblUrl)
     )
 
     if (midW < 70) {
       const sideX = cx + Math.max(topW, botW) / 2 + 8
-      labels.push(
+      unit.push(
         aWrap(`<text x="${sideX.toFixed(1)}" y="${textY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(labelWithValue, 24)}</text>`, lblUrl)
       )
     }
+    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   }
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${shapes.join('\n  ')}
-  ${labels.join('\n  ')}
+  ${parts.join('\n  ')}
 </svg>`
 }

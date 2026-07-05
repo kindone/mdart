@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 /**
  * diamond-pyramid — items arranged in a diamond (rhombus) shape.
@@ -10,6 +10,7 @@ import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap, itemTitleTag, 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const n = items.length
   const W = 600
@@ -28,16 +29,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     return MIN_W + (MAX_W - MIN_W) * (1 - Math.abs(2 * p - 1))
   }
 
-  const shapes: string[] = []
-  const labels: string[] = []
+  const parts: string[] = []
 
   if (spec.title) {
-    shapes.push(
+    parts.push(
       `<text x="${cx}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`
     )
   }
 
   for (let i = 0; i < n; i++) {
+    const unit: string[] = []
     const item = items[i]
 
     const pTop = i / n           // fraction at top edge of this band
@@ -58,7 +59,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const midness = 1 - Math.abs(2 * pMid - 1)
     const fill = lerpColor(theme.muted, theme.primary, 0.3 + midness * 0.7)
 
-    shapes.push(
+    unit.push(
       `<polygon points="${tL.toFixed(1)},${y.toFixed(1)} ${tR.toFixed(1)},${y.toFixed(1)} ${bR.toFixed(1)},${(y + LAYER_H).toFixed(1)} ${bL.toFixed(1)},${(y + LAYER_H).toFixed(1)}" fill="${fill}" stroke="${theme.bg}" stroke-width="2">${itemTitleTag(item)}</polygon>`
     )
 
@@ -74,20 +75,21 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const baseWithValue = item.value ? `${lblDisplay} · ${item.value}` : lblDisplay
     const labelWithValue = ellipsisIfDropped(baseWithValue, item, { value: true })
 
-    labels.push(
+    unit.push(
       aWrap(`<text x="${cx.toFixed(1)}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tt(labelWithValue, maxChars)}</text>`, lblUrl)
     )
 
     if (midW < 70) {
       const sideX = cx + Math.max(topW, botW) / 2 + 8
-      labels.push(
+      unit.push(
         aWrap(`<text x="${sideX.toFixed(1)}" y="${textY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(labelWithValue, 24)}</text>`, lblUrl)
       )
     }
+    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   }
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${shapes.join('\n  ')}
-  ${labels.join('\n  ')}
+  ${parts.join('\n  ')}
 </svg>`
 }

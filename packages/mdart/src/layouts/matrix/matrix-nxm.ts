@@ -1,10 +1,11 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty, ellipsisIfDropped, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty, ellipsisIfDropped, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const rows = spec.items
   if (rows.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const numCols    = Math.max(...rows.map(r => r.children.length), 1)
   const COL_W      = Math.min(160, Math.max(90, 520 / numCols))
@@ -82,45 +83,51 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     svg += `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
+  const headerUnit: string[] = []
+
   // Column headers
-  svg += `<rect x="0" y="${TITLE_H}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`
+  headerUnit.push(`<rect x="0" y="${TITLE_H}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
   for (let c = 0; c < numCols; c++) {
     const colX = LABEL_W + c * COL_W
-    svg += `<rect x="${colX}" y="${TITLE_H}" width="${COL_W}" height="${HEADER_H}" fill="${theme.primary}28" stroke="${theme.border}" stroke-width="0.5"/>`
+    headerUnit.push(`<rect x="${colX}" y="${TITLE_H}" width="${COL_W}" height="${HEADER_H}" fill="${theme.primary}28" stroke="${theme.border}" stroke-width="0.5"/>`)
     const w = colHeaderWraps[c]
-    svg += lbl(colX + COL_W / 2, centredY(TITLE_H, HEADER_H, w.lines.length),
+    headerUnit.push(lbl(colX + COL_W / 2, centredY(TITLE_H, HEADER_H, w.lines.length),
       `text-anchor="middle" font-size="11" fill="${theme.primary}" font-family="system-ui,sans-serif" font-weight="700"`,
-      colHeaders[c], w)
+      colHeaders[c], w))
   }
+  svg += animate ? `<g class="mdart-n0">${headerUnit.join('')}</g>` : headerUnit.join('')
 
   // Rows
   for (let r = 0; r < rows.length; r++) {
+    const rowUnit: string[] = []
     const row  = rows[r]
     const ry   = rowY[r]
     const rH   = rowHeights[r]
     const rowBg = r % 2 === 0 ? theme.surface : theme.bg
 
     // Row label cell — tooltip carries full label + value + attrs
-    svg += `<rect x="0" y="${ry}" width="${LABEL_W}" height="${rH}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`
+    rowUnit.push(`<rect x="0" y="${ry}" width="${LABEL_W}" height="${rH}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`)
     const rlW = rowLabelWraps[r]
-    svg += lbl(8, centredY(ry, rH, rlW.lines.length),
+    rowUnit.push(lbl(8, centredY(ry, rH, rlW.lines.length),
       `font-size="10.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
-      row.label, rlW)
+      row.label, rlW))
 
     // Data cells
     for (let c = 0; c < numCols; c++) {
       const colX = LABEL_W + c * COL_W
       const cell = row.children[c]
       const cellTip = cell ? itemTitleTag(cell) : ''
-      svg += `<rect x="${colX}" y="${ry}" width="${COL_W}" height="${rH}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5">${cellTip}</rect>`
+      rowUnit.push(`<rect x="${colX}" y="${ry}" width="${COL_W}" height="${rH}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5">${cellTip}</rect>`)
       if (cell) {
         const cw = cellWraps[r][c]
-        svg += lbl(colX + COL_W / 2, centredY(ry, rH, cw.lines.length),
+        rowUnit.push(lbl(colX + COL_W / 2, centredY(ry, rH, cw.lines.length),
           `text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif"`,
-          cell.label, cw)
+          cell.label, cw))
       }
     }
+    svg += animate ? `<g class="mdart-n${r + 1}">${rowUnit.join('')}</g>` : rowUnit.join('')
   }
+  if (animate) svg = seqSpotlightCSS(rows.length + 1, spec, { scale: false }) + svg
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
