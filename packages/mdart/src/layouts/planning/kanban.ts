@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function wrapLabel(label: string, maxPerLine: number): string[] {
   if (label.length <= maxPerLine) return [label];
@@ -54,27 +54,29 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const H = TITLE_H + 8 + COL_H + 12
 
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
 
   columns.forEach((col, ci) => {
     const colX = GAP + ci * (COL_W + GAP)
     const colY = TITLE_H + 8
+    const unit: string[] = []
 
-    parts.push(`<rect x="${colX.toFixed(1)}" y="${colY.toFixed(1)}" width="${COL_W.toFixed(1)}" height="${COL_H}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1">${itemTitleTag(col)}</rect>`)
-    parts.push(`<path d="M${(colX + 8).toFixed(1)},${colY.toFixed(1)} Q${colX.toFixed(1)},${colY.toFixed(1)} ${colX.toFixed(1)},${(colY + 8).toFixed(1)} L${colX.toFixed(1)},${(colY + HEADER_H).toFixed(1)} L${(colX + COL_W).toFixed(1)},${(colY + HEADER_H).toFixed(1)} L${(colX + COL_W).toFixed(1)},${(colY + 8).toFixed(1)} Q${(colX + COL_W).toFixed(1)},${colY.toFixed(1)} ${(colX + COL_W - 8).toFixed(1)},${colY.toFixed(1)} Z" fill="${theme.accent}22"/>`)
+    unit.push(`<rect x="${colX.toFixed(1)}" y="${colY.toFixed(1)}" width="${COL_W.toFixed(1)}" height="${COL_H}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1">${itemTitleTag(col)}</rect>`)
+    unit.push(`<path d="M${(colX + 8).toFixed(1)},${colY.toFixed(1)} Q${colX.toFixed(1)},${colY.toFixed(1)} ${colX.toFixed(1)},${(colY + 8).toFixed(1)} L${colX.toFixed(1)},${(colY + HEADER_H).toFixed(1)} L${(colX + COL_W).toFixed(1)},${(colY + HEADER_H).toFixed(1)} L${(colX + COL_W).toFixed(1)},${(colY + 8).toFixed(1)} Q${(colX + COL_W).toFixed(1)},${colY.toFixed(1)} ${(colX + COL_W - 8).toFixed(1)},${colY.toFixed(1)} Z" fill="${theme.accent}22"/>`)
     // kanban already shows attrs as visual treatments (line-through, active outline),
     // so shows.attrs=true on cards. Column header gets the standard treatment.
     const { display: colDisplay, url: colUrl } = displayLabel(col)
-    parts.push(aWrap(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${(colY + 21).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="600">${tt(colDisplay, 14, col)}</text>`, colUrl))
+    unit.push(aWrap(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${(colY + 21).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="600">${tt(colDisplay, 14, col)}</text>`, colUrl))
 
     if (col.children.length > 0) {
       const bx = colX + COL_W - 18
-      parts.push(
+      unit.push(
         `<circle cx="${bx.toFixed(1)}" cy="${(colY + 17).toFixed(1)}" r="9" fill="${theme.accent}44"/>`,
         `<text x="${bx.toFixed(1)}" y="${(colY + 21).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" font-family="system-ui,sans-serif">${col.children.length}</text>`,
       )
     }
 
-    parts.push(`<line x1="${colX}" y1="${(colY + HEADER_H).toFixed(1)}" x2="${(colX + COL_W).toFixed(1)}" y2="${(colY + HEADER_H).toFixed(1)}" stroke="${theme.border}" stroke-width="1"/>`)
+    unit.push(`<line x1="${colX}" y1="${(colY + HEADER_H).toFixed(1)}" x2="${(colX + COL_W).toFixed(1)}" y2="${(colY + HEADER_H).toFixed(1)}" stroke="${theme.border}" stroke-width="1"/>`)
 
     col.children.forEach((card, idx) => {
       const cardX = colX + PAD
@@ -95,20 +97,22 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const y1 = n === 1 ? cardY + 18 : cardY + 12
       const y2 = cardY + 24
 
-      parts.push(
+      unit.push(
         `<rect x="${cardX.toFixed(1)}" y="${cardY.toFixed(1)}" width="${cardW.toFixed(1)}" height="${CARD_H}" rx="5" fill="${theme.bg}" stroke="${theme.border}" stroke-width="1">${itemTitleTag(card)}</rect>`,
       )
       if (n === 1) {
-        parts.push(
+        unit.push(
           aWrap(`<text x="${textX}" y="${y1.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[0])}</text>`, cardUrl),
         )
       } else {
-        parts.push(
+        unit.push(
           aWrap(`<text x="${textX}" y="${y1.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[0])}</text><text x="${textX}" y="${y2.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[1])}</text>`, cardUrl),
         )
       }
     })
+    parts.push(animate ? `<g class="mdart-n${ci}">${unit.join('')}</g>` : unit.join(''))
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
   return svgWrap(W, H, theme, spec.title, parts)
 }

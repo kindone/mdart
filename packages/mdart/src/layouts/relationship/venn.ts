@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, truncate, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, truncate, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 /**
  * Unified Venn renderer.
@@ -149,11 +149,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const { W, H, R, centres, labelOff, colors } = layout
 
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
 
   // Circles — tooltip carries the full circle item (label + value + attrs)
   centres.forEach((c, i) => {
     const item = circles[i]
-    parts.push(`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${R}" fill="${colors[i % colors.length]}28" stroke="${colors[i % colors.length]}88" stroke-width="1.5">${item ? itemTitleTag(item) : ''}</circle>`)
+    parts.push(`<circle class="${animate ? `mdart-n${i}` : ''}" cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${R}" fill="${colors[i % colors.length]}28" stroke="${colors[i % colors.length]}88" stroke-width="1.5">${item ? itemTitleTag(item) : ''}</circle>`)
   })
 
   // Circle labels (+ first 2 children inline)
@@ -172,7 +173,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${lx.toFixed(1)}" dy="${li === 0 ? 0 : lblLineH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl))
+    parts.push(aWrap(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl))
     const maxChildren  = n === 2 ? 4 : 2
     const childGap     = n === 2 ? 12 : 14
     const childSpacing = n === 2 ? 16 : 13
@@ -182,7 +183,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const max = n === 2 ? 13 : 10
       const trunc = truncate(ch.label, max)
       const chTip = trunc !== ch.label ? `<title>${escapeXml(ch.label)}</title>` : ''
-      parts.push(`<text x="${lx.toFixed(1)}" y="${(childBaseY + j * childSpacing).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${chTip}${escapeXml(trunc)}</text>`)
+      parts.push(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${(childBaseY + j * childSpacing).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${chTip}${escapeXml(trunc)}</text>`)
     })
   })
 
@@ -194,7 +195,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     y: centres.reduce((s, c) => s + c.y, 0) / centres.length,
   }
   const spread = n === 2 ? 1 : (n === 3 ? 2.0 : 1.6)
-  intersects.forEach(ix => {
+  intersects.forEach((ix, i) => {
     const names = intersectionNames(ix.label)
     const pos   = intersectionPos(names, circles, centres, allCentre, spread)
     // Display text strips the separator-name list and shows just the value
@@ -209,8 +210,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const tspans  = lines
       .map((line, li) => `<tspan x="${pos.x.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(line)}</tspan>`)
       .join('')
-    parts.push(`<text x="${pos.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="${fw}">${tip}${tspans}</text>`)
+    parts.push(`<text class="${animate ? `mdart-n${n + i}` : ''}" x="${pos.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="${fw}">${tip}${tspans}</text>`)
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n + intersects.length, spec, { scale: false }))
   return svg(W, H, theme, spec.title, parts)
 }

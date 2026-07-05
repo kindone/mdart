@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -25,22 +25,26 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const MAX_R = Math.min(cxPos, (H - TITLE_H) / 2) - 10
 
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
 
   for (let i = n - 1; i >= 0; i--) {
     const item = items[i]
     const r = MAX_R * (i + 1) / n
     const opacityHex = Math.round(12 + (1 - i / n) * 28).toString(16).padStart(2, '0')
 
-    parts.push(
+    const unit: string[] = []
+    unit.push(
       `<circle cx="${cxPos.toFixed(1)}" cy="${cyPos.toFixed(1)}" r="${r.toFixed(1)}" fill="${theme.primary}${opacityHex}" stroke="${theme.primary}55" stroke-width="1.2">${itemTitleTag(item)}</circle>`,
     )
 
     const labelY = cyPos - (r - MAX_R / n / 2) + 14
     const { display: lblDisplay, url: lblUrl } = displayLabel(item)
-    parts.push(
+    unit.push(
       aWrap(`<text x="${cxPos.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(lblDisplay, 18, item)}</text>`, lblUrl),
     )
+    parts.push(animate ? `<g class="mdart-n${n - 1 - i}">${unit.join('')}</g>` : unit.join(''))
   }
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
   return svg(W, H, theme, spec.title, parts)
 }

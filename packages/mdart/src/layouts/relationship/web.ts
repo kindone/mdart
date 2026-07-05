@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -24,23 +24,28 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     cy + R * Math.sin(2 * Math.PI * i / n - Math.PI / 2),
   ])
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
   const drawn = new Set<string>()
+  const edges: string[] = []
   const edge = (i: number, j: number) => {
     const k = `${Math.min(i, j)}-${Math.max(i, j)}`
     if (drawn.has(k)) return; drawn.add(k)
-    parts.push(`<line x1="${pos[i][0].toFixed(1)}" y1="${pos[i][1].toFixed(1)}" x2="${pos[j][0].toFixed(1)}" y2="${pos[j][1].toFixed(1)}" stroke="${theme.primary}55" stroke-width="1.8"/>`)
+    edges.push(`<line x1="${pos[i][0].toFixed(1)}" y1="${pos[i][1].toFixed(1)}" x2="${pos[j][0].toFixed(1)}" y2="${pos[j][1].toFixed(1)}" stroke="${theme.primary}55" stroke-width="1.8"/>`)
   }
   for (let i = 0; i < n; i++) {
     edge(i, (i + 1) % n)
     if (n <= 7) edge(i, (i + 2) % n)
     if (n <= 4) for (let j = i + 1; j < n; j++) edge(i, j)
   }
+  parts.push(animate ? `<g class="mdart-n0">${edges.join('')}</g>` : edges.join(''))
   const nodeR = Math.max(22, Math.min(34, 72 / n))
   items.forEach((item, i) => {
     const [nx, ny] = pos[i]
     const { display: itmDisplay, url: itmUrl } = displayLabel(item)
-    parts.push(`<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${nodeR}" fill="${theme.surface}" stroke="${theme.primary}99" stroke-width="1.8">${itemTitleTag(item)}</circle>`)
-    parts.push(aWrap(`<text x="${nx.toFixed(1)}" y="${(ny + 4).toFixed(1)}" text-anchor="middle" font-size="${Math.max(8, Math.min(10, nodeR * 0.5)).toFixed(0)}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, 9, item)}</text>`, itmUrl))
+    const unit = `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${nodeR}" fill="${theme.surface}" stroke="${theme.primary}99" stroke-width="1.8">${itemTitleTag(item)}</circle>`
+      + aWrap(`<text x="${nx.toFixed(1)}" y="${(ny + 4).toFixed(1)}" text-anchor="middle" font-size="${Math.max(8, Math.min(10, nodeR * 0.5)).toFixed(0)}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, 9, item)}</text>`, itmUrl)
+    parts.push(animate ? `<g class="mdart-n${i + 1}">${unit}</g>` : unit)
   })
+  if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))
   return svg(W, H, theme, spec.title, parts)
 }

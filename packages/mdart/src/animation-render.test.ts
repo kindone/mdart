@@ -53,4 +53,20 @@ describe('animation connector timing', () => {
       expect(classes).toContain('mdart-arr-n3')
     }
   )
+
+  it('timeline-v animates its spine before rows without scale pulse', () => {
+    const svg = renderMdArt(`type: timeline-v
+- 2026 Q1: Plan
+  - Scope
+- 2026 Q2: Build
+  - Ship`)
+
+    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toContain('<g class="mdart-n0">')
+    expect(svg).toContain('<g class="mdart-n1">')
+    expect(svg).toContain('<g class="mdart-n2">')
+    expect(svg).toMatch(/<g class="mdart-n0">[\s\S]*?<line[\s\S]*?<polygon[\s\S]*?<\/g>/)
+    expect(svg).toMatch(/<g class="mdart-n1">[\s\S]*?<circle/)
+    expect(svg).not.toContain('transform:scale')
+  })
 })

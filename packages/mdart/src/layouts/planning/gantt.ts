@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -49,6 +49,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const H = TITLE_H + HEADER_H + rows.length * ROW_H + 12
 
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
 
   for (let t = 0; t <= maxEnd; t++) {
     const x = LABEL_W + (t / maxEnd) * BAR_AREA
@@ -60,17 +61,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   rows.forEach((row, i) => {
     const y = TITLE_H + HEADER_H + i * ROW_H
+    const unit: string[] = []
 
     if (i % 2 === 0) {
-      parts.push(`<rect x="0" y="${y.toFixed(1)}" width="${W}" height="${ROW_H}" fill="${theme.surface}" opacity="0.5"/>`)
+      unit.push(`<rect x="0" y="${y.toFixed(1)}" width="${W}" height="${ROW_H}" fill="${theme.surface}" opacity="0.5"/>`)
     }
 
-    parts.push(aWrap(`<text x="${(LABEL_W - 8).toFixed(1)}" y="${(y + 21).toFixed(1)}" text-anchor="end" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(row.label, 18)}</text>`, row.url))
+    unit.push(aWrap(`<text x="${(LABEL_W - 8).toFixed(1)}" y="${(y + 21).toFixed(1)}" text-anchor="end" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(row.label, 18)}</text>`, row.url))
 
     const barX = LABEL_W + (row.start / maxEnd) * BAR_AREA
     const barW = Math.max(6, ((row.end - row.start) / maxEnd) * BAR_AREA)
-    parts.push(`<rect x="${barX.toFixed(1)}" y="${(y + 8).toFixed(1)}" width="${barW.toFixed(1)}" height="18" rx="4" fill="${theme.accent}88" stroke="${theme.accent}" stroke-width="1">${itemTitleTag(row.src)}</rect>`)
+    unit.push(`<rect x="${barX.toFixed(1)}" y="${(y + 8).toFixed(1)}" width="${barW.toFixed(1)}" height="18" rx="4" fill="${theme.accent}88" stroke="${theme.accent}" stroke-width="1">${itemTitleTag(row.src)}</rect>`)
+    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(rows.length, spec, { scale: false }))
   return svgWrap(W, H, theme, spec.title, parts)
 }

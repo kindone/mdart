@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -39,10 +39,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const labelIndex = new Map(allLabels.map((lbl, i) => [lbl, i]))
 
+  const parts: string[] = []
   const edges: string[] = []
   const nodes: string[] = []
+  const animate = shouldAnimate(spec)
 
-  edges.push(`<defs><marker id="net-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${theme.textMuted}"/></marker></defs>`)
+  parts.push(`<defs><marker id="net-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${theme.textMuted}"/></marker></defs>`)
 
   items.forEach(item => {
     const si = labelIndex.get(item.label) ?? -1
@@ -58,7 +60,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const y1 = src.y + (dy / len) * (NODE_H / 2 + 2)
       const x2 = dst.x - (dx / len) * (NODE_W / 2 + 10)
       const y2 = dst.y - (dy / len) * (NODE_H / 2 + 6)
-      edges.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${theme.textMuted}99" stroke-width="1.5" marker-end="url(#net-arr)"/>`)
+      const edge = `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${theme.textMuted}99" stroke-width="1.5" marker-end="url(#net-arr)"/>`
+      edges.push(animate ? `<g class="mdart-n${ti}">${edge}</g>` : edge)
     })
   })
 
@@ -74,11 +77,18 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { display: rawDisplay, url: lblUrl } = parseLink(label)
     const lblDisplay = sourceItem ? ellipsisIfDropped(rawDisplay, sourceItem) : rawDisplay
     const tip = sourceItem ? itemTitleTag(sourceItem) : ''
-    nodes.push(
+    const unit = [
       `<rect x="${(x - NODE_W / 2).toFixed(1)}" y="${(y - NODE_H / 2).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="1.2">${tip}</rect>`,
-    )
-    nodes.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(lblDisplay, 13)}</text>`, lblUrl))
+      aWrap(`<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(lblDisplay, 13)}</text>`, lblUrl),
+    ].join('')
+    nodes.push(animate ? `<g class="mdart-n${i}">${unit}</g>` : unit)
   })
 
-  return svgWrap(W, H, theme, spec.title, [...edges, ...nodes])
+  const out = [
+    ...parts,
+    ...edges,
+    ...nodes,
+  ]
+  if (animate) out.unshift(seqSpotlightCSS(n, spec, { scale: false }))
+  return svgWrap(W, H, theme, spec.title, out)
 }

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -30,12 +30,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const W = colX[cols - 1] + NW + 16
 
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
   const rootLabel = spec.title ?? items[0].label
 
   let leafRow = 0
   const l1Mids: number[] = []
 
   items.forEach((l1) => {
+    const groupIndex = hasL2 ? l1Mids.length + 1 : l1Mids.length
+    const unit: string[] = []
     const leaves = hasL2 ? Math.max(l1.children.length, 1) : 1
     const l1SpanTop = TITLE_H + PAD_TOP + leafRow * (NH + VGAP)
     const l1SpanH = leaves * (NH + VGAP) - VGAP
@@ -45,8 +48,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const l1x = colX[hasL2 ? 1 : 0]
     const l1y = l1Mid - NH / 2
     const { display: l1Display, url: l1Url } = displayLabel(l1)
-    parts.push(`<rect x="${l1x}" y="${l1y.toFixed(1)}" width="${NW}" height="${NH}" rx="5" fill="${theme.primary}2e" stroke="${theme.primary}88" stroke-width="1.5">${itemTitleTag(l1)}</rect>`)
-    parts.push(aWrap(`<text x="${(l1x+NW/2).toFixed(1)}" y="${(l1y+20).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(l1Display, 15, l1)}</text>`, l1Url))
+    unit.push(`<rect x="${l1x}" y="${l1y.toFixed(1)}" width="${NW}" height="${NH}" rx="5" fill="${theme.primary}2e" stroke="${theme.primary}88" stroke-width="1.5">${itemTitleTag(l1)}</rect>`)
+    unit.push(aWrap(`<text x="${(l1x+NW/2).toFixed(1)}" y="${(l1y+20).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(l1Display, 15, l1)}</text>`, l1Url))
 
     if (hasL2) {
       const midX = colX[1] + NW
@@ -59,31 +62,35 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         const done = l2.attrs.includes('done')
         const active = l2.attrs.includes('active') || l2.attrs.includes('wip')
 
-        parts.push(`<path d="M${midX},${l1Mid.toFixed(1)} H${elbowX} V${l2Mid.toFixed(1)} H${childX}" fill="none" stroke="${theme.border}" stroke-width="1.2"/>`)
+        unit.push(`<path d="M${midX},${l1Mid.toFixed(1)} H${elbowX} V${l2Mid.toFixed(1)} H${childX}" fill="none" stroke="${theme.border}" stroke-width="1.2"/>`)
 
         const { display: l2Display, url: l2Url } = displayLabel(l2, { attrs: true })
         const l2Fill = done ? `${theme.accent}22` : theme.surface
         const l2Stroke = done ? theme.accent : active ? `${theme.accent}88` : theme.border
-        parts.push(`<rect x="${childX}" y="${l2y.toFixed(1)}" width="${NW}" height="${NH}" rx="4" fill="${l2Fill}" stroke="${l2Stroke}" stroke-width="${active ? 1.5 : 1}">${itemTitleTag(l2)}</rect>`)
+        unit.push(`<rect x="${childX}" y="${l2y.toFixed(1)}" width="${NW}" height="${NH}" rx="4" fill="${l2Fill}" stroke="${l2Stroke}" stroke-width="${active ? 1.5 : 1}">${itemTitleTag(l2)}</rect>`)
         const l2Col = done ? theme.accent : active ? theme.text : theme.textMuted
-        parts.push(aWrap(`<text x="${(childX+NW/2).toFixed(1)}" y="${(l2y+20).toFixed(1)}" text-anchor="middle" font-size="10" fill="${l2Col}" font-family="system-ui,sans-serif" ${done ? 'text-decoration="line-through"' : ''}>${tt(l2Display, 15, l2)}</text>`, l2Url))
+        unit.push(aWrap(`<text x="${(childX+NW/2).toFixed(1)}" y="${(l2y+20).toFixed(1)}" text-anchor="middle" font-size="10" fill="${l2Col}" font-family="system-ui,sans-serif" ${done ? 'text-decoration="line-through"' : ''}>${tt(l2Display, 15, l2)}</text>`, l2Url))
       })
     }
 
+    parts.push(animate ? `<g class="mdart-n${groupIndex}">${unit.join('')}</g>` : unit.join(''))
     leafRow += leaves
   })
 
   if (hasL2 && l1Mids.length > 0) {
+    const rootUnit: string[] = []
     const spineX = colX[1] - HGAP / 2
-    parts.push(`<line x1="${spineX}" y1="${l1Mids[0].toFixed(1)}" x2="${spineX}" y2="${l1Mids[l1Mids.length-1].toFixed(1)}" stroke="${theme.border}" stroke-width="1.5"/>`)
-    l1Mids.forEach(mid => parts.push(`<line x1="${spineX}" y1="${mid.toFixed(1)}" x2="${colX[1]}" y2="${mid.toFixed(1)}" stroke="${theme.border}" stroke-width="1.2"/>`))
+    rootUnit.push(`<line x1="${spineX}" y1="${l1Mids[0].toFixed(1)}" x2="${spineX}" y2="${l1Mids[l1Mids.length-1].toFixed(1)}" stroke="${theme.border}" stroke-width="1.5"/>`)
+    l1Mids.forEach(mid => rootUnit.push(`<line x1="${spineX}" y1="${mid.toFixed(1)}" x2="${colX[1]}" y2="${mid.toFixed(1)}" stroke="${theme.border}" stroke-width="1.2"/>`))
 
     const rootMid = (l1Mids[0] + l1Mids[l1Mids.length - 1]) / 2
     const rootX = colX[0]
-    parts.push(`<rect x="${rootX}" y="${(rootMid-NH/2).toFixed(1)}" width="${NW}" height="${NH}" rx="6" fill="${theme.accent}33" stroke="${theme.accent}99" stroke-width="2"/>`)
-    parts.push(`<text x="${(rootX+NW/2).toFixed(1)}" y="${(rootMid+5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="700">${tt(rootLabel, 15)}</text>`)
-    parts.push(`<line x1="${rootX+NW}" y1="${rootMid.toFixed(1)}" x2="${spineX}" y2="${rootMid.toFixed(1)}" stroke="${theme.border}" stroke-width="1.5"/>`)
+    rootUnit.push(`<rect x="${rootX}" y="${(rootMid-NH/2).toFixed(1)}" width="${NW}" height="${NH}" rx="6" fill="${theme.accent}33" stroke="${theme.accent}99" stroke-width="2"/>`)
+    rootUnit.push(`<text x="${(rootX+NW/2).toFixed(1)}" y="${(rootMid+5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="700">${tt(rootLabel, 15)}</text>`)
+    rootUnit.push(`<line x1="${rootX+NW}" y1="${rootMid.toFixed(1)}" x2="${spineX}" y2="${rootMid.toFixed(1)}" stroke="${theme.border}" stroke-width="1.5"/>`)
+    parts.unshift(animate ? `<g class="mdart-n0">${rootUnit.join('')}</g>` : rootUnit.join(''))
   }
 
+  if (animate) parts.unshift(seqSpotlightCSS(hasL2 ? items.length + 1 : items.length, spec, { scale: false }))
   return svgWrap(W, H, theme, undefined, parts)
 }

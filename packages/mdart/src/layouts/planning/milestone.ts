@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -62,11 +62,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
 
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
 
   // Spine line
   const spineY1 = TITLE_H + 12 + rows[0].rowH / 2
   const lastCy  = rowY[items.length - 1] + rows[items.length - 1].rowH / 2
-  parts.push(`<line x1="${LINE_X}" y1="${spineY1.toFixed(1)}" x2="${LINE_X}" y2="${lastCy.toFixed(1)}" stroke="${theme.border}" stroke-width="2"/>`)
+  parts.push(animate ? `<g class="mdart-n0"><line x1="${LINE_X}" y1="${spineY1.toFixed(1)}" x2="${LINE_X}" y2="${lastCy.toFixed(1)}" stroke="${theme.border}" stroke-width="2"/></g>` : `<line x1="${LINE_X}" y1="${spineY1.toFixed(1)}" x2="${LINE_X}" y2="${lastCy.toFixed(1)}" stroke="${theme.border}" stroke-width="2"/>`)
 
   items.forEach((item, i) => {
     const cy      = rowY[i] + rows[i].rowH / 2
@@ -79,10 +80,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill   = done || active ? theme.accent : theme.surface
     const stroke = done || active ? theme.accent : theme.border
     const sw     = active ? 2.5 : 1.5
+    const unit: string[] = []
 
-    parts.push(`<rect x="${(LINE_X - s).toFixed(1)}" y="${(cy - s).toFixed(1)}" width="${(s * 2).toFixed(1)}" height="${(s * 2).toFixed(1)}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" transform="rotate(45 ${LINE_X} ${cy})">${itemTitleTag(item)}</rect>`)
+    unit.push(`<rect x="${(LINE_X - s).toFixed(1)}" y="${(cy - s).toFixed(1)}" width="${(s * 2).toFixed(1)}" height="${(s * 2).toFixed(1)}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" transform="rotate(45 ${LINE_X} ${cy})">${itemTitleTag(item)}</rect>`)
     if (done) {
-      parts.push(`<text x="${LINE_X}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="700">✓</text>`)
+      unit.push(`<text x="${LINE_X}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="700">✓</text>`)
     }
 
     const labelColor = upcoming ? theme.textMuted : theme.text
@@ -94,14 +96,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblSpans  = lblLines
       .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(aWrap(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${labelColor}" font-family="system-ui,sans-serif" font-weight="${fw}">${lblTip}${lblSpans}</text>`, lblUrl))
+    unit.push(aWrap(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${labelColor}" font-family="system-ui,sans-serif" font-weight="${fw}">${lblTip}${lblSpans}</text>`, lblUrl))
 
     // Status tag on the right
     const tag    = done ? 'Done' : active ? 'In Progress' : (item.value ?? 'Upcoming')
     const tagCol = done ? theme.accent : active ? '#fbbf24' : theme.textMuted
     const tagTip = tag.length > 16 ? `<title>${escapeXml(tag)}</title>` : ''
-    parts.push(`<text x="${W - 10}" y="${(cy + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${tagCol}" font-family="system-ui,sans-serif">${tagTip}${escapeXml(tag.slice(0, 16))}</text>`)
+    unit.push(`<text x="${W - 10}" y="${(cy + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${tagCol}" font-family="system-ui,sans-serif">${tagTip}${escapeXml(tag.slice(0, 16))}</text>`)
+    parts.push(animate ? `<g class="mdart-n${i + 1}">${unit.join('')}</g>` : unit.join(''))
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(items.length + 1, spec, { scale: false }))
   return svgWrap(W, H, theme, spec.title, parts)
 }

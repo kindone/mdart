@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -32,6 +32,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const stateIdx = new Map(states.map((s, i) => [s.label, i]))
 
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
   parts.push(`<defs>
     <marker id="sm-a" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
       <path d="M0,0 L7,3.5 L0,7 Z" fill="${theme.accent}99"/>
@@ -57,10 +58,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       if (isSelf) {
         const bx = src.x + STATE_W / 2
         const by = src.y - STATE_H / 2
-        parts.push(
+        const unit = [
           `<path d="M${(bx - 4).toFixed(1)},${by.toFixed(1)} C${(bx + 26).toFixed(1)},${(by - 28).toFixed(1)} ${(bx + 26).toFixed(1)},${(by + 12).toFixed(1)} ${(bx - 4).toFixed(1)},${(by + STATE_H).toFixed(1)}" fill="none" stroke="${theme.accent}66" stroke-width="1.5" marker-end="url(#sm-a)"/>`,
           fc.value ? `<text x="${(bx + 32).toFixed(1)}" y="${(by - 6).toFixed(1)}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(fc.value, 12)}</text>` : '',
-        )
+        ].join('')
+        parts.push(animate ? `<g class="mdart-n${si}">${unit}</g>` : unit)
       } else {
         const isBidi = transitionSet.has(`${ti}-${si}`)
         const dx = dst.x - src.x, dy = dst.y - src.y
@@ -84,21 +86,23 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         const tx = midX - ny * labelOff * effectiveSign
         const ty = midY + nx * labelOff * effectiveSign
         const lw = Math.min((fc.value?.length ?? 0) * 5.5 + 8, 90)
-        parts.push(
+        const unit = [
           `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} Q${cpx.toFixed(1)},${cpy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.accent}66" stroke-width="1.5" marker-end="url(#sm-a)"/>`,
           fc.value ? `<rect x="${(tx - lw / 2).toFixed(1)}" y="${(ty - 9).toFixed(1)}" width="${lw.toFixed(1)}" height="12" rx="3" fill="${theme.surface}" opacity="0.88"/>` : '',
           fc.value ? `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(fc.value, 14)}</text>` : '',
-        )
+        ].join('')
+        parts.push(animate ? `<g class="mdart-n${ti}">${unit}</g>` : unit)
       }
     })
   })
 
   const fp = pos[0]
   const dotX = fp.x - STATE_W / 2 - 34
-  parts.push(
+  const entryUnit = [
     `<circle cx="${dotX.toFixed(1)}" cy="${fp.y.toFixed(1)}" r="7" fill="${theme.text}"/>`,
     `<line x1="${(dotX + 7).toFixed(1)}" y1="${fp.y.toFixed(1)}" x2="${(fp.x - STATE_W / 2 - 6).toFixed(1)}" y2="${fp.y.toFixed(1)}" stroke="${theme.text}" stroke-width="2.5" marker-end="url(#sm-a)"/>`,
-  )
+  ].join('')
+  parts.push(animate ? `<g class="mdart-n0">${entryUnit}</g>` : entryUnit)
 
   states.forEach((state, i) => {
     const { x, y } = pos[i]
@@ -106,17 +110,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const isFinal = state.attrs.includes('final') || lbl === 'end' || lbl === 'final'
     const stroke = i === 0 ? theme.primary : isFinal ? theme.accent : `${theme.accent}66`
     const fill = isFinal ? `${theme.accent}18` : theme.surface
+    const unit: string[] = []
 
     if (isFinal) {
-      parts.push(`<rect x="${(x - STATE_W/2 - 4).toFixed(1)}" y="${(y - STATE_H/2 - 4).toFixed(1)}" width="${STATE_W + 8}" height="${STATE_H + 8}" rx="9" fill="none" stroke="${theme.accent}" stroke-width="2"/>`)
+      unit.push(`<rect x="${(x - STATE_W/2 - 4).toFixed(1)}" y="${(y - STATE_H/2 - 4).toFixed(1)}" width="${STATE_W + 8}" height="${STATE_H + 8}" rx="9" fill="none" stroke="${theme.accent}" stroke-width="2"/>`)
     }
     // shows.attrs=true since [final] gets a visible double-border treatment
     const { display: stDisplay, url: stUrl } = displayLabel(state, { attrs: true })
-    parts.push(
+    unit.push(
       `<rect x="${(x - STATE_W/2).toFixed(1)}" y="${(y - STATE_H/2).toFixed(1)}" width="${STATE_W}" height="${STATE_H}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="1.5">${itemTitleTag(state)}</rect>`,
     )
-    parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y + 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(stDisplay, 12, state)}</text>`, stUrl))
+    unit.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y + 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(stDisplay, 12, state)}</text>`, stUrl))
+    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
   return svgWrap(W, H, theme, spec.title, parts)
 }

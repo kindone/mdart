@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, titleEl, renderEmpty, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, titleEl, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -96,6 +96,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
   const n = items.length
+  const animate = shouldAnimate(spec)
 
   const titleH = spec.title ? 28 : 8
   const rows   = items.map(computeRow)
@@ -112,10 +113,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const spineTop  = titleH + DOT_R
   const lastCy    = rowY[n - 1] + rows[n - 1].rowH / 2
   const arrowTipY = lastCy + DOT_R + 8
-  parts.push(`<line x1="${SPINE_X}" y1="${spineTop}" x2="${SPINE_X}" y2="${(lastCy + DOT_R).toFixed(1)}" stroke="${theme.border}" stroke-width="2"/>`)
-  parts.push(`<polygon points="${(SPINE_X - 5).toFixed(1)},${(arrowTipY - 8).toFixed(1)} ${(SPINE_X + 5).toFixed(1)},${(arrowTipY - 8).toFixed(1)} ${SPINE_X},${arrowTipY.toFixed(1)}" fill="${theme.border}"/>`)
+  parts.push(`<g class="mdart-n0">
+      <line x1="${SPINE_X}" y1="${spineTop}" x2="${SPINE_X}" y2="${(lastCy + DOT_R).toFixed(1)}" stroke="${theme.border}" stroke-width="2"/>
+      <polygon points="${(SPINE_X - 5).toFixed(1)},${(arrowTipY - 8).toFixed(1)} ${(SPINE_X + 5).toFixed(1)},${(arrowTipY - 8).toFixed(1)} ${SPINE_X},${arrowTipY.toFixed(1)}" fill="${theme.border}"/>
+    </g>`)
 
   items.forEach((item, i) => {
+    const unit: string[] = []
     const cy   = rowY[i] + rows[i].rowH / 2
     const { tagLines, tagTrunc, tagUrl,
             mainLines, mainTrunc, mainUrl, mainText,
@@ -126,7 +130,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = i === n - 1 ? theme.accent : lerpColor(theme.primary, theme.secondary, t)
 
     // Dot on spine — tooltip carries full item summary
-    parts.push(`<circle cx="${SPINE_X}" cy="${cy.toFixed(1)}" r="${DOT_R}" fill="${fill}">${itemTitleTag(item)}</circle>`)
+    unit.push(`<circle cx="${SPINE_X}" cy="${cy.toFixed(1)}" r="${DOT_R}" fill="${fill}">${itemTitleTag(item)}</circle>`)
 
     // ── Left column: short tag (item.label), centred at dot, right-aligned ───
     if (tagLines.length > 0) {
@@ -136,7 +140,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const spans     = tagLines
         .map((l, li) => `<tspan x="${TAG_X}" dy="${li === 0 ? 0 : TAG_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      parts.push(aWrap(
+      unit.push(aWrap(
         `<text x="${TAG_X}" y="${tagStartY.toFixed(1)}" text-anchor="end" font-size="${TAG_FS}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${tip}${spans}</text>`,
         tagUrl,
       ))
@@ -149,7 +153,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const mainSpans  = mainLines
       .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(aWrap(
+    unit.push(aWrap(
       `<text x="${textX}" y="${mainStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${mainTip}${mainSpans}</text>`,
       mainUrl,
     ))
@@ -161,9 +165,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const detSpans  = detLines
         .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : DET_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      parts.push(`<text x="${textX}" y="${detStartY.toFixed(1)}" font-size="${DET_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${detTip}${detSpans}</text>`)
+      unit.push(`<text x="${textX}" y="${detStartY.toFixed(1)}" font-size="${DET_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${detTip}${detSpans}</text>`)
     }
+
+    parts.push(`<g class="mdart-n${i + 1}">${unit.join('\n      ')}</g>`)
   })
+
+  if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>

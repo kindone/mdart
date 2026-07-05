@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, tt, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -59,6 +59,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const lifeY2 = H - 16
 
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
   parts.push(`<defs>
     <marker id="sq-a" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
       <path d="M0,0 L7,3.5 L0,7 Z" fill="${theme.accent}"/>
@@ -70,19 +71,17 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   actorRenders.forEach(({ actDisplay, lines, url: actUrl, tip, truncated }, i) => {
     const x = ax(i)
+    const unit: string[] = []
     const textBlockH = lines.length * ACTOR_LH
     const textStartY = actorBoxY + (ACTOR_H - textBlockH) / 2 + ACTOR_LH - 2
     const fullTip = truncated ? `<title>${escapeXml(actDisplay)}</title>` : ''
     const spans = lines.map((l, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : ACTOR_LH}">${escapeXml(l)}</tspan>`).join('')
-    parts.push(
+    unit.push(
       `<rect x="${(x - bw/2).toFixed(1)}" y="${actorBoxY.toFixed(1)}" width="${bw.toFixed(1)}" height="${ACTOR_H}" rx="5" fill="${theme.accent}22" stroke="${theme.accent}aa" stroke-width="1.5">${tip}</rect>`,
     )
-    parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${textStartY.toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${fullTip}${spans}</text>`, actUrl))
-  })
-
-  actors.forEach((_, i) => {
-    const x = ax(i)
-    parts.push(`<line x1="${x.toFixed(1)}" y1="${lifeY1.toFixed(1)}" x2="${x.toFixed(1)}" y2="${lifeY2.toFixed(1)}" stroke="${theme.textMuted}9a" stroke-width="1" stroke-dasharray="4,4"/>`)
+    unit.push(aWrap(`<text x="${x.toFixed(1)}" y="${textStartY.toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${fullTip}${spans}</text>`, actUrl))
+    unit.push(`<line x1="${x.toFixed(1)}" y1="${lifeY1.toFixed(1)}" x2="${x.toFixed(1)}" y2="${lifeY2.toFixed(1)}" stroke="${theme.textMuted}9a" stroke-width="1" stroke-dasharray="4,4"/>`)
+    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   })
 
   messages.forEach((msg, mi) => {
@@ -103,10 +102,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       // horizontal elements competing for that space.
       const nextLifeline = fi < n - 1 ? ax(fi + 1) : W - 8
       const maxCharsLoop = Math.max(12, Math.floor((nextLifeline - x1 - 8) / 5.0))
-      parts.push(
+      const unit = [
         `<path d="M${x1.toFixed(1)},${y.toFixed(1)} C${lx.toFixed(1)},${(y - 10).toFixed(1)} ${lx.toFixed(1)},${(y + 10).toFixed(1)} ${x1.toFixed(1)},${(y + MSG_GAP * 0.55).toFixed(1)}" fill="none" stroke="${theme.accent}cc" stroke-width="1.5" marker-end="url(#sq-a)"/>`,
         msg.msg ? `<text x="${(x1 + 4).toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="start" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(msg.msg, maxCharsLoop)}</text>` : '',
-      )
+      ].join('')
+      parts.push(animate ? `<g class="mdart-n${n + mi}">${unit}</g>` : unit)
     } else {
       const isRet = ti < fi
       const dir = x2 > x1 ? 1 : -1
@@ -114,12 +114,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const ex2 = x2 - dir * 8
       const midX = (ex1 + ex2) / 2
       const maxChars = Math.max(8, Math.floor(Math.abs(ex2 - ex1) / 7))
-      parts.push(
+      const unit = [
         `<line x1="${ex1.toFixed(1)}" y1="${y.toFixed(1)}" x2="${ex2.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${isRet ? theme.textMuted : theme.accent}" stroke-width="1.5"${isRet ? ' stroke-dasharray="5,3"' : ''} marker-end="${isRet ? 'url(#sq-b)' : 'url(#sq-a)'}"/>`,
         msg.msg ? `<text x="${midX.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(msg.msg, maxChars)}</text>` : '',
-      )
+      ].join('')
+      parts.push(animate ? `<g class="mdart-n${n + mi}">${unit}</g>` : unit)
     }
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n + messages.length, spec, { scale: false }))
   return svgWrap(W, H, theme, spec.title, parts)
 }

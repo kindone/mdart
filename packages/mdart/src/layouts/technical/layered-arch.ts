@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, lerpColor, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped } from '../shared'
+import { escapeXml, wrapLabel, lerpColor, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 
@@ -133,6 +133,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const H = cumY + 8
 
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
 
   if (spec.title) {
     parts.push(`<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`)
@@ -143,9 +144,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const y = layerY[i]
     const { fill, labelLines, labelTrunc, labelUrl,
             hasChildren, cols, chipW, chipH, numRows, chips, layerH } = lc
+    const unit: string[] = []
 
     // Band background — tooltip carries full layer item summary
-    parts.push(`<rect x="${LAYER_LEFT}" y="${y.toFixed(1)}" width="${W - LAYER_LEFT - LAYER_RIGHT}" height="${layerH}" rx="8" fill="${fill}22" stroke="${fill}66" stroke-width="1.2">${itemTitleTag(layers[i])}</rect>`)
+    unit.push(`<rect x="${LAYER_LEFT}" y="${y.toFixed(1)}" width="${W - LAYER_LEFT - LAYER_RIGHT}" height="${layerH}" rx="8" fill="${fill}22" stroke="${fill}66" stroke-width="1.2">${itemTitleTag(layers[i])}</rect>`)
 
     // ── Layer label (vertically centred in band) ─────────────────────────────
     const labelH    = labelLines.length * LBL_LH
@@ -154,7 +156,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblSpans  = labelLines
       .map((line, li) => `<tspan x="24" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(line)}</tspan>`)
       .join('')
-    parts.push(aWrap(
+    unit.push(aWrap(
       `<text x="24" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`,
       labelUrl,
     ))
@@ -162,13 +164,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (!hasChildren) {
       if (i < layers.length - 1) {
         const ax = W / 2, ay1 = y + layerH
-        parts.push(`<line x1="${ax}" y1="${ay1.toFixed(1)}" x2="${ax}" y2="${(ay1 + GAP).toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1.5" marker-end="url(#la-arr)"/>`)
+        unit.push(`<line x1="${ax}" y1="${ay1.toFixed(1)}" x2="${ax}" y2="${(ay1 + GAP).toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1.5" marker-end="url(#la-arr)"/>`)
       }
+      parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
       return
     }
 
     // ── Divider ───────────────────────────────────────────────────────────────
-    parts.push(`<line x1="${DIVIDER_X}" y1="${(y + 10).toFixed(1)}" x2="${DIVIDER_X}" y2="${(y + layerH - 10).toFixed(1)}" stroke="${fill}55" stroke-width="1"/>`)
+    unit.push(`<line x1="${DIVIDER_X}" y1="${(y + 10).toFixed(1)}" x2="${DIVIDER_X}" y2="${(y + layerH - 10).toFixed(1)}" stroke="${fill}55" stroke-width="1"/>`)
 
     // ── Chips in a grid, block centred vertically ─────────────────────────────
     const chipsH     = numRows * chipH + (numRows - 1) * CHIP_ROW_GAP
@@ -188,8 +191,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         .map((line, idx) => `<tspan x="${textCX}" dy="${idx === 0 ? 0 : CHIP_LH}">${escapeXml(line)}</tspan>`)
         .join('')
 
-      parts.push(`<rect x="${chipX.toFixed(1)}" y="${chipTop.toFixed(1)}" width="${chipW.toFixed(1)}" height="${chipH.toFixed(1)}" rx="5" fill="${theme.surface}" stroke="${fill}66" stroke-width="1"/>`)
-      parts.push(aWrap(
+      unit.push(`<rect x="${chipX.toFixed(1)}" y="${chipTop.toFixed(1)}" width="${chipW.toFixed(1)}" height="${chipH.toFixed(1)}" rx="5" fill="${theme.surface}" stroke="${fill}66" stroke-width="1"/>`)
+      unit.push(aWrap(
         `<text x="${textCX}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${CHIP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${chipTip}${chipSpans}</text>`,
         chip.url,
       ))
@@ -198,10 +201,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Arrow to next layer
     if (i < layers.length - 1) {
       const ax = W / 2, ay1 = y + layerH
-      parts.push(`<line x1="${ax}" y1="${ay1.toFixed(1)}" x2="${ax}" y2="${(ay1 + GAP).toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1.5" marker-end="url(#la-arr)"/>`)
+      unit.push(`<line x1="${ax}" y1="${ay1.toFixed(1)}" x2="${ax}" y2="${(ay1 + GAP).toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1.5" marker-end="url(#la-arr)"/>`)
     }
+    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(layers.length, spec, { scale: false }))
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${parts.join('\n  ')}
 </svg>`

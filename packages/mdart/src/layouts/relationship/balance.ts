@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -18,6 +18,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const W = 520, TITLE_H = spec.title ? 28 : 8, H = 300 + TITLE_H
   const bx = W / 2, beamY = TITLE_H + 76, beamW = 400, plateW = 130, plateH = 18
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
   parts.push(`<polygon points="${bx},${beamY + 4} ${bx - 18},${beamY + 44} ${bx + 18},${beamY + 44}" fill="${theme.surface}" stroke="${theme.textMuted}" stroke-width="1.5"/>`)
   parts.push(`<rect x="${bx - 30}" y="${beamY + 44}" width="60" height="8" rx="2" fill="${theme.surface}" stroke="${theme.textMuted}" stroke-width="1"/>`)
   parts.push(`<rect x="${(bx - beamW / 2).toFixed(1)}" y="${(beamY - 4).toFixed(1)}" width="${beamW}" height="8" rx="3" fill="${theme.surface}" stroke="${theme.textMuted}" stroke-width="1.5"/>`)
@@ -27,17 +28,22 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // Value/attrs aren't rendered visibly → ellipsis cue + tooltip recovers them.
   const { display: leftDisplay, url: leftUrl } = displayLabel(left)
   const { display: rightDisplay, url: rightUrl } = displayLabel(right)
-  parts.push(`<rect x="${(lx - plateW / 2).toFixed(1)}" y="${(beamY + 38).toFixed(1)}" width="${plateW}" height="${plateH}" rx="4" fill="${theme.primary}30" stroke="${theme.primary}77" stroke-width="1.2">${itemTitleTag(left)}</rect>`)
-  parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(beamY + 38 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(leftDisplay, 16, left)}</text>`, leftUrl))
+  const leftUnit: string[] = []
+  leftUnit.push(`<rect x="${(lx - plateW / 2).toFixed(1)}" y="${(beamY + 38).toFixed(1)}" width="${plateW}" height="${plateH}" rx="4" fill="${theme.primary}30" stroke="${theme.primary}77" stroke-width="1.2">${itemTitleTag(left)}</rect>`)
+  leftUnit.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(beamY + 38 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(leftDisplay, 16, left)}</text>`, leftUrl))
   left.children.slice(0, 4).forEach((ch, i) => {
-    parts.push(`<text x="${lx.toFixed(1)}" y="${(beamY + 66 + i * 14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 16)}</text>`)
+    leftUnit.push(`<text x="${lx.toFixed(1)}" y="${(beamY + 66 + i * 14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 16)}</text>`)
   })
+  parts.push(animate ? `<g class="mdart-n0">${leftUnit.join('')}</g>` : leftUnit.join(''))
   const rx = bx + beamW / 2 - plateW / 2 + 6
   parts.push(`<line x1="${rx}" y1="${beamY}" x2="${rx}" y2="${beamY + 38}" stroke="${theme.textMuted}99" stroke-width="1.5"/>`)
-  parts.push(`<rect x="${(rx - plateW / 2).toFixed(1)}" y="${(beamY + 38).toFixed(1)}" width="${plateW}" height="${plateH}" rx="4" fill="${theme.secondary}30" stroke="${theme.secondary}77" stroke-width="1.2">${itemTitleTag(right)}</rect>`)
-  parts.push(aWrap(`<text x="${rx.toFixed(1)}" y="${(beamY + 38 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(rightDisplay, 16, right)}</text>`, rightUrl))
+  const rightUnit: string[] = []
+  rightUnit.push(`<rect x="${(rx - plateW / 2).toFixed(1)}" y="${(beamY + 38).toFixed(1)}" width="${plateW}" height="${plateH}" rx="4" fill="${theme.secondary}30" stroke="${theme.secondary}77" stroke-width="1.2">${itemTitleTag(right)}</rect>`)
+  rightUnit.push(aWrap(`<text x="${rx.toFixed(1)}" y="${(beamY + 38 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(rightDisplay, 16, right)}</text>`, rightUrl))
   right.children.slice(0, 4).forEach((ch, i) => {
-    parts.push(`<text x="${rx.toFixed(1)}" y="${(beamY + 66 + i * 14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 16)}</text>`)
+    rightUnit.push(`<text x="${rx.toFixed(1)}" y="${(beamY + 66 + i * 14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 16)}</text>`)
   })
+  parts.push(animate ? `<g class="mdart-n1">${rightUnit.join('')}</g>` : rightUnit.join(''))
+  if (animate) parts.unshift(seqSpotlightCSS(2, spec, { scale: false }))
   return svg(W, H, theme, spec.title, parts)
 }
