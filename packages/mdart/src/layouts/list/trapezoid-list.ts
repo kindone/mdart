@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -81,6 +81,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
   const H = cumY - GAP + 8
 
+  const animate = shouldAnimate(spec)
   const parts: string[] = []
 
   if (spec.title) {
@@ -105,7 +106,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       `L${botInset.toFixed(1)},${(y + bandH)}`,
       'Z',
     ].join(' ')
-    parts.push(`<path d="${d}" fill="${fill}33" stroke="${fill}" stroke-width="1">${itemTitleTag(item)}</path>`)
 
     // Baseline of first label line, text block vertically centred in bandH
     const lblStartY = y + (bandH - blockH) / 2 + LBL_FS * 0.75
@@ -115,7 +115,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${W / 2}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(aWrap(`<text x="${W / 2}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl))
+
+    let nodeStr = ''
+    nodeStr += `<path d="${d}" fill="${fill}33" stroke="${fill}" stroke-width="1">${itemTitleTag(item)}</path>`
+    nodeStr += aWrap(`<text x="${W / 2}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
 
     // ── Caption (muted, below label block, up to 3 lines) ────────────────────
     if (capLines.length > 0) {
@@ -124,10 +127,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const capSpans  = capLines
         .map((l, li) => `<tspan x="${W / 2}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      parts.push(`<text x="${W / 2}" y="${capStartY.toFixed(1)}" text-anchor="middle" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`)
+      nodeStr += `<text x="${W / 2}" y="${capStartY.toFixed(1)}" text-anchor="middle" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`
     }
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
     ${parts.join('\n    ')}

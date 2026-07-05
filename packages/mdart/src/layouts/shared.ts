@@ -1,5 +1,6 @@
 import type { MdArtTheme } from '../theme'
-import type { MdArtItem } from '../parser'
+import type { MdArtItem, MdArtSpec } from '../parser'
+import { getGlobalConfig } from '../config'
 
 // ── XML / text helpers ────────────────────────────────────────────────────────
 
@@ -93,6 +94,145 @@ export function wrapLabel(
   }
 
   return { lines: lines.length > 0 ? lines : [''], truncated, url }
+}
+
+// ── Animation helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Returns true when animation should be emitted for this spec.
+ * Default is ON; disable with `animate: false` in front-matter or globalConfig.
+ */
+export function shouldAnimate(spec: MdArtSpec): boolean {
+  if (spec.animate === false) return false
+  if (getGlobalConfig().animate === false) return false
+  return true
+}
+
+/**
+ * Effective animation speed multiplier (spec > global > 1.0).
+ */
+function animateSpeed(spec: MdArtSpec): number {
+  return spec.animateSpeed ?? getGlobalConfig().animateSpeed ?? 1.0
+}
+
+/**
+ * Two-phase sequential animation for N nodes. Stamp `class="mdart-n{i}"` on
+ * each animated element (wrapping both the shape and its label in a `<g>`).
+ *
+ * Phase 1 — Entrance (plays once, completion-timed):
+ *   Total entrance time is fixed (~3.2 s). That budget is divided equally by n,
+ *   giving each node a time slot. Each node fades in during the first 72% of its
+ *   slot, leaving a visible gap before the next node starts — the accumulation
+ *   effect (1 → 1,2 → 1,2,3). Fewer nodes = slower, more dramatic entrances;
+ *   more nodes = brisk staircase, same total time.
+ *
+ * Phase 2 — Loop (infinite after entrance, node-timed):
+ *   Each node gets a fixed spotlight window (stepMs), regardless of n. The loop
+ *   total scales naturally with the count. One extra step of silence (pauseMs =
+ *   stepMs) follows the last node — a clean "breath" before the cycle restarts.
+ *   All nodes stay at full natural opacity; emphasis is filter-only (brightness +
+ *   saturation + glow) so there is no opacity conflict with the entrance animation.
+ *
+ * @param n     number of nodes
+ * @param spec  MdArtSpec (reads animate-speed)
+ */
+interface SeqSpotlightOptions {
+  scale?: boolean
+  scalePeak?: number
+  trailingArrowSlot?: boolean
+}
+
+export function seqSpotlightCSS(n: number, spec: MdArtSpec, options: SeqSpotlightOptions = {}): string {
+  const speed = animateSpeed(spec)
+
+  // ── Phase 1: entrance — fixed total time ÷ n ────────────────────────────
+  const totalEntranceMs = Math.round(3200 / speed)
+  const slotMs   = totalEntranceMs / n              // time slot per node
+  const enterDur = Math.round(slotMs * 0.72)        // fade occupies 72% of slot
+  const enterGap = Math.round(slotMs)               // next node starts one slot later
+
+  // ── Phase 2: loop — fixed per-node spotlight ─────────────────────────────
+  // Resting nodes stay at FULL natural opacity (no dim).
+  // Emphasis is filter-only: brightness + saturation + glow.
+  // enterDur animates opacity; mdart-loop animates scale; mdart-bright-loop
+  // animates filter on child shapes. Different properties → no priority
+  // conflict. The `both` fill-mode on enter keeps every node at opacity:1
+  // after it enters, forever.
+  const stepMs      = Math.round(1800 / speed)  // fixed spotlight per node
+  const pauseMs     = Math.round(1800 / speed)  // one-beat silence at cycle end
+  const totalLoopMs = n * stepMs + pauseMs
+  const lastEntranceSlot = options.trailingArrowSlot ? n : n - 1
+  const entranceDone = lastEntranceSlot * enterGap + enterDur
+  const loopStartMs  = entranceDone + Math.round(900 / speed)  // breath before loop
+  const scaleEnabled = options.scale !== false
+  const scalePeak = options.scalePeak ?? 1.03
+
+  // ── Crossfade keyframe percentages ───────────────────────────────────────
+  // dimEndPct must satisfy two constraints:
+  //   (a) ≥ (stepMs - riseMs) / totalLoopMs  → dim-out overlaps next node's rise (no blink)
+  //   (b) ≤ (stepMs + pauseMs) / totalLoopMs → node N-1's dim completes before cycle end
+  // We pick a value between those bounds, closer to (a) to maximise the pause zone.
+  const riseMs    = Math.round(500 / speed)
+  const minDimPct = (stepMs - riseMs) / totalLoopMs * 100
+  const maxDimPct = (stepMs + pauseMs * 0.65) / totalLoopMs * 100
+  const dimEndPct   = Math.min(maxDimPct, minDimPct * 1.25).toFixed(1)
+  // Rise window starts riseMs before the cycle end (= node 0's next peak)
+  const risingPct = ((totalLoopMs - riseMs) / totalLoopMs * 100).toFixed(1)
+
+  const classes = Array.from({ length: n }, (_, i) => {
+    // Correct formula: node i peaks at clock time loopStartMs + i*stepMs.
+    // subtracting totalLoopMs (= n*stepMs + pauseMs) gives the right negative
+    // delay so the CSS pre-advances each node into the correct phase.
+    const loopDelay  = loopStartMs + i * stepMs - totalLoopMs
+    const enterDelay = i * enterGap
+    // Scale pulse lives on the <g> (reliable on all browsers), but some
+    // directional layouts opt out so their geometry stays anchored.
+    const nodeRule = scaleEnabled
+      ? `.mdart-n${i}{` +
+        `transform-box:fill-box;transform-origin:50% 50%;` +
+        `animation:` +
+        `mdart-loop ${totalLoopMs}ms ease-in-out ${loopDelay}ms infinite,` +
+        `mdart-enter ${enterDur}ms ease-out ${enterDelay}ms 1 both` +
+        `}`
+      : `.mdart-n${i}{animation:mdart-enter ${enterDur}ms ease-out ${enterDelay}ms 1 both}`
+    // Brightness filter lives on child shape elements.
+    // CSS filter on <g> can be silently ignored in some SVG rendering contexts;
+    // filter on concrete shape elements (rect/circle/polygon/ellipse) is
+    // universally supported. Using a separate keyframe (mdart-bright-loop)
+    // so the two animations never collide.
+    const shapeRule = `.mdart-n${i} rect,.mdart-n${i} circle,.mdart-n${i} polygon,.mdart-n${i} ellipse{` +
+      `animation:mdart-bright-loop ${totalLoopMs}ms ease-in-out ${loopDelay}ms infinite` +
+      `}`
+    // Connector reveal slots: use the destination node's index for ordinary
+    // i → i+1 connectors so the arrow appears with the node it points to.
+    // Closing cycle arrows should use n-1 so the cycle closes with the last node.
+    const arrRule = `.mdart-arr-n${i}{animation:mdart-enter ${enterDur}ms ease-out ${enterDelay}ms 1 both}`
+    return nodeRule + shapeRule + arrRule
+  }).join('')
+  const trailingArrowRule = options.trailingArrowSlot
+    ? `.mdart-arr-n${n}{animation:mdart-enter ${enterDur}ms ease-out ${n * enterGap}ms 1 both}`
+    : ''
+
+  return `<style>` +
+    // Entrance: opacity only — 0 → 1, held by forwards fill forever.
+    `@keyframes mdart-enter{from{opacity:0}to{opacity:1}}` +
+    (scaleEnabled
+      ? `@keyframes mdart-loop{` +
+        `0%,100%{transform:scale(${scalePeak})}` +
+        `${dimEndPct}%{transform:scale(1)}` +
+        `${risingPct}%{transform:scale(1)}` +
+      `}`
+      : '') +
+    // Brightness filter on child shapes. Identity values (brightness(1) saturate(1))
+    // instead of filter:none so browsers can smoothly interpolate — none→brightness(X)
+    // is a discrete snap in many implementations; identity→brightness(X) is smooth.
+    `@keyframes mdart-bright-loop{` +
+      `0%,100%{filter:brightness(1.9) saturate(1.6) drop-shadow(0 0 10px rgba(255,255,255,.65))}` +
+      `${dimEndPct}%{filter:brightness(1) saturate(1)}` +
+      `${risingPct}%{filter:brightness(1) saturate(1)}` +
+    `}` +
+    classes + trailingArrowRule +
+    `</style>`
 }
 
 /**
@@ -227,8 +367,6 @@ export function titleEl(W: number, title: string, theme: MdArtTheme): string {
 
 // ── Staircase helper (shared by step-up and step-down) ────────────────────────
 
-import type { MdArtSpec } from '../parser'
-
 export function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: boolean): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
@@ -236,12 +374,15 @@ export function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: b
   const W = 560
   const GAP_X = 6, GAP_Y = 6
   const BOX_W = Math.min(110, Math.floor((W - 16 - (n - 1) * GAP_X) / n))
-  const BOX_H = 36
+  const captions = items.map(item => getCaption(item))
+  const hasSecondary = items.some((item, i) => !!item.value || !!captions[i])
+  const BOX_H = hasSecondary ? 44 : 36
   const titleH = spec.title ? 28 : 8
   const totalDiagH = (n - 1) * (BOX_H + GAP_Y) + BOX_H
   const H = titleH + totalDiagH + 16
   const startX = 8
 
+  const animate = shouldAnimate(spec)
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
   parts.push(`<defs><marker id="step-arr" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto"><polygon points="0,0 5,2.5 0,5" fill="${theme.accent}"/></marker></defs>`)
@@ -254,12 +395,17 @@ export function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: b
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
 
-    const caption = getCaption(item)
-    const { display: staircaseDisplay, url: staircaseUrl } = displayLabel(item, { value: !!caption })
-    parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.2">${itemTitleTag(item)}</rect>`)
-    parts.push(aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(staircaseDisplay, Math.floor(BOX_W / 6), item)}</text>`, staircaseUrl))
-    if (caption) parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 16).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, Math.floor(BOX_W / 5))}</text>`)
+    const caption = captions[i]
+    const secondary = item.value ?? caption
+    const { display: staircaseDisplay, url: staircaseUrl } = displayLabel(item, { value: true })
+    const cy = y + BOX_H / 2
+    let nodeStr = `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.2">${itemTitleTag(item)}</rect>`
+    const labelY = secondary ? cy - 3 : cy + 4
+    nodeStr += aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(staircaseDisplay, Math.floor(BOX_W / 6), item)}</text>`, staircaseUrl)
+    if (secondary) nodeStr += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(cy + 11).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(secondary, Math.floor(BOX_W / 5))}</text>`
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
 
+    // Arrow fades in with the destination step it points to.
     if (i < n - 1) {
       const nextY = ascending
         ? titleH + 4 + (n - 2 - i) * (BOX_H + GAP_Y)
@@ -268,9 +414,11 @@ export function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: b
       const y1 = ascending ? y : y + BOX_H
       const x2 = x + BOX_W + GAP_X
       const y2 = ascending ? nextY + BOX_H : nextY
-      parts.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${theme.accent}cc" stroke-width="2.5" marker-end="url(#step-arr)"/>`)
+      const arrEl = `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${theme.accent}cc" stroke-width="2.5" marker-end="url(#step-arr)"/>`
+      parts.push(animate ? `<g class="mdart-arr-n${i + 1}">${arrEl}</g>` : arrEl)
     }
   })
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
     ${parts.join('\n    ')}

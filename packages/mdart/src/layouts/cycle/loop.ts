@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, tt, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { lerpColor, tt, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -32,6 +32,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const nx      = (i: number) => n === 1 ? W / 2 : padX + i * spacing
 
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
   // ── Arrowhead markers ──────────────────────────────────────────────────────
@@ -39,7 +40,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     <marker id="lp-fwd" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
       <path d="M0,0 L7,4 L0,8 Z" fill="${theme.primary}"/>
     </marker>
-    <marker id="lp-ret" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+    <marker id="lp-ret" markerWidth="8" markerHeight="8" refX="0" refY="4" orient="auto">
       <path d="M0,0 L7,4 L0,8 Z" fill="${theme.accent}bb"/>
     </marker>
   </defs>`)
@@ -51,7 +52,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (x2 > x1) {
       const t   = i / Math.max(n - 1, 1)
       const col = lerpColor(theme.primary, theme.secondary, t)
-      parts.push(`<line x1="${x1.toFixed(1)}" y1="${rowY}" x2="${x2.toFixed(1)}" y2="${rowY}" stroke="${col}" stroke-width="2" marker-end="url(#lp-fwd)"/>`)
+      const arrEl = `<line x1="${x1.toFixed(1)}" y1="${rowY}" x2="${x2.toFixed(1)}" y2="${rowY}" stroke="${col}" stroke-width="2" marker-end="url(#lp-fwd)"/>`
+      parts.push(animate ? `<g class="mdart-arr-n${i + 1}">${arrEl}</g>` : arrEl)
     }
   }
 
@@ -60,18 +62,33 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Self-loop above the single node
     const cx = W / 2
     const loopTop = rowY - nodeR - 4
-    parts.push(`<path d="M${cx - nodeR + 4},${loopTop} a22,16 0 1 1 ${nodeR * 2 - 8},0" fill="none" stroke="${theme.accent}" stroke-width="1.8" stroke-dasharray="5,4" opacity="0.75" marker-end="url(#lp-ret)"/>`)
+    const arrEl = `<path d="M${cx - nodeR + 4},${loopTop} a22,16 0 1 1 ${nodeR * 2 - 8},0" fill="none" stroke="${theme.accent}" stroke-width="1.8" stroke-dasharray="5,4" opacity="0.75" marker-end="url(#lp-ret)"/>`
+    parts.push(animate ? `<g class="mdart-arr-n${n}">${arrEl}</g>` : arrEl)
   } else {
     const x1  = nx(n - 1)
     const x0  = nx(0)
     const sy  = rowY + nodeR + 2
-    const ey  = sy
     const dip = rowY + nodeR + dipAmt
-    // Cubic bezier: control points at full dip depth under each end node
-    parts.push(`<path d="M${x1.toFixed(1)},${sy} C${x1.toFixed(1)},${dip.toFixed(1)} ${x0.toFixed(1)},${dip.toFixed(1)} ${x0.toFixed(1)},${ey}" fill="none" stroke="${theme.accent}" stroke-width="1.8" stroke-dasharray="5,4" opacity="0.7" marker-end="url(#lp-ret)"/>`)
+    const incomingAngle = Math.PI * 0.51
+    const returnStroke = 1.8
+    const markerTipLen = 7 * returnStroke
+    const tipClearance = 3
+    const dirX = Math.cos(incomingAngle)
+    const dirY = Math.sin(incomingAngle)
+    const ex  = x0 + dirX * (nodeR + markerTipLen + tipClearance)
+    const ey  = rowY + dirY * (nodeR + markerTipLen + tipClearance)
+    // Approach along a ray aimed at the node center, but stop the marker just
+    // outside the circle. The final control point remains on that same ray so
+    // the curve's imaginary extension passes cleanly through the arrowhead axis.
+    const c2Dist = Math.max(30, nodeR * 1.6)
+    const c2x = ex + dirX * c2Dist
+    const c2y = ey + dirY * c2Dist
+    const arrEl = `<path d="M${x1.toFixed(1)},${sy} C${x1.toFixed(1)},${dip.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}" fill="none" stroke="${theme.accent}" stroke-width="${returnStroke}" stroke-dasharray="5,4" opacity="0.7" marker-end="url(#lp-ret)"/>`
     // "↺ loop" label at the arc's lowest point
     const labelY = dip + 13
-    parts.push(`<text x="${(W / 2).toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic" opacity="0.85">&#x21BA; loop</text>`)
+    const labelEl = `<text x="${(W / 2).toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic" opacity="0.85">&#x21BA; loop</text>`
+    const returnEl = arrEl + labelEl
+    parts.push(animate ? `<g class="mdart-arr-n${n}">${returnEl}</g>` : returnEl)
   }
 
   // ── Nodes ──────────────────────────────────────────────────────────────────
@@ -79,9 +96,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const x    = nx(i)
     const t    = i / Math.max(n - 1, 1)
     const fill = lerpColor(theme.primary, theme.secondary, t)
-
-    // Node circle
-    parts.push(`<circle cx="${x.toFixed(1)}" cy="${rowY}" r="${nodeR}" fill="${fill}" stroke="${theme.bg}" stroke-width="2.5">${itemTitleTag(item)}</circle>`)
 
     // Label (one or two lines, bg-coloured text inside node)
     const { display: lblDisplay, url: lblUrl } = displayLabel(item)
@@ -98,14 +112,19 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       lblContent = `<text x="${x.toFixed(1)}" y="${(rowY - fh * 0.4).toFixed(1)}" text-anchor="middle" font-size="${fh}" font-weight="700" font-family="system-ui,sans-serif" ${halo}>${tt(l1, 11)}</text>`
                + `<text x="${x.toFixed(1)}" y="${(rowY + fh * 1.1).toFixed(1)}" text-anchor="middle" font-size="${fh}" font-weight="700" font-family="system-ui,sans-serif" ${halo}>${tt(l2, 11)}</text>`
     }
-    parts.push(aWrap(lblContent, lblUrl))
 
-    // Step-number badge (top-right of node)
+    // Step-number badge (top-right of node) — visually part of the node
     const bx = x + nodeR - 4
     const by = rowY - nodeR + 4
-    parts.push(`<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="7" fill="${theme.bg}" stroke="${fill}" stroke-width="1.5"/>`)
-    parts.push(`<text x="${bx.toFixed(1)}" y="${(by + 3.5).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui,sans-serif" fill="${fill}">${i + 1}</text>`)
+
+    let nodeStr = ''
+    nodeStr += `<circle cx="${x.toFixed(1)}" cy="${rowY}" r="${nodeR}" fill="${fill}" stroke="${theme.bg}" stroke-width="2.5">${itemTitleTag(item)}</circle>`
+    nodeStr += aWrap(lblContent, lblUrl)
+    nodeStr += `<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="7" fill="${theme.bg}" stroke="${fill}" stroke-width="1.5"/>`
+    nodeStr += `<text x="${bx.toFixed(1)}" y="${(by + 3.5).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui,sans-serif" fill="${fill}">${i + 1}</text>`
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec, { trailingArrowSlot: true }))
   return svgWrap(W, H, theme, parts)
 }

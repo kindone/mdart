@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -51,6 +51,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     return [line1, null]
   }
 
+  const n = items.length
+  const animate = shouldAnimate(spec)
   const parts: string[] = []
   if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
 
@@ -60,7 +62,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const cy = titleH + R + row * ROW_H
     const t = items.length > 1 ? i / (items.length - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
-    parts.push(`<polygon points="${hexPoints(cx, cy)}" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</polygon>`)
     const caption = getCaption(item)
     const { display: rawLabel, url: lblUrl } = displayLabel(item, { value: !!caption })
     const [line1, line2] = wrapLabel(rawLabel)
@@ -79,7 +80,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       hexContent += `<text x="${cx.toFixed(1)}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line1)}</text>`
       if (caption) hexContent += `<text x="${cx.toFixed(1)}" y="${(cy + 8).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(trunc(caption, VALUE_MAX_CHARS))}</text>`
     }
-    parts.push(aWrap(hexContent, lblUrl))
+    let nodeStr = ''
+    nodeStr += `<polygon points="${hexPoints(cx, cy)}" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</polygon>`
+    nodeStr += aWrap(hexContent, lblUrl)
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   })
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svg(W, H, theme, parts)
 }

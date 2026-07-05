@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, svgWrap, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, lerpColor, svgWrap, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function wrapText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
@@ -38,6 +38,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const hw = BOX_W / 2, hh = BOX_H / 2
   const GAP = 6  // extra px gap between arrow tip and box edge
 
+  const animate = shouldAnimate(spec)
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
@@ -62,7 +63,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const x1 = cx + R * Math.cos(sa), y1 = cy + R * Math.sin(sa)
     const x2 = cx + R * Math.cos(ea), y2 = cy + R * Math.sin(ea)
     const largeArc = arcLen > Math.PI ? 1 : 0
-    parts.push(`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${largeArc},1 ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.accent}55" stroke-width="2" marker-end="url(#cp-arr)"/>`)
+    const arcEl = `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${largeArc},1 ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.accent}55" stroke-width="2" marker-end="url(#cp-arr)"/>`
+    const arrIndex = i === n - 1 ? n : i + 1
+    parts.push(animate ? `<g class="mdart-arr-n${arrIndex}">${arcEl}</g>` : arcEl)
   }
 
   // ── Nodes ───────────────────────────────────────────────────────────────────
@@ -103,8 +106,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const truncated = valueLine.length > valMax ? valueLine.slice(0, valMax - 1) + '…' : valueLine
       nodeContent += `<text x="${bx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="9" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(truncated)}</text>`
     }
-    parts.push(aWrap(nodeContent, url))
+    const nodeEl = aWrap(nodeContent, url)
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeEl}</g>` : nodeEl)
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec, { trailingArrowSlot: true }))
   return svgWrap(W, H, theme, undefined, parts)
 }

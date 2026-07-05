@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -89,6 +89,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
   const H = cumY - GAP + 8   // trim trailing gap + bottom margin
 
+  const n = items.length
+  const animate = shouldAnimate(spec)
   const parts: string[] = []
 
   if (spec.title) {
@@ -105,10 +107,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill  = lerpColor(theme.primary, theme.secondary, t)
     const { lblLines, lblTrunc, lblUrl, valLines, valTrunc, valUrl, chdLayouts } = layouts[i]
 
-    // Cell background rect + left accent bar — tooltip carries full item
-    parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CELL_W.toFixed(1)}" height="${cellH}" rx="8" fill="${fill}33" stroke="${fill}88" stroke-width="1.5">${itemTitleTag(item)}</rect>`)
-    parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="6" height="${cellH}" rx="3" fill="${fill}"/>`)
-
     const tx  = (x + PAD_L).toFixed(1)       // first-line x
     const ctx = (x + PAD_L + 8).toFixed(1)   // continuation indent (past "· ")
 
@@ -117,9 +115,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${tx}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(aWrap(`<text x="${tx}" y="${(y + PAD_T).toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${lblTip}${lblSpans}</text>`, lblUrl))
 
     let textY = y + PAD_T + lblLines.length * LBL_LH
+    let valStr = ''
 
     // ── Value (italic muted subtitle, up to 2 lines) ─────────────────────────
     if (valLines.length > 0) {
@@ -128,11 +126,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const valSpans = valLines
         .map((l, li) => `<tspan x="${tx}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      parts.push(aWrap(`<text x="${tx}" y="${textY.toFixed(1)}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-style="italic" font-family="system-ui,sans-serif">${valTip}${valSpans}</text>`, valUrl))
+      valStr = aWrap(`<text x="${tx}" y="${textY.toFixed(1)}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-style="italic" font-family="system-ui,sans-serif">${valTip}${valSpans}</text>`, valUrl)
       textY += valLines.length * VAL_LH
     }
 
     // ── Children: bulleted, multi-line wrap, all items ────────────────────────
+    let childStr = ''
     if (chdLayouts.length > 0) {
       textY += SEC_G
       chdLayouts.forEach(({ lines, truncated }, ci) => {
@@ -146,12 +145,21 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
             ? `<tspan x="${tx}"  dy="0">· ${escapeXml(l)}</tspan>`
             : `<tspan x="${ctx}" dy="${CHD_LH}">${escapeXml(l)}</tspan>`)
           .join('')
-        parts.push(`<text x="${tx}" y="${textY.toFixed(1)}" font-size="${CHD_FS}" fill="${theme.textMuted}" fill-opacity="${op}" font-family="system-ui,sans-serif">${chTip}${spans}</text>`)
+        childStr += `<text x="${tx}" y="${textY.toFixed(1)}" font-size="${CHD_FS}" fill="${theme.textMuted}" fill-opacity="${op}" font-family="system-ui,sans-serif">${chTip}${spans}</text>`
         textY += lines.length * CHD_LH
       })
     }
+
+    let nodeStr = ''
+    // Cell background rect + left accent bar — tooltip carries full item
+    nodeStr += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CELL_W.toFixed(1)}" height="${cellH}" rx="8" fill="${fill}33" stroke="${fill}88" stroke-width="1.5">${itemTitleTag(item)}</rect>`
+    nodeStr += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="6" height="${cellH}" rx="3" fill="${fill}"/>`
+    nodeStr += aWrap(`<text x="${tx}" y="${(y + PAD_T).toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${lblTip}${lblSpans}</text>`, lblUrl)
+    nodeStr += valStr + childStr
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
     ${parts.join('\n    ')}

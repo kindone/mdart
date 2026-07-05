@@ -43,6 +43,10 @@ export interface MdArtSpec {
   refX?:   Array<{ at: string; atLabel?: string; label: string }>
 
   raw: string
+
+  // ── Animation ─────────────────────────────────────────────────────────────
+  animate?: boolean     // false = disable; undefined = use global/default (on)
+  animateSpeed?: number // multiplier: >1 = faster, <1 = slower (default 1.0)
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -339,6 +343,11 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
           if (key === 'ref-y') (spec.refY ??= []).push(r)
           else                 (spec.refX ??= []).push(r)
         }
+      } else if (key === 'animate') {
+        const b = asBool(val); if (b !== null) spec.animate = b
+      } else if (key === 'animate-speed' || key === 'animatespeed' || key === 'speed') {
+        const n = parseFloat(val)
+        if (!isNaN(n) && n > 0) spec.animateSpeed = n
       } else {
         // Not a recognized front-matter key — treat as body start
         bodyStart = i

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, tt, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 import { render as renderProcess } from './process'
 
 function wrapText(text: string, maxChars: number): string[] {
@@ -41,6 +41,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const y = titleH + 10
   const cy = y + chevH / 2
 
+  const animate = shouldAnimate(spec)
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
@@ -61,7 +62,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     } else {
       pts = `${x},${y} ${x + chevW - P},${y} ${x + chevW},${cy} ${x + chevW - P},${y + chevH} ${x},${y + chevH} ${x + P},${cy}`
     }
-    parts.push(`<polygon points="${pts}" fill="${fill}ee" stroke="${theme.bg}" stroke-width="2.5">${itemTitleTag(item)}</polygon>`)
 
     const bodyX = x + (isFirst ? 0 : P / 2)
     const bodyW = chevW - (isFirst ? P : 0) - (isLast ? 0 : P)
@@ -69,22 +69,23 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const hasValue = !!item.value
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: hasValue })
     const lines = wrapText(itmDisplay, Math.max(4, Math.floor(bodyW / 7)))
-    // When a value is present, restrict the label to a single line so the
-    // value can sit beneath it; otherwise fall back to the prior 2-line wrap.
     const labelLines = hasValue ? lines.slice(0, 1) : lines.slice(0, 2)
 
+    let nodeStr = `<polygon points="${pts}" fill="${fill}ee" stroke="${theme.bg}" stroke-width="2.5">${itemTitleTag(item)}</polygon>`
     if (hasValue) {
-      parts.push(aWrap(`<text x="${tx.toFixed(1)}" y="${cy - 3}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelLines[0])}</text>`, itmUrl))
-      parts.push(`<text x="${tx.toFixed(1)}" y="${cy + 12}" text-anchor="middle" font-size="9" fill="${theme.text}" fill-opacity="0.72" font-family="system-ui,sans-serif">${tt(item.value!, Math.max(4, Math.floor(bodyW / 6)))}</text>`)
+      nodeStr += aWrap(`<text x="${tx.toFixed(1)}" y="${cy - 3}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelLines[0])}</text>`, itmUrl)
+      nodeStr += `<text x="${tx.toFixed(1)}" y="${cy + 12}" text-anchor="middle" font-size="9" fill="${theme.text}" fill-opacity="0.72" font-family="system-ui,sans-serif">${tt(item.value!, Math.max(4, Math.floor(bodyW / 6)))}</text>`
     } else {
       let lblContent = ''
       labelLines.forEach((line, li) => {
         const ty = labelLines.length === 1 ? cy + 4 : cy + (li === 0 ? -5 : 9)
         lblContent += `<text x="${tx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
       })
-      parts.push(aWrap(lblContent, itmUrl))
+      nodeStr += aWrap(lblContent, itmUrl)
     }
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svgWrapProcess(W, H, theme, parts)
 }

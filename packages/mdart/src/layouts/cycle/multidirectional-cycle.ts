@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, tt, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { lerpColor, tt, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -32,7 +32,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     positions.push({ x: cx + R * Math.cos(angle), y: cy + R * Math.sin(angle) })
   }
 
-  // Draw all connections behind nodes
+  // Draw all connections behind nodes (always visible)
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
       const a = positions[i]
@@ -40,6 +40,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       parts.push(`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1" opacity="0.55"/>`)
     }
   }
+
+  const animate = shouldAnimate(spec)
 
   // Draw nodes on top
   for (let i = 0; i < n; i++) {
@@ -49,9 +51,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.secondary, t)
 
     const { display: lblDisplay, url: lblUrl } = displayLabel(item)
-    parts.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${nodeR}" fill="${fill}" stroke="${theme.bg}" stroke-width="2">${itemTitleTag(item)}</circle>`)
-    parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10, item)}</text>`, lblUrl))
+    let nodeStr = ''
+    nodeStr += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${nodeR}" fill="${fill}" stroke="${theme.bg}" stroke-width="2">${itemTitleTag(item)}</circle>`
+    nodeStr += aWrap(`<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10, item)}</text>`, lblUrl)
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   }
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svgWrap(W, H, theme, parts)
 }

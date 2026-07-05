@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, titleEl, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { lerpColor, titleEl, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -23,6 +23,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const rows = Math.ceil(n / COLS)
   const titleH = spec.title ? 28 : 8
   const H = titleH + rows * (BOX_H + ROW_GAP) + 8
+  const animate = shouldAnimate(spec)
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
   parts.push(`<defs>
@@ -42,37 +43,40 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const isLast = i === n - 1
-    parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W.toFixed(1)}" height="${BOX_H}" rx="5" fill="${isLast ? theme.accent + '33' : fill + '33'}" stroke="${isLast ? theme.accent : fill}" stroke-width="1.2">${itemTitleTag(item)}</rect>`)
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
-    if (item.value) {
-      // Two-line stack: bold label above midline, muted value below.
-      parts.push(aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 17).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, Math.floor(BOX_W / 6), item)}</text>`, itmUrl))
-      parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 32).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, Math.floor(BOX_W / 5))}</text>`)
-    } else {
-      parts.push(aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, Math.floor(BOX_W / 6), item)}</text>`, itmUrl))
-    }
 
+    let nodeStr = `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W.toFixed(1)}" height="${BOX_H}" rx="5" fill="${isLast ? theme.accent + '33' : fill + '33'}" stroke="${isLast ? theme.accent : fill}" stroke-width="1.2">${itemTitleTag(item)}</rect>`
+    if (item.value) {
+      nodeStr += aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 17).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, Math.floor(BOX_W / 6), item)}</text>`, itmUrl)
+      nodeStr += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 32).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, Math.floor(BOX_W / 5))}</text>`
+    } else {
+      nodeStr += aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, Math.floor(BOX_W / 6), item)}</text>`, itmUrl)
+    }
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+
+    // Connectors fade in with the destination node they point to.
     if (i < n - 1) {
       const next = positions[i + 1]
       const sameRow = Math.floor(i / COLS) === Math.floor((i + 1) / COLS)
+      let connEl: string
       if (sameRow) {
         const row = Math.floor(i / COLS)
         const goRight = row % 2 === 0
         const x1 = goRight ? x + BOX_W + 1 : x - 1
         const x2 = goRight ? next.x - 1 : next.x + BOX_W + 1
-        parts.push(`<line x1="${x1.toFixed(1)}" y1="${(y + BOX_H / 2).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${(y + BOX_H / 2).toFixed(1)}" stroke="${theme.accent}99" stroke-width="1.5" marker-end="url(#bp-r)"/>`)
+        connEl = `<line x1="${x1.toFixed(1)}" y1="${(y + BOX_H / 2).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${(y + BOX_H / 2).toFixed(1)}" stroke="${theme.accent}99" stroke-width="1.5" marker-end="url(#bp-r)"/>`
       } else {
         const row = Math.floor(i / COLS)
         const goRight = row % 2 === 0
-        const xPivot = x + (goRight ? BOX_W : 0)   // same as next.x + (goRight ? BOX_W : 0)
+        const xPivot = x + (goRight ? BOX_W : 0)
         const yMid1 = y + BOX_H / 2
         const yMid2 = next.y + BOX_H / 2
-        const ext = Math.round(TURN_EXT * 0.5)      // horizontal run length (16px)
-        const r   = Math.round(ROW_GAP / 3)          // rounded-corner radius   (8px)
-        const d   = goRight ? 1 : -1                 // +1 right-turn, -1 left-turn
-        const sw  = goRight ? 1 : 0                  // CW for right, CCW for left
-        const xA  = xPivot + d * ext                 // end of first H / start of second H
-        const xB  = xPivot + d * (ext + r)           // tip of both corner arcs (V segment x)
+        const ext = Math.round(TURN_EXT * 0.5)
+        const r   = Math.round(ROW_GAP / 3)
+        const d   = goRight ? 1 : -1
+        const sw  = goRight ? 1 : 0
+        const xA  = xPivot + d * ext
+        const xB  = xPivot + d * (ext + r)
         const path = [
           `M${xPivot},${yMid1.toFixed(1)}`,
           `H${xA}`,
@@ -81,9 +85,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
           `A${r},${r} 0 0,${sw} ${xA},${yMid2.toFixed(1)}`,
           `H${xPivot}`
         ].join(' ')
-        parts.push(`<path d="${path}" fill="none" stroke="${theme.accent}88" stroke-width="2" marker-end="url(#bp-r)"/>`)
+        connEl = `<path d="${path}" fill="none" stroke="${theme.accent}88" stroke-width="2" marker-end="url(#bp-r)"/>`
       }
+      parts.push(animate ? `<g class="mdart-arr-n${i + 1}">${connEl}</g>` : connEl)
     }
   })
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svgWrapProcess(W, H, theme, parts)
 }

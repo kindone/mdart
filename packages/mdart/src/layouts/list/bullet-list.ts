@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -80,6 +80,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const layouts = items.map(computeItemLayout)
   const H       = PAD + titleH + layouts.reduce((s, l) => s + l.itemH, 0) + PAD
 
+  const n = items.length
+  const animate = shouldAnimate(spec)
   let svg = ''
   if (spec.title) {
     svg += `<text x="${PAD}" y="${PAD + 16}" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
@@ -97,41 +99,46 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelBL  = y + FIRST_LBL_BL
     const markerCy = labelBL - 4
 
-    // ── Main bullet ───────────────────────────────────────────────────────────
-    svg += `<circle cx="${mainMarkerX}" cy="${markerCy}" r="5" fill="${fill}" >${itemTitleTag(item)}</circle>`
-
     // ── Main label (bold, up to 2 lines) ─────────────────────────────────────
     const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${mainTextStart}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    svg += aWrap(`<text x="${mainTextStart}" y="${labelBL}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
 
     // ── Value subtitle (italic muted, up to 2 lines) ──────────────────────────
+    let valStr = ''
     if (valLines.length > 0) {
       const valBL    = y + firstValBL
       const valTip   = valTrunc ? `<title>${escapeXml(item.value ?? '')}</title>` : ''
       const valSpans = valLines
         .map((l, li) => `<tspan x="${mainTextStart}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      svg += aWrap(`<text x="${mainTextStart}" y="${valBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic">${valTip}${valSpans}</text>`, valUrl)
+      valStr = aWrap(`<text x="${mainTextStart}" y="${valBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic">${valTip}${valSpans}</text>`, valUrl)
     }
 
     // ── Child rows (up to 2 lines each) ──────────────────────────────────────
+    let chdStr = ''
     let chdBL = y + firstChdBL
     item.children.forEach((child, j) => {
       const { lines: chLines, truncated: chTrunc } = chdLayouts[j]
       const childMarkerCy = chdBL - 4
-      svg += `<circle cx="${subMarkerX}" cy="${childMarkerCy}" r="3" fill="${fill}" fill-opacity="0.7" />`
+      chdStr += `<circle cx="${subMarkerX}" cy="${childMarkerCy}" r="3" fill="${fill}" fill-opacity="0.7" />`
       const chTip   = chTrunc ? `<title>${escapeXml(child.label)}</title>` : ''
       const chSpans = chLines
         .map((l, li) => `<tspan x="${subTextStart}" dy="${li === 0 ? 0 : CHD_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      svg += `<text x="${subTextStart}" y="${chdBL}" font-size="${CHD_FS}" fill="${theme.text}" fill-opacity="0.85" font-family="system-ui,sans-serif">${chTip}${chSpans}</text>`
+      chdStr += `<text x="${subTextStart}" y="${chdBL}" font-size="${CHD_FS}" fill="${theme.text}" fill-opacity="0.85" font-family="system-ui,sans-serif">${chTip}${chSpans}</text>`
       chdBL += chLines.length * CHD_LH
     })
 
-    // ── Divider ───────────────────────────────────────────────────────────────
+    // ── Assemble node (bullet + label + value + children) ─────────────────────
+    const nodeStr =
+      `<circle cx="${mainMarkerX}" cy="${markerCy}" r="5" fill="${fill}" >${itemTitleTag(item)}</circle>` +
+      aWrap(`<text x="${mainTextStart}" y="${labelBL}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl) +
+      valStr + chdStr
+    svg += animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr
+
+    // ── Divider — separator, not part of the item ──────────────────────────────
     if (i < items.length - 1) {
       svg += `<line x1="${PAD}" y1="${y + itemH}" x2="${W - PAD}" y2="${y + itemH}" stroke="${theme.border}" stroke-width="0.5" />`
     }
@@ -141,6 +148,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(n, spec) : ''}
     ${svg}
   </svg>`
 }

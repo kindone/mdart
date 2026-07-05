@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -15,6 +15,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const innerR = 70
   const GAP_ANGLE = 0.03  // radians gap between wedges
 
+  const animate = shouldAnimate(spec)
   let svgContent = ''
 
   for (let i = 0; i < n; i++) {
@@ -36,7 +37,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const largeArc = endAngle - startAngle > Math.PI ? 1 : 0
 
     const path = `M ${x1} ${y1} L ${x2} ${y2} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x3} ${y3} L ${x4} ${y4} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x1} ${y1} Z`
-    svgContent += `<path d="${path}" fill="${fill}">${itemTitleTag(item)}</path>`
 
     // Label at wedge midpoint. Wedge text room is tight; if a value is set
     // we render it as a smaller subtitle just below the label, both within
@@ -46,12 +46,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lx = cx + labelR * Math.cos(midAngle)
     const ly = cy + labelR * Math.sin(midAngle)
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
+
+    svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}>`
+    svgContent += `<path d="${path}" fill="${fill}">${itemTitleTag(item)}</path>`
     if (item.value) {
       svgContent += aWrap(`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10, item)}</text>`, lblUrl)
       svgContent += `<text x="${lx}" y="${ly + 11}" text-anchor="middle" font-size="8" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(tt(item.value, 12))}</text>`
     } else {
       svgContent += aWrap(`<text x="${lx}" y="${ly + 4}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10, item)}</text>`, lblUrl)
     }
+    svgContent += `</g>`
   }
 
   // Center label
@@ -61,6 +65,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(n, spec) : ''}
     ${svgContent}
   </svg>`
 }

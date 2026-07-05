@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, truncate, escapeXml, tt, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { lerpColor, truncate, escapeXml, tt, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 import { render as renderCircleCycle } from './cycle'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
@@ -55,6 +55,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     boxPos.push({ x, y: rowY[1], col, row: 1 })
   }
 
+  const animate = shouldAnimate(spec)
+
   // Draw boxes
   for (let i = 0; i < n; i++) {
     const item = items[i]
@@ -62,16 +64,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = i / (n - 1 || 1)
     const headerFill = lerpColor(theme.primary, theme.secondary, t)
 
-    // Box bg — tooltip carries full label/value/attrs even when body shows only one
-    parts.push(`<rect x="${x}" y="${y}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${theme.surface}" stroke="${headerFill}" stroke-opacity="0.55" stroke-width="1">${itemTitleTag(item)}</rect>`)
-    // Colored header (top corners rounded)
-    parts.push(`<path d="M ${x + 5} ${y} L ${x + BOX_W - 5} ${y} Q ${x + BOX_W} ${y} ${x + BOX_W} ${y + 5} L ${x + BOX_W} ${y + HEADER_H} L ${x} ${y + HEADER_H} L ${x} ${y + 5} Q ${x} ${y} ${x + 5} ${y} Z" fill="${headerFill}"/>`)
     // Header (10px) and body (9px) — slightly tighter px/char = fewer false ellipses
     const headerMaxChars = Math.max(6, Math.floor((BOX_W - 8) / 5.0))
     // Body shows children OR value; pass shows so ellipsis only fires if attrs are dropped.
     const showsValue = item.children.length > 0 || !!item.value
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: showsValue })
-    parts.push(aWrap(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, headerMaxChars, item)}</text>`, lblUrl))
 
     // Body content: children or value
     const bodyMaxChars = Math.max(8, Math.floor((BOX_W - 12) / 4.4))
@@ -83,16 +80,26 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lineH = 13
     const bodyMidY = y + HEADER_H + (BOX_H - HEADER_H) / 2
     const firstBaselineY = bodyMidY - (bodyLines.length * lineH) / 2 + 9 * 0.75  // 0.75 ≈ cap-height ratio
+
+    let nodeStr = ''
+    // Box bg — tooltip carries full label/value/attrs even when body shows only one
+    nodeStr += `<rect x="${x}" y="${y}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${theme.surface}" stroke="${headerFill}" stroke-opacity="0.55" stroke-width="1">${itemTitleTag(item)}</rect>`
+    // Colored header (top corners rounded)
+    nodeStr += `<path d="M ${x + 5} ${y} L ${x + BOX_W - 5} ${y} Q ${x + BOX_W} ${y} ${x + BOX_W} ${y + 5} L ${x + BOX_W} ${y + HEADER_H} L ${x} ${y + HEADER_H} L ${x} ${y + 5} Q ${x} ${y} ${x + 5} ${y} Z" fill="${headerFill}"/>`
+    nodeStr += aWrap(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, headerMaxChars, item)}</text>`, lblUrl)
     bodyLines.forEach((line, li) => {
-      parts.push(`<text x="${x + 6}" y="${(firstBaselineY + li * lineH).toFixed(1)}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(line)}</text>`)
+      nodeStr += `<text x="${x + 6}" y="${(firstBaselineY + li * lineH).toFixed(1)}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(line)}</text>`
     })
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   }
 
-  // Draw arrows between consecutive items (clockwise)
+  // Draw arrows between consecutive items (clockwise). Each arrow fades in
+  // with its destination node; the closing arrow uses a trailing arrow-only slot.
   for (let i = 0; i < n; i++) {
     const from = boxPos[i]
     const to = boxPos[(i + 1) % n]
 
+    let arrowEl: string
     if (from.row === to.row) {
       // Same row: horizontal arrow
       let x1: number, x2: number, arrowY: number
@@ -107,7 +114,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         x2 = to.x + BOX_W + 6
         arrowY = from.y + BOX_H / 2
       }
-      parts.push(`<line x1="${x1.toFixed(1)}" y1="${arrowY.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${arrowY.toFixed(1)}" stroke="${theme.primary}" stroke-width="1.5" marker-end="url(#bc-arr)"/>`)
+      arrowEl = `<line x1="${x1.toFixed(1)}" y1="${arrowY.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${arrowY.toFixed(1)}" stroke="${theme.primary}" stroke-width="1.5" marker-end="url(#bc-arr)"/>`
     } else {
       // Different rows: vertical arrow (transition between rows)
       const colCenter = from.x + BOX_W / 2
@@ -121,9 +128,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         y1 = from.y - 2
         y2 = to.y + BOX_H + 6
       }
-      parts.push(`<line x1="${colCenter.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${colCenter.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${theme.primary}" stroke-width="1.5" marker-end="url(#bc-arr)"/>`)
+      arrowEl = `<line x1="${colCenter.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${colCenter.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${theme.primary}" stroke-width="1.5" marker-end="url(#bc-arr)"/>`
     }
+    const arrIndex = i === n - 1 ? n : i + 1
+    parts.push(animate ? `<g class="mdart-arr-n${arrIndex}">${arrowEl}</g>` : arrowEl)
   }
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec, { trailingArrowSlot: true }))
   return svgWrap(W, H, theme, parts)
 }

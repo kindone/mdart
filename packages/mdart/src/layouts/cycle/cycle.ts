@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -40,10 +40,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     return Math.min(hw / adx, hh / ady)
   }
 
+  const animate = shouldAnimate(spec)
+
   // ── Arrows — SVG arcs along the orbit circle ─────────────────────────────
   // Arc endpoints are inset by an angular clearance so they sit just outside
   // each node box. Nodes are drawn on top, masking any slight overlap.
   // orient="auto" reads the arc tangent at the endpoint → always correct.
+  // Each arc fades in with its destination node. The closing arc uses a
+  // trailing arrow-only slot so it appears after the final node.
 
   for (let i = 0; i < n; i++) {
     const angle     = (2 * Math.PI * i)            / n - Math.PI / 2
@@ -72,7 +76,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const stroke = lerpColor(theme.secondary, theme.primary, t)
 
     // sweep-flag=1 → clockwise; orient="auto" aligns marker with arc tangent
-    svgContent += `<path d="M${ax1.toFixed(1)},${ay1.toFixed(1)} A${R},${R} 0 ${largeArc},1 ${ax2.toFixed(1)},${ay2.toFixed(1)}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#cycle-arr)"/>`
+    const arc = `<path d="M${ax1.toFixed(1)},${ay1.toFixed(1)} A${R},${R} 0 ${largeArc},1 ${ax2.toFixed(1)},${ay2.toFixed(1)}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#cycle-arr)"/>`
+    const arrIndex = i === n - 1 ? n : i + 1
+    svgContent += animate ? `<g class="mdart-arr-n${arrIndex}">${arc}</g>` : arc
   }
 
   // ── Nodes (drawn on top so they mask arc endpoints cleanly) ───────────────
@@ -85,6 +91,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.secondary, theme.primary, t)
 
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
+    svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}>`
     svgContent += `<rect x="${(nx - hw).toFixed(1)}" y="${(ny - hh).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${fill}">${itemTitleTag(item)}</rect>`
     if (item.value) {
       // Two-line layout: label up top, value as dimmer subtitle below.
@@ -93,6 +100,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     } else {
       svgContent += aWrap(`<text x="${nx.toFixed(1)}" y="${(ny + 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 14, item)}</text>`, lblUrl)
     }
+    svgContent += `</g>`
   }
 
   // Title in centre
@@ -102,6 +110,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(n, spec, { trailingArrowSlot: true }) : ''}
     ${svgContent}
   </svg>`
 }

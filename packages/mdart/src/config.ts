@@ -29,6 +29,18 @@ export interface MdArtConfig {
    * Per-fence `primary:`, `secondary:` … values still take precedence.
    */
   colors?: Partial<MdArtTheme>
+
+  /**
+   * Enable or disable animation globally. Defaults to true (animated).
+   * Per-fence `animate: false` still overrides this.
+   */
+  animate?: boolean
+
+  /**
+   * Global animation speed multiplier. >1 = faster, <1 = slower. Default 1.0.
+   * Per-fence `animate-speed:` overrides this.
+   */
+  animateSpeed?: number
 }
 
 // ── Module-level singleton ────────────────────────────────────────────────────

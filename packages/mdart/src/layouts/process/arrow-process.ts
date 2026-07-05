@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, tt, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 import { render as renderVerticalFallback } from './process'
 
 function wrapText(text: string, maxChars: number): string[] {
@@ -40,6 +40,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const startX = (W - totalW) / 2
   const bY = titleH + 14
 
+  const animate = shouldAnimate(spec)
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
@@ -47,12 +48,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const x = startX + i * (BOX_W + ARROW_W)
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
-    parts.push(`<rect x="${x.toFixed(1)}" y="${bY}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="2">${itemTitleTag(item)}</rect>`)
     const cy = bY + BOX_H / 2
     const hasValue = !!item.value
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: hasValue })
     const lines = wrapText(itmDisplay, Math.floor(BOX_W / 7))
-    // When a value is present, cap the label at 2 lines to leave room for it.
     const labelLines = lines.slice(0, hasValue ? 2 : 3)
     const totalRows = labelLines.length + (hasValue ? 1 : 0)
     const rowH = 14
@@ -62,19 +61,27 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const ty = cy + (li - (totalRows - 1) / 2) * rowH + 4
       lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
     })
-    parts.push(aWrap(lblContent, itmUrl))
+
+    let nodeStr = ''
+    nodeStr += `<rect x="${x.toFixed(1)}" y="${bY}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="2">${itemTitleTag(item)}</rect>`
+    nodeStr += aWrap(lblContent, itmUrl)
     if (hasValue) {
       const ty = cy + (labelLines.length - (totalRows - 1) / 2) * rowH + 4
-      parts.push(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" fill-opacity="0.72" font-family="system-ui,sans-serif">${tt(item.value!, Math.floor(BOX_W / 6))}</text>`)
+      nodeStr += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" fill-opacity="0.72" font-family="system-ui,sans-serif">${tt(item.value!, Math.floor(BOX_W / 6))}</text>`
     }
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+
+    // Arrow between nodes fades in with its destination node.
     if (i < n - 1) {
       const ax = x + BOX_W + 4
       const arrowH = 30
       const shaftH = Math.round(arrowH * 0.46)
       const headBase = ax + ARROW_W - 14
-      parts.push(`<polygon points="${ax},${(cy - shaftH).toFixed(1)} ${headBase},${(cy - shaftH).toFixed(1)} ${headBase},${(cy - arrowH).toFixed(1)} ${(ax + ARROW_W - 2).toFixed(1)},${cy.toFixed(1)} ${headBase},${(cy + arrowH).toFixed(1)} ${headBase},${(cy + shaftH).toFixed(1)} ${ax},${(cy + shaftH).toFixed(1)}" fill="${fill}99"/>`)
+      const arrEl = `<polygon points="${ax},${(cy - shaftH).toFixed(1)} ${headBase},${(cy - shaftH).toFixed(1)} ${headBase},${(cy - arrowH).toFixed(1)} ${(ax + ARROW_W - 2).toFixed(1)},${cy.toFixed(1)} ${headBase},${(cy + arrowH).toFixed(1)} ${headBase},${(cy + shaftH).toFixed(1)} ${ax},${(cy + shaftH).toFixed(1)}" fill="${fill}99"/>`
+      parts.push(animate ? `<g class="mdart-arr-n${i + 1}">${arrEl}</g>` : arrEl)
     }
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svgWrapProcess(W, H, theme, parts)
 }

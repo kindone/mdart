@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, titleEl, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { lerpColor, titleEl, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -18,23 +18,29 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const titleH = spec.title ? 28 : 8
   const H = titleH + R * 2 + 20
   const spacing = (W - 16) / n
+  const arrowColor = theme.accent
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
-  parts.push(`<defs><marker id="cp-arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><polygon points="0,0 7,3.5 0,7" fill="${theme.muted}"/></marker></defs>`)
+  parts.push(`<defs><marker id="cp-arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><polygon points="0,0 7,3.5 0,7" fill="${arrowColor}"/></marker></defs>`)
 
+  const animate = shouldAnimate(spec)
   items.forEach((item, i) => {
     const cx = 16 + i * spacing + spacing / 2
     const cy = titleH + R + 6
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
-    parts.push(`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${R}" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</circle>`)
-    parts.push(aWrap(`<text x="${cx.toFixed(1)}" y="${(cy - (item.value ? 5 : 0)).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, Math.floor(R / 4), item)}</text>`, itmUrl))
-    if (item.value) parts.push(`<text x="${cx.toFixed(1)}" y="${(cy + 10).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, Math.floor(R / 3.5))}</text>`)
+    let nodeStr = `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${R}" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</circle>`
+    nodeStr += aWrap(`<text x="${cx.toFixed(1)}" y="${(cy - (item.value ? 5 : 0)).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, Math.floor(R / 4), item)}</text>`, itmUrl)
+    if (item.value) nodeStr += `<text x="${cx.toFixed(1)}" y="${(cy + 10).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, Math.floor(R / 3.5))}</text>`
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    // Arrow fades in with the destination node it points to.
     if (i < n - 1) {
       const x1 = cx + R + 2, x2 = cx + spacing - R - 6
-      parts.push(`<line x1="${x1.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${cy.toFixed(1)}" stroke="${theme.muted}" stroke-width="1.5" marker-end="url(#cp-arr)"/>`)
+      const arrEl = `<line x1="${x1.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${cy.toFixed(1)}" stroke="${arrowColor}" stroke-width="2" marker-end="url(#cp-arr)"/>`
+      parts.push(animate ? `<g class="mdart-arr-n${i + 1}">${arrEl}</g>` : arrEl)
     }
   })
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svgWrapProcess(W, H, theme, parts)
 }

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function wrapText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
@@ -40,9 +40,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const startX = (W - (STEP_X * (n - 1) + BOX_W)) / 2
   const startY = titleH + 14
 
+  const animate = shouldAnimate(spec)
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
+  // Connectors fade in with the destination node they point to.
   for (let i = 0; i < n - 1; i++) {
     const x1 = startX + i * STEP_X + BOX_W
     const y1 = startY + i * STEP_Y + BOX_H / 2
@@ -50,9 +52,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const y2 = startY + (i + 1) * STEP_Y + BOX_H / 2
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
-    parts.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${(x1 + 4).toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${fill}99" stroke-width="1.5"/>`)
-    parts.push(`<line x1="${(x1 + 4).toFixed(1)}" y1="${y1.toFixed(1)}" x2="${(x1 + 4).toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${fill}55" stroke-width="1.5" stroke-dasharray="3,3"/>`)
-    parts.push(`<line x1="${(x1 + 4).toFixed(1)}" y1="${y2.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${fill}99" stroke-width="1.5"/>`)
+    const connLines =
+      `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${(x1 + 4).toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${fill}99" stroke-width="1.5"/>` +
+      `<line x1="${(x1 + 4).toFixed(1)}" y1="${y1.toFixed(1)}" x2="${(x1 + 4).toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${fill}55" stroke-width="1.5" stroke-dasharray="3,3"/>` +
+      `<line x1="${(x1 + 4).toFixed(1)}" y1="${y2.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${fill}99" stroke-width="1.5"/>`
+    parts.push(animate ? `<g class="mdart-arr-n${i + 1}">${connLines}</g>` : connLines)
   }
 
   items.forEach((item, i) => {
@@ -61,10 +65,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
-    parts.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</rect>`)
     const valueText = item.value ?? ''
-    // When a value is present, force the label to a single line and use the
-    // second line for the value subtitle.
     const lines = wrapText(itmDisplay, Math.floor(BOX_W / 7)).slice(0, valueText ? 1 : 2)
     const cy = y + BOX_H / 2
     let lblContent = ''
@@ -79,8 +80,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
       })
     }
-    parts.push(aWrap(lblContent, itmUrl))
+    let nodeStr = `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</rect>`
+    nodeStr += aWrap(lblContent, itmUrl)
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svgWrapProcess(W, H, theme, parts)
 }

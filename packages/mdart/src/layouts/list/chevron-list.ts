@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -16,6 +16,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const ROW_H = 32, GAP = 4, NOTCH = 14
   const titleH = spec.title ? 30 : 8
   const H = titleH + items.length * (ROW_H + GAP) + 8
+  const n = items.length
+  const animate = shouldAnimate(spec)
   const parts: string[] = []
   if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
   items.forEach((item, i) => {
@@ -27,14 +29,17 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const d = i === 0
       ? `M0,${y} L${x1},${y} L${W},${mid} L${x1},${y+ROW_H} L0,${y+ROW_H} Z`
       : `M0,${y} L${x1},${y} L${W},${mid} L${x1},${y+ROW_H} L0,${y+ROW_H} L${NOTCH},${mid} Z`
-    parts.push(`<path d="${d}" fill="${fill}33" stroke="${fill}" stroke-width="1">${itemTitleTag(item)}</path>`)
     // Reserve ~90 px on the right for the caption badge; shrink label room accordingly
     const caption  = getCaption(item)
     const rightRes = caption ? 96 : 0
     const labelMax = Math.floor((W - NOTCH - rightRes - 16) / 6.2)
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: !!caption })
-    parts.push(aWrap(`<text x="${(x0 + x1) / 2 + NOTCH/2}" y="${(mid + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, labelMax, item)}</text>`, lblUrl))
-    if (caption) parts.push(`<text x="${W - NOTCH - 6}" y="${(mid + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, 16)}</text>`)
+    let nodeStr = ''
+    nodeStr += `<path d="${d}" fill="${fill}33" stroke="${fill}" stroke-width="1">${itemTitleTag(item)}</path>`
+    nodeStr += aWrap(`<text x="${(x0 + x1) / 2 + NOTCH/2}" y="${(mid + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, labelMax, item)}</text>`, lblUrl)
+    if (caption) nodeStr += `<text x="${W - NOTCH - 6}" y="${(mid + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, 16)}</text>`
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   })
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svg(W, H, theme, parts)
 }

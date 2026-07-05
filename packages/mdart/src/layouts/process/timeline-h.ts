@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, titleEl, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { lerpColor, titleEl, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 /** Greedy word-wrap into lines of ~maxChars each. */
 function wrapText(text: string, maxChars: number): string[] {
@@ -51,42 +51,38 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   parts.push(`<line x1="${PAD}" y1="${SPINE_Y}" x2="${W - PAD}" y2="${SPINE_Y}" stroke="${theme.border}" stroke-width="2"/>`)
   parts.push(`<polygon points="${(W - PAD - 2).toFixed(1)},${(SPINE_Y - 5).toFixed(1)} ${(W - PAD + 6).toFixed(1)},${SPINE_Y} ${(W - PAD - 2).toFixed(1)},${(SPINE_Y + 5).toFixed(1)}" fill="${theme.border}"/>`)
 
+  const animate = shouldAnimate(spec)
   items.forEach((item, i) => {
     const x    = n === 1 ? W / 2 : PAD + i * spacing
     const t    = n > 1 ? i / (n - 1) : 0
     const fill = i === n - 1 ? theme.accent : lerpColor(theme.primary, theme.secondary, t)
     const above = i % 2 === 0
-
-    // Dot on spine + perpendicular tick
-    parts.push(`<circle cx="${x.toFixed(1)}" cy="${SPINE_Y}" r="6" fill="${fill}">${itemTitleTag(item)}</circle>`)
     const tickStart = above ? SPINE_Y - 6  : SPINE_Y + 6
     const tickEnd   = above ? SPINE_Y - 18 : SPINE_Y + 18
-    parts.push(`<line x1="${x.toFixed(1)}" y1="${tickStart}" x2="${x.toFixed(1)}" y2="${tickEnd}" stroke="${fill}" stroke-width="1"/>`)
-
-    // Wrap value into up to 2 lines if present
     const valueLines = item.value ? wrapText(item.value, maxChars).slice(0, 2) : []
-
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
+
+    let nodeStr = `<circle cx="${x.toFixed(1)}" cy="${SPINE_Y}" r="6" fill="${fill}">${itemTitleTag(item)}</circle>`
+    nodeStr += `<line x1="${x.toFixed(1)}" y1="${tickStart}" x2="${x.toFixed(1)}" y2="${tickEnd}" stroke="${fill}" stroke-width="1"/>`
     if (above) {
-      // Stack (top → bottom reading): value_line1, value_line2, label, tick, spine
       const labelY = tickEnd - 4
-      parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="10" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, maxChars, item)}</text>`, itmUrl))
-      // Draw value lines so line[0] ends up at the top.
+      nodeStr += aWrap(`<text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="10" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, maxChars, item)}</text>`, itmUrl)
       const L = valueLines.length
       valueLines.forEach((line, j) => {
         const vy = labelY - 11 - (L - 1 - j) * 10
-        parts.push(`<text x="${x.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(line, maxChars)}</text>`)
+        nodeStr += `<text x="${x.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(line, maxChars)}</text>`
       })
     } else {
-      // Stack (top → bottom reading): spine, tick, label, value_line1, value_line2
       const labelY = tickEnd + 12
-      parts.push(aWrap(`<text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="10" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, maxChars, item)}</text>`, itmUrl))
+      nodeStr += aWrap(`<text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="10" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, maxChars, item)}</text>`, itmUrl)
       valueLines.forEach((line, j) => {
         const vy = labelY + 11 + j * 10
-        parts.push(`<text x="${x.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(line, maxChars)}</text>`)
+        nodeStr += `<text x="${x.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(line, maxChars)}</text>`
       })
     }
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svgWrapProcess(W, H, theme, parts)
 }

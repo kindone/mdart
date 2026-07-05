@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -69,6 +69,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
   const H = cumY + 8
 
+  const n = items.length
+  const animate = shouldAnimate(spec)
   const parts: string[] = []
   if (spec.title) {
     parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
@@ -77,40 +79,38 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   items.forEach((item, i) => {
     const y      = rowY[i]
     const { displayLabel, icon, lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, blockH, rowH } = layouts[i]
-    const t      = items.length > 1 ? i / (items.length - 1) : 0
+    const t      = n > 1 ? i / (n - 1) : 0
     const fill   = lerpColor(theme.primary, theme.secondary, t)
     const cy     = y + rowH / 2
-
-    // Circle + icon
-    parts.push(`<circle cx="${LEFT}" cy="${cy.toFixed(1)}" r="${CIRCLE_R}" fill="${fill}">${itemTitleTag(item)}</circle>`)
-    if (icon) {
-      parts.push(`<text x="${LEFT}" y="${(cy + 5).toFixed(1)}" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">${escapeXml(icon)}</text>`)
-    }
-
-    // Text block vertically centred
     const lblStartY = y + (rowH - blockH) / 2 + LBL_FS * 0.75
-
     const lblTip   = lblTrunc ? `<title>${escapeXml(displayLabel)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(aWrap(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl))
 
+    let nodeStr = ''
+    nodeStr += `<circle cx="${LEFT}" cy="${cy.toFixed(1)}" r="${CIRCLE_R}" fill="${fill}">${itemTitleTag(item)}</circle>`
+    if (icon) {
+      nodeStr += `<text x="${LEFT}" y="${(cy + 5).toFixed(1)}" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">${escapeXml(icon)}</text>`
+    }
+    nodeStr += aWrap(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
     if (capLines.length > 0) {
       const capStartY = lblStartY + lblLines.length * LBL_LH + SEC_G
       const capTip    = capTrunc ? `<title>${escapeXml(caption!)}</title>` : ''
       const capSpans  = capLines
         .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : CAP_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      parts.push(`<text x="${textX}" y="${capStartY.toFixed(1)}" font-size="${CAP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`)
+      nodeStr += `<text x="${textX}" y="${capStartY.toFixed(1)}" font-size="${CAP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`
     }
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
 
-    // Divider between rows
-    if (i < items.length - 1) {
+    // Divider between rows — separator, not part of the item
+    if (i < n - 1) {
       parts.push(`<line x1="${textX}" y1="${y + rowH}" x2="${W - 16}" y2="${y + rowH}" stroke="${theme.border}" stroke-width="0.5"/>`)
     }
   })
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
     ${parts.join('\n    ')}

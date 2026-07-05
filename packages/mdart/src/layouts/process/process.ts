@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, lerpColor, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function wrapText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
@@ -33,6 +33,8 @@ function renderVerticalProcess(spec: MdArtSpec, theme: MdArtTheme): string {
     svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
+  const animate = shouldAnimate(spec)
+
   for (let i = 0; i < n; i++) {
     const item = items[i]
     const t = n > 1 ? i / (n - 1) : 0.5
@@ -41,17 +43,22 @@ function renderVerticalProcess(spec: MdArtSpec, theme: MdArtTheme): string {
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
     const cy = y + ROW_H / 2
 
+    // Arrow from previous node lives inside this node's <g> so it fades in together.
+    svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}>`
+    if (i > 0) {
+      const prevT = n > 1 ? (i - 1) / (n - 1) : 0.5
+      const prevFill = lerpColor(theme.secondary, theme.primary, prevT)
+      const ay = y - ARROW_H + 2
+      svgContent += `<polygon points="${W / 2 - 8},${ay} ${W / 2 + 8},${ay} ${W / 2},${ay + ARROW_H - 2}" fill="${prevFill}" />`
+    }
     svgContent += `<rect x="${nodeX}" y="${y}" width="${NODE_W}" height="${ROW_H}" rx="6" fill="${fill}" >${itemTitleTag(item)}</rect>`
     svgContent += aWrap(`<text x="${W / 2}" y="${cy + 5}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(itmDisplay)}</text>`, itmUrl)
-
-    if (i < n - 1) {
-      const ay = y + ROW_H + 2
-      svgContent += `<polygon points="${W / 2 - 8},${ay} ${W / 2 + 8},${ay} ${W / 2},${ay + ARROW_H - 2}" fill="${fill}" />`
-    }
+    svgContent += `</g>`
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(n, spec) : ''}
     ${svgContent}
   </svg>`
 }
@@ -80,6 +87,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const startX = (W - totalContentW) / 2
   const cy = PAD + titleH + nodeH / 2          // centre of boxes, below title strip
 
+  const animate = shouldAnimate(spec)
   let svgContent = ''
 
   for (let i = 0; i < n; i++) {
@@ -92,6 +100,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const label = escapeXml(itmDisplay)
     const lines = wrapText(itmDisplay, Math.floor(nodeW / 7))
 
+    // Arrow from previous node lives inside this node's <g> so it fades in together.
+    svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}>`
+    if (i > 0) {
+      const ax = x - ARROW_W + 2
+      const prevT = n > 1 ? (i - 1) / (n - 1) : 0.5
+      const prevFill = lerpColor(theme.secondary, theme.primary, prevT)
+      svgContent += `<polygon points="${ax},${cy - 7} ${ax + ARROW_W - 2},${cy} ${ax},${cy + 7}" fill="${prevFill}" />`
+    }
     svgContent += `<rect x="${x}" y="${y}" width="${nodeW}" height="${nodeH}" rx="6" fill="${fill}" >${itemTitleTag(item)}</rect>`
 
     // Visual centring: SVG <text y> is the baseline, so add ~font-size * 0.35
@@ -111,16 +127,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (hasValue) {
       svgContent += `<text x="${x + nodeW / 2}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="#ffffffcc" font-family="system-ui,sans-serif">${escapeXml(item.value!)}</text>`
     }
-
-    if (i < n - 1) {
-      const ax = x + nodeW + 2
-      const ay = cy
-      svgContent += `<polygon points="${ax},${ay - 7} ${ax + ARROW_W - 2},${ay} ${ax},${ay + 7}" fill="${fill}" />`
-    }
+    svgContent += `</g>`
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(n, spec) : ''}
     ${spec.title ? `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>` : ''}
     ${svgContent}
   </svg>`

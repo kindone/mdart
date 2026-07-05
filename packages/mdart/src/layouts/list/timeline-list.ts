@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -71,69 +71,65 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
   const H = cumY - CARD_GAP + PAD
 
+  const n = items.length
+  const animate = shouldAnimate(spec)
   let svgContent = ''
 
   if (spec.title) {
     svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
-  // Vertical timeline line: spans from top card centre to bottom card centre
+  // Vertical timeline line — always visible backbone
   const topCy    = cardY[0] + cards[0].cardH / 2
-  const bottomCy = cardY[items.length - 1] + cards[items.length - 1].cardH / 2
+  const bottomCy = cardY[n - 1] + cards[n - 1].cardH / 2
   svgContent += `<line x1="${LINE_X}" y1="${topCy}" x2="${LINE_X}" y2="${bottomCy}" stroke="${theme.border}" stroke-width="2" />`
 
-  for (let i = 0; i < items.length; i++) {
+  for (let i = 0; i < n; i++) {
     const item  = items[i]
     const { lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, hasAttr, cardH } = cards[i]
     const cy    = cardY[i] + cardH / 2
-    const t     = items.length > 1 ? i / (items.length - 1) : 0
+    const t     = n > 1 ? i / (n - 1) : 0
     const fill  = lerpColor(theme.secondary, theme.primary, t)
     const left  = i % 2 === 0
 
     const cardX = left ? LINE_X - 14 - CARD_W : LINE_X + 14
     const cy0   = cardY[i]
+    const cx    = cardX + CARD_W / 2
 
-    // Card rect — tooltip carries full item summary
-    svgContent += `<rect x="${cardX}" y="${cy0}" width="${CARD_W}" height="${cardH}" rx="6" fill="${theme.surface}" stroke="${fill}" stroke-width="1.5" >${itemTitleTag(item)}</rect>`
-
-    // Timeline dot
-    svgContent += `<circle cx="${LINE_X}" cy="${cy}" r="${DOT_R}" fill="${fill}" />`
-
-    // Text block vertically centred in card
     const blockH = lblLines.length * LBL_LH
       + (capLines.length > 0 ? SEC_G + capLines.length * CAP_LH : 0)
       + (hasAttr ? SEC_G + ATTR_LH : 0)
-    const cx    = cardX + CARD_W / 2
-    let textY   = cy0 + (cardH - blockH) / 2 + LBL_FS * 0.75
+    let textY = cy0 + (cardH - blockH) / 2 + LBL_FS * 0.75
 
-    // Label
     const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    svgContent += aWrap(`<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
-    textY += lblLines.length * LBL_LH
 
-    // Caption
+    let nodeStr = ''
+    nodeStr += `<rect x="${cardX}" y="${cy0}" width="${CARD_W}" height="${cardH}" rx="6" fill="${theme.surface}" stroke="${fill}" stroke-width="1.5" >${itemTitleTag(item)}</rect>`
+    nodeStr += `<circle cx="${LINE_X}" cy="${cy}" r="${DOT_R}" fill="${fill}" />`
+    nodeStr += aWrap(`<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
+    textY += lblLines.length * LBL_LH
     if (capLines.length > 0) {
       textY += SEC_G
       const capTip   = capTrunc ? `<title>${escapeXml(caption!)}</title>` : ''
       const capSpans = capLines
         .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : CAP_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      svgContent += `<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${CAP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`
+      nodeStr += `<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${CAP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`
       textY += capLines.length * CAP_LH
     }
-
-    // Attrs
     if (hasAttr) {
       textY += SEC_G
-      svgContent += `<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${ATTR_FS}" fill="${theme.accent}" font-family="system-ui,sans-serif">${escapeXml(item.attrs.join(', '))}</text>`
+      nodeStr += `<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${ATTR_FS}" fill="${theme.accent}" font-family="system-ui,sans-serif">${escapeXml(item.attrs.join(', '))}</text>`
     }
+    svgContent += animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(n, spec) : ''}
     ${svgContent}
   </svg>`
 }

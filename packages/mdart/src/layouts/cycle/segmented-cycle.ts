@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, truncate, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, lerpColor, truncate, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -24,6 +24,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const connectorR = outerR + 5
   const GAP_ANGLE = 0.03
 
+  const animate = shouldAnimate(spec)
   const parts: string[] = []
   if (spec.title) {
     parts.push(`<text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`)
@@ -48,7 +49,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const largeArc = endAngle - startAngle > Math.PI ? 1 : 0
 
     const path = `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x3.toFixed(1)} ${y3.toFixed(1)} L ${x4.toFixed(1)} ${y4.toFixed(1)} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x1.toFixed(1)} ${y1.toFixed(1)} Z`
-    parts.push(`<path d="${path}" fill="${fill}">${itemTitleTag(item)}</path>`)
 
     // Label OUTSIDE the wedge
     const midAngle = (startAngle + endAngle) / 2
@@ -60,21 +60,26 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelText = truncate(lblDisplay, 14)
     const lblTip    = labelText !== lblDisplay ? `<title>${escapeXml(item.label)}</title>` : ''
 
-    // Connector line from outer edge to label
+    // Connector line from outer edge to label — included in group as it is part of this wedge
     const cx1 = cx + connectorR * Math.cos(midAngle)
     const cy1 = cy + connectorR * Math.sin(midAngle)
-    parts.push(`<line x1="${cx1.toFixed(1)}" y1="${cy1.toFixed(1)}" x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="${fill}" stroke-width="1" opacity="0.7"/>`)
+
+    let nodeStr = ''
+    nodeStr += `<path d="${path}" fill="${fill}">${itemTitleTag(item)}</path>`
+    nodeStr += `<line x1="${cx1.toFixed(1)}" y1="${cy1.toFixed(1)}" x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="${fill}" stroke-width="1" opacity="0.7"/>`
     if (item.value) {
       // Two-line: label up, dim value subtitle beneath. Plenty of room
       // outside the wedges so we render full text without truncation tail.
-      parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${escapeXml(labelText)}</text>`, lblUrl))
+      nodeStr += aWrap(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${escapeXml(labelText)}</text>`, lblUrl)
       const valTrunc = truncate(item.value, 16)
       const valTip   = valTrunc !== item.value ? `<title>${escapeXml(item.value)}</title>` : ''
-      parts.push(`<text x="${lx.toFixed(1)}" y="${(ly + 11).toFixed(1)}" text-anchor="${anchor}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${valTip}${escapeXml(valTrunc)}</text>`)
+      nodeStr += `<text x="${lx.toFixed(1)}" y="${(ly + 11).toFixed(1)}" text-anchor="${anchor}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${valTip}${escapeXml(valTrunc)}</text>`
     } else {
-      parts.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${escapeXml(labelText)}</text>`, lblUrl))
+      nodeStr += aWrap(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${escapeXml(labelText)}</text>`, lblUrl)
     }
+    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   }
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svgWrap(W, H, theme, parts)
 }

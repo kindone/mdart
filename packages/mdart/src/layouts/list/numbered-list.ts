@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -87,6 +87,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const layouts = items.map(computeItemLayout)
   const H       = PAD + titleH + layouts.reduce((s, l) => s + l.itemH, 0) + PAD
 
+  const n = items.length
+  const animate = shouldAnimate(spec)
   let svg = ''
   if (spec.title) {
     svg += `<text x="${PAD}" y="${PAD + 16}" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
@@ -104,40 +106,37 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelBL = y + FIRST_LBL_BL
     const badgeCy = labelBL - 4
 
-    // ── Number badge ─────────────────────────────────────────────────────────
-    svg += `<rect x="${mainBadgeX}" y="${(badgeCy - BADGE_H / 2).toFixed(1)}" width="${BADGE_W}" height="${BADGE_H}" rx="4" fill="${fill}" >${itemTitleTag(item)}</rect>`
-    svg += `<text x="${(mainBadgeX + BADGE_W / 2).toFixed(1)}" y="${(badgeCy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${i + 1}</text>`
-
     // ── Main label (bold, up to 2 lines) ─────────────────────────────────────
     const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${mainTextStart}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    svg += aWrap(`<text x="${mainTextStart}" y="${labelBL}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
 
     // ── Value subtitle (italic muted, up to 2 lines) ──────────────────────────
+    let valStr = ''
     if (valLines.length > 0) {
       const valBL    = y + firstValBL
       const valTip   = valTrunc ? `<title>${escapeXml(item.value ?? '')}</title>` : ''
       const valSpans = valLines
         .map((l, li) => `<tspan x="${mainTextStart}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      svg += aWrap(`<text x="${mainTextStart}" y="${valBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic">${valTip}${valSpans}</text>`, valUrl)
+      valStr = aWrap(`<text x="${mainTextStart}" y="${valBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic">${valTip}${valSpans}</text>`, valUrl)
     }
 
     // ── Child rows with letter badges (up to 2 lines each) ───────────────────
     // Single child → plain bullet; multiple children → letter badges a, b, c…
     const useLetterBadge = item.children.length > 1
+    let chdStr = ''
     let chdBL = y + firstChdBL
     item.children.forEach((child, j) => {
       const { lines: chLines, truncated: chTrunc } = chdLayouts[j]
       const subCy = chdBL - 4
 
       if (useLetterBadge) {
-        svg += `<rect x="${subBadgeX}" y="${(subCy - SUB_H / 2).toFixed(1)}" width="${SUB_W}" height="${SUB_H}" rx="3" fill="${fill}" fill-opacity="0.6" />`
-        svg += `<text x="${(subBadgeX + SUB_W / 2).toFixed(1)}" y="${(subCy + 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${subLetter(j)}</text>`
+        chdStr += `<rect x="${subBadgeX}" y="${(subCy - SUB_H / 2).toFixed(1)}" width="${SUB_W}" height="${SUB_H}" rx="3" fill="${fill}" fill-opacity="0.6" />`
+        chdStr += `<text x="${(subBadgeX + SUB_W / 2).toFixed(1)}" y="${(subCy + 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${subLetter(j)}</text>`
       } else {
-        svg += `<circle cx="${(subBadgeX + SUB_W / 2).toFixed(1)}" cy="${subCy.toFixed(1)}" r="4" fill="${fill}" fill-opacity="0.7" />`
+        chdStr += `<circle cx="${(subBadgeX + SUB_W / 2).toFixed(1)}" cy="${subCy.toFixed(1)}" r="4" fill="${fill}" fill-opacity="0.7" />`
       }
 
       const chTip   = chTrunc ? `<title>${escapeXml(child.label)}</title>` : ''
@@ -145,12 +144,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const chSpans = chLines
         .map((l, li) => `<tspan x="${subTextStart}" dy="${li === 0 ? 0 : CHD_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      svg += `<text x="${subTextStart}" y="${chdBL}" font-size="${CHD_FS}" fill="${theme.text}" fill-opacity="0.85" font-family="system-ui,sans-serif">${chTip}${chSpans}</text>`
+      chdStr += `<text x="${subTextStart}" y="${chdBL}" font-size="${CHD_FS}" fill="${theme.text}" fill-opacity="0.85" font-family="system-ui,sans-serif">${chTip}${chSpans}</text>`
 
       chdBL += chLines.length * CHD_LH   // advance by actual wrapped line count
     })
 
-    // ── Divider ──────────────────────────────────────────────────────────────
+    // ── Assemble node (badge + label + value + children) ─────────────────────
+    const nodeStr =
+      `<rect x="${mainBadgeX}" y="${(badgeCy - BADGE_H / 2).toFixed(1)}" width="${BADGE_W}" height="${BADGE_H}" rx="4" fill="${fill}" >${itemTitleTag(item)}</rect>` +
+      `<text x="${(mainBadgeX + BADGE_W / 2).toFixed(1)}" y="${(badgeCy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${i + 1}</text>` +
+      aWrap(`<text x="${mainTextStart}" y="${labelBL}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl) +
+      valStr + chdStr
+    svg += animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr
+
+    // ── Divider — separator, not part of the item ──────────────────────────────
     if (i < items.length - 1) {
       svg += `<line x1="${PAD}" y1="${y + itemH}" x2="${W - PAD}" y2="${y + itemH}" stroke="${theme.border}" stroke-width="0.5" />`
     }
@@ -160,6 +167,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(n, spec) : ''}
     ${svg}
   </svg>`
 }

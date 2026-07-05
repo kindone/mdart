@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 /** Parse a strictly-numeric string (allowing commas, underscores, whitespace). */
 function parseNum(s: string): number | null {
@@ -44,6 +44,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const metrics = items.map(deriveMetric)
 
+  const animate = shouldAnimate(spec)
   let svg = ''
   if (spec.title) {
     svg += `<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
@@ -57,41 +58,37 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const y    = titleH + PAD + i * STEP_H
     const fill = lerpColor(theme.primary, theme.secondary, t)
 
-    // Trapezoid polygon — top edge of this band, bottom edge sized for next step
     const nextT = i < n - 1 ? (i + 1) / (n - 1 || 1) : t
     const nextW = maxW - (maxW - minW) * nextT
     const nextX = (W - nextW) / 2
     const points = `${x},${y} ${x + w},${y} ${nextX + nextW},${y + STEP_H} ${nextX},${y + STEP_H}`
-    svg += `<polygon points="${points}" fill="${fill}">${itemTitleTag(item)}</polygon>`
 
     const m      = metrics[i]
     const bandCx = W / 2
-
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: m.raw !== null })
-    if (m.raw !== null) {
-      // Label small uppercase on top, metric BIG and bold below
-      svg += aWrap(`<text x="${bandCx}" y="${y + 24}" text-anchor="middle" font-size="10" fill="#fff" fill-opacity="0.85" font-family="system-ui,sans-serif" font-weight="700" letter-spacing="0.08em">${escapeXml(itmDisplay.toUpperCase())}</text>`, itmUrl)
-      const metricText = m.num !== null ? fmtNum(m.num) : m.raw
-      svg += `<text x="${bandCx}" y="${y + 46}" text-anchor="middle" font-size="19" fill="#fff" font-family="system-ui,sans-serif" font-weight="800" letter-spacing="0.02em">${escapeXml(metricText)}</text>`
-    } else {
-      // No metric — just centre the label
-      svg += aWrap(`<text x="${bandCx}" y="${y + STEP_H/2 + 5}" text-anchor="middle" font-size="13" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(itmDisplay)}</text>`, itmUrl)
-    }
 
-    // Conversion rate from previous step — right gutter, small accent badge
+    let nodeStr = `<polygon points="${points}" fill="${fill}">${itemTitleTag(item)}</polygon>`
+    if (m.raw !== null) {
+      nodeStr += aWrap(`<text x="${bandCx}" y="${y + 24}" text-anchor="middle" font-size="10" fill="#fff" fill-opacity="0.85" font-family="system-ui,sans-serif" font-weight="700" letter-spacing="0.08em">${escapeXml(itmDisplay.toUpperCase())}</text>`, itmUrl)
+      const metricText = m.num !== null ? fmtNum(m.num) : m.raw
+      nodeStr += `<text x="${bandCx}" y="${y + 46}" text-anchor="middle" font-size="19" fill="#fff" font-family="system-ui,sans-serif" font-weight="800" letter-spacing="0.02em">${escapeXml(metricText)}</text>`
+    } else {
+      nodeStr += aWrap(`<text x="${bandCx}" y="${y + STEP_H/2 + 5}" text-anchor="middle" font-size="13" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(itmDisplay)}</text>`, itmUrl)
+    }
     if (i > 0) {
       const prev = metrics[i - 1]
       if (prev.num !== null && m.num !== null && prev.num > 0) {
-        const pct       = (m.num / prev.num) * 100
-        const pctText   = pct >= 10 ? `${Math.round(pct)}%` : `${pct.toFixed(1)}%`
-        const dropText  = `↓ ${pctText}`
-        svg += `<text x="${W - 8}" y="${(y + STEP_H / 2 + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="700">${dropText}</text>`
+        const pct      = (m.num / prev.num) * 100
+        const pctText  = pct >= 10 ? `${Math.round(pct)}%` : `${pct.toFixed(1)}%`
+        nodeStr += `<text x="${W - 8}" y="${(y + STEP_H / 2 + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="700">↓ ${pctText}</text>`
       }
     }
+    svg += animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(n, spec) : ''}
     ${svg}
   </svg>`
 }
