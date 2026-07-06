@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqMeasureTiming, seqSpotlightCSS } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -15,6 +15,7 @@ function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined,
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const n = items.length
   const GW = n <= 1 ? 240 : n <= 2 ? 220 : n <= 3 ? 180 : 150
@@ -23,30 +24,64 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const parts: string[] = []
 
   items.forEach((item, i) => {
+    const unit: string[] = []
     const cx = GW * i + GW / 2, cy = TITLE_H + GH * 0.88
     const R = GW * 0.37, SW = R * 0.17
 
     const raw = (item.value ?? item.attrs[0] ?? '0').replace('%', '')
     const val = Math.min(Math.max(parseFloat(raw) || 0, 0), 100) / 100
+    const pct = Math.round(val * 100)
+    const { delayMs, durationMs } = seqMeasureTiming(n, spec, i)
 
     const lx = cx - R, rx = cx + R
-    parts.push(`<path d="M${lx},${cy} A${R},${R} 0 0,1 ${rx},${cy}" fill="none" stroke="${theme.muted}44" stroke-width="${SW}" stroke-linecap="round"/>`)
+    unit.push(`<path d="M${lx},${cy} A${R},${R} 0 0,1 ${rx},${cy}" fill="none" stroke="${theme.muted}44" stroke-width="${SW}" stroke-linecap="round"/>`)
 
     if (val > 0) {
       const angle = Math.PI * (1 - val)
       const ex = cx + R * Math.cos(angle), ey = cy - R * Math.sin(angle)
       const largeArc = 0
       const col = val >= 0.7 ? theme.accent : val >= 0.4 ? theme.warning : theme.danger
-      parts.push(`<path d="M${lx},${cy} A${R},${R} 0 ${largeArc},1 ${ex.toFixed(1)},${ey.toFixed(1)}" fill="none" stroke="${col}" stroke-width="${SW}" stroke-linecap="round"/>`)
-      parts.push(`<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="${(SW / 2).toFixed(1)}" fill="${col}"/>`)
+      const markerPoints = Array.from({ length: 9 }, (_, p) => {
+        const t = p / 8
+        const a = Math.PI * (1 - val * t)
+        return {
+          x: (cx + R * Math.cos(a)).toFixed(1),
+          y: (cy - R * Math.sin(a)).toFixed(1),
+        }
+      })
+      const markerXs = markerPoints.map(p => p.x).join(';')
+      const markerYs = markerPoints.map(p => p.y).join(';')
+      if (animate) {
+        unit.push(`<path class="mdart-gauge-arc mdart-glow-stroke" opacity="0" visibility="hidden" pathLength="1" d="M${lx},${cy} A${R},${R} 0 ${largeArc},1 ${ex.toFixed(1)},${ey.toFixed(1)}" fill="none" stroke="${col}" stroke-width="${SW}" stroke-linecap="butt" stroke-dasharray="1" stroke-dashoffset="1"><set attributeName="visibility" to="visible" begin="${delayMs}ms" fill="freeze"/><set attributeName="opacity" to="1" begin="${delayMs}ms" fill="freeze"/><animate attributeName="stroke-dashoffset" from="1" to="0" begin="${delayMs}ms" dur="${durationMs}ms" fill="freeze"/></path>`)
+        unit.push(`<circle class="mdart-start-tip" opacity="0" visibility="hidden" cx="${markerPoints[0].x}" cy="${markerPoints[0].y}" r="${(SW / 2).toFixed(1)}" fill="${col}"><set attributeName="visibility" to="visible" begin="${delayMs}ms" fill="freeze"/><set attributeName="opacity" to="1" begin="${delayMs}ms" fill="freeze"/></circle>`)
+        unit.push(`<circle class="mdart-moving-tip" opacity="0" visibility="hidden" cx="${markerPoints[0].x}" cy="${markerPoints[0].y}" r="${(SW / 2).toFixed(1)}" fill="${col}"><set attributeName="visibility" to="visible" begin="${delayMs}ms" fill="freeze"/><set attributeName="opacity" to="1" begin="${delayMs}ms" fill="freeze"/><animate attributeName="cx" values="${markerXs}" begin="${delayMs}ms" dur="${durationMs}ms" fill="freeze"/><animate attributeName="cy" values="${markerYs}" begin="${delayMs}ms" dur="${durationMs}ms" fill="freeze"/></circle>`)
+      } else {
+        unit.push(`<path d="M${lx},${cy} A${R},${R} 0 ${largeArc},1 ${ex.toFixed(1)},${ey.toFixed(1)}" fill="none" stroke="${col}" stroke-width="${SW}" stroke-linecap="round"/>`)
+      }
     }
 
     const fs = Math.max(16, Math.round(GW * 0.15))
-    parts.push(`<text x="${cx}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${Math.round(val * 100)}%</text>`)
+    if (animate) {
+      const steps = Array.from(new Set([0, 0.25, 0.5, 0.75, 1].map(t => Math.round(pct * t))))
+      const stepDur = Math.max(120, Math.round(durationMs / steps.length))
+      const fadeDur = Math.min(180, Math.max(80, Math.round(stepDur * 0.45)))
+      steps.forEach((step, j) => {
+        const begin = delayMs + j * stepDur
+        const isLast = j === steps.length - 1
+        const anim = isLast
+          ? `<animate attributeName="opacity" from="0" to="1" begin="${Math.max(delayMs, begin - fadeDur)}ms" dur="${fadeDur}ms" fill="freeze"/>`
+          : `<animate attributeName="opacity" from="0" to="1" begin="${Math.max(delayMs, begin - fadeDur)}ms" dur="${fadeDur}ms" fill="freeze"/><animate attributeName="opacity" from="1" to="0" begin="${begin + stepDur - fadeDur}ms" dur="${fadeDur}ms" fill="freeze"/>`
+        unit.push(`<text class="mdart-counter-step" opacity="0" x="${cx}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${anim}${step}%</text>`)
+      })
+    } else {
+      unit.push(`<text x="${cx}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${pct}%</text>`)
+    }
     // value renders as the dial reading; attrs would otherwise be invisible
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true })
-    parts.push(aWrap(`<text x="${cx}" y="${(cy + 16).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${itemTitleTag(item)}${tt(itmDisplay, 16, item)}</text>`, itmUrl))
+    unit.push(aWrap(`<text x="${cx}" y="${(cy + 16).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${itemTitleTag(item)}${tt(itmDisplay, 16, item)}</text>`, itmUrl))
+    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   })
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
 
   return svg(W, H, theme, spec.title, parts)
 }

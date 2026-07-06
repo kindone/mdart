@@ -142,6 +142,19 @@ interface SeqSpotlightOptions {
   trailingArrowSlot?: boolean
 }
 
+export function seqMeasureTiming(n: number, spec: MdArtSpec, i: number): { delayMs: number; durationMs: number } {
+  const speed = animateSpeed(spec)
+  const totalEntranceMs = Math.round(3200 / speed)
+  const slotMs = totalEntranceMs / n
+  const enterDur = Math.round(slotMs * 0.72)
+  const enterGap = Math.round(slotMs)
+  const enterDelay = i * enterGap
+  return {
+    delayMs: enterDelay + Math.round(enterDur * 0.75),
+    durationMs: Math.max(Math.round(900 / speed), enterDur),
+  }
+}
+
 export function seqSpotlightCSS(n: number, spec: MdArtSpec, options: SeqSpotlightOptions = {}): string {
   const speed = animateSpeed(spec)
 
@@ -200,14 +213,34 @@ export function seqSpotlightCSS(n: number, spec: MdArtSpec, options: SeqSpotligh
     // filter on concrete shape elements (rect/circle/polygon/ellipse) is
     // universally supported. Using a separate keyframe (mdart-bright-loop)
     // so the two animations never collide.
-    const shapeRule = `.mdart-n${i} rect,.mdart-n${i} circle,.mdart-n${i} polygon,.mdart-n${i} ellipse{` +
+    const shapeRule = `.mdart-n${i} rect:not(.mdart-no-glow),.mdart-n${i} circle:not(.mdart-no-glow),.mdart-n${i} polygon:not(.mdart-no-glow),.mdart-n${i} ellipse:not(.mdart-no-glow){` +
       `animation:mdart-bright-loop ${totalLoopMs}ms ease-in-out ${loopDelay}ms infinite` +
+      `}`
+    const textRule = `.mdart-n${i} .mdart-glow-text{` +
+      `animation:mdart-bright-loop ${totalLoopMs}ms ease-in-out ${loopDelay}ms infinite` +
+      `}`
+    const strokeRule = `.mdart-n${i} .mdart-glow-stroke{` +
+      `animation:mdart-bright-loop ${totalLoopMs}ms ease-in-out ${loopDelay}ms infinite` +
+      `}`
+    const { delayMs: measureDelay, durationMs: measureDur } = seqMeasureTiming(n, spec, i)
+    const markerDelay = measureDelay + measureDur
+    const markerDur = Math.round(180 / speed)
+    const barRule = `.mdart-n${i} .mdart-bar-grow{` +
+      `transform-box:fill-box;transform-origin:left center;` +
+      `animation:mdart-bar-grow ${measureDur}ms ease-out ${measureDelay}ms 1 both` +
+      `}` +
+      `.mdart-n${i} .mdart-stroke-grow{` +
+      `stroke-dasharray:1;stroke-dashoffset:1;` +
+      `animation:mdart-stroke-grow ${measureDur}ms ease-out ${measureDelay}ms 1 both` +
+      `}` +
+      `.mdart-n${i} .mdart-marker-pop{` +
+      `opacity:0;animation:mdart-marker-pop ${markerDur}ms ease-out ${markerDelay}ms 1 both` +
       `}`
     // Connector reveal slots: use the destination node's index for ordinary
     // i → i+1 connectors so the arrow appears with the node it points to.
     // Closing cycle arrows should use n-1 so the cycle closes with the last node.
     const arrRule = `.mdart-arr-n${i}{animation:mdart-enter ${enterDur}ms ease-out ${enterDelay}ms 1 both}`
-    return nodeRule + shapeRule + arrRule
+    return nodeRule + shapeRule + textRule + strokeRule + barRule + arrRule
   }).join('')
   const trailingArrowRule = options.trailingArrowSlot
     ? `.mdart-arr-n${n}{animation:mdart-enter ${enterDur}ms ease-out ${n * enterGap}ms 1 both}`
@@ -216,6 +249,9 @@ export function seqSpotlightCSS(n: number, spec: MdArtSpec, options: SeqSpotligh
   return `<style>` +
     // Entrance: opacity only — 0 → 1, held by forwards fill forever.
     `@keyframes mdart-enter{from{opacity:0}to{opacity:1}}` +
+    `@keyframes mdart-bar-grow{from{transform:matrix(0,0,0,1,0,0)}to{transform:matrix(1,0,0,1,0,0)}}` +
+    `@keyframes mdart-stroke-grow{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}` +
+    `@keyframes mdart-marker-pop{from{opacity:0}to{opacity:1}}` +
     (scaleEnabled
       ? `@keyframes mdart-loop{` +
         `0%,100%{transform:scale(${scalePeak})}` +

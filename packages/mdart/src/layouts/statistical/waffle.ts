@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -15,6 +15,7 @@ function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined,
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const colors = [theme.primary, theme.secondary, theme.accent, theme.muted, ...theme.palette]
   const rawVals = items.map(it => Math.max(0, parseFloat((it.value ?? it.attrs[0] ?? '0').replace('%', '')) || 0))
@@ -34,12 +35,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const sqColor: string[] = []
   items.forEach((_, gi) => { for (let s = 0; s < squares[gi]; s++) sqColor.push(colors[gi % colors.length]) })
 
-  const parts: string[] = []
+  const categoryParts: string[][] = items.map(() => [])
   for (let sq = 0; sq < 100; sq++) {
     const col = sq % GRID, row = Math.floor(sq / GRID)
     const x = gridOffX + col * (SQ + GAP), y = TITLE_H + PAD + row * (SQ + GAP)
-    const fill = sqColor[sq] ? sqColor[sq] : `${theme.muted}22`
-    parts.push(`<rect x="${x.toFixed(1)}" y="${y}" width="${SQ}" height="${SQ}" rx="2" fill="${fill}"/>`)
+    let acc = 0
+    let owner = -1
+    for (let i = 0; i < squares.length; i++) {
+      acc += squares[i]
+      if (sq < acc) { owner = i; break }
+    }
+    const fill = owner >= 0 ? colors[owner % colors.length] : `${theme.muted}22`
+    const rect = `<rect x="${x.toFixed(1)}" y="${y}" width="${SQ}" height="${SQ}" rx="2" fill="${fill}"/>`
+    if (owner >= 0) categoryParts[owner].push(rect)
+    else categoryParts[0]?.push(rect)
   }
 
   const legY = TITLE_H + PAD + GRID * (SQ + GAP) + 6
@@ -48,9 +57,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // attrs would be silently dropped otherwise so ellipsis cue applies.
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true })
     const ly = legY + i * 22
-    parts.push(`<rect x="${PAD}" y="${ly}" width="12" height="12" rx="2" fill="${colors[i % colors.length]}">${itemTitleTag(item)}</rect>`)
-    parts.push(aWrap(`<text x="${PAD + 16}" y="${ly + 10}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, 22, item)} (${squares[i]}%)</text>`, itmUrl))
+    categoryParts[i].push(`<rect x="${PAD}" y="${ly}" width="12" height="12" rx="2" fill="${colors[i % colors.length]}">${itemTitleTag(item)}</rect>`)
+    categoryParts[i].push(aWrap(`<text x="${PAD + 16}" y="${ly + 10}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, 22, item)} (${squares[i]}%)</text>`, itmUrl))
   })
+  const parts = categoryParts.map((unit, i) => animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+  if (animate) parts.unshift(seqSpotlightCSS(items.length, spec, { scale: false }))
 
   return svg(W, H, theme, spec.title, parts)
 }

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svgOut(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -15,6 +15,7 @@ function svgOut(W: number, H: number, theme: MdArtTheme, title: string | undefin
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const cols    = items.length <= 2 ? items.length : items.length <= 4 ? 2 : Math.min(4, items.length)
   const rowCount = Math.ceil(items.length / cols)
@@ -74,6 +75,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const cards: string[] = []
 
   items.forEach((item, i) => {
+    const unit: string[] = []
     const col   = i % cols
     const row   = Math.floor(i / cols)
     const x     = GAP + col * (CARD_W + GAP)
@@ -84,17 +86,17 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const cx = (x + CARD_W / 2).toFixed(1)
 
     // Card background — tooltip carries full label/value/attrs
-    cards.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${cardH}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1">${itemTitleTag(item)}</rect>`)
+    unit.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${cardH}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1">${itemTitleTag(item)}</rect>`)
 
     // Big metric value
-    cards.push(`<text x="${cx}" y="${(y + VAL_BL).toFixed(1)}" text-anchor="middle" font-size="${VAL_FS}" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(value)}</text>`)
+    unit.push(`<text x="${cx}" y="${(y + VAL_BL).toFixed(1)}" text-anchor="middle" font-size="${VAL_FS}" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(value)}</text>`)
 
     // Label — multi-line, width-aware
     const lblTip   = lblTrunc ? `<title>${escapeXml(display)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    cards.push(aWrap(
+    unit.push(aWrap(
       `<text x="${cx}" y="${(y + LBL1_BL).toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${lblTip}${lblSpans}</text>`,
       url,
     ))
@@ -102,9 +104,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Change indicator
     if (change) {
       const lastLblBL = LBL1_BL + (lblLines.length - 1) * LBL_LH
-      cards.push(`<text x="${cx}" y="${(y + lastLblBL + CHG_GAP).toFixed(1)}" text-anchor="middle" font-size="${CHG_FS}" fill="${chgColor}" font-family="system-ui,sans-serif">${escapeXml(change)}</text>`)
+      unit.push(`<text x="${cx}" y="${(y + lastLblBL + CHG_GAP).toFixed(1)}" text-anchor="middle" font-size="${CHG_FS}" fill="${chgColor}" font-family="system-ui,sans-serif">${escapeXml(change)}</text>`)
     }
+    cards.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   })
+  if (animate) cards.unshift(seqSpotlightCSS(items.length, spec, { scale: false }))
 
   return svgOut(W, H, theme, spec.title, cards)
 }

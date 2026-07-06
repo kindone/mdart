@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -15,6 +15,7 @@ function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined,
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const colors = [theme.primary, theme.secondary, theme.accent, theme.muted, ...theme.palette]
 
@@ -68,7 +69,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     dy += h + GAP
   })
 
-  const parts: string[] = []
+  const flowParts = new Map<string, string[]>()
+  const sourceParts: string[] = []
+  const destParts: string[] = []
   const srcYCur = srcNodes.map(n => n.y)
   const dstYCur = new Map<string, number>(dstNames.map(n => [n, dstNodes.get(n)!.y]))
 
@@ -85,22 +88,31 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const dy0 = dstYCur.get(f.dst)!, dy1 = dy0 + fwDst
     dstYCur.set(f.dst, dy1)
     const col = colors[f.si % colors.length]
-    parts.push(`<path d="M${x0},${sy0.toFixed(1)} C${mx},${sy0.toFixed(1)} ${mx},${dy0.toFixed(1)} ${x1},${dy0.toFixed(1)} L${x1},${dy1.toFixed(1)} C${mx},${dy1.toFixed(1)} ${mx},${sy1.toFixed(1)} ${x0},${sy1.toFixed(1)} Z" fill="${col}3a" stroke="${col}77" stroke-width="0.5"/>`)
+    const path = `<path d="M${x0},${sy0.toFixed(1)} C${mx},${sy0.toFixed(1)} ${mx},${dy0.toFixed(1)} ${x1},${dy0.toFixed(1)} L${x1},${dy1.toFixed(1)} C${mx},${dy1.toFixed(1)} ${mx},${sy1.toFixed(1)} ${x0},${sy1.toFixed(1)} Z" fill="${col}3a" stroke="${col}77" stroke-width="0.5"/>`
+    const list = flowParts.get(f.dst) ?? []
+    list.push(path)
+    flowParts.set(f.dst, list)
   })
 
   srcNodes.forEach((n, i) => {
+    const unit: string[] = []
     const col = colors[i % colors.length]
     const item = items[i]
     const { display: srcDisplay, url: srcUrl } = displayLabel(item, { value: !!item.value, attrs: !!item.attrs?.length })
-    parts.push(`<rect x="0" y="${n.y.toFixed(1)}" width="${BOX_W - 8}" height="${n.h.toFixed(1)}" rx="4" fill="${col}44" stroke="${col}99" stroke-width="1">${itemTitleTag(item)}</rect>`)
-    if (n.h >= 14) parts.push(aWrap(`<text x="${(BOX_W - 8) / 2}" y="${(n.y + n.h / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(srcDisplay, 13, item)}</text>`, srcUrl))
+    unit.push(`<rect x="0" y="${n.y.toFixed(1)}" width="${BOX_W - 8}" height="${n.h.toFixed(1)}" rx="4" fill="${col}44" stroke="${col}99" stroke-width="1">${itemTitleTag(item)}</rect>`)
+    if (n.h >= 14) unit.push(aWrap(`<text x="${(BOX_W - 8) / 2}" y="${(n.y + n.h / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(srcDisplay, 13, item)}</text>`, srcUrl))
+    sourceParts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   })
 
-  dstNames.forEach(name => {
+  dstNames.forEach((name, i) => {
+    const unit: string[] = [...(flowParts.get(name) ?? [])]
     const n = dstNodes.get(name)!
-    parts.push(`<rect x="${W - BOX_W + 8}" y="${n.y.toFixed(1)}" width="${BOX_W - 8}" height="${n.h.toFixed(1)}" rx="4" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>`)
-    if (n.h >= 14) parts.push(aWrap(`<text x="${W - (BOX_W - 8) / 2}" y="${(n.y + n.h / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(dstDisplayMap.get(name) ?? name, 13)}</text>`, dstUrlMap.get(name) ?? null))
+    unit.push(`<rect x="${W - BOX_W + 8}" y="${n.y.toFixed(1)}" width="${BOX_W - 8}" height="${n.h.toFixed(1)}" rx="4" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>`)
+    if (n.h >= 14) unit.push(aWrap(`<text x="${W - (BOX_W - 8) / 2}" y="${(n.y + n.h / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(dstDisplayMap.get(name) ?? name, 13)}</text>`, dstUrlMap.get(name) ?? null))
+    destParts.push(animate ? `<g class="mdart-n${items.length + i}">${unit.join('')}</g>` : unit.join(''))
   })
+  const parts = [...destParts, ...sourceParts]
+  if (animate) parts.unshift(seqSpotlightCSS(items.length + dstNames.length, spec, { scale: false }))
 
   return svg(W, H, theme, spec.title, parts)
 }

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -15,6 +15,7 @@ function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined,
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const rows = spec.items
   if (rows.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const numCols = Math.max(...rows.map(r => r.children.length), 1)
   const CELL_W = Math.min(88, Math.max(46, 520 / numCols))
@@ -40,30 +41,35 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   )
   const colHeaderMax = Math.floor(CELL_W / 6)
 
-  parts.push(`<rect x="0" y="${TITLE_H}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
+  const headerUnit: string[] = []
+  headerUnit.push(`<rect x="0" y="${TITLE_H}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
   for (let c = 0; c < numCols; c++) {
     const colX = LABEL_W + c * CELL_W
-    parts.push(`<rect x="${colX}" y="${TITLE_H}" width="${CELL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
-    parts.push(`<text x="${(colX + CELL_W / 2).toFixed(1)}" y="${(TITLE_H + 19).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${tt(colHeaders[c], colHeaderMax)}</text>`)
+    headerUnit.push(`<rect x="${colX}" y="${TITLE_H}" width="${CELL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
+    headerUnit.push(`<text x="${(colX + CELL_W / 2).toFixed(1)}" y="${(TITLE_H + 19).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${tt(colHeaders[c], colHeaderMax)}</text>`)
   }
+  parts.push(animate ? `<g class="mdart-n0">${headerUnit.join('')}</g>` : headerUnit.join(''))
 
   rows.forEach((row, r) => {
+    const unit: string[] = []
     const rowY = TITLE_H + HEADER_H + r * CELL_H
     const { display: rowDisplay, url: rowUrl } = displayLabel(row)
-    parts.push(`<rect x="0" y="${rowY}" width="${LABEL_W}" height="${CELL_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`)
-    parts.push(aWrap(`<text x="8" y="${(rowY + 25).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(rowDisplay, 12, row)}</text>`, rowUrl))
+    unit.push(`<rect x="0" y="${rowY}" width="${LABEL_W}" height="${CELL_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`)
+    unit.push(aWrap(`<text x="8" y="${(rowY + 25).toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(rowDisplay, 12, row)}</text>`, rowUrl))
     row.children.slice(0, numCols).forEach((cell, c) => {
       const colX = LABEL_W + c * CELL_W
       const raw = (cell.value ?? cell.attrs[0] ?? cell.label.match(/[\d.]+/)?.[0] ?? '0').replace('%', '')
       const v = Math.min((parseFloat(raw) || 0) / maxVal, 1)
       const alpha = Math.round(18 + v * 210).toString(16).padStart(2, '0')
-      parts.push(`<rect x="${colX}" y="${rowY}" width="${CELL_W}" height="${CELL_H}" fill="${theme.primary}${alpha}" stroke="${theme.border}55" stroke-width="0.5">${itemTitleTag(cell)}</rect>`)
+      unit.push(`<rect x="${colX}" y="${rowY}" width="${CELL_W}" height="${CELL_H}" fill="${theme.primary}${alpha}" stroke="${theme.border}55" stroke-width="0.5">${itemTitleTag(cell)}</rect>`)
       const textFill = v > 0.55 ? theme.bg : theme.text
       // Prefer the cell's value (e.g. "5"); fall back to label when absent.
       const cellText = cell.value ?? cell.label
-      parts.push(`<text x="${(colX + CELL_W / 2).toFixed(1)}" y="${(rowY + 25).toFixed(1)}" text-anchor="middle" font-size="10" fill="${textFill}" font-family="system-ui,sans-serif">${escapeXml(tt(cellText, 9))}</text>`)
+      unit.push(`<text x="${(colX + CELL_W / 2).toFixed(1)}" y="${(rowY + 25).toFixed(1)}" text-anchor="middle" font-size="10" fill="${textFill}" font-family="system-ui,sans-serif">${escapeXml(tt(cellText, 9))}</text>`)
     })
+    parts.push(animate ? `<g class="mdart-n${r + 1}">${unit.join('')}</g>` : unit.join(''))
   })
+  if (animate) parts.unshift(seqSpotlightCSS(rows.length + 1, spec, { scale: false }))
 
   return svg(W, H, theme, spec.title, parts)
 }

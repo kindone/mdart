@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -15,6 +15,7 @@ function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined,
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const W = 600
   const TITLE_H = spec.title ? 30 : 8
@@ -31,6 +32,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const cellH = CONTENT_H / rows
 
   items.forEach((item, i) => {
+    const unit: string[] = []
     const col = i % cols
     const row = Math.floor(i / cols)
     const x = col * cellW
@@ -38,14 +40,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = colors[i % colors.length]
 
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
-    cells.push(
+    unit.push(
       `<rect x="${(x + 2).toFixed(1)}" y="${(y + 2).toFixed(1)}" width="${(cellW - 4).toFixed(1)}" height="${(cellH - 4).toFixed(1)}" rx="6" fill="${fill}55" stroke="${fill}99" stroke-width="1">${itemTitleTag(item)}</rect>`,
       aWrap(`<text x="${(x + cellW / 2).toFixed(1)}" y="${(y + cellH / 2).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, Math.floor(cellW / 8), item)}</text>`, itmUrl),
     )
     if (item.value) {
-      cells.push(`<text x="${(x + cellW / 2).toFixed(1)}" y="${(y + cellH / 2 + 16).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value)}</text>`)
+      unit.push(`<text x="${(x + cellW / 2).toFixed(1)}" y="${(y + cellH / 2 + 16).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value)}</text>`)
     }
+    cells.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
   })
+  if (animate) cells.unshift(seqSpotlightCSS(items.length, spec, { scale: false }))
 
   return svg(W, H, theme, spec.title, cells)
 }

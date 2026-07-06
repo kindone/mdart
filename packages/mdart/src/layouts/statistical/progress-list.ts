@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqMeasureTiming, seqSpotlightCSS } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -15,6 +15,7 @@ function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined,
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
 
   const W = 520
   const ROW_H = 40
@@ -35,6 +36,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const num = parseFloat(raw)
     const pct = isNaN(num) ? 0 : num > 1 ? Math.min(num, 100) : num * 100
     const fillW = Math.max(0, BAR_W * pct / 100)
+    const fillWidth = fillW.toFixed(1)
+    const { delayMs, durationMs } = seqMeasureTiming(items.length, spec, i)
+    const widthAnim = animate
+      ? `<animate attributeName="width" from="0" to="${fillWidth}" begin="${delayMs}ms" dur="${durationMs}ms" fill="freeze"/>`
+      : ''
 
     const barColor = pct >= 70 ? theme.accent : pct >= 40 ? theme.warning : theme.danger
 
@@ -42,13 +48,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // become the value source. We pass shows.value=true since the bar IS
     // showing the value visibly. attrs may still drop silently.
     const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true })
-    rows.push(
+    const unit = [
       `<rect x="${BAR_X}" y="${barY}" width="${BAR_W}" height="16" rx="8" fill="${theme.muted}33">${itemTitleTag(item)}</rect>`,
-      `<rect x="${BAR_X}" y="${barY}" width="${fillW.toFixed(1)}" height="16" rx="8" fill="${barColor}">${itemTitleTag(item)}</rect>`,
+      `<rect class="mdart-bar-grow" x="${BAR_X}" y="${barY}" width="${animate ? 0 : fillWidth}" height="16" rx="8" fill="${barColor}">${itemTitleTag(item)}${widthAnim}</rect>`,
       aWrap(`<text x="${LABEL_W}" y="${barY + 11}" text-anchor="end" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, 20, item)}</text>`, itmUrl),
       `<text x="${BAR_X + BAR_W + 8}" y="${barY + 11}" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${pct % 1 === 0 ? pct : pct.toFixed(1)}%</text>`,
-    )
+    ].join('')
+    rows.push(animate ? `<g class="mdart-n${i}">${unit}</g>` : unit)
   }
+  if (animate) rows.unshift(seqSpotlightCSS(items.length, spec, { scale: false }))
 
   return svg(W, H, theme, spec.title, rows)
 }

@@ -60,5 +60,7 @@ title: Project
     expect(svg).toMatch(/<g class="mdart-n0">[\s\S]*Project/)
     expect(svg).toContain('class="mdart-n1"')
     expect(svg).toContain('class="mdart-n2"')
+    expect(svg).toContain('class="mdart-n4"')
+    expect(svg).toMatch(/<g class="mdart-n2">[\s\S]*<path[\s\S]*Task A/)
   })
 })
