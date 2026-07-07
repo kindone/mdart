@@ -1,20 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
-
-function wrapText(text: string, maxChars: number): string[] {
-  if (text.length <= maxChars) return [text]
-  const words = text.split(' ')
-  const lines: string[] = []
-  let cur = ''
-  for (const w of words) {
-    if (!cur) { cur = w; continue }
-    if (cur.length + 1 + w.length <= maxChars) { cur += ' ' + w }
-    else { lines.push(cur); cur = w }
-  }
-  if (cur) lines.push(cur)
-  return lines.length ? lines : [text]
-}
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, type FitTextResult } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -59,26 +45,86 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(animate ? `<g class="mdart-arr-n${i + 1}">${connLines}</g>` : connLines)
   }
 
+  // Floors pushed lower than the usual 8/7 — the SVG scales via viewBox, so
+  // a smaller source font size still reads fine once the diagram renders at
+  // a normal display width; better to shrink further than to drop content.
+  const VALUE_FS_MAX = 9, VALUE_FS_MIN = 6
+  const LABEL_FS_MAX = 10.5, LABEL_FS_MIN = 6.5
+  const PAD_V = 3
+  const usableH = BOX_H - PAD_V * 2
+
+  const displays = items.map(it => displayLabel(it, { value: !!it.value }))
+
+  // Per-node fitting: every box shares BOX_W, but each label/value pair is
+  // sized independently rather than to the diagram's worst-case label — a
+  // short label stays large instead of being dragged down to match a long
+  // neighbor. The value's own best-fit size isn't necessarily the best
+  // choice for the box overall: a short value ("4wk") that already fits
+  // fine at its max size stays at a taller line height than it needs to,
+  // which reserves LESS room for the label than a longer value that was
+  // forced to shrink would have — so a short value can paradoxically starve
+  // the label of room a long one wouldn't have. Try shrinking the value
+  // (down to its own floor) and re-check the label at each step, preferring
+  // the LARGEST value size that still lets the label avoid truncation —
+  // only give up value size for label room when the label actually needs it.
   items.forEach((item, i) => {
     const x = startX + i * STEP_X
     const y = startY + i * STEP_Y
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
-    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
-    const valueText = item.value ?? ''
-    const lines = wrapText(itmDisplay, Math.floor(BOX_W / 7)).slice(0, valueText ? 1 : 2)
-    const cy = y + BOX_H / 2
-    let lblContent = ''
-    if (valueText) {
-      lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(cy - 5).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(lines[0] ?? '')}</text>`
-      const valMax = Math.floor(BOX_W / 5.5)
-      const valDisp = valueText.length > valMax ? valueText.slice(0, valMax - 1) + '…' : valueText
-      lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(cy + 8).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(valDisp)}</text>`
-    } else {
-      lines.forEach((line, li) => {
-        const ty = lines.length === 1 ? cy + 4 : cy + (li === 0 ? -5 : 8)
-        lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+    const { url: itmUrl, display: itmDisplay } = displays[i]
+
+    let labelFS: number, labelLH: number, lines: string[], labelTruncated: boolean
+    let valueFS: number, valueLH: number, valueFit: FitTextResult | null
+    if (item.value) {
+      const natural = fitTextToWidthShared([item.value], BOX_W - 10, { maxSize: VALUE_FS_MAX, minSize: VALUE_FS_MIN, maxLines: 1 })
+      let bestValue = natural
+      let bestLabel = fitTextToWidthShared([itmDisplay], BOX_W - 10, {
+        maxSize: LABEL_FS_MAX, minSize: LABEL_FS_MIN, maxLines: 2,
+        boxH: Math.max(10, usableH - natural.lineHeight - 4),
       })
+      // Keep updating on EVERY iteration (not just on full success): if some
+      // value size fully clears the label's truncation, `break` locks that
+      // in (preferring the largest such size); if none do, the loop still
+      // runs to its last (smallest) value size, which is the most room the
+      // label can possibly get — a genuine best effort, unlike reverting to
+      // the value's natural (least-helpful) size.
+      for (let vfs = natural.fontSize; vfs >= VALUE_FS_MIN; vfs--) {
+        const candidateValue = fitTextToWidthShared([item.value], BOX_W - 10, { maxSize: vfs, minSize: vfs, maxLines: 1 })
+        const reservedBoxH = Math.max(10, usableH - candidateValue.lineHeight - 4)
+        const candidateLabel = fitTextToWidthShared([itmDisplay], BOX_W - 10, {
+          maxSize: LABEL_FS_MAX, minSize: LABEL_FS_MIN, maxLines: 2, boxH: reservedBoxH,
+        })
+        bestValue = candidateValue
+        bestLabel = candidateLabel
+        if (!candidateLabel.results[0].truncated) break
+      }
+      valueFS = bestValue.fontSize; valueLH = bestValue.lineHeight; valueFit = bestValue.results[0]
+      labelFS = bestLabel.fontSize; labelLH = bestLabel.lineHeight
+      ;({ lines, truncated: labelTruncated } = bestLabel.results[0])
+    } else {
+      const labelFit = fitTextToWidthShared([itmDisplay], BOX_W - 10, {
+        maxSize: LABEL_FS_MAX, minSize: LABEL_FS_MIN, maxLines: 3, boxH: usableH,
+      })
+      labelFS = labelFit.fontSize; labelLH = labelFit.lineHeight
+      ;({ lines, truncated: labelTruncated } = labelFit.results[0])
+      valueFS = VALUE_FS_MAX; valueLH = VALUE_FS_MAX * 1.3; valueFit = null
+    }
+    const cy = y + BOX_H / 2
+    // Centre the whole block (label lines + optional value line) around cy —
+    // generalized so it works whatever combination of line counts the fit
+    // above landed on, instead of assuming exactly 1 or 2 label lines.
+    const totalH = lines.length * labelLH + (valueFit ? valueLH + 3 : 0)
+    const labelTip = labelTruncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
+    let lblContent = labelTip
+    lines.forEach((line, li) => {
+      const ty = cy - totalH / 2 + li * labelLH + labelLH * 0.8
+      lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+    })
+    if (valueFit) {
+      const ty = cy - totalH / 2 + lines.length * labelLH + valueLH * 0.8
+      const valueTip = valueFit.truncated ? `<title>${escapeXml(item.value!)}</title>` : ''
+      lblContent += `${valueTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(valueFit.lines[0])}</text>`
     }
     let nodeStr = `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</rect>`
     nodeStr += aWrap(lblContent, itmUrl)

@@ -1,23 +1,21 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, type ItemLike } from '../shared'
+import { escapeXml, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
 
 // ── Node geometry ────────────────────────────────────────────────────────────
-// Three tiers, each an ellipse. rx/ry chosen so 2 wrapped lines fit.
+// Three tiers, each an ellipse. Radii are fixed (tied to the R1/R2 radial
+// spacing math below — growing one ellipse would crowd its neighbours), so
+// font size is the only lever available per tier: each tier shares ONE font
+// size across all its nodes, sized to that tier's worst-fitting label.
 
 const CENTER_RX = 72,  CENTER_RY = 30
 const BRANCH_RX = 58,  BRANCH_RY = 27
 const SUB_RX    = 36,  SUB_RY    = 23
 
-const CENTER_FS = 12,  CENTER_LH = 15
-const BRANCH_FS = 10,  BRANCH_LH = 13
-const SUB_FS    = 8.5, SUB_LH   = 11
-
-// Max chars per line ≈ (2·rx − padding) / avg-px-per-char
-const CENTER_MC = Math.floor((CENTER_RX * 2 - 16) / 6.5)   // ~20
-const BRANCH_MC = Math.floor((BRANCH_RX * 2 - 14) / 5.8)   // ~17
-// Sub-nodes: text is intentionally wider than the ellipse — spill is fine
-const SUB_MC    = 20
+const CENTER_FS_MAX = 12
+const BRANCH_FS_MAX = 10
+const SUB_FS_MAX    = 8.5
+const FS_MIN = 7  // shared floor before a tier accepts truncation
 
 // Canvas — tall enough so top/bottom sub-nodes don't clip
 const W  = 720, H  = 660
@@ -25,24 +23,21 @@ const cx = W / 2, cy = H / 2
 const R1 = 170   // center → branch
 const R2 = 100   // branch → sub-node (further out so subs don't crowd the branch)
 
-// ── Helper: centered multi-line <text> ───────────────────────────────────────
+// ── Helper: centered multi-line <text> from a pre-fitted result ──────────────
 
 function mlText(
   x: number, y: number,
-  label: string,
-  maxChars: number,
+  fit: { lines: string[]; truncated: boolean; url: string | null },
+  fullLabel: string,
   fontSize: number,
   lineH: number,
   fill: string,
   weight = 'normal',
-  ellipsisItem?: ItemLike,
 ): string {
-  // Apply ellipsis cue when value/attrs would otherwise be invisible.
-  const labelStr = ellipsisItem ? ellipsisIfDropped(label, ellipsisItem) : label
-  const { lines, truncated, url } = wrapLabel(labelStr, maxChars, 3)
+  const { lines, truncated, url } = fit
   // Shift baseline up by half the total text-block height so it centers in the ellipse
   const startY = y - (lines.length - 1) * lineH / 2 + fontSize * 0.32
-  const tip    = truncated ? `<title>${escapeXml(label)}</title>` : ''
+  const tip    = truncated ? `<title>${escapeXml(fullLabel)}</title>` : ''
   const spans  = lines
     .map((l, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
     .join('')
@@ -69,15 +64,47 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const n = branches.length
 
+  // Per-node fitting: within each tier every ellipse shares one RX/RY, but
+  // each node's label is now sized to ITS OWN worst-fitting need rather
+  // than the whole tier's — a short branch/sub label stays large instead
+  // of being dragged down to match a long neighbor, same approach as
+  // process.ts/circular-process.ts. maxLines was already a generous flat 3
+  // with no boxH; since these are ellipses (not rects), a boxH derived from
+  // the full RY*2 diameter would let outer wrapped lines run past the
+  // ellipse's tapering silhouette near top/bottom, so — same heuristic as
+  // circle-process's circleBoxH — the vertical budget below uses a fraction
+  // of the diameter, not the full RY*2.
+  const centerFitFull = fitTextToWidthShared(
+    [centerLabel], CENTER_RX * 2 - 16, { maxSize: CENTER_FS_MAX, minSize: FS_MIN, maxLines: 3, boxH: CENTER_RY * 1.5 },
+  )
+  const centerFS = centerFitFull.fontSize
+  const centerLH = centerFitFull.lineHeight
+  const centerFits = centerFitFull.results
+
+  const branchLabels = branches.map(b => ellipsisIfDropped(b.label, b))
+  const branchFitsFull = branchLabels.map(label =>
+    fitTextToWidthShared([label], BRANCH_RX * 2 - 14, { maxSize: BRANCH_FS_MAX, minSize: FS_MIN, maxLines: 3, boxH: BRANCH_RY * 1.5 }),
+  )
+
+  // Subs are collected across ALL branches up front, then consumed in the
+  // same order via subCursor as branches render — each still fit
+  // independently (per-node), just gathered up front for indexing.
+  const allSubs   = branches.flatMap(b => b.children)
+  const subLabels = allSubs.map(s => ellipsisIfDropped(s.label, s))
+  const subFitsFull = subLabels.map(label =>
+    fitTextToWidthShared([label], SUB_RX * 2 - 10, { maxSize: SUB_FS_MAX, minSize: FS_MIN, maxLines: 3, boxH: SUB_RY * 1.5 }),
+  )
+
   const parts: string[] = []
 
   // ── Center node ─────────────────────────────────────────────────────────────
   const centerUnit = [
     `<ellipse cx="${cx}" cy="${cy}" rx="${CENTER_RX}" ry="${CENTER_RY}" fill="${theme.surface}" stroke="${theme.accent}" stroke-width="1.5"/>`,
-    mlText(cx, cy, centerLabel, CENTER_MC, CENTER_FS, CENTER_LH, theme.text, '600'),
+    mlText(cx, cy, centerFits[0], centerLabel, centerFS, centerLH, theme.text, '600'),
   ].join('')
 
   // ── Branches ────────────────────────────────────────────────────────────────
+  let subCursor = 0
   for (let i = 0; i < n; i++) {
     const connectors: string[] = []
     const shapes: string[] = []
@@ -87,9 +114,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const by = cy + R1 * Math.sin(angle)
     const branch = branches[i]
 
+    const { fontSize: branchFS, lineHeight: branchLH, results: branchResults } = branchFitsFull[i]
     connectors.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${theme.accent}99" stroke-width="2"/>`)
     shapes.push(`<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="${BRANCH_RX}" ry="${BRANCH_RY}" fill="${theme.surface}" stroke="${theme.accent}cc" stroke-width="1">${itemTitleTag(branch)}</ellipse>`)
-    texts.push(mlText(bx, by, branch.label, BRANCH_MC, BRANCH_FS, BRANCH_LH, theme.text, 'normal', branch))
+    texts.push(mlText(bx, by, branchResults[0], branch.label, branchFS, branchLH, theme.text, 'normal'))
 
     // ── Sub-nodes ──────────────────────────────────────────────────────────────
     const subs = branch.children
@@ -104,9 +132,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const sx = bx + R2 * Math.cos(subAngle)
       const sy = by + R2 * Math.sin(subAngle)
 
+      const { fontSize: subFS, lineHeight: subLH, results: subResults } = subFitsFull[subCursor]
       connectors.push(`<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1" opacity="0.7"/>`)
       shapes.push(`<ellipse cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" rx="${SUB_RX}" ry="${SUB_RY}" fill="${theme.surface}" stroke="${theme.textMuted}aa" stroke-width="1">${itemTitleTag(subs[j])}</ellipse>`)
-      texts.push(mlText(sx, sy, subs[j].label, SUB_MC, SUB_FS, SUB_LH, theme.textMuted, 'normal', subs[j]))
+      texts.push(mlText(sx, sy, subResults[0], subs[j].label, subFS, subLH, theme.textMuted, 'normal'))
+      subCursor++
     }
     const unit = [...connectors, ...shapes, ...texts].join('')
     parts.push(animate ? `<g class="mdart-n${i + 1}">${unit}</g>` : unit)

@@ -1,6 +1,6 @@
 import path from 'node:path'
 
-export type CliName = 'claude' | 'opencode'
+export type CliName = 'claude' | 'opencode' | 'codex'
 
 export type ErrorCode = 'session_expired' | 'context_limit' | 'provider_quota' | 'process_error'
 
@@ -282,6 +282,147 @@ const opencodeModels: ModelOption[] = [
   { value: 'groq/meta-llama/llama-4-scout-17b-16e-instruct', label: 'Llama 4 Scout 17B (Groq, free)' },
 ]
 
+// ── Codex ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Codex CLI adapter for the MdArt demo.
+ *
+ * Codex is OpenAI's open-source agent CLI (https://github.com/openai/codex).
+ * It emits JSONL events on stdout in `exec --json` mode.
+ *
+ * Auth note: OPENAI_API_KEY env alone is insufficient — codex requires a
+ * prior `codex login --with-api-key` or `codex login --device-auth` call.
+ * Auth is stored in ~/.codex/auth.json. The demo does not manage auth.
+ *
+ * Event mapping:
+ *   thread.started          → session_id (thread_id as externalId)
+ *   item.completed (agent_message) → text_block_start + text_delta
+ *   turn.completed          → result_done
+ *   turn.failed             → result_error
+ *   error (recoverable)     → ignored (codex retries internally)
+ */
+
+function classifyCodexError(text: string): ErrorCode {
+  const lower = (text || '').toLowerCase()
+  if (
+    lower.includes('missing bearer') ||
+    lower.includes('api key') ||
+    lower.includes('credential') ||
+    lower.includes('unauthorized') ||
+    lower.includes('not supported when using codex')
+  ) return 'process_error'
+  if (
+    lower.includes('quota') ||
+    lower.includes('rate limit') ||
+    lower.includes('too many requests') ||
+    lower.includes('check your plan and billing') ||
+    lower.includes('usage limit') ||
+    lower.includes('429')
+  ) return 'provider_quota'
+  if (
+    lower.includes('context') ||
+    lower.includes('too long') ||
+    lower.includes('too many tokens') ||
+    lower.includes('token limit')
+  ) return 'context_limit'
+  if (
+    lower.includes('session not found') ||
+    lower.includes('thread not found') ||
+    lower.includes('could not resume') ||
+    lower.includes('could not be resumed')
+  ) return 'session_expired'
+  return 'process_error'
+}
+
+class CodexParser implements CliParser {
+  private sessionIdEmitted = false
+  private threadId: string | null = null
+
+  constructor(private readonly opts: LaunchOptions) {}
+
+  parseLine(line: string): { rawChunk: unknown | null; events: CanonicalEvent[] } {
+    if (!line.trim()) return { rawChunk: null, events: [] }
+    let chunk: Record<string, unknown>
+    try { chunk = JSON.parse(line) as Record<string, unknown> } catch { return { rawChunk: null, events: [] } }
+
+    const events: CanonicalEvent[] = []
+
+    if (chunk.type === 'thread.started') {
+      const tid = typeof chunk.thread_id === 'string' ? chunk.thread_id : ''
+      if (tid) {
+        this.threadId = tid
+        if (!this.sessionIdEmitted) {
+          this.sessionIdEmitted = true
+          events.push({ type: 'session_id', externalId: tid })
+        }
+      }
+    } else if (chunk.type === 'item.completed') {
+      const item = chunk.item as Record<string, unknown> | undefined
+      if (item?.type === 'agent_message') {
+        const text = typeof item.text === 'string' ? item.text : ''
+        if (text) {
+          events.push({ type: 'text_block_start' })
+          events.push({ type: 'text_delta', text })
+        }
+      }
+    } else if (chunk.type === 'turn.completed') {
+      events.push({ type: 'result_done', externalId: this.threadId ?? '' })
+    } else if (chunk.type === 'turn.failed') {
+      const err = chunk.error as Record<string, unknown> | undefined
+      const errorText = typeof err?.message === 'string' ? err.message : 'codex error'
+      const code = classifyCodexError(errorText)
+      events.push({ type: 'result_error', code, message: defaultUserMessageForErrorCode(code, errorText), errorText })
+    }
+    // 'error' events are recoverable internal retries — codex handles them itself; ignore.
+
+    return { rawChunk: chunk, events }
+  }
+}
+
+const codexModels: ModelOption[] = [
+  { value: null,           label: 'Default (codex picks)' },
+  { value: 'gpt-5.5',     label: 'GPT-5.5' },
+  { value: 'gpt-5.4',     label: 'GPT-5.4' },
+  { value: 'gpt-5.4-mini',label: 'GPT-5.4 Mini' },
+  { value: 'gpt-5.2',     label: 'GPT-5.2' },
+]
+
+function buildCodexEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const out: NodeJS.ProcessEnv = {}
+  for (const [key, val] of Object.entries(env)) {
+    if (val === undefined) continue
+    if (key === 'CLAUDECODE') continue  // defensive scrub
+    out[key] = val
+  }
+  // Silence Rust tracing logs that otherwise spam stderr during connection retries.
+  if (!('RUST_LOG' in out)) out.RUST_LOG = 'off'
+  return out
+}
+
+export const codexAdapter: CliAdapter = {
+  name: 'codex',
+  models: codexModels,
+  capabilities: { streamingTokens: false, toolUseStructured: false, branchResume: true },
+  binaryPath: () => process.env.CODEX_PATH ?? 'codex',
+  buildArgs: (opts) => {
+    const args: string[] = ['exec', '--skip-git-repo-check', '--json', '--dangerously-bypass-approvals-and-sandbox']
+    if (opts.workingDirectory) args.push('-C', path.resolve(opts.workingDirectory))
+    if (opts.model) args.push('-m', opts.model)
+    const fullPrompt = opts.systemPrompt
+      ? `${opts.systemPrompt}\n\n---\n\n${opts.prompt}`
+      : opts.prompt
+    if (opts.resumeId) {
+      args.push('resume', opts.resumeId, fullPrompt)
+    } else {
+      args.push(fullPrompt)
+    }
+    return args
+  },
+  buildEnv: buildCodexEnv,
+  createParser: (opts) => new CodexParser(opts),
+  classifyError: (text) => classifyCodexError(text),
+}
+
 export const claudeAdapter: CliAdapter = {
   name: 'claude',
   models: claudeModels,
@@ -331,10 +472,13 @@ export const opencodeAdapter: CliAdapter = {
 export const adapters: Record<CliName, CliAdapter> = {
   claude: claudeAdapter,
   opencode: opencodeAdapter,
+  codex: codexAdapter,
 }
 
 export function normalizeCliName(value: unknown): CliName {
-  return value === 'opencode' ? 'opencode' : 'claude'
+  if (value === 'opencode') return 'opencode'
+  if (value === 'codex') return 'codex'
+  return 'claude'
 }
 
 export function defaultCliName(): CliName {

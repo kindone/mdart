@@ -1778,7 +1778,9 @@ function activeSession() {
 }
 
 function assistantLabel(cli) {
-  return cli === 'opencode' ? 'OpenCode' : 'Claude'
+  if (cli === 'opencode') return 'OpenCode'
+  if (cli === 'codex') return 'Codex'
+  return 'Claude'
 }
 
 async function loadChatStatus() {
@@ -1799,7 +1801,7 @@ function populateCliSelect() {
   for (const [name, info] of Object.entries(chatMeta.adapters ?? {})) {
     const opt = document.createElement('option')
     opt.value = name
-    opt.textContent = name === 'opencode' ? 'opencode' : 'claude'
+    opt.textContent = name === 'opencode' ? 'opencode' : name === 'codex' ? 'codex' : 'claude'
     opt.disabled = !info.available
     if (info.available && !firstAvailable) firstAvailable = name
     cliSelect.appendChild(opt)

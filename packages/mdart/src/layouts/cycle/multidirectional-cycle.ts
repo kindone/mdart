@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, tt, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { lerpColor, titleEl, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, roundTextBox } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -43,6 +43,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const animate = shouldAnimate(spec)
 
+  // Per-node fitting: every node shares nodeR (like circle-process.ts's
+  // circles), so each label is sized independently — a short label stays
+  // large instead of being dragged down to match a long neighbor. Delegates
+  // to shared.ts's fitLabelValueBlock/renderFitBlock (no value here, so
+  // hasValue is always false) — replaces the old flat 10-char truncation
+  // (fixed font-size 10, single line only, no <title> tooltip).
+  const { w: nodeBoxW, h: nodeBoxH } = roundTextBox(nodeR)
+  const halo = `stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill"`
+
   // Draw nodes on top
   for (let i = 0; i < n; i++) {
     const item = items[i]
@@ -51,9 +60,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.secondary, t)
 
     const { display: lblDisplay, url: lblUrl } = displayLabel(item)
+    const fit = fitLabelValueBlock(lblDisplay, null, nodeBoxW, nodeBoxH, {
+      labelUrl: lblUrl, labelMaxSize: 10, labelMinSize: 6.5, labelMaxLines: 2, labelMaxLinesNoValue: 2,
+    })
     let nodeStr = ''
     nodeStr += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${nodeR}" fill="${fill}" stroke="${theme.bg}" stroke-width="2">${itemTitleTag(item)}</circle>`
-    nodeStr += aWrap(`<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10, item)}</text>`, lblUrl)
+    nodeStr += renderFitBlock(x, y, fit, {
+      labelFullText: lblDisplay, labelFill: '#ffffff', valueFill: '#ffffff',
+      labelWeight: '600', extraAttrs: halo,
+    })
     parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   }
 

@@ -1,20 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
-
-function wrapText(text: string, maxChars: number): string[] {
-  if (text.length <= maxChars) return [text]
-  const words = text.split(' ')
-  const lines: string[] = []
-  let cur = ''
-  for (const w of words) {
-    if (!cur) { cur = w; continue }
-    if (cur.length + 1 + w.length <= maxChars) { cur += ' ' + w }
-    else { lines.push(cur); cur = w }
-  }
-  if (cur) lines.push(cur)
-  return lines.length ? lines : [text]
-}
+import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -34,6 +20,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // Timeline backbone — always visible
   svgContent += `<line x1="${PAD}" y1="${LINE_Y}" x2="${W - PAD}" y2="${LINE_Y}" stroke="${theme.border}" stroke-width="3" />`
 
+  // Per-node fitting: every column shares the same spacing-derived width,
+  // but each label/value pair is sized independently rather than to the
+  // diagram's worst-case label — a short label stays large instead of
+  // being dragged down to match a long neighbor. Replaces the old flat
+  // 12-char budget (unrelated to actual spacing) with no line cap at all,
+  // which on a fixed-height (H=140) canvas could push content past the
+  // top/bottom edge for a sufficiently long label.
+  const labelBoxW = Math.max(30, spacing - 10)
+  const displays = items.map(it => displayLabel(it, { value: !!it.value }))
+
   for (let i = 0; i < n; i++) {
     const item = items[i]
     const x = PAD + i * spacing
@@ -43,12 +39,17 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelY = above ? LINE_Y - 22 : LINE_Y + 36
     const lineEndY = above ? LINE_Y - 14 : LINE_Y + 14
 
-    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
-    const lines = wrapText(itmDisplay, 12)
-    let lblContent = ''
+    const { url: itmUrl, display: itmDisplay } = displays[i]
+    const { fontSize: labelFS, lineHeight: lineH, results: [{ lines, truncated }] } =
+      fitTextToWidthShared([itmDisplay], labelBoxW, { maxSize: 10, minSize: 6.5, maxLines: 2 })
+    const valueFitFull = item.value
+      ? fitTextToWidthShared([item.value], labelBoxW, { maxSize: 9, minSize: 6, maxLines: 1 })
+      : null
+    const valueFS = valueFitFull?.fontSize ?? 9
+    let lblContent = truncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
     lines.forEach((line, li) => {
-      const ly = labelY + li * 13
-      lblContent += `<text x="${x}" y="${ly}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+      const ly = labelY + li * lineH
+      lblContent += `<text x="${x}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
     })
 
     let nodeStr = ''
@@ -56,8 +57,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     nodeStr += `<circle cx="${x}" cy="${LINE_Y}" r="${DOT_R - 3}" fill="${theme.bg}" />`
     nodeStr += `<line x1="${x}" y1="${LINE_Y}" x2="${x}" y2="${lineEndY}" stroke="${fill}" stroke-width="1.5" stroke-dasharray="3,2" />`
     nodeStr += aWrap(lblContent, itmUrl)
-    if (item.value) {
-      nodeStr += `<text x="${x}" y="${labelY + lines.length * 13}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value)}</text>`
+    if (valueFitFull) {
+      const valueFit = valueFitFull.results[0]
+      const valueTip = valueFit.truncated ? `<title>${escapeXml(item.value!)}</title>` : ''
+      nodeStr += `${valueTip}<text x="${x}" y="${(labelY + lines.length * lineH).toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(valueFit.lines[0])}</text>`
     }
     svgContent += animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr
   }

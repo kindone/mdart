@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, truncate, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -57,8 +57,26 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const cosA = Math.cos(midAngle)
     const anchor = cosA > 0.3 ? 'start' : cosA < -0.3 ? 'end' : 'middle'
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
-    const labelText = truncate(lblDisplay, 14)
-    const lblTip    = labelText !== lblDisplay ? `<title>${escapeXml(item.label)}</title>` : ''
+    // Labels float outside the ring with plenty of open room (not tightly
+    // bounded by a shape like the other cycle types), so segBoxW/H below
+    // are generous fixed budgets rather than geometry-derived — still a
+    // big improvement over the old flat 14/16-char truncation (fixed
+    // font-size 10/9, single line only).
+    const segBoxW = 92
+    const segBoxH = 40
+    const valueFitFull = item.value
+      ? fitTextToWidthShared([item.value], segBoxW, { maxSize: 9, minSize: 6.5, maxLines: 1 })
+      : null
+    const valueFS = valueFitFull?.fontSize ?? 9
+    const valueLH = valueFitFull?.lineHeight ?? 9 * 1.3
+    const valueFit = valueFitFull?.results[0] ?? null
+    const reservedBoxH = valueFit ? Math.max(12, segBoxH - valueLH - 2) : segBoxH
+    const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines: labelLines, truncated: labelTruncated }] } =
+      fitTextToWidthShared([lblDisplay], segBoxW, {
+        maxSize: 10, minSize: 6.5, maxLines: item.value ? 2 : 3, boxH: reservedBoxH,
+      })
+    const lblTip = labelTruncated ? `<title>${escapeXml(lblDisplay)}</title>` : ''
+    const totalH = labelLines.length * labelLH + (valueFit ? valueLH + 2 : 0)
 
     // Connector line from outer edge to label — included in group as it is part of this wedge
     const cx1 = cx + connectorR * Math.cos(midAngle)
@@ -67,15 +85,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let nodeStr = ''
     nodeStr += `<path d="${path}" fill="${fill}">${itemTitleTag(item)}</path>`
     nodeStr += `<line x1="${cx1.toFixed(1)}" y1="${cy1.toFixed(1)}" x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="${fill}" stroke-width="1" opacity="0.7"/>`
-    if (item.value) {
-      // Two-line: label up, dim value subtitle beneath. Plenty of room
-      // outside the wedges so we render full text without truncation tail.
-      nodeStr += aWrap(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${escapeXml(labelText)}</text>`, lblUrl)
-      const valTrunc = truncate(item.value, 16)
-      const valTip   = valTrunc !== item.value ? `<title>${escapeXml(item.value)}</title>` : ''
-      nodeStr += `<text x="${lx.toFixed(1)}" y="${(ly + 11).toFixed(1)}" text-anchor="${anchor}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${valTip}${escapeXml(valTrunc)}</text>`
-    } else {
-      nodeStr += aWrap(`<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${escapeXml(labelText)}</text>`, lblUrl)
+    let lblContent = lblTip
+    labelLines.forEach((line, li) => {
+      const ty = ly - totalH / 2 + li * labelLH + labelLH * 0.8
+      lblContent += `<text x="${lx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+    })
+    nodeStr += aWrap(lblContent, lblUrl)
+    if (valueFit) {
+      const valueTip = valueFit.truncated ? `<title>${escapeXml(item.value!)}</title>` : ''
+      const ty = ly - totalH / 2 + labelLines.length * labelLH + valueLH * 0.8
+      nodeStr += `${valueTip}<text x="${lx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(valueFit.lines[0])}</text>`
     }
     parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   }

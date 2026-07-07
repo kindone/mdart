@@ -288,11 +288,117 @@ export function renderMdArt(raw: string, hintType?: string, pluginConfig?: MdArt
       theme = { ...theme, ...spec.colors } as typeof theme
     }
     const renderer = LAYOUT_RENDERERS[spec.type]
-    if (!renderer) return renderFallback(spec, theme)
-    return renderer(spec, theme)
+    const svg = renderer ? renderer(spec, theme) : renderFallback(spec, theme)
+    return scopeSvgAnimation(svg, raw, hintType, spec.type)
   } catch (e) {
     return renderError(String(e))
   }
+}
+
+function scopeSvgAnimation(svg: string, raw: string, hintType: string | undefined, type: string): string {
+  if (!svg.includes('<style>') || !svg.startsWith('<svg')) return svg
+
+  const scope = `mdart-s${stableHash(`${type}\n${hintType ?? ''}\n${raw}`)}`
+  const keyframeNames = Array.from(new Set(
+    Array.from(svg.matchAll(/@keyframes\s+(mdart-[A-Za-z0-9_-]+)/g), match => match[1]),
+  ))
+
+  let scoped = renameKeyframes(svg, keyframeNames, scope)
+
+  scoped = scoped.replace(/<style>([\s\S]*?)<\/style>/g, (_match, css: string) => {
+    return `<style>${scopeCssRules(css, scope)}</style>`
+  })
+
+  return scoped.replace('<svg ', `<svg data-mdart-scope="${scope}" `)
+}
+
+function stableHash(input: string): string {
+  let hash = 2166136261
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
+  }
+  return (hash >>> 0).toString(36)
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function renameKeyframes(svg: string, keyframeNames: string[], scope: string): string {
+  let out = svg
+  for (const name of keyframeNames) {
+    const scopedName = `${scope}-${name}`
+    out = out.replace(
+      new RegExp(`(@keyframes\\s+)${escapeRegExp(name)}\\b`, 'g'),
+      `$1${scopedName}`,
+    )
+  }
+  return out.replace(/animation:[^;"'}]+/g, decl => {
+    let renamed = decl
+    for (const name of keyframeNames) {
+      renamed = renamed.replace(
+        new RegExp(`\\b${escapeRegExp(name)}\\b`, 'g'),
+        `${scope}-${name}`,
+      )
+    }
+    return renamed
+  })
+}
+
+function scopeCssRules(css: string, scope: string): string {
+  let out = ''
+  let i = 0
+  while (i < css.length) {
+    const open = css.indexOf('{', i)
+    if (open === -1) {
+      out += css.slice(i)
+      break
+    }
+
+    const selector = css.slice(i, open)
+    const close = findMatchingBrace(css, open)
+    if (close === -1) {
+      out += css.slice(i)
+      break
+    }
+
+    const block = css.slice(open, close + 1)
+    if (selector.trim().startsWith('@keyframes')) {
+      out += selector + block
+    } else if (selector.trim().startsWith('@')) {
+      out += selector + block
+    } else {
+      out += prefixSelectorList(selector, scope) + block
+    }
+    i = close + 1
+  }
+  return out
+}
+
+function findMatchingBrace(css: string, open: number): number {
+  let depth = 0
+  for (let i = open; i < css.length; i++) {
+    if (css[i] === '{') depth++
+    if (css[i] === '}') {
+      depth--
+      if (depth === 0) return i
+    }
+  }
+  return -1
+}
+
+function prefixSelectorList(selector: string, scope: string): string {
+  return selector
+    .split(',')
+    .map(part => {
+      const trimmed = part.trim()
+      if (!trimmed) return part
+      const leading = part.match(/^\s*/)?.[0] ?? ''
+      const trailing = part.match(/\s*$/)?.[0] ?? ''
+      return `${leading}[data-mdart-scope="${scope}"] ${trimmed}${trailing}`
+    })
+    .join(',')
 }
 
 function renderFallback(spec: MdArtSpec, theme: MdArtTheme): string {

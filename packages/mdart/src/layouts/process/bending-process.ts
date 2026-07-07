@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, titleEl, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -38,19 +38,34 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     return { x, y }
   })
 
+  // Per-node fitting: every box shares BOX_W, but each label/value pair is
+  // sized independently rather than to the diagram's worst-case label — a
+  // short label stays large instead of being dragged down to match a long
+  // neighbor. Replaces the old flat BOX_W/6 char-budget truncation.
+  const displays = items.map(item => displayLabel(item, { value: !!item.value }))
+
   items.forEach((item, i) => {
     const { x, y } = positions[i]
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const isLast = i === n - 1
-    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
+    const { url: itmUrl, display: itmDisplay } = displays[i]
+    const { fontSize: labelFS, results: [{ lines: labelLines, truncated: labelTruncated }] } =
+      fitTextToWidthShared([itmDisplay], BOX_W - 8, { maxSize: 10, minSize: 6.5, maxLines: 1 })
+    const valueFitFull = item.value
+      ? fitTextToWidthShared([item.value], BOX_W - 8, { maxSize: 8.5, minSize: 6, maxLines: 1 })
+      : null
+    const valueFS = valueFitFull?.fontSize ?? 8.5
+    const labelTip = labelTruncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
 
     let nodeStr = `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W.toFixed(1)}" height="${BOX_H}" rx="5" fill="${isLast ? theme.accent + '33' : fill + '33'}" stroke="${isLast ? theme.accent : fill}" stroke-width="1.2">${itemTitleTag(item)}</rect>`
     if (item.value) {
-      nodeStr += aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 17).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, Math.floor(BOX_W / 6), item)}</text>`, itmUrl)
-      nodeStr += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 32).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(item.value, Math.floor(BOX_W / 5))}</text>`
+      nodeStr += aWrap(`${labelTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 17).toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelLines[0])}</text>`, itmUrl)
+      const { lines: valLines, truncated: valTruncated } = valueFitFull!.results[0]
+      const valTip = valTruncated ? `<title>${escapeXml(item.value)}</title>` : ''
+      nodeStr += `${valTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 32).toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(valLines[0])}</text>`
     } else {
-      nodeStr += aWrap(`<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, Math.floor(BOX_W / 6), item)}</text>`, itmUrl)
+      nodeStr += aWrap(`${labelTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelLines[0])}</text>`, itmUrl)
     }
     parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
 

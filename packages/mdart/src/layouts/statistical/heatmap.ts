@@ -69,7 +69,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     })
     parts.push(animate ? `<g class="mdart-n${r + 1}">${unit.join('')}</g>` : unit.join(''))
   })
-  if (animate) parts.unshift(seqSpotlightCSS(rows.length + 1, spec, { scale: false }))
+  if (animate) parts.unshift(seqSpotlightCSS(rows.length + 1, spec, { scale: false, loopStartIndex: 1 }))
 
   return svg(W, H, theme, spec.title, parts)
 }

@@ -205,7 +205,7 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
     svg += `<line x1="${lx}" y1="${baseY}" x2="${lx}" y2="${H - PAD}" stroke="${theme.border}" stroke-width="0.5" />`
   }
   svg += `<line x1="${LABEL_W}" y1="${baseY}" x2="${LABEL_W}" y2="${H - PAD}" stroke="${theme.border}" stroke-width="1" />`
-  if (animate) svg = seqSpotlightCSS(rowLabels.length + 1, spec, { scale: false }) + svg
+  if (animate) svg = seqSpotlightCSS(rowLabels.length + 1, spec, { scale: false, loopStartIndex: 1 }) + svg
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
@@ -359,7 +359,7 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
     svg += `<line x1="${lx}" y1="${baseY}" x2="${lx}" y2="${H - PAD}" stroke="${theme.border}" stroke-width="0.5" />`
   }
   svg += `<line x1="${LABEL_W}" y1="${baseY}" x2="${LABEL_W}" y2="${H - PAD}" stroke="${theme.border}" stroke-width="1" />`
-  if (animate) svg = seqSpotlightCSS(dataRows.length + 1, spec, { scale: false }) + svg
+  if (animate) svg = seqSpotlightCSS(dataRows.length + 1, spec, { scale: false, loopStartIndex: 1 }) + svg
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>

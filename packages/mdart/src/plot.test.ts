@@ -212,8 +212,8 @@ title: Revenue
     expect(svg).toContain('Revenue')
     expect(svg).toContain('Q1')
     expect(svg).toContain('Q4')
-    // a non-empty <path> with d= for the line
-    expect(svg).toMatch(/<path d="M [\d. ]+L /)
+    // a non-empty line path; attribute order may vary as animation metadata is added
+    expect(svg).toMatch(/<path\b[^>]*\bd="M [^"]* L /)
   })
 
   it('renders smooth lines with cubic Bezier path commands', () => {
@@ -222,7 +222,7 @@ smooth: true
 
 - A: 1, 5, 2, 8, 3, 9`)
     // Smooth path uses 'C' (cubic Bezier), not 'L'
-    expect(svg).toMatch(/<path d="M [\d. ]+C /)
+    expect(svg).toMatch(/<path\b[^>]*\bd="M [^"]* C /)
   })
 
   it('renders scatter plot as circles only (no connecting path)', () => {

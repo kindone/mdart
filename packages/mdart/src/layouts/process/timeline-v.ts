@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, titleEl, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, aWrap, lerpColor, titleEl, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, type FitTextResult } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -8,9 +8,9 @@ const W       = 560
 const SPINE_X = 80          // spine x — left column is 0…SPINE_X
 const DOT_R   = 7
 
-const TAG_FS = 9,  TAG_LH = 12   // left column: short label / timestamp
-const LBL_FS = 11, LBL_LH = 14   // right column: main title (item.value or item.label)
-const DET_FS = 9,  DET_LH = 12   // right column: children detail
+const TAG_FS_MAX = 9,  TAG_LH_RATIO = 12 / 9    // left column: short label / timestamp
+const LBL_FS_MAX = 11, LBL_LH_RATIO = 14 / 11   // right column: main title (item.value or item.label)
+const DET_FS_MAX = 9,  DET_LH_RATIO = 12 / 9    // right column: children detail
 const SEC_G  = 5                  // gap between title and detail lines
 
 const PAD_T     = 8
@@ -22,11 +22,7 @@ const textX  = SPINE_X + DOT_R + 8  // first character of right column
 
 // Left column: text is right-aligned at SPINE_X − DOT_R − 4
 const TAG_X   = SPINE_X - DOT_R - 4
-const TAG_MAX = Math.max(5, Math.floor((TAG_X - 8) / 5.5))   // ≈ 12 chars
-
-// Right column character budgets
-const LBL_MAX = Math.max(12, Math.floor((W - textX - rightM) / 6.0))   // ~76
-const DET_MAX = Math.max(16, Math.floor((W - textX - rightM) / 5.2))   // ~88
+const RIGHT_COL_W = W - textX - rightM
 
 // ── Per-row layout ────────────────────────────────────────────────────────────
 
@@ -54,42 +50,6 @@ interface RowLayout {
   rowH:      number
 }
 
-function computeRow(item: MdArtSpec['items'][number]): RowLayout {
-  const hasValue = !!item.value
-
-  // Left tag: always item.label (shown only when there is a value to go on the right)
-  const tagResult = hasValue
-    ? wrapLabel(item.label, TAG_MAX, 5)
-    : { lines: [] as string[], truncated: false, url: null }
-  const { lines: tagLines, truncated: tagTrunc, url: tagUrl } = tagResult
-
-  // Right main: item.value when present, else item.label
-  const mainText  = hasValue ? item.value! : item.label
-  const { lines: mainLines, truncated: mainTrunc, url: mainUrl } = wrapLabel(mainText, LBL_MAX, 5)
-
-  // Detail: children labels joined
-  const detail = item.children.map(c => c.label).join(' · ')
-  const { lines: detLines, truncated: detTrunc } = detail
-    ? wrapLabel(detail, DET_MAX, 5)
-    : { lines: [] as string[], truncated: false }
-
-  // Height of the right-column content block
-  const rightH = mainLines.length * LBL_LH
-    + (detLines.length > 0 ? SEC_G + detLines.length * DET_LH : 0)
-
-  // Row height must accommodate both columns
-  const leftH  = tagLines.length * TAG_LH
-  const blockH = Math.max(rightH, leftH)
-  const rowH   = Math.max(MIN_ROW_H, PAD_T + blockH + PAD_B)
-
-  return {
-    tagLines, tagTrunc, tagUrl,
-    mainLines, mainTrunc, mainUrl, mainText,
-    detLines, detTrunc, detail,
-    hasValue, rightH, rowH,
-  }
-}
-
 // ── Renderer ─────────────────────────────────────────────────────────────────
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
@@ -99,7 +59,59 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
 
   const titleH = spec.title ? 28 : 8
-  const rows   = items.map(computeRow)
+
+  // One shared font size per column across the WHOLE diagram — every row
+  // shares the same column widths here (unlike process/circular-process's
+  // per-item varying box widths), so this is a plain batch fit per column.
+  // Replaces the old flat char-budget wrapLabel calls (TAG_MAX/LBL_MAX/
+  // DET_MAX derived from a fixed average, not an actual font search).
+  const hasValueIdx: number[] = []
+  items.forEach((it, i) => { if (it.value) hasValueIdx.push(i) })
+  const tagTexts = hasValueIdx.map(i => items[i].label)
+  const tagFit = tagTexts.length
+    ? fitTextToWidthShared(tagTexts, TAG_X - 8, { maxSize: TAG_FS_MAX, minSize: 6.5, maxLines: 5 })
+    : { fontSize: TAG_FS_MAX, results: [] as FitTextResult[] }
+  const tagFitByIdx = new Map(hasValueIdx.map((idx, j) => [idx, j]))
+  const tagLH = tagFit.fontSize * TAG_LH_RATIO
+
+  const mainTexts = items.map(it => it.value ?? it.label)
+  const mainFit = fitTextToWidthShared(mainTexts, RIGHT_COL_W, { maxSize: LBL_FS_MAX, minSize: 7, maxLines: 5 })
+  const mainLH = mainFit.fontSize * LBL_LH_RATIO
+
+  const detailIdx: number[] = []
+  const detailTexts: string[] = []
+  items.forEach((it, i) => {
+    const d = it.children.map(c => c.label).join(' · ')
+    if (d) { detailIdx.push(i); detailTexts.push(d) }
+  })
+  const detFit = detailTexts.length
+    ? fitTextToWidthShared(detailTexts, RIGHT_COL_W, { maxSize: DET_FS_MAX, minSize: 6.5, maxLines: 5 })
+    : { fontSize: DET_FS_MAX, results: [] as FitTextResult[] }
+  const detFitByIdx = new Map(detailIdx.map((idx, j) => [idx, j]))
+  const detLH = detFit.fontSize * DET_LH_RATIO
+
+  const rows: RowLayout[] = items.map((item, i) => {
+    const hasValue = !!item.value
+    const tagFitIdx = tagFitByIdx.get(i)
+    const { lines: tagLines, truncated: tagTrunc, url: tagUrl } =
+      tagFitIdx !== undefined ? tagFit.results[tagFitIdx] : { lines: [] as string[], truncated: false, url: null }
+
+    const mainText = mainTexts[i]
+    const { lines: mainLines, truncated: mainTrunc, url: mainUrl } = mainFit.results[i]
+
+    const detFitIdx = detFitByIdx.get(i)
+    const { lines: detLines, truncated: detTrunc } =
+      detFitIdx !== undefined ? detFit.results[detFitIdx] : { lines: [] as string[], truncated: false }
+    const detail = detFitIdx !== undefined ? detailTexts[detFitIdx] : ''
+
+    const rightH = mainLines.length * mainLH
+      + (detLines.length > 0 ? SEC_G + detLines.length * detLH : 0)
+    const leftH  = tagLines.length * tagLH
+    const blockH = Math.max(rightH, leftH)
+    const rowH   = Math.max(MIN_ROW_H, PAD_T + blockH + PAD_B)
+
+    return { tagLines, tagTrunc, tagUrl, mainLines, mainTrunc, mainUrl, mainText, detLines, detTrunc, detail, hasValue, rightH, rowH }
+  })
 
   const rowY: number[] = []
   let cumY = titleH
@@ -134,38 +146,38 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     // ── Left column: short tag (item.label), centred at dot, right-aligned ───
     if (tagLines.length > 0) {
-      const tagBlockH = tagLines.length * TAG_LH
-      const tagStartY = cy - tagBlockH / 2 + TAG_FS * 0.75
+      const tagBlockH = tagLines.length * tagLH
+      const tagStartY = cy - tagBlockH / 2 + tagFit.fontSize * 0.75
       const tip       = tagTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
       const spans     = tagLines
-        .map((l, li) => `<tspan x="${TAG_X}" dy="${li === 0 ? 0 : TAG_LH}">${escapeXml(l)}</tspan>`)
+        .map((l, li) => `<tspan x="${TAG_X}" dy="${li === 0 ? 0 : tagLH}">${escapeXml(l)}</tspan>`)
         .join('')
       unit.push(aWrap(
-        `<text x="${TAG_X}" y="${tagStartY.toFixed(1)}" text-anchor="end" font-size="${TAG_FS}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${tip}${spans}</text>`,
+        `<text x="${TAG_X}" y="${tagStartY.toFixed(1)}" text-anchor="end" font-size="${tagFit.fontSize}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${tip}${spans}</text>`,
         tagUrl,
       ))
     }
 
     // ── Right column: main title, centred vertically ─────────────────────────
     // Centre the right-column block (title + detail) in the row
-    const mainStartY = rowY[i] + (rowH - rightH) / 2 + LBL_FS * 0.75
+    const mainStartY = rowY[i] + (rowH - rightH) / 2 + mainFit.fontSize * 0.75
     const mainTip    = mainTrunc ? `<title>${escapeXml(mainText)}</title>` : ''
     const mainSpans  = mainLines
-      .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
+      .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : mainLH}">${escapeXml(l)}</tspan>`)
       .join('')
     unit.push(aWrap(
-      `<text x="${textX}" y="${mainStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${mainTip}${mainSpans}</text>`,
+      `<text x="${textX}" y="${mainStartY.toFixed(1)}" font-size="${mainFit.fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${mainTip}${mainSpans}</text>`,
       mainUrl,
     ))
 
     // ── Right column: detail (children) below main title ─────────────────────
     if (detLines.length > 0) {
-      const detStartY = mainStartY + mainLines.length * LBL_LH + SEC_G
+      const detStartY = mainStartY + mainLines.length * mainLH + SEC_G
       const detTip    = detTrunc ? `<title>${escapeXml(detail)}</title>` : ''
       const detSpans  = detLines
-        .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : DET_LH}">${escapeXml(l)}</tspan>`)
+        .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : detLH}">${escapeXml(l)}</tspan>`)
         .join('')
-      unit.push(`<text x="${textX}" y="${detStartY.toFixed(1)}" font-size="${DET_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${detTip}${detSpans}</text>`)
+      unit.push(`<text x="${textX}" y="${detStartY.toFixed(1)}" font-size="${detFit.fontSize}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${detTip}${detSpans}</text>`)
     }
 
     parts.push(`<g class="mdart-n${i + 1}">${unit.join('\n      ')}</g>`)

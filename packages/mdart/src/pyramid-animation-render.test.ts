@@ -21,7 +21,7 @@ describe('pyramid layout animation', () => {
   ])('%s animates tiers in sequence without scale pulse', type => {
     const svg = renderMdArt(`type: ${type}\n${pyramidItems}`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toContain('class="mdart-n0"')
     expect(svg).toContain('class="mdart-n1"')
     expect(svg).toContain('class="mdart-n2"')

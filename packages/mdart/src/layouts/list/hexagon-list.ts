@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -29,27 +29,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       return `${(cx + R * Math.cos(a)).toFixed(1)},${(cy + R * Math.sin(a)).toFixed(1)}`
     }).join(' ')
 
-  // Plain truncation — no SVG <title> wrapper, escapeXml applied at render site.
-  // Label wraps/truncates at MAX_CHARS per line; value gets a bit more room since
-  // it occupies the wider mid-section of the hexagon on its own line.
-  const MAX_CHARS       = 12
-  const VALUE_MAX_CHARS = 14
-  const trunc = (s: string, max: number) => s.length > max ? s.slice(0, max - 1) + '…' : s
-
-  // Split a label into up to two lines at a word boundary
-  function wrapLabel(label: string): [string, string | null] {
-    if (label.length <= MAX_CHARS) return [label, null]
-    const words = label.split(' ')
-    let line1 = ''
-    for (let i = 0; i < words.length; i++) {
-      const attempt = line1 ? line1 + ' ' + words[i] : words[i]
-      if (attempt.length <= MAX_CHARS) { line1 = attempt; continue }
-      // if line1 is empty the oversized word is words[i] itself — skip it for line2
-      const rest = (line1 ? words.slice(i) : words.slice(i + 1)).join(' ')
-      return [line1 || trunc(words[i], MAX_CHARS), rest ? trunc(rest, MAX_CHARS) : null]
-    }
-    return [line1, null]
-  }
+  // Per-node fitting: every hexagon shares R (like circle-process.ts's
+  // circles), so each label/value pair is sized independently — a short
+  // label stays large instead of being dragged down to match a long
+  // neighbor. Replaces the old flat 12/14-char truncation (fixed font-size
+  // 11/9, hard 2-line label cap, no <title> tooltip so truncated text was
+  // silently lost with no way to see the full value on hover).
+  //
+  // The hexagon is a pointy-top shape (vertices at top/bottom), so like
+  // circle-process's circleBoxW/H it's widest at the vertical middle and
+  // narrows toward the top/bottom points — usable width/height are
+  // fractions of the full HEX_W/HEX_H, not the full extents, to keep
+  // wrapped text clear of the taper.
+  const hexBoxW = Math.max(20, HEX_W - 10)
+  const hexBoxH = HEX_H * 0.7
 
   const n = items.length
   const animate = shouldAnimate(spec)
@@ -64,21 +57,39 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const caption = getCaption(item)
     const { display: rawLabel, url: lblUrl } = displayLabel(item, { value: !!caption })
-    const [line1, line2] = wrapLabel(rawLabel)
-    let hexContent = ''
-    if (line2 && caption) {
-      // 3 rows: shift everything up a little
-      hexContent += `<text x="${cx.toFixed(1)}" y="${(cy - 13).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line1)}</text>`
-      hexContent += `<text x="${cx.toFixed(1)}" y="${(cy + 1).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line2)}</text>`
-      hexContent += `<text x="${cx.toFixed(1)}" y="${(cy + 15).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(trunc(caption, VALUE_MAX_CHARS))}</text>`
-    } else if (line2) {
-      // two label lines, no caption — vertically centre the pair
-      hexContent += `<text x="${cx.toFixed(1)}" y="${(cy - 7).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line1)}</text>`
-      hexContent += `<text x="${cx.toFixed(1)}" y="${(cy + 7).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line2)}</text>`
-    } else {
-      // single line (original layout)
-      hexContent += `<text x="${cx.toFixed(1)}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line1)}</text>`
-      if (caption) hexContent += `<text x="${cx.toFixed(1)}" y="${(cy + 8).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(trunc(caption, VALUE_MAX_CHARS))}</text>`
+
+    // Value/caption fit first (its own boxH share, a minority of hexBoxH
+    // since the label is the primary text), then label reserves whatever's
+    // left — same joint pattern as circle-process/chevron-process.
+    const valueFitFull = caption
+      ? fitTextToWidthShared([caption], hexBoxW, { maxSize: 9, minSize: 6.5, maxLines: 2, boxH: Math.max(10, hexBoxH * 0.4) })
+      : null
+    const valueFS = valueFitFull?.fontSize ?? 9
+    const valueLH = valueFitFull?.lineHeight ?? 9 * 1.3
+    const valueFit = valueFitFull?.results[0] ?? null
+    const valueBlockH = valueFit ? valueFit.lines.length * valueLH : 0
+    const reservedBoxH = valueFit ? Math.max(10, hexBoxH - valueBlockH - 3) : hexBoxH
+    const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines: labelLines, truncated: labelTruncated }] } =
+      fitTextToWidthShared([rawLabel], hexBoxW, {
+        maxSize: 11, minSize: 6.5, maxLines: caption ? 2 : 3, boxH: reservedBoxH,
+      })
+    const labelTip = labelTruncated ? `<title>${escapeXml(rawLabel)}</title>` : ''
+    // Centre the whole block (label lines + optional value lines) on cy —
+    // generalized so it works for any line-count combination the fit above
+    // lands on, instead of assuming exactly 1 or 2 label lines.
+    const totalH = labelLines.length * labelLH + (valueFit ? valueBlockH + 3 : 0)
+
+    let hexContent = labelTip
+    labelLines.forEach((line, li) => {
+      const ty = cy - totalH / 2 + li * labelLH + labelLH * 0.8
+      hexContent += `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line)}</text>`
+    })
+    if (valueFit) {
+      const valueTip = valueFit.truncated ? `<title>${escapeXml(caption!)}</title>` : ''
+      valueFit.lines.forEach((line, li) => {
+        const ty = cy - totalH / 2 + labelLines.length * labelLH + li * valueLH + valueLH * 0.8
+        hexContent += `${li === 0 ? valueTip : ''}<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(line)}</text>`
+      })
     }
     let nodeStr = ''
     nodeStr += `<polygon points="${hexPoints(cx, cy)}" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</polygon>`

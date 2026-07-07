@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, tt, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -24,10 +24,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const SAMPLES = 200
 
   const parts: string[] = []
+  const animate = shouldAnimate(spec)
 
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
-  // Generate spiral path
+  // Generate spiral path — static guide, not part of the per-milestone entrance.
   const spiralPoints: string[] = []
   for (let s = 0; s <= SAMPLES; s++) {
     const theta = (s / SAMPLES) * turns * 2 * Math.PI
@@ -38,7 +39,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
   parts.push(`<polyline points="${spiralPoints.join(' ')}" fill="none" stroke="${theme.textMuted}" stroke-width="2" opacity="0.7"/>`)
 
-  // Place milestones evenly along spiral
+  // Labels float outside each dot with open room (not tightly bounded by a
+  // shape), so spiralBoxW/H below are generous fixed budgets — a big
+  // improvement over the old flat 14-char truncation (fixed font-size 10,
+  // single line only) even without computing exact per-position clearance
+  // to the canvas edge.
+  const spiralBoxW = 110
+  const spiralBoxH = 28
+
+  // Place milestones evenly along spiral — each one fades in and joins the
+  // idle spotlight loop in order from the centre outward.
   for (let k = 0; k < n; k++) {
     const theta = n > 1 ? k * (turns * 2 * Math.PI) / (n - 1) : 0
     const r = innerR + (outerR - innerR) * theta / (turns * 2 * Math.PI)
@@ -51,14 +61,25 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const item = items[k]
     const { display: lblDisplay, url: lblUrl } = displayLabel(item)
-    parts.push(`<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="${dotR}" fill="${fill}">${itemTitleTag(item)}</circle>`)
+    let unit = `<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="${dotR}" fill="${fill}">${itemTitleTag(item)}</circle>`
 
     // Label on alternating sides
     const cosTheta = Math.cos(theta)
     const labelX = cosTheta >= 0 ? mx + dotR + 4 : mx - dotR - 4
     const anchor = cosTheta >= 0 ? 'start' : 'end'
-    parts.push(aWrap(`<text x="${labelX.toFixed(1)}" y="${(my + 4).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 14, item)}</text>`, lblUrl))
+    const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines, truncated }] } =
+      fitTextToWidthShared([lblDisplay], spiralBoxW, { maxSize: 10, minSize: 6.5, maxLines: 2, boxH: spiralBoxH })
+    const tip = truncated ? `<title>${escapeXml(lblDisplay)}</title>` : ''
+    const totalH = lines.length * labelLH
+    let lblContent = tip
+    lines.forEach((line, li) => {
+      const ty = my - totalH / 2 + li * labelLH + labelLH * 0.8
+      lblContent += `<text x="${labelX.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+    })
+    unit += aWrap(lblContent, lblUrl)
+    parts.push(animate ? `<g class="mdart-n${k}">${unit}</g>` : unit)
   }
 
+  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svgWrap(W, H, theme, parts)
 }

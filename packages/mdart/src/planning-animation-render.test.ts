@@ -11,7 +11,7 @@ describe('planning layout animation', () => {
 - Build
 - Launch`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toMatch(/<g class="mdart-n0"><line/)
     expect(svg).toContain('class="mdart-n1"')
   })

@@ -33,7 +33,7 @@ import path        from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readFile, writeFile, readdir, copyFile, unlink, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { exec as execCb, spawn as spawnProc } from 'node:child_process'
+import { exec as execCb, spawn as spawnProc, spawnSync } from 'node:child_process'
 import { createInterface } from 'node:readline'
 import { promisify } from 'node:util'
 import { randomUUID } from 'node:crypto'
@@ -753,12 +753,20 @@ function broadcastToJob(job: ChatJob, event: string, data: unknown): void {
  * GET /lab/chat/status
  * Returns available CLI adapters and model lists.
  */
+/** Resolve a binary path (absolute or bare command name) to a full path, or null if not found. */
+function resolveBinary(bin: string): string | null {
+  if (bin.startsWith('/') || bin.startsWith('~')) return existsSync(bin) ? bin : null
+  const r = spawnSync('which', [bin], { encoding: 'utf8' })
+  const found = r.stdout?.trim()
+  return found ? found : null
+}
+
 app.get('/lab/chat/status', (_req, res) => {
   const cliInfo = Object.fromEntries(
     Object.entries(adapters).map(([name, adapter]) => [
       name,
       {
-        available: existsSync(adapter.binaryPath()),
+        available: resolveBinary(adapter.binaryPath()) !== null,
         binaryPath: adapter.binaryPath(),
         models: adapter.models,
         capabilities: adapter.capabilities,

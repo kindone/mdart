@@ -1,34 +1,34 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, aWrap, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
 import { countLeaves, maxDepth, layoutNodes, flatNodes } from './shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
 const BOX_W    = 124
-const FONT_SIZE = 10
-const LINE_H   = 13
+const FONT_SIZE_MAX = 10
+const FONT_SIZE_MIN = 8
 const VPAD     = 7     // top + bottom inner padding
 const MAX_LINES = 4
-const CHAR_PX  = 5.8
-const MAX_CHARS = Math.max(10, Math.floor((BOX_W - 16) / CHAR_PX))  // ~18 chars/line
-const CONN_GAP = 30    // vertical space reserved for bezier connectors between levels
+// Vertical space reserved for bezier connectors between levels. Sibling
+// layout org-chart.ts uses an ~56px gap between box bottom and next box
+// top; this was 30, giving a visibly tighter per-level rhythm than its
+// sibling and making wide, shallow trees (many leaves, few levels — the
+// common case) look flatter than intended relative to their width.
+const CONN_GAP = 46
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function boxH(lineCount: number): number {
-  return VPAD * 2 + lineCount * LINE_H
-}
-
-/** Walk the whole item tree and return the max wrapped-line count of any node. */
-function maxLinesAnywhere(items: MdArtItem[]): number {
-  let max = 1
+/** Walk the whole item tree and collect every label, in the same pre-order
+ *  traversal flatNodes(layoutNodes(...)) produces — so the result lines up
+ *  index-for-index with `flat` in render() below without needing a lookup. */
+function collectLabels(items: MdArtItem[]): string[] {
+  const out: string[] = []
   for (const item of items) {
-    const { lines } = wrapLabel(item.label, MAX_CHARS, MAX_LINES)
-    max = Math.max(max, lines.length)
-    if (item.children.length) max = Math.max(max, maxLinesAnywhere(item.children))
+    out.push(item.label)
+    if (item.children.length) out.push(...collectLabels(item.children))
   }
-  return max
+  return out
 }
 
 // ── Renderer ─────────────────────────────────────────────────────────────────
@@ -41,9 +41,29 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const totalLeaves = spec.items.reduce((s, i) => s + countLeaves(i), 0) || 1
   const W           = Math.max(640, totalLeaves * (BOX_W + 10) + 80)
 
-  // Size every box uniformly to the tallest label in the whole diagram so
-  // connector math stays simple (all boxes on a level share the same height).
-  const BOX_H  = boxH(maxLinesAnywhere(spec.items))
+  // Per-node fitting: every box shares BOX_W, but each label is sized
+  // independently rather than to the diagram's worst-case label — a short
+  // label stays large instead of being dragged down to match a long
+  // neighbor several levels away, same approach as process.ts/
+  // circular-process.ts. Unlike those fixed-height boxes, BOX_H here is
+  // derived AFTER fitting (below) to whatever the tallest node's own
+  // text block needs at ITS OWN font size — so there's no boxH-starvation
+  // concern: MAX_LINES was already a generous flat cap since the box
+  // simply grows to whatever room the chosen size needs, not the other
+  // way around.
+  const allLabels = collectLabels(spec.items)
+  const nodeFits = allLabels.map(label =>
+    fitTextToWidthShared([label], BOX_W - 16, { maxSize: FONT_SIZE_MAX, minSize: FONT_SIZE_MIN, maxLines: MAX_LINES }),
+  )
+
+  // Size every box uniformly to the tallest per-node text block (own font
+  // size × own line count), so connector math stays simple (all boxes on
+  // a level share the same height) without forcing every node to share one
+  // font size.
+  const BOX_H  = nodeFits.reduce((m, f) => {
+    const lh = f.lineHeight
+    return Math.max(m, VPAD * 2 + f.results[0].lines.length * lh)
+  }, VPAD * 2)
   const levelH = BOX_H + CONN_GAP
 
   const TITLE_H = spec.title ? 28 : 10
@@ -68,7 +88,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       )
     }
 
-    const { lines: lblLines, url: lblUrl, truncated } = wrapLabel(n.label, MAX_CHARS, MAX_LINES)
+    const { fontSize: nodeFS, lineHeight: lineH, results: [{ lines: lblLines, url: lblUrl, truncated }] } = nodeFits[i]
     const bx  = n.x - BOX_W / 2
     const by  = n.y - BOX_H / 2
     const tip = itemTitleTag(n)
@@ -78,16 +98,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     )
 
     // Vertically centre the text block within the box
-    const textBlockH = lblLines.length * LINE_H
-    const textStartY = n.y - textBlockH / 2 + LINE_H - 2  // first-line baseline
+    const textBlockH = lblLines.length * lineH
+    const textStartY = n.y - textBlockH / 2 + lineH - 2  // first-line baseline
 
     const fullTip = truncated ? `<title>${escapeXml(n.label)}</title>` : ''
     const spans   = lblLines
-      .map((l, li) => `<tspan x="${n.x.toFixed(1)}" dy="${li === 0 ? 0 : LINE_H}">${escapeXml(l)}</tspan>`)
+      .map((l, li) => `<tspan x="${n.x.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
       .join('')
 
     unit.push(aWrap(
-      `<text x="${n.x.toFixed(1)}" y="${textStartY.toFixed(1)}" text-anchor="middle" font-size="${FONT_SIZE}" fill="${theme.text}" font-family="system-ui,sans-serif">${fullTip}${spans}</text>`,
+      `<text x="${n.x.toFixed(1)}" y="${textStartY.toFixed(1)}" text-anchor="middle" font-size="${nodeFS}" fill="${theme.text}" font-family="system-ui,sans-serif">${fullTip}${spans}</text>`,
       lblUrl,
     ))
     parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))

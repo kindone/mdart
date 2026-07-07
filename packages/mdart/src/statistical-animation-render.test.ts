@@ -19,7 +19,7 @@ describe('statistical layout animation', () => {
   ])('%s animates item units in sequence without scale pulse', type => {
     const svg = renderMdArt(`type: ${type}\n${values}`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toContain('class="mdart-n0"')
     expect(svg).toContain('class="mdart-n1"')
     expect(svg).not.toContain('transform:scale')
@@ -32,7 +32,7 @@ describe('statistical layout animation', () => {
 - Alpha: 75
 - Beta: 45`)
 
-      expect(svg).toContain('@keyframes mdart-bar-grow')
+      expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-bar-grow/)
       expect(svg).toContain('class="mdart-bar-grow"')
       expect(svg).toContain('transform-origin:left center')
       expect(svg).toContain('<animate attributeName="width" from="0"')
@@ -103,16 +103,19 @@ animate: false
   - AM: 6
   - PM: 2`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toContain('class="mdart-n0"')
     expect(svg).toContain('class="mdart-n1"')
+    expect(svg).toMatch(/\.mdart-n0\{animation:mdart-s[a-z0-9]+-mdart-enter/)
+    expect(svg).not.toMatch(/\.mdart-n0 rect[^}]+mdart-bright-loop/)
+    expect(svg).toMatch(/\.mdart-n1 rect[^}]+mdart-bright-loop/)
     expect(svg).not.toContain('transform:scale')
   })
 
   it('radar animates the grid before metric points without scale pulse', () => {
     const svg = renderMdArt(`type: radar\n${values}`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toContain('class="mdart-n0"')
     expect(svg).toContain('class="mdart-n1"')
     expect(svg).not.toContain('transform:scale')
@@ -127,7 +130,7 @@ animate: false
   - Target Y: 30
   - Target Z: 10`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toContain('class="mdart-n0"')
     expect(svg).toContain('class="mdart-n2"')
     expect(svg).toMatch(/<g class="mdart-n2">[\s\S]*?<path/)

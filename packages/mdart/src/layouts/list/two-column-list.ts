@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -79,6 +79,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     cumY += rh + ROW_GAP
   }
   const H = cumY - ROW_GAP + PAD
+  const animate = shouldAnimate(spec)
 
   let svgContent = ''
 
@@ -95,7 +96,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     rowH: number,
     rowYoffset: number,
     globalIdx: number,
-  ) => {
+  ): string => {
     const { lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, blockH } = layout
     const t    = items.length > 1 ? globalIdx / (items.length - 1) : 0
     const fill = lerpColor(theme.secondary, theme.primary, t)
@@ -105,13 +106,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const dotCy  = topY + LBL_FS * 0.4
     const lblY   = topY + LBL_FS * 0.75
 
-    svgContent += `<circle cx="${colStartX + 8}" cy="${dotCy.toFixed(1)}" r="4" fill="${fill}" >${itemTitleTag(item)}</circle>`
+    let str = `<circle cx="${colStartX + 8}" cy="${dotCy.toFixed(1)}" r="4" fill="${fill}" >${itemTitleTag(item)}</circle>`
 
     const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${colStartX + COL_TEXTX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    svgContent += aWrap(`<text x="${colStartX + COL_TEXTX}" y="${lblY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
+    str += aWrap(`<text x="${colStartX + COL_TEXTX}" y="${lblY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
 
     if (capLines.length > 0) {
       const capY   = lblY + lblLines.length * LBL_LH + SEC_G
@@ -119,16 +120,22 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const capSpans = capLines
         .map((l, li) => `<tspan x="${colStartX + COL_TEXTX}" dy="${li === 0 ? 0 : CAP_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      svgContent += `<text x="${colStartX + COL_TEXTX}" y="${capY.toFixed(1)}" font-size="${CAP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`
+      str += `<text x="${colStartX + COL_TEXTX}" y="${capY.toFixed(1)}" font-size="${CAP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`
     }
+    return str
   }
 
+  // Both columns' entries on the same row read as one visual unit (the row
+  // divider ties them together), so they enter together as a row, top to
+  // bottom — not as two independent left/right sequences.
   for (let r = 0; r < maxRows; r++) {
     const rY = rowY[r]
     const rH = rowHeights[r]
 
-    if (leftLayouts[r]) renderColItem(left[r],  leftLayouts[r],  PAD,        rH, rY, r)
-    if (rightLayouts[r]) renderColItem(right[r], rightLayouts[r], HALF + PAD, rH, rY, half + r)
+    let rowStr = ''
+    if (leftLayouts[r]) rowStr += renderColItem(left[r], leftLayouts[r], PAD, rH, rY, r)
+    if (rightLayouts[r]) rowStr += renderColItem(right[r], rightLayouts[r], HALF + PAD, rH, rY, half + r)
+    svgContent += animate ? `<g class="mdart-n${r}">${rowStr}</g>` : rowStr
 
     if (r < maxRows - 1) {
       svgContent += `<line x1="${PAD}" y1="${rY + rH}" x2="${W - PAD}" y2="${rY + rH}" stroke="${theme.border}" stroke-width="0.5" />`
@@ -137,6 +144,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(maxRows, spec, { scale: false }) : ''}
     ${svgContent}
   </svg>`
 }

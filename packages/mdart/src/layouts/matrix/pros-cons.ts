@@ -142,7 +142,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
 
   svgContent += `<line x1="${HALF}" y1="${baseY}" x2="${HALF}" y2="${H}" stroke="${theme.bg}" stroke-width="2" />`
-  if (animate) svgContent = seqSpotlightCSS(maxRows + 1, spec, { scale: false }) + svgContent
+  if (animate) svgContent = seqSpotlightCSS(maxRows + 1, spec, { scale: false, loopStartIndex: 1 }) + svgContent
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, roundTextBox } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -33,6 +33,18 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const animate = shouldAnimate(spec)
 
+  // Per-node fitting: every node shares nodeR (like circle-process.ts's
+  // circles), so each label/value pair is sized independently — a short
+  // label stays large instead of being dragged down to match a long
+  // neighbor. Delegates to shared.ts's fitLabelValueBlock/renderFitBlock,
+  // which centralise this exact "value gets a minority boxH share, label
+  // reserves what's left, both centred as one block" pattern that used to
+  // be hand-rolled per file (circle-process.ts, cycle.ts, donut-cycle.ts,
+  // gear-cycle.ts, etc.) — replaces the old flat 10-char truncation (fixed
+  // font-size 9/8, single line only, no <title> tooltip).
+  const { w: nodeBoxW, h: nodeBoxH } = roundTextBox(nodeR)
+  const halo = `stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill"`
+
   // Nodes on track
   for (let i = 0; i < n; i++) {
     const item = items[i]
@@ -43,12 +55,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.secondary, t)
 
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
+    const fit = fitLabelValueBlock(lblDisplay, item.value, nodeBoxW, nodeBoxH, {
+      labelUrl: lblUrl,
+      labelMaxSize: 9, labelMinSize: 6.5, labelMaxLines: 2,
+      valueMaxSize: 8, valueMinSize: 6,
+    })
+
     let nodeStr = ''
     nodeStr += `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${nodeR}" fill="${fill}">${itemTitleTag(item)}</circle>`
-    nodeStr += aWrap(`<text x="${nx.toFixed(1)}" y="${(ny + (item.value ? -3 : 4)).toFixed(1)}" text-anchor="middle" font-size="9" fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 10, item)}</text>`, lblUrl)
-    if (item.value) {
-      nodeStr += `<text x="${nx.toFixed(1)}" y="${(ny + 9).toFixed(1)}" text-anchor="middle" font-size="8" fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill" font-family="system-ui,sans-serif">${tt(item.value, 10)}</text>`
-    }
+    nodeStr += renderFitBlock(nx, ny, fit, {
+      labelFullText: lblDisplay, valueFullText: item.value ?? undefined,
+      labelFill: '#ffffff', valueFill: '#ffffff',
+      labelWeight: '600', valueWeight: '400',
+      extraAttrs: halo,
+    })
     parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   }
 

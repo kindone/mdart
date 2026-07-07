@@ -12,7 +12,7 @@ title: Hub
 - Beta
 - Gamma`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toContain('class="mdart-n0"')
     expect(svg).toContain('class="mdart-n1"')
     expect(svg).not.toContain('mdart-loop')
@@ -35,7 +35,7 @@ title: Hub
 - Market
 - Product ∩ Market: Fit`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toContain('class="mdart-n0"')
     expect(svg).toContain('class="mdart-n1"')
     expect(svg).toContain('class="mdart-n2"')

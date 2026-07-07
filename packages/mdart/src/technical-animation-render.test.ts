@@ -11,7 +11,7 @@ describe('technical layout animation', () => {
 - Validate
 - Render`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toMatch(/<g class="mdart-n1"><path[\s\S]*?<rect/)
     expect(svg).toMatch(/<g class="mdart-n2"><path[\s\S]*?<rect/)
   })
@@ -36,7 +36,7 @@ describe('technical layout animation', () => {
 - Running
   -> Idle: stop`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toContain('class="mdart-n0"')
     expect(svg).toContain('class="mdart-n1"')
     expect(svg).toContain('marker-end="url(#sm-a)"')

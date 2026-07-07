@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, truncate, escapeXml, tt, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { lerpColor, escapeXml, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
 import { render as renderCircleCycle } from './cycle'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
@@ -64,31 +64,43 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = i / (n - 1 || 1)
     const headerFill = lerpColor(theme.primary, theme.secondary, t)
 
-    // Header (10px) and body (9px) — slightly tighter px/char = fewer false ellipses
-    const headerMaxChars = Math.max(6, Math.floor((BOX_W - 8) / 5.0))
+    // Per-node fitting: every box shares BOX_W, so header/body text is sized
+    // independently per box rather than a flat 5.0/4.4 px-per-char budget
+    // (fixed font-size 10/9). Header stays single-line (HEADER_H=20 leaves
+    // no real room to grow lines); body rows are each an independent short
+    // text (a child label or the value) rather than one wrapped block, so
+    // they're batch-fit together to share one size within this box.
+    const headerBoxW = BOX_W - 8
+    const bodyBoxW = BOX_W - 12
     // Body shows children OR value; pass shows so ellipsis only fires if attrs are dropped.
     const showsValue = item.children.length > 0 || !!item.value
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: showsValue })
+    const { fontSize: headerFS, results: [{ lines: headerLines, truncated: headerTruncated }] } =
+      fitTextToWidthShared([lblDisplay], headerBoxW, { maxSize: 10, minSize: 7, maxLines: 1 })
+    const headerTip = headerTruncated ? `<title>${escapeXml(lblDisplay)}</title>` : ''
 
-    // Body content: children or value
-    const bodyMaxChars = Math.max(8, Math.floor((BOX_W - 12) / 4.4))
-    const bodyLines: string[] = item.children.length > 0
-      ? item.children.slice(0, 2).map(c => truncate(c.label, bodyMaxChars))
-      : (item.value ? [truncate(item.value, bodyMaxChars)] : [])
+    // Body content: children or value — each its own row, not a wrapped block
+    const bodyTexts: string[] = item.children.length > 0
+      ? item.children.slice(0, 2).map(c => c.label)
+      : (item.value ? [item.value] : [])
+    const bodyAreaH = BOX_H - HEADER_H - 4
+    const { fontSize: bodyFS, lineHeight: lineH, results: bodyFits } = bodyTexts.length
+      ? fitTextToWidthShared(bodyTexts, bodyBoxW, { maxSize: 9, minSize: 6.5, maxLines: 1, boxH: bodyAreaH })
+      : { fontSize: 9, lineHeight: 9 * 1.3, results: [] as ReturnType<typeof fitTextToWidthShared>['results'] }
 
     // Vertically centre the text block inside the body area
-    const lineH = 13
     const bodyMidY = y + HEADER_H + (BOX_H - HEADER_H) / 2
-    const firstBaselineY = bodyMidY - (bodyLines.length * lineH) / 2 + 9 * 0.75  // 0.75 ≈ cap-height ratio
+    const firstBaselineY = bodyMidY - (bodyFits.length * lineH) / 2 + bodyFS * 0.75  // 0.75 ≈ cap-height ratio
 
     let nodeStr = ''
     // Box bg — tooltip carries full label/value/attrs even when body shows only one
     nodeStr += `<rect x="${x}" y="${y}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${theme.surface}" stroke="${headerFill}" stroke-opacity="0.55" stroke-width="1">${itemTitleTag(item)}</rect>`
     // Colored header (top corners rounded)
     nodeStr += `<path d="M ${x + 5} ${y} L ${x + BOX_W - 5} ${y} Q ${x + BOX_W} ${y} ${x + BOX_W} ${y + 5} L ${x + BOX_W} ${y + HEADER_H} L ${x} ${y + HEADER_H} L ${x} ${y + 5} Q ${x} ${y} ${x + 5} ${y} Z" fill="${headerFill}"/>`
-    nodeStr += aWrap(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="10" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, headerMaxChars, item)}</text>`, lblUrl)
-    bodyLines.forEach((line, li) => {
-      nodeStr += `<text x="${x + 6}" y="${(firstBaselineY + li * lineH).toFixed(1)}" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(line)}</text>`
+    nodeStr += aWrap(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="${headerFS}" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="600">${headerTip}${escapeXml(headerLines[0])}</text>`, lblUrl)
+    bodyFits.forEach(({ lines, truncated }, li) => {
+      const bodyTip = truncated ? `<title>${escapeXml(bodyTexts[li])}</title>` : ''
+      nodeStr += `${bodyTip}<text x="${x + 6}" y="${(firstBaselineY + li * lineH).toFixed(1)}" font-size="${bodyFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(lines[0])}</text>`
     })
     parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
   }

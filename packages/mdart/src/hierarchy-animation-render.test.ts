@@ -23,7 +23,7 @@ describe('hierarchy layout animation', () => {
   ])('%s animates hierarchy units in sequence without scale pulse', type => {
     const svg = renderMdArt(`type: ${type}\n${hierarchy}`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toContain('class="mdart-n0"')
     expect(svg).toContain('class="mdart-n1"')
     expect(svg).not.toContain('transform:scale')
@@ -36,7 +36,7 @@ describe('hierarchy layout animation', () => {
 - Gamma [w1]
 - Delta`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toContain('class="mdart-n0"')
     expect(svg).toContain('class="mdart-n1"')
     expect(svg).toMatch(/<g class="mdart-n1">[\s\S]*?<polyline/)

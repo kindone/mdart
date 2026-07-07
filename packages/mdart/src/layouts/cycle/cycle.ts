@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -81,6 +81,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     svgContent += animate ? `<g class="mdart-arr-n${arrIndex}">${arc}</g>` : arc
   }
 
+  // Per-node fitting: every node shares NODE_W/NODE_H, so each label/value
+  // pair is sized independently — a short label stays large instead of
+  // being dragged down to match a long neighbor. Replaces the old flat
+  // 14/18-char truncation (fixed font-size 11/9, single line only, no
+  // <title> tooltip so truncated text had no way to be seen in full).
+  const cycleBoxW = NODE_W - 12
+  const cycleBoxH = NODE_H - 8
+
   // ── Nodes (drawn on top so they mask arc endpoints cleanly) ───────────────
   for (let i = 0; i < n; i++) {
     const item = items[i]
@@ -91,15 +99,19 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.secondary, theme.primary, t)
 
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
+    const fit = fitLabelValueBlock(lblDisplay, item.value, cycleBoxW, cycleBoxH, {
+      labelUrl: lblUrl,
+      labelMaxSize: 11, labelMinSize: 6.5, labelMaxLines: 2,
+      valueMaxSize: 9, valueMinSize: 6.5,
+    })
+
     svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}>`
     svgContent += `<rect x="${(nx - hw).toFixed(1)}" y="${(ny - hh).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${fill}">${itemTitleTag(item)}</rect>`
-    if (item.value) {
-      // Two-line layout: label up top, value as dimmer subtitle below.
-      svgContent += aWrap(`<text x="${nx.toFixed(1)}" y="${(ny - 1).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 14, item)}</text>`, lblUrl)
-      svgContent += `<text x="${nx.toFixed(1)}" y="${(ny + 12).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(tt(item.value, 18))}</text>`
-    } else {
-      svgContent += aWrap(`<text x="${nx.toFixed(1)}" y="${(ny + 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, 14, item)}</text>`, lblUrl)
-    }
+    svgContent += renderFitBlock(nx, ny, fit, {
+      labelFullText: lblDisplay, valueFullText: item.value ?? undefined,
+      labelFill: theme.text, valueFill: theme.text,
+      labelWeight: '600', valueExtraAttrs: 'opacity="0.7"',
+    })
     svgContent += `</g>`
   }
 

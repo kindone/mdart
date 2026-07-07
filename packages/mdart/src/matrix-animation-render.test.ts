@@ -25,7 +25,7 @@ describe('matrix layout animation', () => {
   - Four`
       const svg = renderMdArt(source)
 
-      expect(svg).toContain('@keyframes mdart-enter')
+      expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
       expect(svg).toContain('class="mdart-n0"')
       expect(svg).toContain('class="mdart-n3"')
       expect(svg).not.toContain('transform:scale')
@@ -52,9 +52,12 @@ describe('matrix layout animation', () => {
   - Yes`
       const svg = renderMdArt(source)
 
-      expect(svg).toContain('@keyframes mdart-enter')
+      expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
       expect(svg).toContain('class="mdart-n0"')
       expect(svg).toContain('class="mdart-n1"')
+      expect(svg).toMatch(/\.mdart-n0\{animation:mdart-s[a-z0-9]+-mdart-enter/)
+      expect(svg).not.toMatch(/\.mdart-n0 rect[^}]+mdart-bright-loop/)
+      expect(svg).toMatch(/\.mdart-n1 rect[^}]+mdart-bright-loop/)
       expect(svg).not.toContain('transform:scale')
     },
   )

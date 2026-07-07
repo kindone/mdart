@@ -1,20 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, svgWrap, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
-
-function wrapText(text: string, maxChars: number): string[] {
-  if (text.length <= maxChars) return [text]
-  const words = text.split(' ')
-  const lines: string[] = []
-  let cur = ''
-  for (const w of words) {
-    if (!cur) { cur = w; continue }
-    if (cur.length + 1 + w.length <= maxChars) { cur += ' ' + w }
-    else { lines.push(cur); cur = w }
-  }
-  if (cur) lines.push(cur)
-  return lines.length ? lines : [text]
-}
+import { escapeXml, lerpColor, svgWrap, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
 
 /** Radial clearance from centre of a box to its silhouette edge at angle `a`. */
 function boxRadius(hw: number, hh: number, a: number): number {
@@ -68,6 +54,23 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(animate ? `<g class="mdart-arr-n${arrIndex}">${arcEl}</g>` : arcEl)
   }
 
+  // Per-node fitting: every box shares BOX_W, but each label/value pair is
+  // sized independently rather than to the diagram's worst-case label — a
+  // short label stays large instead of being dragged down to match a long
+  // neighbor.
+  //
+  // Both label and value were also capped at a flat maxLines (1 with a
+  // value / 2 without for the label, 1 always for the value) with no
+  // boxH — so a smaller font never unlocked an extra line, it just kept
+  // shrinking down to the floor before truncating. circBoxH below gives
+  // fitTextToWidthShared the real vertical budget, same mechanism as
+  // circle-process/waterfall/chevron-process/arrow-process/funnel. The
+  // value gets a minority share of that budget (it's the secondary text),
+  // enough to wrap to a 2nd line when it's genuinely long — short values
+  // still land on 1 line at max size exactly as before.
+  const circBoxH = BOX_H - 8
+  const displays = items.map(it => displayLabel(it, { value: !!it.value }))
+
   // ── Nodes ───────────────────────────────────────────────────────────────────
   items.forEach((item, i) => {
     const angle = (2 * Math.PI * i / n) - Math.PI / 2
@@ -83,28 +86,43 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const badgeX = (bx - hw + 5).toFixed(1)
     const badgeY = (by - hh + 9).toFixed(1)
 
-    // Label — up to 2 wrapped lines normally; when a value is present we
-    // limit the label to 1 line and use the second line for the value.
-    const { display: itemLabel, url } = displayLabel(item, { value: !!item.value })
-    const maxLabelLines = item.value ? 1 : 2
-    const lines = wrapText(itemLabel, Math.floor(BOX_W / 6.8)).slice(0, maxLabelLines)
-    const lineH = 11
-    const valueLine = item.value ?? ''
-    const totalLines = lines.length + (valueLine ? 1 : 0)
-    const totalH = totalLines * lineH
+    const { url, display: itemLabel } = displays[i]
+    // 2 lines at the value's own font floor (6) need ~2×(6×1.3)=15.6px —
+    // a plain fraction of circBoxH (28px here) can land under that
+    // threshold and silently never wrap no matter how long the value is,
+    // since the effective per-size line cap floors at 1 before minSize is
+    // ever reached. Guarantee at least that floor-line-pair's worth of
+    // room so the mechanism can actually engage when genuinely needed.
+    const valueFitFull = item.value
+      ? fitTextToWidthShared([item.value], BOX_W - 10, {
+          maxSize: 9, minSize: 6, maxLines: 2, boxH: Math.max(6 * 1.3 * 2, circBoxH * 0.4),
+        })
+      : null
+    const valueFS = valueFitFull?.fontSize ?? 9
+    const valueLH = valueFitFull?.lineHeight ?? 9 * 1.3
+    const valueFit = valueFitFull?.results[0] ?? null
+    const valueBlockH = valueFit ? valueFit.lines.length * valueLH : 0
+    const reservedBoxH = valueFit ? Math.max(8, circBoxH - valueBlockH - 2) : circBoxH
+    const { fontSize: labelFS, lineHeight: lineH, results: [{ lines, truncated: labelTruncated }] } =
+      fitTextToWidthShared([itemLabel], BOX_W - 10, {
+        maxSize: 10.5, minSize: 6.5, maxLines: item.value ? 2 : 3, boxH: reservedBoxH,
+      })
+    const totalH = lines.length * lineH + (valueFit ? valueBlockH : 0)
 
     // Box + label text wrapped in aWrap for clickable node
     let nodeContent = `<rect x="${rx}" y="${ry}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="1.8">${itemTitleTag(item)}</rect>`
     nodeContent += `<text x="${badgeX}" y="${badgeY}" font-size="8" fill="${fill}" font-family="system-ui,sans-serif" font-weight="800" opacity="0.85">${i + 1}</text>`
+    if (labelTruncated) nodeContent += `<title>${escapeXml(itemLabel)}</title>`
     lines.forEach((line, li) => {
       const ty = (by - totalH / 2 + lineH * li + lineH * 0.8).toFixed(1)
-      nodeContent += `<text x="${bx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+      nodeContent += `<text x="${bx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
     })
-    if (valueLine) {
-      const ty = (by - totalH / 2 + lineH * lines.length + lineH * 0.8).toFixed(1)
-      const valMax = Math.floor(BOX_W / 5.5)   // smaller font → more chars fit
-      const truncated = valueLine.length > valMax ? valueLine.slice(0, valMax - 1) + '…' : valueLine
-      nodeContent += `<text x="${bx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="9" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(truncated)}</text>`
+    if (valueFit) {
+      const valueTip = valueFit.truncated ? `<title>${escapeXml(item.value!)}</title>` : ''
+      valueFit.lines.forEach((line, li) => {
+        const ty = (by - totalH / 2 + lines.length * lineH + li * valueLH + valueLH * 0.8).toFixed(1)
+        nodeContent += `${li === 0 ? valueTip : ''}<text x="${bx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="${valueFS}" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(line)}</text>`
+      })
     }
     const nodeEl = aWrap(nodeContent, url)
     parts.push(animate ? `<g class="mdart-n${i}">${nodeEl}</g>` : nodeEl)

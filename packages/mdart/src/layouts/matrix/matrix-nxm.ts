@@ -127,7 +127,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     }
     svg += animate ? `<g class="mdart-n${r + 1}">${rowUnit.join('')}</g>` : rowUnit.join('')
   }
-  if (animate) svg = seqSpotlightCSS(rows.length + 1, spec, { scale: false }) + svg
+  if (animate) svg = seqSpotlightCSS(rows.length + 1, spec, { scale: false, loopStartIndex: 1 }) + svg
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>

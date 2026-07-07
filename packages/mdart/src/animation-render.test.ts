@@ -13,6 +13,25 @@ function arrowGroupClasses(svg: string): string[] {
 }
 
 describe('animation connector timing', () => {
+  it('scopes animation CSS per rendered SVG so multiple diagrams do not interfere', () => {
+    const processSvg = renderMdArt(`type: process\n${threeItems}`)
+    const timelineSvg = renderMdArt(`type: timeline-v
+- 2026 Q1: Plan
+- 2026 Q2: Build`)
+    const processScope = processSvg.match(/data-mdart-scope="([^"]+)"/)?.[1]
+    const timelineScope = timelineSvg.match(/data-mdart-scope="([^"]+)"/)?.[1]
+
+    expect(processScope).toBeTruthy()
+    expect(timelineScope).toBeTruthy()
+    expect(processScope).not.toBe(timelineScope)
+    expect(processSvg).toContain(`[data-mdart-scope="${processScope}"] .mdart-n0`)
+    expect(timelineSvg).toContain(`[data-mdart-scope="${timelineScope}"] .mdart-n0`)
+    expect(processSvg).toContain(`@keyframes ${processScope}-mdart-enter`)
+    expect(timelineSvg).toContain(`@keyframes ${timelineScope}-mdart-enter`)
+    expect(processSvg).not.toContain('@keyframes mdart-enter')
+    expect(timelineSvg).not.toContain('@keyframes mdart-enter')
+  })
+
   it('shrinks spotlighted nodes directly back to their original state', () => {
     const svg = renderMdArt(`type: process\n${threeItems}`)
 
@@ -61,7 +80,7 @@ describe('animation connector timing', () => {
 - 2026 Q2: Build
   - Ship`)
 
-    expect(svg).toContain('@keyframes mdart-enter')
+    expect(svg).toMatch(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
     expect(svg).toContain('<g class="mdart-n0">')
     expect(svg).toContain('<g class="mdart-n1">')
     expect(svg).toContain('<g class="mdart-n2">')

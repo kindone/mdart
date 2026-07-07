@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, lerpColor, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, wrapLabel, lerpColor, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 
@@ -57,6 +57,8 @@ interface LayerPrecomp {
   cols:        number
   chipW:       number
   chipH:       number   // same for every chip in this layer (tallest needed)
+  chipFS:      number   // font size shared by every chip in this layer
+  chipLH:      number   // line-height at chipFS (keeps CHIP_LH:CHIP_FS ratio)
   numRows:     number
   chips:       ChipPrecomp[]
   layerH:      number
@@ -80,7 +82,7 @@ function computeLayer(
       wrapLabel(ellipsisIfDropped(layer.label, layer), LABEL_FULL_MAX, MAX_LABEL_LINES)
     const layerH = Math.max(MIN_LAYER_H, PAD_V + labelLines.length * LBL_LH + PAD_V)
     return { fill, labelLines, labelTrunc, labelUrl, hasChildren: false,
-             cols: 0, chipW: 0, chipH: 0, numRows: 0, chips: [], layerH }
+             cols: 0, chipW: 0, chipH: 0, chipFS: CHIP_FS, chipLH: CHIP_LH, numRows: 0, chips: [], layerH }
   }
 
   // ── With children: label in left column, chips on right ───────────────────
@@ -92,17 +94,28 @@ function computeLayer(
   const maxFit  = Math.floor((CHIPS_W + CHIP_GAP) / (TARGET_MIN_CHIP + CHIP_GAP))
   const cols    = Math.min(n, MAX_COLS, Math.max(1, maxFit))
   const chipW   = (CHIPS_W - (cols - 1) * CHIP_GAP) / cols
-  const maxChars = Math.max(4, Math.floor((chipW - 16) / CHAR_PX))
   const numRows  = Math.ceil(n / cols)
 
-  const chips: ChipPrecomp[] = layer.children.map(child => {
-    const { lines, truncated, url } = wrapLabel(child.label, maxChars, MAX_CHIP_LINES)
+  // One shared font size for every chip in this layer (not per-chip), sized
+  // to whichever child label is worst-fitting at this layer's chipW — a
+  // layer with one long child and several short ones used to force every
+  // chip to the same fixed 11px and let the long one wrap to 3 lines or
+  // truncate, while the short ones sat mostly empty at that same size.
+  const { fontSize: chipFS, results: chipFits } = fitTextToWidthShared(
+    layer.children.map(c => c.label),
+    chipW - 16,
+    { maxSize: CHIP_FS, minSize: 8, maxLines: MAX_CHIP_LINES },
+  )
+  const chipLH = Math.round(chipFS * (CHIP_LH / CHIP_FS) * 10) / 10
+
+  const chips: ChipPrecomp[] = layer.children.map((child, ci) => {
+    const { lines, truncated, url } = chipFits[ci]
     return { label: child.label, lines, truncated, url }
   })
 
   // All chips in this layer share the same height (tallest line count wins)
   const maxChipLines = chips.reduce((m, c) => Math.max(m, c.lines.length), 1)
-  const chipH  = CHIP_H_BASE + (maxChipLines - 1) * CHIP_LH
+  const chipH  = CHIP_H_BASE + (maxChipLines - 1) * chipLH
   const chipsH = numRows * chipH + (numRows - 1) * CHIP_ROW_GAP
 
   const layerH = Math.max(
@@ -111,7 +124,7 @@ function computeLayer(
   )
 
   return { fill, labelLines, labelTrunc, labelUrl, hasChildren: true,
-           cols, chipW, chipH, numRows, chips, layerH }
+           cols, chipW, chipH, chipFS, chipLH, numRows, chips, layerH }
 }
 
 // ── Renderer ─────────────────────────────────────────────────────────────────
@@ -143,7 +156,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   precomps.forEach((lc, i) => {
     const y = layerY[i]
     const { fill, labelLines, labelTrunc, labelUrl,
-            hasChildren, cols, chipW, chipH, numRows, chips, layerH } = lc
+            hasChildren, cols, chipW, chipH, chipFS, chipLH, numRows, chips, layerH } = lc
     const unit: string[] = []
 
     // Band background — tooltip carries full layer item summary
@@ -184,16 +197,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const chipTop = chipsStartY + row * (chipH + CHIP_ROW_GAP)
 
       // Baseline of first line: centre text block inside chip
-      const textY  = chipTop + (chipH - CHIP_LH * chip.lines.length) / 2 + CHIP_LH - 2
+      const textY  = chipTop + (chipH - chipLH * chip.lines.length) / 2 + chipLH - 2
       const textCX = (chipX + chipW / 2).toFixed(1)
       const chipTip   = chip.truncated ? `<title>${escapeXml(chip.label)}</title>` : ''
       const chipSpans = chip.lines
-        .map((line, idx) => `<tspan x="${textCX}" dy="${idx === 0 ? 0 : CHIP_LH}">${escapeXml(line)}</tspan>`)
+        .map((line, idx) => `<tspan x="${textCX}" dy="${idx === 0 ? 0 : chipLH}">${escapeXml(line)}</tspan>`)
         .join('')
 
       unit.push(`<rect x="${chipX.toFixed(1)}" y="${chipTop.toFixed(1)}" width="${chipW.toFixed(1)}" height="${chipH.toFixed(1)}" rx="5" fill="${theme.surface}" stroke="${fill}66" stroke-width="1"/>`)
       unit.push(aWrap(
-        `<text x="${textCX}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${CHIP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${chipTip}${chipSpans}</text>`,
+        `<text x="${textCX}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${chipFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${chipTip}${chipSpans}</text>`,
         chip.url,
       ))
     })

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, tt, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -91,27 +91,38 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     parts.push(animate ? `<g class="mdart-arr-n${n}">${returnEl}</g>` : returnEl)
   }
 
+  // Per-node fitting: every node shares nodeR (which itself already varies
+  // by total item count, tiered above), so within one diagram each label is
+  // sized independently — a short label stays large instead of being
+  // dragged down to match a long neighbor. Replaces the old flat 11-char
+  // truncation plus a crude "split words in half" 2-line rule (word-count
+  // based, not actual width) with dynamic width-aware wrapping.
+  const nodeBoxW = Math.max(20, nodeR * 1.6 - 4)
+  // 2 lines at the label's own font floor (6.5) need ~2×(6.5×1.3)=16.9px —
+  // the smallest nodeR tier (12, for n>8) gives nodeR×1.4=16.8px, just
+  // under that threshold, which would silently make the 2-line ceiling
+  // unreachable there (same bug caught in circular-process.ts/decision-
+  // tree.ts/h-org-chart.ts). Guarantee at least that floor-line-pair's
+  // worth of room.
+  const nodeBoxH = Math.max(nodeR * 1.4, 6.5 * 1.3 * 2)
+  const halo = `stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill"`
+
   // ── Nodes ──────────────────────────────────────────────────────────────────
   items.forEach((item, i) => {
     const x    = nx(i)
     const t    = i / Math.max(n - 1, 1)
     const fill = lerpColor(theme.primary, theme.secondary, t)
 
-    // Label (one or two lines, bg-coloured text inside node)
     const { display: lblDisplay, url: lblUrl } = displayLabel(item)
-    const words = lblDisplay.split(' ')
-    let lblContent: string
-    const halo = `fill="#ffffff" stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill"`
-    if (words.length <= 1) {
-      lblContent = `<text x="${x.toFixed(1)}" y="${(rowY + fontSize * 0.38).toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="700" font-family="system-ui,sans-serif" ${halo}>${tt(lblDisplay, 11, item)}</text>`
-    } else {
-      const mid = Math.ceil(words.length / 2)
-      const l1  = words.slice(0, mid).join(' ')
-      const l2  = words.slice(mid).join(' ')
-      const fh  = fontSize - 1
-      lblContent = `<text x="${x.toFixed(1)}" y="${(rowY - fh * 0.4).toFixed(1)}" text-anchor="middle" font-size="${fh}" font-weight="700" font-family="system-ui,sans-serif" ${halo}>${tt(l1, 11)}</text>`
-               + `<text x="${x.toFixed(1)}" y="${(rowY + fh * 1.1).toFixed(1)}" text-anchor="middle" font-size="${fh}" font-weight="700" font-family="system-ui,sans-serif" ${halo}>${tt(l2, 11)}</text>`
-    }
+    const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines, truncated }] } =
+      fitTextToWidthShared([lblDisplay], nodeBoxW, { maxSize: fontSize, minSize: 6.5, maxLines: 2, boxH: nodeBoxH })
+    const tip = truncated ? `<title>${escapeXml(lblDisplay)}</title>` : ''
+    const totalH = lines.length * labelLH
+    let lblContent = tip
+    lines.forEach((line, li) => {
+      const ty = rowY - totalH / 2 + li * labelLH + labelLH * 0.8
+      lblContent += `<text x="${x.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" font-weight="700" font-family="system-ui,sans-serif" fill="#ffffff" ${halo}>${escapeXml(line)}</text>`
+    })
 
     // Step-number badge (top-right of node) — visually part of the node
     const bx = x + nodeR - 4

@@ -30,7 +30,7 @@ export const CATEGORY_THEMES: Record<string, MdArtTheme> = {
   statistical:  { primary:'#10b981', secondary:'#059669', accent:'#34d399', muted:'#064e3b', bg:'#080f10', surface:'#0a1a14', border:'#0e3020', text:'#e2e8f0', textMuted:'#6ee7b7', ...SEM },
   planning:     { primary:'#a78bfa', secondary:'#8b5cf6', accent:'#c4b5fd', muted:'#4c1d95', bg:'#0e0a1a', surface:'#13101e', border:'#2d1f50', text:'#e2e8f0', textMuted:'#ddd6fe', ...SEM },
   technical:    { primary:'#0ea5e9', secondary:'#0284c7', accent:'#38bdf8', muted:'#0c4a6e', bg:'#080f18', surface:'#091520', border:'#0e3050', text:'#e2e8f0', textMuted:'#7dd3fc', ...SEM },
-  plot:         { primary:'#4f6ef7', secondary:'#3b56cc', accent:'#7aa2f7', muted:'#1e293b', bg:'#0d0d14', surface:'#15151c', border:'#26262e', text:'#e8e8ec', textMuted:'#94a3b8', danger:'#f87171', warning:'#fbbf24', palette:['#4f6ef7','#34d399','#f59e0b','#ec4899','#8b5cf6','#06b6d4'] },
+  plot:         { primary:'#4f6ef7', secondary:'#3b56cc', accent:'#7aa2f7', muted:'#1e293b', bg:'#0d0d14', surface:'#15151c', border:'#26262e', text:'#e8e8ec', textMuted:'#94a3b8', danger:'#f87171', warning:'#fbbf24', palette:['#34d399','#f59e0b','#ec4899','#8b5cf6','#06b6d4'] },
 }
 
 // Light-mode counterparts of every category theme — same brand hues, adjusted
@@ -48,7 +48,7 @@ export const CATEGORY_THEMES_LIGHT: Record<string, MdArtTheme> = {
   statistical:  { primary:'#059669', secondary:'#047857', accent:'#10b981', muted:'#d1fae5', bg:'#f0fdf4', surface:'#ffffff', border:'#bbf7d0', text:'#052e16', textMuted:'#059669', ...SEM_LIGHT },
   planning:     { primary:'#8b5cf6', secondary:'#7c3aed', accent:'#a78bfa', muted:'#ede9fe', bg:'#f5f3ff', surface:'#ffffff', border:'#ddd6fe', text:'#2e1065', textMuted:'#7c3aed', ...SEM_LIGHT },
   technical:    { primary:'#0284c7', secondary:'#0369a1', accent:'#0ea5e9', muted:'#e0f2fe', bg:'#f0f9ff', surface:'#ffffff', border:'#bae6fd', text:'#082f49', textMuted:'#0369a1', ...SEM_LIGHT },
-  plot:         { primary:'#3b56cc', secondary:'#1e3a8a', accent:'#4f6ef7', muted:'#e0e7ff', bg:'#ffffff', surface:'#f8fafc', border:'#e2e8f0', text:'#0f172a', textMuted:'#475569', danger:'#dc2626', warning:'#d97706', palette:['#3b56cc','#059669','#d97706','#db2777','#7c3aed','#0891b2'] },
+  plot:         { primary:'#3b56cc', secondary:'#1e3a8a', accent:'#4f6ef7', muted:'#e0e7ff', bg:'#ffffff', surface:'#f8fafc', border:'#e2e8f0', text:'#0f172a', textMuted:'#475569', danger:'#dc2626', warning:'#d97706', palette:['#059669','#d97706','#db2777','#7c3aed','#0891b2'] },
 }
 
 // Named themes — genuinely standalone overrides (not category-derived)
