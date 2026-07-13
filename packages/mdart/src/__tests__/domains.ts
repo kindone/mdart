@@ -29,45 +29,88 @@ export const genTypeIdx = Gen.inRange(0, ALL_TYPES.length - 1)
 /**
  * Plain word — no special parser chars (:, →, [, ], ∩, \n, leading - / ?).
  * Colon-free so parseMdArt never splits it into label:value.
- * Achieved by generating printable ASCII then replacing colons and backslashes.
+ * Length range 1–50 to cover short names AND multi-word phrases.
+ * Callers strip colons when needed: label.replace(/:/g, '-').replace(/\\/g, '')
  */
-export const genLabelPlain = Gen.printableAsciiString(1, 20)
-// callers strip colons when needed: label.replace(/:/g, '-').replace(/\\/g, '')
+export const genLabelPlain = Gen.printableAsciiString(1, 50)
 
 /**
  * Label that is guaranteed to contain exactly one non-escaped colon in
  * the form "key: value" (space after colon).  Generates the KEY and VALUE
  * parts separately so neither contains a colon.
  * Returns a tuple [key, value] — join as `${key}: ${value}` for a source line.
+ * Key up to 20 chars, value up to 30 chars to cover realistic metric labels.
  */
 export const genKvTuple = Gen.tuple(
-  Gen.printableAsciiString(1, 12),
-  Gen.printableAsciiString(1, 15),
+  Gen.printableAsciiString(1, 20),
+  Gen.printableAsciiString(1, 30),
 )
 // NOTE: the key/value strings may still contain colons inside parens or
 // digits — callers strip them: key.replace(/:/g, '-')
 
 /** Colon pattern that must NOT cause a split: inside parentheses. */
 export const genParenColon = Gen.tuple(
-  Gen.printableAsciiString(1, 10),   // prefix before paren
-  Gen.printableAsciiString(1, 6),    // text inside paren
-  Gen.printableAsciiString(1, 8),    // suffix after paren
+  Gen.printableAsciiString(1, 15),   // prefix before paren
+  Gen.printableAsciiString(1, 10),   // text inside paren
+  Gen.printableAsciiString(1, 12),   // suffix after paren
 )
 // build: `${prefix} (e.g.: ${inner}) ${suffix}` → should NOT split
 
-/** Unicode label — tests multi-byte character handling in renderers. */
-export const genLabelUnicode = Gen.unicodeString(1, 15)
-
-/** Long label — often triggers CONTENT_VERY_LONG_LABEL for tight types. */
-export const genLabelLong = Gen.printableAsciiString(40, 80)
+/**
+ * Unicode label — tests multi-byte character handling in renderers.
+ * Increased to 40 chars to cover realistic multi-word Unicode phrases.
+ */
+export const genLabelUnicode = Gen.unicodeString(1, 40)
 
 /**
- * Any label — union of all sub-domains.  Use when the test property holds
- * regardless of which sub-domain the label comes from.
+ * CJK label — Chinese/Japanese/Korean characters specifically.
+ * `measureText` treats CJK as ~2× the width of ASCII chars; this sub-domain
+ * targets the text-fitting and wrapping code paths that ASCII alone won't reach.
+ */
+export const genLabelCJK = Gen.elementOf(
+  '日本語テスト',
+  '中文测试内容',
+  '한국어 테스트',
+  '中文標題文字',
+  'テスト中のデータ',
+  '시스템 점검',
+  '数据分析报告',
+  '東アジア文字',
+  '한글 입력 테스트',
+  '漢字テスト文',
+)
+
+/**
+ * Emoji-containing label — tests multi-codepoint sequences and width estimation.
+ * Emoji are often multi-byte and their rendered width differs from charCount.
+ */
+export const genLabelEmoji = Gen.elementOf(
+  '🚀 Launch',
+  '✅ Complete',
+  '⚠️ Alert',
+  '📊 Report',
+  '🎯 Goal reached',
+  '🔥 Hot topic',
+  '💡 New idea',
+  '🌍 Global scale',
+  '🛠️ In progress',
+  '📅 Scheduled',
+)
+
+/** Long label — often triggers CONTENT_VERY_LONG_LABEL for tight types. */
+export const genLabelLong = Gen.printableAsciiString(30, 80)
+
+/**
+ * Any label — union of ALL sub-domains including long, CJK, and emoji.
+ * Use when the test property must hold regardless of input character set or length.
+ * Previously this only covered plain + unicode; now broadened to the full domain.
  */
 export const genLabelAny = Gen.oneOf(
   genLabelPlain,
   genLabelUnicode,
+  genLabelCJK,
+  genLabelEmoji,
+  genLabelLong,
 )
 
 // ── Prefix / bullet sub-domains ───────────────────────────────────────────────

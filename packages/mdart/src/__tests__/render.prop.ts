@@ -17,6 +17,7 @@ import { forAll, Gen } from 'jsproptest'
 import { renderMdArt, KNOWN_TYPES } from '../index.ts'
 import { checkSvg } from '../heuristics.ts'
 import { configureMdArt, resetMdArtConfig } from '../config.ts'
+import { genLabelCJK, genLabelEmoji, genLabelLong } from './domains'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -115,7 +116,7 @@ describe('all KNOWN_TYPES — exhaustive scan', () => {
 
 describe('¬∃ (type, items): renderMdArt throws', () => {
 
-  it('random type × 0–8 printable-ASCII items', { timeout: 30000 }, () => {
+  it('random type × 0–12 printable-ASCII items (up to 50 chars each)', { timeout: 30000 }, () => {
     forAll(
       (typeIdx: number, labels: string[]) => {
         const type = ALL_TYPES[typeIdx]
@@ -128,7 +129,7 @@ describe('¬∃ (type, items): renderMdArt throws', () => {
         }
       },
       Gen.inRange(0, ALL_TYPES.length - 1),
-      Gen.array(Gen.printableAsciiString(1, 25), 0, 8),
+      Gen.array(Gen.printableAsciiString(1, 50), 0, 12),
     )
   })
 
@@ -145,7 +146,61 @@ describe('¬∃ (type, items): renderMdArt throws', () => {
         }
       },
       Gen.inRange(0, ALL_TYPES.length - 1),
-      Gen.array(Gen.unicodeString(1, 20), 0, 6),
+      Gen.array(Gen.unicodeString(1, 40), 0, 8),
+    )
+  })
+
+  it('random type × CJK labels (tests double-width char measurement)', { timeout: 30000 }, () => {
+    forAll(
+      (typeIdx: number, n: number, label: string) => {
+        const type = ALL_TYPES[typeIdx]
+        const source = Array.from({ length: n }, (_, i) => `- ${label} ${i}`).join('\n')
+        try {
+          renderMdArt(source, type)
+          return true
+        } catch {
+          return false
+        }
+      },
+      Gen.inRange(0, ALL_TYPES.length - 1),
+      Gen.inRange(1, 6),
+      genLabelCJK,
+    )
+  })
+
+  it('random type × emoji labels (tests multi-codepoint width estimation)', { timeout: 30000 }, () => {
+    forAll(
+      (typeIdx: number, n: number, label: string) => {
+        const type = ALL_TYPES[typeIdx]
+        const source = Array.from({ length: n }, (_, i) => `- ${label} ${i}`).join('\n')
+        try {
+          renderMdArt(source, type)
+          return true
+        } catch {
+          return false
+        }
+      },
+      Gen.inRange(0, ALL_TYPES.length - 1),
+      Gen.inRange(1, 6),
+      genLabelEmoji,
+    )
+  })
+
+  it('random type × long labels (30–80 chars, triggers text-wrap and overflow guards)', { timeout: 30000 }, () => {
+    forAll(
+      (typeIdx: number, n: number, label: string) => {
+        const type = ALL_TYPES[typeIdx]
+        const source = Array.from({ length: n }, (_, i) => `- ${label} item${i}`).join('\n')
+        try {
+          renderMdArt(source, type)
+          return true
+        } catch {
+          return false
+        }
+      },
+      Gen.inRange(0, ALL_TYPES.length - 1),
+      Gen.inRange(1, 6),
+      genLabelLong,
     )
   })
 
@@ -168,7 +223,7 @@ describe('¬∃ (type, items): renderMdArt throws', () => {
       },
       Gen.inRange(0, PROCESS_TYPES.length - 1),
       Gen.inRange(0, 20),
-      Gen.printableAsciiString(1, 15),
+      Gen.printableAsciiString(1, 40),
     )
   })
 
@@ -183,7 +238,7 @@ describe('¬∃ (type, items): renderMdArt throws', () => {
 
 describe('∀ (type, items): no geometry errors in rendered SVG', () => {
 
-  it('random type × 0–8 printable-ASCII items', { timeout: 30000 }, () => {
+  it('random type × 0–12 printable-ASCII items (up to 50 chars)', { timeout: 30000 }, () => {
     forAll(
       (typeIdx: number, labels: string[]) => {
         const type = ALL_TYPES[typeIdx]
@@ -197,13 +252,14 @@ describe('∀ (type, items): no geometry errors in rendered SVG', () => {
         }
       },
       Gen.inRange(0, ALL_TYPES.length - 1),
-      Gen.array(Gen.printableAsciiString(1, 25), 0, 8),
+      Gen.array(Gen.printableAsciiString(1, 50), 0, 12),
     )
   })
 
-  it('hierarchy types with nested children', { timeout: 20000 }, () => {
+  it('hierarchy types with nested children and long labels', { timeout: 20000 }, () => {
     // Hierarchy types (org-chart, tree, mind-map, …) have meaningful renders
     // with 2-level nesting. Generate a parent + 2 children per parent.
+    // Labels up to 40 chars to exercise word-wrap in hierarchy boxes.
     const HIER_TYPES = ALL_TYPES.filter(t =>
       ['org-chart', 'tree', 'h-org-chart', 'hierarchy-list', 'radial-tree',
        'decision-tree', 'sitemap', 'bracket', 'bracket-tree', 'mind-map',
@@ -228,8 +284,8 @@ describe('∀ (type, items): no geometry errors in rendered SVG', () => {
         }
       },
       Gen.inRange(0, HIER_TYPES.length - 1),
-      Gen.array(Gen.printableAsciiString(1, 20), 1, 4),
-      Gen.printableAsciiString(1, 15),
+      Gen.array(Gen.printableAsciiString(1, 40), 1, 4),
+      Gen.printableAsciiString(1, 40),
     )
   })
 
@@ -256,7 +312,7 @@ describe('∀ (type, source): renderMdArt is deterministic', () => {
         }
       },
       Gen.inRange(0, ALL_TYPES.length - 1),
-      Gen.array(Gen.printableAsciiString(1, 20), 0, 6),
+      Gen.array(Gen.printableAsciiString(1, 50), 0, 8),
     )
   })
 
@@ -306,7 +362,7 @@ describe('∀ XML-dangerous labels: no raw entity leakage into SVG markup', () =
         }
       },
       Gen.inRange(0, ALL_TYPES.length - 1),
-      Gen.printableAsciiString(1, 20),
+      Gen.printableAsciiString(1, 50),
     )
   })
 
@@ -320,7 +376,7 @@ describe('∀ XML-dangerous labels: no raw entity leakage into SVG markup', () =
 
 describe('∀ (type, items) with instrument:true: no geometry errors', () => {
 
-  it('random type × 1–6 items with instrumentation enabled', { timeout: 30000 }, () => {
+  it('random type × 1–8 items with instrumentation enabled (labels up to 50 chars)', { timeout: 30000 }, () => {
     forAll(
       (typeIdx: number, labels: string[]) => {
         configureMdArt({ instrument: true, animate: false })
@@ -337,7 +393,7 @@ describe('∀ (type, items) with instrument:true: no geometry errors', () => {
         }
       },
       Gen.inRange(0, ALL_TYPES.length - 1),
-      Gen.array(Gen.printableAsciiString(1, 20), 1, 6),
+      Gen.array(Gen.printableAsciiString(1, 50), 1, 8),
     )
   })
 
