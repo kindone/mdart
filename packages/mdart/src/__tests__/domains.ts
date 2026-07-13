@@ -101,17 +101,65 @@ export const genLabelEmoji = Gen.elementOf(
 export const genLabelLong = Gen.printableAsciiString(30, 80)
 
 /**
- * Any label — union of ALL sub-domains including long, CJK, and emoji.
- * Use when the test property must hold regardless of input character set or length.
- * Previously this only covered plain + unicode; now broadened to the full domain.
+ * Edge-case labels — a curated set of values that tend to trigger bugs silently:
+ *   - Very short (1–3 chars): boundary of text-measurement and wrapping guards
+ *   - XML-special chars: `<`, `>`, `&`, `"` must be escaped before SVG insertion
+ *   - Numeric-only: some renderers treat "42" as a metric value, not a label
+ *   - High-plane Unicode: ellipsis (…) and other multi-byte scalars
+ *
+ * These are each 10–15% likely in `genLabelAny` (via `Gen.weightedGen`) so they
+ * appear regularly without crowding out the normal-case subdomains.
+ */
+export const genLabelEdge = Gen.elementOf(
+  'A',           // 1-char minimum
+  'XY',          // 2-char
+  'abc',         // 3-char lowercase
+  '<Script>',    // XML tag — must be escaped in SVG
+  'AT&T',        // ampersand — XML entity in SVG
+  '"quoted"',    // double-quote — XML entity in SVG
+  '0',           // numeric-only
+  '100%',        // percent sign
+  '3.14',        // decimal number
+  '…done',       // ellipsis U+2026 (multi-byte)
+)
+
+/**
+ * Any label — weighted union across ALL sub-domains.
+ *
+ * Weights follow the subdomain-exploration guideline: normal cases (plain ASCII)
+ * get the highest share; edge-case and stress subdomains each get 10–15% so
+ * they appear regularly but don't crowd out typical inputs.
+ *
+ *   plain   35%  — most common real-world input
+ *   edge    15%  — boundary & XML-escape triggers (boosted per guidelines)
+ *   CJK     15%  — double-width character measurement
+ *   unicode 15%  — general multi-byte handling
+ *   emoji   10%  — multi-codepoint width estimation
+ *   long    10%  — text-wrap and overflow guards
  */
 export const genLabelAny = Gen.oneOf(
-  genLabelPlain,
-  genLabelUnicode,
-  genLabelCJK,
-  genLabelEmoji,
-  genLabelLong,
+  Gen.weightedGen(genLabelPlain,   0.35),
+  Gen.weightedGen(genLabelEdge,    0.15),
+  Gen.weightedGen(genLabelCJK,     0.15),
+  Gen.weightedGen(genLabelUnicode, 0.15),
+  Gen.weightedGen(genLabelEmoji,   0.10),
+  Gen.weightedGen(genLabelLong,    0.10),
 )
+
+/**
+ * Compact alphanumeric label for SVG label-fidelity tests.
+ *
+ * Strips ALL non-alphanumeric characters so the resulting string appears
+ * verbatim in SVG text nodes without any XML-escaping transformation.
+ * Used exclusively in tests that check `svg.includes(label)`.
+ *
+ * The caller appends an index suffix for uniqueness:
+ *   `rawLabels.map((l, i) => compactLabel(l, i))`
+ */
+export function compactLabel(raw: string, idx: number): string {
+  const clean = raw.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12) || 'Label'
+  return `${clean}${idx}`
+}
 
 // ── Prefix / bullet sub-domains ───────────────────────────────────────────────
 

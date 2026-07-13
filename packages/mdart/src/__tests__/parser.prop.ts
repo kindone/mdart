@@ -387,3 +387,75 @@ describe('∀ Unicode labels: parseMdArt parses correctly', () => {
   })
 
 })
+
+// ── Observability: label content round-trip ───────────────────────────────────
+//
+// Postcondition: parseMdArt faithfully returns each item's label as parsed.
+// From the PBT observability guideline: "State queries should return values
+// consistent with actual state." spec.items[i].label IS the state query — it
+// must equal what was put in.
+//
+// The existing Unicode test above covers single items with genLabelUnicode.
+// These tests extend coverage to:
+//   (a) multi-item arrays over the FULL genLabelAny weighted domain
+//   (b) spec.title fidelity from the `title:` front-matter key
+//
+// `safeObsLabel` strips exactly the chars that parseMdArt TRANSFORMS so the
+// expected label matches what parseItem actually computes for item.label.
+
+function safeObsLabel(raw: string): string {
+  return raw
+    .replace(/\\/g, '')              // strip backslash escape chars first
+    .replace(/&&/g, 'xx')            // && is the typeable intersection alias (≡ ∩)
+    .replace(/->/g, '-')             // ASCII `->` gets normalized to `→` by parser
+    .replace(/[\n:→\[\]∩]/g, '-')   // remaining parser-special chars → neutral dash
+    .replace(/^[-+?!*\s]+/, 'X')    // strip leading SWOT/bullet/milestone prefix chars
+    .trim()
+    .slice(0, 25) || 'Label'         // never blank; max 25 chars
+}
+
+describe('observability: spec.items[i].label faithfully reflects each input label', () => {
+
+  it('∀ n labels (any subdomain): spec.items[i].label === cleaned input for all i', { timeout: 20000 }, () => {
+    forAll(
+      (rawLabels: string[]) => {
+        // Index suffix guarantees uniqueness; prevents CONTENT_DUPLICATE_SIBLING_LABELS
+        const labels = rawLabels.map((r, i) => `${safeObsLabel(r)}${i}`)
+        const source = labels.map(l => `- ${l}`).join('\n')
+        const spec = parseMdArt(source)
+        return spec.items.length === labels.length
+          && spec.items.every((item, i) => item.label === labels[i])
+      },
+      Gen.array(genLabelAny, 1, 5),
+    )
+  })
+
+  it('∀ single label (any subdomain): spec.items[0].label === cleaned input', { timeout: 15000 }, () => {
+    forAll(
+      (raw: string) => {
+        const label = `${safeObsLabel(raw)}0`
+        const src = `- ${label}`
+        const spec = parseMdArt(src)
+        return spec.items.length >= 1 && spec.items[0].label === label
+      },
+      genLabelAny,
+    )
+  })
+
+  it('∀ (title, label): spec.title === the declared front-matter title', { timeout: 15000 }, () => {
+    forAll(
+      (rawTitle: string, rawLabel: string) => {
+        // Title is the value of the `title: ...` front-matter line.
+        // Only \n is stripped (it would break the single-line front-matter).
+        const title = rawTitle.replace(/\n/g, ' ').trim() || 'MyTitle'
+        const label = `${safeObsLabel(rawLabel)}0`
+        const src = `title: ${title}\n\n- ${label}`
+        const spec = parseMdArt(src)
+        return spec.title === title
+      },
+      Gen.printableAsciiString(1, 30),
+      genLabelAny,
+    )
+  })
+
+})

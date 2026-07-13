@@ -14,7 +14,7 @@
 import { describe, it } from 'vitest'
 import { forAll, Gen, Property } from 'jsproptest'
 import { renderMdArt } from '../renderer'
-import { genLabelPlain } from './domains'
+import { genLabelPlain, genLabelAny, compactLabel } from './domains'
 
 /** Fixed word pairs to use as key:value — avoids characters that disrupt KV splitting. */
 const KEYS   = ['Revenue', 'Retention', 'Growth', 'Margin', 'Uptime', 'Speed', 'Cost', 'Score']
@@ -96,6 +96,75 @@ describe('KV list renderers: markup structure', () => {
     prop.example(1, 1)   // Retention: 91%
     prop.forAll(Gen.inRange(0, KEYS.length - 1), Gen.inRange(0, VALUES.length - 1))
   })
+
+})
+
+// ── KV fidelity across the full label domain ──────────────────────────────────
+//
+// The tests above use a fixed word pool (`KEYS`/`VALUES`). These tests cover
+// the same "both key and value appear in SVG" property with the FULL weighted
+// genLabelAny domain so edge-case subdomains (XML chars, CJK, emoji, very short)
+// are exercised at their proper proportions.
+//
+// `compactLabel(raw, idx)` strips to alnum-only so the result appears verbatim
+// in SVG text nodes without XML-escaping — makes `svg.includes(label)` reliable.
+//
+// Extended type list adds `two-column-list` and `ribbon-list` which are similarly
+// structured KV renderers not yet covered by the fixed-pool tests.
+
+const KV_TYPES_FULL = [
+  'zigzag-list',
+  'step-up',
+  'step-down',
+  'two-column-list',
+  'ribbon-list',
+] as const
+
+describe('KV fidelity: both key AND value appear in SVG (full genLabelAny domain)', () => {
+
+  it.each(KV_TYPES_FULL)(
+    '%s: ∀ (rawKey, rawVal): compact key AND value both appear in SVG',
+    { timeout: 20000 },
+    (type) => {
+      forAll(
+        (rawKey: string, rawVal: string) => {
+          const key = compactLabel(rawKey, 0)
+          const val = compactLabel(rawVal, 1)
+          // Second item gives the renderer enough to construct the full layout
+          const src = `type: ${type}\n- ${key}: ${val}\n- Anchor2: Padding3`
+          try {
+            const svg = renderMdArt(src)
+            return svg.includes(key) && svg.includes(val)
+          } catch { return false }
+        },
+        genLabelAny,
+        genLabelAny,
+      )
+    },
+  )
+
+  it.each(KV_TYPES_FULL)(
+    '%s: ∀ n KV items (1–4): all compact keys AND values appear in SVG',
+    { timeout: 20000 },
+    (type) => {
+      forAll(
+        (rawLabels: string[]) => {
+          // Use even indices for keys, odd for values — ensures every key+val pair
+          // produces distinct compact strings (no prefix-collision risk with 1-digit idx)
+          const pairs = rawLabels.map((r, i) => ({
+            key: compactLabel(r, i * 2),
+            val: compactLabel(r, i * 2 + 1),
+          }))
+          const src = `type: ${type}\n${pairs.map(p => `- ${p.key}: ${p.val}`).join('\n')}`
+          try {
+            const svg = renderMdArt(src)
+            return pairs.every(p => svg.includes(p.key) && svg.includes(p.val))
+          } catch { return false }
+        },
+        Gen.array(genLabelAny, 1, 4),
+      )
+    },
+  )
 
 })
 
