@@ -1,8 +1,8 @@
 type: concentric
 title: Scope Layers
 
-- Vision
-- Strategy
-- Goals
-- Initiatives
+- Vision: 10yr north star
+- Strategy: 3yr directional bets
+- Goals: annual OKRs
+- Initiatives: quarterly projects
 - Tasks

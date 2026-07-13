@@ -2,11 +2,11 @@ type: wbs
 title: Platform Launch
 
 - Frontend
-  - Components [done]
-  - State Mgmt [active]
+  - Component library [done]
+  - State management [active]
 - Backend
-  - API Design [done]
-  - Auth [active]
+  - API design & contracts [done]
+  - Auth + token refresh [active]
 - QA
-  - Unit Tests
-  - E2E
+  - Unit tests
+  - End-to-end coverage

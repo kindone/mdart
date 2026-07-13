@@ -1,8 +1,8 @@
 type: process
 title: Deployment Pipeline
 
-- Code Review: ~30min
+- Code Review: 2 approvals required before merge
 - CI Build
-- Staging Deploy: 5min
+- Staging Deploy: automated via Actions
 - Smoke Test
-- Production Deploy
+- Production Deploy: blue-green with instant rollback

@@ -1,8 +1,8 @@
 type: progress-list
 title: Q3 KPIs
 
-- ARR growth: 84
-- Churn rate: 28
-- NPS: 78
-- API uptime: 99
+- ARR growth target: 84
+- Churn rate below 3%: 28
+- Net Promoter Score: 78
+- API uptime SLA: 99
 - Deploy frequency: 91

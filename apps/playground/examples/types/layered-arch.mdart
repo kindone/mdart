@@ -2,14 +2,14 @@ type: layered-arch
 title: Application Architecture
 
 - Presentation
-  - React SPA
-  - Mobile App
+  - React SPA with SSR
+  - Mobile app (iOS + Android)
 - API Gateway
-  - Rate limiting
+  - Rate limiting & throttling
   - Auth middleware
 - Services
-  - User service
-  - Order service
+  - User & identity service
+  - Order processing
 - Data
   - PostgreSQL
-  - Redis
+  - Redis cache

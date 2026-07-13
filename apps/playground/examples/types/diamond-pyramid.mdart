@@ -1,8 +1,8 @@
 type: diamond-pyramid
-title: Adoption Curve
+title: Technology Adoption Curve
 
-- Niche: 2.5%
+- Innovators: 2.5% risk-tolerant early experimenters
 - Early Adopters: 13.5%
-- Mainstream: 34%
+- Early Majority: 34% pragmatists waiting for proof
 - Late Majority: 34%
-- Laggards: 16%
+- Laggards: 16% skeptics

@@ -2,11 +2,11 @@ type: cluster
 title: Engineering Org
 
 - Platform
-  - Core API
-  - Auth
+  - Core API services
+  - Auth & permissions
 - Product
-  - Search
-  - Feed
+  - Search & ranking
+  - Feed algorithm
 - Infrastructure
-  - Compute
+  - Compute orchestration
   - Storage

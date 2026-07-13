@@ -1,8 +1,8 @@
 type: arrow-process
 title: Data Flow
 
-- Ingest: from Kafka
-- Validate: schema check
-- Transform: normalise units
+- Ingest: raw events from Kafka
+- Validate: check schema & types
+- Transform: normalise, dedupe, and fill missing fields from defaults
 - Enrich: join lookup tables
 - Publish: to warehouse

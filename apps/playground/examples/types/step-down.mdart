@@ -1,9 +1,9 @@
 type: step-down
 title: Incident Response
 
-- Detect: T+0
+- Detect: T+0 automated alert
 - Alert: T+1min
-- Triage: T+5min
+- Triage: identify blast radius and severity
 - Mitigate: T+15min
-- Resolve: T+30min
-- Post-mortem: +24h
+- Resolve: T+30min service restored
+- Post-mortem: blameless review within 24h

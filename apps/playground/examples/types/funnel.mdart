@@ -1,8 +1,8 @@
 type: funnel
 title: Conversion Funnel
 
-- Visitors: 10000
-- Sign-ups: 2400
-- Activated: 960
+- Visitors: 10,000 monthly sessions
+- Sign-ups: 2,400
+- Activated: 960 completed onboarding
 - Paying: 192
-- Champions: 38
+- Champions: 38 NPS promoters

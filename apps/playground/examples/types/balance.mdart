@@ -1,9 +1,10 @@
 type: balance
 
 - Benefits
-  - Speed
-  - Flexibility
-  - Cost savings
+  - Faster development cycles
+  - Reduced operational overhead
+  - Cost savings at scale
 - Risks
-  - Complexity
-  - Dependencies
+  - Increased system complexity
+  - Third-party dependencies
+  - Vendor lock-in

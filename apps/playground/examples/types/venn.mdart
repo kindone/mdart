@@ -1,10 +1,15 @@
 type: venn
+title: Quantum objects — beyond classical categories
 
-- Design
-  - UX Research
-  - Prototyping
-- Engineering
-  - Frontend
-  - Backend
-
-- Design && Engineering: Design system
+- Wave behavior
+  - Interference
+  - Diffraction
+  - Superposition
+- Particle behavior
+  - Discrete detection
+  - Localized impacts
+  - Countable quanta
+- Wave behavior && Particle behavior
+  - Quantum objects
+  - Wavefunction
+  - Dual nature

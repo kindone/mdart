@@ -5,7 +5,7 @@ title: Service Topology
   → API Server
   → CDN
 - API Server
-  → Worker
-  → SQLite
-- Worker
-  → Claude CLI
+  → Job Worker
+  → PostgreSQL
+- Job Worker
+  → External Payment API

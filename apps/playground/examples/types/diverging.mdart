@@ -1,8 +1,8 @@
 type: diverging
 title: Platform APIs
 
-- Core Platform
-- Mobile SDK
-- Web Embed
-- Partner API
-- Webhooks
+- Core Platform: REST + GraphQL endpoints
+- Mobile SDK: iOS and Android
+- Web Embed: iframe + postMessage bridge
+- Partner API: OAuth 2.0 scoped tokens
+- Webhooks: event-driven push

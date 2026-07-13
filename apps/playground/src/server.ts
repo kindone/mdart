@@ -39,7 +39,14 @@ import { promisify } from 'node:util'
 import { randomUUID } from 'node:crypto'
 import { tmpdir } from 'node:os'
 
-import { renderMdArt, parseMdArt, configureMdArt, resetMdArtConfig } from 'mdart'
+import { Marked } from 'marked'
+import MarkdownIt from 'markdown-it'
+import { unified } from 'unified'
+import remarkParse from 'remark-parse'
+import remarkRehype from 'remark-rehype'
+import rehypeStringify from 'rehype-stringify'
+
+import { renderMdArt, parseMdArt } from 'mdart'
 import { adapters, defaultCliName, getAdapter, normalizeCliName, type CliName } from './cli/index.js'
 
 // Ecosystem adapters — each is a real adapter package (workspace-resolved locally,
@@ -209,16 +216,95 @@ async function renderFresh(
   mdartSource: string,
   mode?: 'dark' | 'light',
   theme?: string,
+  hintType?: string,
 ): Promise<string> {
   const tmp = path.join(tmpdir(), `mdart-lab-${Date.now()}-${Math.random().toString(36).slice(2)}.mjs`)
   await copyFile(DIST_INDEX, tmp)
   try {
     const mod = await import(`file://${tmp}`) as { renderMdArt: typeof renderMdArt }
     const cfg = (mode || theme) ? { mode, theme } : undefined
-    return mod.renderMdArt(mdartSource, undefined, cfg)
+    return mod.renderMdArt(mdartSource, hintType, cfg)
   } finally {
     await unlink(tmp).catch(() => {})
   }
+}
+
+/**
+ * Render mdart fences through renderFresh() before handing the surrounding
+ * Markdown to the selected ecosystem parser. The adapter packages import
+ * `mdart` once at server startup, so using them directly here makes markdown
+ * mode stale after lab rebuilds. Renderer mode already avoids that cache by
+ * temp-copying dist/index.js per call; markdown mode needs the same path for
+ * each mdart fence.
+ */
+async function replaceMdartFencesWithPlaceholders(
+  markdown: string,
+  mode?: 'dark' | 'light',
+  theme?: string,
+): Promise<{ markdown: string; replacements: Array<{ token: string; svg: string }> }> {
+  const fenceRe = /(^|\n)```mdart(?:[ \t]+([^\n]+))?[ \t]*\n([\s\S]*?)```[ \t]*(?=\n|$)/g
+  let out = ''
+  let lastIndex = 0
+  const replacements: Array<{ token: string; svg: string }> = []
+  for (const match of markdown.matchAll(fenceRe)) {
+    const index = match.index ?? 0
+    const leadingNewline = match[1] ?? ''
+    const hintType = match[2]?.trim() || undefined
+    const source = match[3] ?? ''
+    const token = `@@MDART_FRESH_${replacements.length}_${randomUUID()}@@`
+    let svg: string
+    out += markdown.slice(lastIndex, index) + leadingNewline
+    try {
+      svg = await renderFresh(source, mode, theme, hintType)
+    } catch (err) {
+      svg = `<pre class="mdart-error">${String(err)}</pre>`
+    }
+    replacements.push({ token, svg })
+    out += token
+    lastIndex = index + match[0].length
+  }
+  out += markdown.slice(lastIndex)
+  return { markdown: out, replacements }
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function applyMdartPlaceholders(html: string, replacements: Array<{ token: string; svg: string }>): string {
+  let out = html
+  for (const { token, svg } of replacements) {
+    const tokenRe = escapeRegExp(token)
+    out = out
+      .replace(new RegExp(`<p>\\s*${tokenRe}\\s*</p>`, 'g'), svg)
+      .replace(new RegExp(tokenRe, 'g'), svg)
+  }
+  return out
+}
+
+async function renderMarkdownFresh(
+  markdown: string,
+  adapter: EcosystemAdapter,
+  mode?: 'dark' | 'light',
+  theme?: string,
+): Promise<string> {
+  const prepared = await replaceMdartFencesWithPlaceholders(markdown, mode, theme)
+  let html: string
+  if (adapter === 'marked') {
+    html = await new Marked().parse(prepared.markdown)
+    return applyMdartPlaceholders(html, prepared.replacements)
+  }
+  if (adapter === 'markdown-it') {
+    html = new MarkdownIt({ html: false, linkify: true, typographer: true }).render(prepared.markdown)
+    return applyMdartPlaceholders(html, prepared.replacements)
+  }
+  const file = await unified()
+    .use(remarkParse)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeStringify, { allowDangerousHtml: true })
+    .process(prepared.markdown)
+  html = String(file)
+  return applyMdartPlaceholders(html, prepared.replacements)
 }
 
 /** Coerce arbitrary user input to a valid 'dark' | 'light' or undefined. */
@@ -550,21 +636,14 @@ app.post('/render/ecosystem', async (req, res) => {
     res.status(400).json({ error: 'source is required' }); return
   }
   const name: EcosystemAdapter = adapter ?? 'marked'
-  // The local ecosystem adapters import `renderMdArt` directly without a per-
-  // call config, so route the dark/light/theme choices via the global mdart
-  // config. Reset after the call so the next request picks fresh.
-  if (mode || theme) configureMdArt({ mode, theme })
   try {
-    let html: string
-    if (name === 'marked')            html = await renderWithMarked(source)
-    else if (name === 'markdown-it')  html = renderWithMarkdownIt(source)
-    else if (name === 'unified')      html = await renderWithUnified(source)
-    else { res.status(400).json({ error: `unknown adapter: ${String(adapter)}` }); return }
+    if (name !== 'marked' && name !== 'markdown-it' && name !== 'unified') {
+      res.status(400).json({ error: `unknown adapter: ${String(adapter)}` }); return
+    }
+    const html = await renderMarkdownFresh(source, name, mode, theme)
     res.json({ html, adapter: name })
   } catch (err) {
     res.status(400).json({ error: String(err) })
-  } finally {
-    if (mode || theme) resetMdArtConfig()
   }
 })
 

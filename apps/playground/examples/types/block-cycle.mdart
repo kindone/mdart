@@ -2,13 +2,13 @@ type: block-cycle
 title: Incident Response
 
 - Detect
-  - Detect anomaly
+  - Alert fires on anomaly
 - Respond
-  - Closely analyze the situation
-  - Alert affected personnels
+  - Page on-call engineer
+  - Open incident channel and brief stakeholders
 - Resolve
-  - Provide workaround
-  - Devise a fix to the issue
+  - Apply immediate workaround
+  - Deploy verified fix
 - Review
-  - Perform tests
-  - Monitor system status
+  - Write blameless post-mortem
+  - Ship action items within 1wk

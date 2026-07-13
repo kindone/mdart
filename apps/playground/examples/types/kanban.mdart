@@ -2,12 +2,12 @@ type: kanban
 title: Sprint 14
 
 - Backlog
-  - Write API docs
-  - Design onboarding flow
+  - Write API migration guide for v2 consumers
+  - Design new onboarding flow
 - In Progress
-  - Auth refresh token logic
+  - Auth refresh token logic with sliding window
   - Dashboard redesign
 - Review
   - Rate limiting middleware
 - Done
-  - Database migrations
+  - DB migrations

@@ -1,7 +1,7 @@
 type: nondirectional-cycle
 title: Team Rituals
 
-- Standup: daily
-- Planning: biweekly
+- Standup: daily 15min
+- Planning: biweekly story mapping session
 - Demo: end of sprint
-- Retro: end of sprint
+- Retro: identify one process improvement per cycle

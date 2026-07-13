@@ -1,10 +1,10 @@
 type: org-chart
 title: Engineering Org
 
-- CTO
-  - VP Platform
-    - Infra Team
-    - SRE Team
-  - VP Product Eng
-    - Frontend Team
-    - Backend Team
+- Chief Technology Officer
+  - VP Platform Engineering
+    - Infrastructure
+    - Site Reliability
+  - VP Product Engineering
+    - Frontend Platform
+    - Backend Services

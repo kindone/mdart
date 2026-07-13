@@ -1,8 +1,8 @@
 type: plus
-title: Growth Framework (AARRR)
+title: AARRR Metrics
 
-- Acquire
-- Activate
-- Retain
-- Revenue
-- Referral
+- Acquire: paid + organic channels
+- Activate: first-value moment in 5min
+- Retain: weekly active usage
+- Revenue: MRR growth
+- Referral: NPS-driven word-of-mouth

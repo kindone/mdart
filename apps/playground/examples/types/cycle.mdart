@@ -1,7 +1,7 @@
 type: cycle
 title: Agile Sprint
 
-- Plan: 1d
-- Build: 8d
-- Review: 1d
-- Retro: 0.5d
+- Plan: story mapping & estimation
+- Build: 8d feature development
+- Review: demo to stakeholders
+- Retro: 1d

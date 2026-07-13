@@ -1,8 +1,8 @@
 type: multidirectional-cycle
 title: Data Flows
 
-- Ingest
-- Transform
-- Store
-- Serve
-- Monitor
+- Ingest: from event stream
+- Transform: normalise & enrich
+- Store: write to warehouse
+- Serve: query layer
+- Monitor: anomaly detection

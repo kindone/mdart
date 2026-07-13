@@ -2,7 +2,7 @@ type: donut-cycle
 title: Content Pipeline
 
 - Ideate: 1d
-- Draft: 3d
+- Draft: write first version without editing
 - Edit: 2d
 - Publish: 1d
-- Promote: 1wk
+- Promote: distribute across owned channels

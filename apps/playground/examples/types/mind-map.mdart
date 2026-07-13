@@ -2,12 +2,12 @@ type: mind-map
 title: Product Strategy
 
 - Market
-  - SMB
-  - Enterprise
-  - Developer
+  - SMB self-serve
+  - Enterprise sales-led
+  - Developer community
 - Distribution
-  - PLG
-  - Sales-led
+  - Product-led growth
+  - Partner channel
 - Moat
   - Data network effects
   - Brand

@@ -1,9 +1,9 @@
 type: waterfall
 title: Project Phases
 
-- Requirements: 4wk
+- Requirements: 4wk stakeholder alignment
 - Design: 6wk
-- Implementation: 12wk
+- Implementation: 12wk feature development
 - Testing: 4wk
-- Deployment: 2wk
+- Deployment: 2wk phased rollout
 - Maintenance

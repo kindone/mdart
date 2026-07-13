@@ -1,7 +1,7 @@
 type: roadmap
 title: Product Roadmap
 
-- Q1: Foundation
-- Q2: Growth
-- Q3: Scale
-- Q4: Expand
+- Q1: Core infra and auth
+- Q2: Growth features & partner integrations
+- Q3: Scale to 1M users
+- Q4: Enterprise tier with SSO and audit logs

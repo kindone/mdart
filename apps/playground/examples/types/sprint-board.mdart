@@ -3,9 +3,9 @@ title: Sprint 24
 
 - Backlog
   - Write migration guide for v2 API consumers: 3
-  - Add OpenAPI spec with full request and response schemas: 5
+  - Add OpenAPI spec with full request/response schemas: 5
 - In Progress
   - Pagination refactor to cursor-based model: 5 [active]
-  - Token refresh logic with sliding window: 3 [active]
+  - Token refresh with sliding window: 3 [active]
 - Done
   - Rate limiter with per-user quotas: 5 [done]

@@ -1,7 +1,7 @@
 type: pyramid-list
 title: Testing Trophy
 
-- E2E Tests: 5%
+- E2E Tests: 5% slow but high confidence
 - Integration Tests: 20%
-- Unit Tests: 60%
+- Unit Tests: 60% fast feedback loop
 - Static Analysis: 15%

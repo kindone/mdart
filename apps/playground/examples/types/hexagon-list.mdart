@@ -1,9 +1,9 @@
 type: hexagon-list
 title: DevOps Practices
 
-- Version control: Git
+- Version control: Git with trunk-based development
 - CI/CD: GitHub Actions
-- Infrastructure as code: Terraform
-- Monitoring: Datadog
+- Infrastructure as code: Terraform modules
+- Monitoring: Datadog APM + custom dashboards
 - Incident response
 - Blameless post-mortems

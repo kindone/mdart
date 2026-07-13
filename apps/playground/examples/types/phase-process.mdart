@@ -2,12 +2,12 @@ type: phase-process
 title: Product Launch
 
 - Discovery
-  - Research
-  - Requirements
+  - User research interviews
+  - Requirements & scope
 - Alpha
-  - Internal dogfood
+  - Internal dogfood testing
 - Beta
-  - Invite-only
-  - Bug fixes
+  - Invite-only external users
+  - Bug triage and fixes
 - GA
-  - Public launch
+  - Public launch with full rollout

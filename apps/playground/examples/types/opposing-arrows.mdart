@@ -1,8 +1,8 @@
 type: opposing-arrows
 
 - Supply
-  - Inventory
-  - Production
+  - Raw inventory on hand
+  - Production capacity
 - Demand
-  - Orders
-  - Forecast
+  - Confirmed orders
+  - 30-day sales forecast

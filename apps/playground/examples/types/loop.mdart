@@ -1,6 +1,6 @@
 type: loop
 title: Retry Logic
 
-- Attempt
-- Check
-- Backoff
+- Attempt: execute request
+- Fail: log error, check retry budget
+- Backoff: exponential delay with jitter

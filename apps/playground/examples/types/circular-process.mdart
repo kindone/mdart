@@ -1,7 +1,8 @@
 type: circular-process
 title: Product Lifecycle
 
-- Plan: 2wk
+- Plan: define scope & OKRs
 - Build: 6wk
-- Test: 2wk
-- Ship
+- Test: QA + load testing
+- Ship: staged rollout with feature flags
+- Monitor: track metrics and regressions
