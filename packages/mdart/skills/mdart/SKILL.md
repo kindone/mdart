@@ -39,8 +39,8 @@ Eleven families. **105 type names**, of which **101 are distinct renderers** —
 
 | Family | Default | Escalate when … |
 |---|---|---|
-| **Process** (sequential) | `process` | dates → `timeline-h` · narrowing → `funnel` · parallel actors → `swimlane` · phases → `phase-process` · long sequence wraps → `snake-process` · returns to start → `cycle` · branches by condition → `decision-tree` |
-| **List** (no order) | `bullet-list` | with status checkbox → `checklist` · with progress % → `progress-list` · equal-weight cards → `card-list` · paired pros/cons → `two-column-list` · with emoji → `icon-list` · numbered → `numbered-list` |
+| **Process** (sequential) | `process` | dates → `timeline-h` · long event text → `timeline-v` / `timeline-list` · narrowing → `funnel` · parallel actors → `swimlane` · phases → `phase-process` · long sequence wraps → `snake-process` · returns to start → `cycle` · branches by condition → `decision-tree` |
+| **List** (ordered or unordered facts) | `bullet-list` | ordered with long text → `circle-list` / `icon-list` · with status checkbox → `checklist` · with progress % → `progress-list` · equal-weight cards → `card-list` · paired pros/cons → `two-column-list` · with emoji → `icon-list` · numbered → `numbered-list` |
 | **Cycle** (recurring) | `cycle` | mechanical metaphor → `gear-cycle` · expanding spiral → `spiral` · no inherent direction → `nondirectional-cycle` · single feedback loop → `loop` |
 | **Matrix** (compare/classify) | `comparison` | exactly 2 things, +/- → `pros-cons` · 2 axes → `matrix-2x2` · market share → `bcg` · growth strategy → `ansoff` · 4 SWOT quadrants → `swot` · N×M grid → `matrix-nxm` |
 | **Hierarchy** (parent → child) | `tree` | reporting line → `org-chart` (vertical) or `h-org-chart` (horizontal) · ideation → `mind-map` · branching choice → `decision-tree` · web pages → `sitemap` · tournament → `bracket` · text outline → `hierarchy-list` |
@@ -111,8 +111,8 @@ Triggers worth memorising:
 
 ### 2. Comparison of 2+ named things?
 If the user says "compare", "vs", "differences between", "tradeoffs":
-- 2 items, additive vs subtractive view → `pros-cons`
-- 2+ items, multiple attributes → `comparison`
+- single item, additive vs subtractive view → `pros-cons`
+- 2+ items, multiple attributes (e.g. comparing options with pros/cons) → `comparison`
 - 2 axes (impact × effort, importance × urgency) → `matrix-2x2`
 - Market share quadrant (stars/cash cows) → `bcg`
 - Growth strategy quadrant → `ansoff`
@@ -138,12 +138,16 @@ If items reference each other ("A sends to B", "X depends on Y"):
 - Project tasks with start/end → `gantt` or `gantt-lite`
 - Milestones only → `milestone`
 - Chronological log of past events → `timeline` or `timeline-list`
+- Long temporal event labels/descriptions → `timeline-v` or `timeline-list`
 - Roadmap of future work → `roadmap`
 - Phases without precise dates → `phase-process`
 - Horizontal timeline of items → `timeline-h`
 - Vertical timeline → `timeline-v`
 
-**Do not** use bare `process` when dates are provided.
+**Do not** use bare `process` when dates are provided. If each event needs a
+phrase such as `Planck (1900): Energy is quantized`, prefer a vertical type:
+`timeline-v` or `timeline-list` lets text read horizontally while events stack
+vertically. `process` and `timeline-h` are for short step/event labels.
 
 ### 5. Hierarchy / containment?
 - Reporting / org structure → `org-chart` or `h-org-chart`
@@ -158,6 +162,7 @@ If items reference each other ("A sends to B", "X depends on Y"):
 
 ### 6. Sequential steps with order?
 - Equal-weight steps → `process`
+- Ordered facts/events with long descriptions → `circle-list` or `icon-list`
 - Each step narrows / filters → `funnel`
 - Steps are explicit phases → `phase-process`
 - 7+ steps that need to wrap → `snake-process` or `bending-process`
@@ -165,6 +170,10 @@ If items reference each other ("A sends to B", "X depends on Y"):
 - Branching on condition → `decision-tree` or `state-machine`
 - Steps run in parallel lanes → `swimlane`
 - Returns to start → `cycle` (or `loop` for feedback)
+
+Use `process` only when arrows mean workflow, causality, transformation, or
+handoff. If the content is just an ordered list with long values, `circle-list`
+or `icon-list` is the more generic, text-friendly choice.
 
 ### 7. Containment / set overlap?
 - 2–4 overlapping sets → `venn`, `venn-3`, `venn-4`
@@ -341,6 +350,7 @@ unreadable long before the data becomes complete.
 | `kanban` / `sprint-board` card | task title only, no description | ~40 chars |
 | Sequence / state-machine label | verb phrase or event name | ~24 chars |
 | Comparison / matrix-nxm cell | a value, not a sentence | ~30 chars |
+| Vertical timeline item (`timeline-v`, `timeline-list`) | date/name + short event phrase | ~80 chars |
 
 **Compression techniques** (apply before emitting the fence):
 
@@ -388,6 +398,20 @@ Prefer 2–3 focused diagrams over one overstuffed one.
 
 If after splitting and compressing the labels still don't fit, the right
 answer is often **prose plus a small diagram**, not a bigger diagram.
+
+**Long text needs text-friendly types.** Some diagrams are built from compact
+shapes; others put labels in wider horizontal text lanes. Pick accordingly:
+
+| More suitable for longer text | Avoid for longer text |
+|---|---|
+| `timeline-v`, `timeline-list` | `process`, `timeline-h`, `arrow-process` |
+| `circle-list`, `icon-list`, `card-list`, `pyramid-list`, `hierarchy-list` | `cycle`, `gear-cycle`, `circle-process` |
+| `comparison` / `matrix-nxm` cells with short values | `pyramid`, `step-up`, `step-down` |
+
+Rule: if the content is a chronological story with named dates and explanatory
+phrases, use `timeline-v` or `timeline-list`, not `process` or `timeline-h`.
+If it is only an ordered list with descriptive text, use `circle-list` or
+`icon-list`, not `process`.
 
 ---
 
@@ -523,10 +547,35 @@ collapses both into one undifferentiated text blob, defeating the renderer.
 For these types, **always** prefer `Label: value`. Reserve `-` / `—` only for
 free-text labels with no separable value (e.g. `Brand strength` in a SWOT cell,
 where the dash would be inside a single descriptive phrase).
-For `comparison`, keep this consistent within the whole table: use shared
-`key: value` children for every option, or use entirely unkeyed feature bullets.
-Never mix keyed children such as `Start: claude` with row-specific free-text
-bullets such as `Human TUI`.
+For `comparison`, **child keys become columns**. Prefer shared `key: value`
+children when the row has a name (`Form`, `Example`, `Momentum`). Unkeyed
+children are allowed beside keyed rows; they align positionally with an empty
+row/column header. Use that only for parallel value-only lines, not for
+one-off summaries or conclusions.
+
+```mdart
+type: comparison
+- Gaussian wavepacket
+  - Wavefunction: Minimum uncertainty state
+  - Balances position and momentum spread   ← allowed if peer items have matching value-only lines
+```
+
+Give that idea a column key instead:
+
+```mdart
+type: comparison
+- Gaussian wavepacket
+  - Wavefunction: Minimum uncertainty state
+  - Momentum: Balances position and momentum spread
+  - Δp,Δx: Δx · Δp = ℏ/2
+```
+
+Also make sure every top-level item is the same kind of thing. In a
+`comparison`, "Wave aspect" and "Particle aspect" are peer options; "Cannot
+observe both simultaneously" is a conclusion/constraint, not a third option.
+Put that conclusion in prose outside the fence, in a separate `card-list`, or
+recast it into the same shared keys only if it truly behaves like another
+comparable option.
 
 ```mdart
 type: progress-list
@@ -615,7 +664,7 @@ Before emitting a diagram, sanity-check:
 - **Dashes instead of `:`** — `Item - description` and `Item — description` parse as one big label. Only `:` splits into `{label, value}`, which renderers display distinctly (bar fills, badges, columns, message text). See §5.
 - **Syntax traps** — in `sequence` / `state-machine` / `network`, always use `→ Target: message`, never `- Target` (parses as edge but reads as containment). SWOT/pros-cons headings must be exact words (`Strengths`, `Pros`, etc.) or use the explicit `[strengths]` / `[pros]` attr.
 
-For the full anti-pattern catalog with 7 categories of failure modes, **read `anti-patterns.md` in this skill directory**.
+For the full anti-pattern catalog with 8 categories of failure modes, **read `anti-patterns.md` in this skill directory**.
 
 ---
 

@@ -11,6 +11,10 @@ Each entry: short trigger you can self-check against, then the fix.
 The most frequent failure. When uncertain, the model picks the broadest possible type. Almost always there's a more semantic option.
 
 - **`process` for unordered items.** `process` implies sequential order with arrows. A list of features, principles, or qualities is not a process. → `bullet-list`, `block-list`, or `card-list`.
+- **`process` for ordered-but-descriptive lists.** Order alone is not enough.
+  If arrows do not mean workflow, causality, transformation, or handoff, avoid
+  `process`. For ordered lists with long text values, use `circle-list` or
+  `icon-list`.
 - **`bullet-list` for comparisons.** If two or more items share parallel attributes (speed, cost, scale), the structure is `comparison` or `matrix-nxm`. The columns are the whole point.
 - **`tree` for ordered processes.** Trees show containment, not flow. If steps proceed in order, use `process` (or `decision-tree` if branching).
 - **`mind-map` for organised data.** `mind-map` connotes free-form ideation. If the structure is well-defined, use `tree` or `hierarchy-list`.
@@ -24,6 +28,7 @@ The user's vocabulary is a hint, not a directive. Match the *data structure*, no
 
 - **"timeline"** can mean three different things:
   - Chronological log of events → `timeline` or `timeline-list`
+  - Chronological story with long event descriptions → `timeline-v` or `timeline-list`
   - Project tasks with dates → `gantt-lite`
   - Future-facing plan → `roadmap`
 - **"tree"** can mean:
@@ -44,6 +49,7 @@ The user's vocabulary is a hint, not a directive. Match the *data structure*, no
   - Narrowing → `funnel`
   - Parallel actors → `swimlane`
   - With dates → `timeline-h` or `roadmap`
+  - With long dated event text → `timeline-v` or `timeline-list`
   - With phases → `phase-process`
 
 ---
@@ -68,6 +74,9 @@ Some types have implicit count constraints. Violating them produces awkward outp
 - **Funnel with 2 stages** is just two boxes — use `process` with two items.
 - **Venn with 5+ sets** doesn't fit `venn-4`. Switch to `cluster` or `concentric`.
 - **Process with 12+ steps** overflows the canvas. Use `snake-process` or `bending-process` (which auto-wrap).
+- **Horizontal timelines with sentence-length events** become cramped. Use
+  `timeline-v` or `timeline-list` so events stack vertically and the event
+  text can read horizontally.
 - **Pyramid with 1 tier** is just a triangle — use `bullet-list`.
 - **SWOT with only positive items** — use `bullet-list` or `pros-cons`. SWOT's value is the four-quadrant tension.
 - **Matrix-nxm with 1 row** is a definition list — use `bullet-list`.
@@ -132,6 +141,14 @@ Even a good type pick can produce a bad diagram if syntax is sloppy.
 - **Using `process` when arrow-chain shorthand fits.** `A → B → C` (one line) is cleaner than `- A` / `- B` / `- C`. Prefer it for short flat sequences.
 - **Forgetting `→ Target` flow children when the type expects edges.** In `sankey`, edges are `→ Target (value)` flow children of the source. In `network` mesh mode, edges go in an explicit `edges:` section.
 - **Numeric values without `key: value`.** For statistical types, `- Item: 75` is required — `- Item 75` won't parse the value. Same for `progress-list` percentages.
+- **Duplicate keys inside one `comparison` option.** `comparison` builds a column for each unique child label (via `Set`) then resolves each cell with `find` — so the second `- Advantage: …` under the same option is silently dropped. Every key must appear **at most once per top-level item** (= one row per attribute per option). If you have multiple advantages to list, either (a) merge them into a single value (`- Advantage: Works today; covers 92 renderers`), (b) number them (`- Advantage 1:` / `- Advantage 2:`), or (c) use `matrix-2x2` / `card-list` for free-form per-option bullets.
+- **Unkeyed `comparison` rows that are not parallel.** Child keys are the column names. Unkeyed children are allowed beside keyed rows, but they align positionally under an empty key. That works for parallel value-only lines such as `- Each particle has its own definite state` vs `- Neither particle has its own definite state`. It is wrong for row-specific summaries that do not have a matching peer. If a line has a real field name, use `Column: cell text` such as `- Momentum: Balances position and momentum spread` or `- Δp,Δx: Δx small, Δp large`.
+- **Conclusion or constraint as a fake `comparison` option.** Top-level
+  comparison items must be peers with the same schema. `Wave aspect` and
+  `Particle aspect` are comparable; `Cannot observe both simultaneously` is
+  a conclusion about both, not a third comparable option. Put it in prose
+  outside the fence, a separate `card-list`, or recast it into the same
+  shared keys only if it is genuinely another option.
 - **Dash or em-dash where a colon belongs.** `- Item — description` and
   `- Item - description` parse as one big label with `value` undefined. The
   parser only splits on the first unprotected `:` (URLs are protected via
@@ -159,6 +176,10 @@ See SKILL.md §3 for length budgets per node kind. Common manifestations:
 - **Full sentences inside process / cycle / pyramid nodes.** "The user signs
   in via OAuth and we issue a JWT" should become "OAuth sign-in" + "Issue
   JWT" as two steps, or "OAuth → JWT" if it really is one step.
+- **Ordered list values rendered as `process`.** `process` nodes are compact
+  arrow steps. For long ranked or ordered facts, use `circle-list` or
+  `icon-list`; they preserve the ordering cue without forcing each item into
+  a short arrow box.
 - **Descriptive paragraphs inside `kanban` / `sprint-board` cards.** Cards
   hold task titles only. If you need acceptance criteria, write them outside
   the fence.
@@ -177,6 +198,19 @@ See SKILL.md §3 for length budgets per node kind. Common manifestations:
 - **Numerical breakdowns inside labels.** "Revenue (was $1.2M in Q1, $1.5M
   in Q2, projected $1.8M in Q3)" → use a `bullet-chart` or `progress-list`
   with the numbers as values, label is just "Revenue".
+- **Long historical / temporal events forced into `process` or `timeline-h`.**
+  A path like `Planck (1900): Energy is quantized` → `Einstein (1905): Light
+  is quantized` is a chronological story, not compact process steps. Use
+  `timeline-v` or `timeline-list`; the dates stay ordered vertically and the
+  explanatory text gets horizontal reading space.
+
+**Text suitability quick check:**
+
+| Better for longer text | Not for longer text |
+|---|---|
+| `timeline-v`, `timeline-list` | `process`, `timeline-h`, `arrow-process` |
+| `circle-list`, `icon-list`, `card-list`, `pyramid-list`, `hierarchy-list` | `cycle`, `gear-cycle`, `circle-process` |
+| `comparison` / `matrix-nxm` with short cell values | `pyramid`, `step-up`, `step-down` |
 
 **Fix priority when a diagram feels too big:**
 

@@ -9,5 +9,5 @@
     "outDir":              "./dist",
     "rootDir":             "./src"
   },
-  "exclude": ["src/**/*.test.ts"]
+  "exclude": ["src/__tests__/**", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.prop.ts"]
 }

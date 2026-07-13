@@ -262,6 +262,8 @@ title: Microservices vs Monolith
 #### `comparison`
 Top-level items = **rows** (attributes); children = `Column: value` pairs.
 Set `direction: LR` in front-matter to flip — top-level items become columns instead.
+Children without `:` can be mixed with keyed children; they align positionally
+under an empty row/column header. Use that only for parallel value-only lines.
 ```
 - Type
   - Postgres: Relational

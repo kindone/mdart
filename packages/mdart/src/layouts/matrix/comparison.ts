@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, type ItemLike } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty, shouldAnimate, seqSpotlightCSS, renderWrappedText, type ItemLike, wrapItem, shouldInstrument } from '../shared'
 
 function lerpColorLocal(c1: string, c2: string, t: number): string {
   const hexToRgb = (hex: string) => {
@@ -27,14 +27,7 @@ function labelText(
   lineH = LINE_H,
   item?: ItemLike,
 ): string {
-  const { lines, truncated, url = null } = wrap
-  // Prefer full item summary (label + value + attrs) so attrs are never silently dropped.
-  // Fall back to label-on-truncation when no item context is available.
-  const tip   = item ? itemTitleTag(item) : (truncated ? `<title>${escapeXml(label)}</title>` : '')
-  const spans = lines
-    .map((l, i) => `<tspan x="${cx}" dy="${i === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
-    .join('')
-  return aWrap(`<text x="${cx}" y="${y1}" ${attrs}>${tip}${spans}</text>`, url)
+  return renderWrappedText(cx, y1, attrs, label, wrap, lineH, item)
 }
 
 /** First-line baseline that centres n lines in cellH. */
@@ -48,11 +41,7 @@ function rowH(maxLines: number): number {
 
 function validateComparisonSpec(spec: MdArtSpec): boolean {
   const children = spec.items.flatMap(item => item.children)
-  if (children.length === 0) return false
-
-  const hasKeyedChildren = children.some(child => child.value !== undefined)
-  const hasUnkeyedChildren = children.some(child => child.value === undefined)
-  return !(hasKeyedChildren && hasUnkeyedChildren)
+  return children.length > 0
 }
 
 function renderComparisonError(theme: MdArtTheme): string {
@@ -61,7 +50,7 @@ function renderComparisonError(theme: MdArtTheme): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
     <text x="${W / 2}" y="${titleY}" text-anchor="middle" font-size="15" fill="${theme.danger}" font-family="system-ui,sans-serif" font-weight="700">Invalid comparison diagram syntax</text>
-    <text x="${W / 2}" y="${descY}" text-anchor="middle" font-size="12" fill="${theme.textMuted}" font-family="system-ui,sans-serif">Comparison needs all children keyed or all children unkeyed:</text>
+    <text x="${W / 2}" y="${descY}" text-anchor="middle" font-size="12" fill="${theme.textMuted}" font-family="system-ui,sans-serif">Comparison needs at least one child row:</text>
     <rect x="80" y="${boxY}" width="${W - 160}" height="${lineH * 6 + pad * 2}" rx="6" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>
     <text x="96" y="${boxY + pad + 14}" font-size="12" fill="${theme.text}" font-family="ui-monospace,monospace">- Option A</text>
     <text x="112" y="${boxY + pad + 14 + lineH}" font-size="12" fill="${theme.text}">  - Start: CLI command</text>
@@ -82,14 +71,21 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
   const cols = spec.items
   if (cols.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const allChildrenPositional = cols.every(col => col.children.every(ch => !ch.value))
   const isPositional = allChildrenPositional && cols.length >= 2
 
   const rowLabelColHeader = isPositional ? cols[0].label : 'Feature'
-  const rowLabels: string[] = isPositional
-    ? cols[0].children.map(ch => ch.label)
-    : Array.from(new Set(cols.flatMap(c => c.children.map(ch => ch.label))))
+  const keyedRowLabels = Array.from(new Set(cols.flatMap(c => c.children.filter(ch => ch.value !== undefined).map(ch => ch.label))))
+  const maxUnkeyedRows = Math.max(0, ...cols.map(c => c.children.filter(ch => ch.value === undefined).length))
+  const rowSpecs: Array<{ label: string; key?: string; unkeyedIndex?: number }> = isPositional
+    ? cols[0].children.map(ch => ({ label: ch.label, unkeyedIndex: cols[0].children.indexOf(ch) }))
+    : [
+        ...keyedRowLabels.map(label => ({ label, key: label })),
+        ...Array.from({ length: maxUnkeyedRows }, (_, i) => ({ label: '', unkeyedIndex: i })),
+      ]
+  const rowLabels = rowSpecs.map(row => row.label)
   const dataCols = isPositional ? cols.slice(1) : cols
 
   const LABEL_W  = 120
@@ -107,17 +103,17 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
   const HEADER_H       = Math.max(32, PAD_V + maxHLines * LINE_H + PAD_V)
 
   // Pre-compute cell values and wraps
-  const cellValues: string[][] = rowLabels.map((rowLabel, ri) =>
+  const cellValues: string[][] = rowSpecs.map(row =>
     dataCols.map(col => {
-      if (isPositional) return col.children[ri]?.label ?? '—'
-      const child = col.children.find(ch => ch.label === rowLabel)
+      if (isPositional || row.unkeyedIndex !== undefined) return col.children.filter(ch => ch.value === undefined)[row.unkeyedIndex ?? 0]?.label ?? '—'
+      const child = col.children.find(ch => ch.value !== undefined && ch.label === row.key)
       return child?.value ?? (child ? '✓' : '—')
     })
   )
-  const cellItems: (ItemLike | undefined)[][] = rowLabels.map((rowLabel, ri) =>
+  const cellItems: (ItemLike | undefined)[][] = rowSpecs.map(row =>
     dataCols.map(col => {
-      if (isPositional) return col.children[ri]
-      return col.children.find(ch => ch.label === rowLabel)
+      if (isPositional || row.unkeyedIndex !== undefined) return col.children.filter(ch => ch.value === undefined)[row.unkeyedIndex ?? 0]
+      return col.children.find(ch => ch.value !== undefined && ch.label === row.key)
     })
   )
   const rowLabelWraps = rowLabels.map(rl => wrapLabel(rl, rowMax, 5))
@@ -163,7 +159,7 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
       `text-anchor="middle" font-size="12" fill="#bfdbfe" font-family="system-ui,sans-serif" font-weight="700"`,
       col.label, hw, LINE_H, col))
   }
-  svg += animate ? `<g class="mdart-n0">${headerUnit.join('')}</g>` : headerUnit.join('')
+  svg += wrapItem(headerUnit.join(''), 0, animate, instrument)
 
   // Header / data separator
   svg += `<line x1="0" y1="${baseY + HEADER_H}" x2="${W}" y2="${baseY + HEADER_H}" stroke="${theme.border}" stroke-width="1.5" />`
@@ -196,7 +192,7 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
     }
 
     rowUnit.push(`<line x1="0" y1="${ry + rH}" x2="${W}" y2="${ry + rH}" stroke="${theme.border}" stroke-width="0.5" />`)
-    svg += animate ? `<g class="mdart-n${ri + 1}">${rowUnit.join('')}</g>` : rowUnit.join('')
+    svg += wrapItem(rowUnit.join(''), ri + 1, animate, instrument)
   }
 
   // Column dividers
@@ -218,6 +214,7 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const allChildrenPositional = items.every(it => it.children.every(ch => !ch.value))
   const useFirstRowHeaders    = allChildrenPositional && items.length >= 2 && !spec.columns
@@ -240,7 +237,12 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
     dataRows      = items
     topLeftHeader = ''
   } else {
-    colLabels     = Array.from(new Set(items.flatMap(it => it.children.map(ch => ch.label))))
+    const keyedLabels = Array.from(new Set(items.flatMap(it => it.children.filter(ch => ch.value !== undefined).map(ch => ch.label))))
+    const maxUnkeyedCols = Math.max(0, ...items.map(it => it.children.filter(ch => ch.value === undefined).length))
+    colLabels     = [
+      ...keyedLabels,
+      ...Array.from({ length: maxUnkeyedCols }, () => ''),
+    ]
     dataRows      = items
     topLeftHeader = 'Field'
   }
@@ -261,16 +263,21 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
   const HEADER_H       = Math.max(28, PAD_V + maxHLines * LINE_H + PAD_V)
 
   // Pre-compute cell values and wraps
+  const keyedColCount = allChildrenPositional ? 0 : colLabels.filter(label => label !== '').length
   const cellValues: string[][] = dataRows.map(row =>
     colLabels.map((colLabel, ci) => {
-      const kvChild = row.children.find(ch => ch.label === colLabel)
+      if (!allChildrenPositional && colLabel === '') return row.children.filter(ch => ch.value === undefined)[ci - keyedColCount]?.label ?? '—'
+      const kvChild = row.children.find(ch => ch.value !== undefined && ch.label === colLabel)
       if (kvChild) return kvChild.value ?? '✓'
+      if (!allChildrenPositional) return '—'
       return row.children[ci]?.label ?? '—'
     })
   )
   const cellItems: (ItemLike | undefined)[][] = dataRows.map(row =>
     colLabels.map((colLabel, ci) => {
-      const kvChild = row.children.find(ch => ch.label === colLabel)
+      if (!allChildrenPositional && colLabel === '') return row.children.filter(ch => ch.value === undefined)[ci - keyedColCount]
+      const kvChild = row.children.find(ch => ch.value !== undefined && ch.label === colLabel)
+      if (!allChildrenPositional) return kvChild
       return kvChild ?? row.children[ci]
     })
   )
@@ -314,7 +321,7 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
       `text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
       colLabels[ci], hw))
   }
-  svg += animate ? `<g class="mdart-n0">${headerUnit.join('')}</g>` : headerUnit.join('')
+  svg += wrapItem(headerUnit.join(''), 0, animate, instrument)
 
   // Header / data separator
   svg += `<line x1="0" y1="${baseY + HEADER_H}" x2="${W}" y2="${baseY + HEADER_H}" stroke="${theme.border}" stroke-width="1.5" />`
@@ -350,7 +357,7 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
     }
 
     rowUnit.push(`<line x1="0" y1="${ry + rH}" x2="${W}" y2="${ry + rH}" stroke="${theme.border}" stroke-width="0.5" />`)
-    svg += animate ? `<g class="mdart-n${ri + 1}">${rowUnit.join('')}</g>` : rowUnit.join('')
+    svg += wrapItem(rowUnit.join(''), ri + 1, animate, instrument)
   }
 
   // Vertical dividers
