@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, truncate, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, tt, truncate, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -39,6 +39,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const maxCharsPerField = Math.floor(CLASS_W / 7) - 2
 
   classes.forEach((cls, i) => {
@@ -109,7 +110,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const isStatic = method.attrs.includes('static')
       unit.push(`<text x="${(x + 7).toFixed(1)}" y="${my.toFixed(1)}" font-size="10" fill="${theme.primary}cc" font-family="ui-monospace,monospace"${isStatic ? ' text-decoration="underline"' : ''}>${escapeXml(vis + truncate(raw, maxCharsPerField))}</text>`)
     })
-    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i, animate, instrument))
   })
 
   if (animate) parts.unshift(seqSpotlightCSS(classes.length, spec, { scale: false }))

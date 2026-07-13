@@ -1,9 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, parseLink, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, renderWrappedText, wrapItem, shouldInstrument } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   // Collect items by prefix char or by group name
   interface SwotEntry { display: string; url: string | null; value?: string; attrs?: string[]; rawLabel: string }
   interface SwotQuadrant {
@@ -103,8 +104,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const contentTop = spec.title ? PAD + titleH : 0
   const CELL_W = W / 2
   const CELL_H = (H - contentTop) / 2
-  // 10px body + "• " — use right edge of cell (x+10 inset)
-  const bulletMax = Math.max(10, Math.floor((CELL_W - 20) / 4.3))
 
   let svgContent = ''
 
@@ -130,32 +129,27 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const maxItems = Math.min(q.items.length, 5)
     for (let i = 0; i < maxItems; i++) {
-      const itemY = y + 38 + i * 16
+      const itemY = y + 44 + i * 25
       const entry = q.items[i]
       const { display: itDisplay, url: itUrl, value: itValue } = entry
-      // Reserve space for the dim value suffix when present so the label
-      // isn't the only thing that gets squeezed.
       const valueSuffix = itValue ? ` · ${itValue}` : ''
-      const totalBudget = bulletMax
-      const valBudget   = itValue ? Math.min(itValue.length + 3, Math.floor(totalBudget * 0.4)) : 0
-      const lblBudget   = totalBudget - valBudget
-      // Tooltip carries full label + value + attrs even though attrs aren't
-      // visually displayed in the bullet text.
-      const fullTip = itemTitleTag({ label: entry.rawLabel, value: itValue, attrs: entry.attrs })
-      unit.push(aWrap(
-        `<text x="${x + 10}" y="${itemY}" font-size="10" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.85">` +
-        fullTip +
-        `<tspan>• ${tt(itDisplay, lblBudget)}</tspan>` +
-        (itValue ? `<tspan opacity="0.7">${tt(valueSuffix, valBudget)}</tspan>` : '') +
-        `</text>`,
-        itUrl,
+      const bulletText = `• ${itDisplay}${valueSuffix}`
+      const bulletFit = fitTextToWidthShared([bulletText], CELL_W - 20, { maxSize: 10, minSize: 6.5, maxLines: 2, boxH: 24 })
+      unit.push(renderWrappedText(
+        x + 10,
+        itemY,
+        `font-size="${bulletFit.fontSize}" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.85"`,
+        bulletText,
+        { ...bulletFit.results[0], url: itUrl },
+        bulletFit.lineHeight,
+        { label: entry.rawLabel, value: itValue, attrs: entry.attrs },
       ))
     }
 
     if (q.items.length > 5) {
-      unit.push(`<text x="${x + 10}" y="${y + 38 + 5 * 16}" font-size="9" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.6">+${q.items.length - 5} more</text>`)
+      unit.push(`<text x="${x + 10}" y="${y + 44 + 5 * 25}" font-size="9" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.6">+${q.items.length - 5} more</text>`)
     }
-    svgContent += animate ? `<g class="mdart-n${quadrants.findIndex(qd => qd.key === key)}">${unit.join('')}</g>` : unit.join('')
+    svgContent += wrapItem(unit.join(''), quadrants.findIndex(qd => qd.key === key), animate, instrument)
   }
 
   // Grid lines

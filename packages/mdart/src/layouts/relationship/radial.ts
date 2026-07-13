@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const centerLabel = spec.title ?? spec.items[0]?.label ?? 'Hub'
@@ -12,6 +12,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const CR = 38  // center circle radius
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   for (let i = 0; i < n; i++) {
     const angle = (2 * Math.PI * i / n) - Math.PI / 2
     const sx = cx + R * Math.cos(angle), sy = cy + R * Math.sin(angle)
@@ -36,7 +37,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         unit.push(`<text x="${sx.toFixed(1)}" y="${offY.toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 12)}</text>`)
       })
     }
-    parts.push(animate ? `<g class="mdart-n${i + 1}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i + 1, animate, instrument))
   }
   const centerUnit: string[] = []
   centerUnit.push(`<circle cx="${cx}" cy="${cy}" r="${CR}" fill="${theme.surface}" stroke="${theme.accent}" stroke-width="1.5"/>`)
@@ -49,7 +50,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     centerUnit.push(`<text x="${cx}" y="${cy - 3}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(cw.slice(0, m).join(' '), 12)}</text>`)
     centerUnit.push(`<text x="${cx}" y="${cy + 11}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(cw.slice(m).join(' '), 12)}</text>`)
   }
-  parts.push(animate ? `<g class="mdart-n0">${centerUnit.join('')}</g>` : centerUnit.join(''))
+  parts.push(wrapItem(centerUnit.join(''), 0, animate, instrument))
   if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${parts.join('\n  ')}

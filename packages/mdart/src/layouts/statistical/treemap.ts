@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -16,6 +16,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const W = 600
   const TITLE_H = spec.title ? 30 : 8
@@ -24,12 +25,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const colors = [theme.primary, theme.secondary, theme.accent, theme.muted, ...theme.palette]
 
-  const cells: string[] = []
-
   const cols = Math.ceil(Math.sqrt(items.length))
   const rows = Math.ceil(items.length / cols)
   const cellW = W / cols
   const cellH = CONTENT_H / rows
+
+  const cells: string[] = []
 
   items.forEach((item, i) => {
     const unit: string[] = []
@@ -38,16 +39,47 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const x = col * cellW
     const y = TITLE_H + 4 + row * cellH
     const fill = colors[i % colors.length]
+    const ccx = x + cellW / 2
+    const ccy = y + cellH / 2
 
-    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: !!item.value })
-    unit.push(
-      `<rect x="${(x + 2).toFixed(1)}" y="${(y + 2).toFixed(1)}" width="${(cellW - 4).toFixed(1)}" height="${(cellH - 4).toFixed(1)}" rx="6" fill="${fill}55" stroke="${fill}99" stroke-width="1">${itemTitleTag(item)}</rect>`,
-      aWrap(`<text x="${(x + cellW / 2).toFixed(1)}" y="${(y + cellH / 2).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, Math.floor(cellW / 8), item)}</text>`, itmUrl),
-    )
-    if (item.value) {
-      unit.push(`<text x="${(x + cellW / 2).toFixed(1)}" y="${(y + cellH / 2 + 16).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value)}</text>`)
+    const hasValue = !!item.value
+    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: hasValue })
+
+    // Per-cell fitting: when a value is shown below, label shares the upper
+    // portion of the cell; otherwise it gets the full height.
+    const lblBoxH = hasValue ? cellH * 0.5 : cellH - 16
+    const { fontSize: lblFS, lineHeight: lblLH, results: [{ lines: lblLines, truncated: lblTruncated }] } =
+      fitTextToWidthShared([itmDisplay], cellW - 12, {
+        maxSize: 12, minSize: 7,
+        maxLines: hasValue ? 2 : 3,
+        boxH: lblBoxH,
+      })
+    const lblTip = lblTruncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
+
+    unit.push(`<rect x="${(x + 2).toFixed(1)}" y="${(y + 2).toFixed(1)}" width="${(cellW - 4).toFixed(1)}" height="${(cellH - 4).toFixed(1)}" rx="6" fill="${fill}55" stroke="${fill}99" stroke-width="1">${itemTitleTag(item)}</rect>`)
+
+    if (hasValue) {
+      // Centre label+value block vertically in the cell
+      const lblVisH = (lblLines.length - 1) * lblLH + lblFS
+      const valFS = 10
+      const totalBlockH = lblVisH + 4 + valFS
+      const lblStartY = ccy - totalBlockH / 2 + lblFS * 0.75
+      const valStartY = ccy - totalBlockH / 2 + lblVisH + 4 + valFS * 0.75
+      const lblSpans = lblLines
+        .map((line, li) => `<tspan x="${ccx.toFixed(1)}" dy="${li === 0 ? 0 : lblLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+        .join('')
+      unit.push(aWrap(`${lblTip}<text x="${ccx.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${lblFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblSpans}</text>`, itmUrl))
+      unit.push(`<text x="${ccx.toFixed(1)}" y="${valStartY.toFixed(1)}" text-anchor="middle" font-size="${valFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value!)}</text>`)
+    } else {
+      // Label centred in full cell
+      const lblStartY = ccy - ((lblLines.length - 1) * lblLH) / 2 + lblFS * 0.35
+      const lblSpans = lblLines
+        .map((line, li) => `<tspan x="${ccx.toFixed(1)}" dy="${li === 0 ? 0 : lblLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+        .join('')
+      unit.push(aWrap(`${lblTip}<text x="${ccx.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${lblFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblSpans}</text>`, itmUrl))
     }
-    cells.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+
+    cells.push(wrapItem(unit.join(''), i, animate, instrument))
   })
   if (animate) cells.unshift(seqSpotlightCSS(items.length, spec, { scale: false }))
 

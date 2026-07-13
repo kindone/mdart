@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -25,6 +25,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const GAP_ANGLE = 0.03
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const parts: string[] = []
   if (spec.title) {
     parts.push(`<text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`)
@@ -64,19 +65,17 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // font-size 10/9, single line only).
     const segBoxW = 92
     const segBoxH = 40
-    const valueFitFull = item.value
-      ? fitTextToWidthShared([item.value], segBoxW, { maxSize: 9, minSize: 6.5, maxLines: 1 })
-      : null
-    const valueFS = valueFitFull?.fontSize ?? 9
-    const valueLH = valueFitFull?.lineHeight ?? 9 * 1.3
-    const valueFit = valueFitFull?.results[0] ?? null
-    const reservedBoxH = valueFit ? Math.max(12, segBoxH - valueLH - 2) : segBoxH
-    const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines: labelLines, truncated: labelTruncated }] } =
-      fitTextToWidthShared([lblDisplay], segBoxW, {
-        maxSize: 10, minSize: 6.5, maxLines: item.value ? 2 : 3, boxH: reservedBoxH,
-      })
-    const lblTip = labelTruncated ? `<title>${escapeXml(lblDisplay)}</title>` : ''
-    const totalH = labelLines.length * labelLH + (valueFit ? valueLH + 2 : 0)
+    const fit = fitLabelValueBlock(lblDisplay, item.value, segBoxW, segBoxH, {
+      labelUrl: lblUrl,
+      labelMaxSize: 10,
+      labelMinSize: 6.5,
+      labelMaxLines: 2,
+      labelMaxLinesNoValue: 3,
+      valueMaxSize: 9,
+      valueMinSize: 6.5,
+      valueMaxLines: 1,
+      gap: 2,
+    })
 
     // Connector line from outer edge to label — included in group as it is part of this wedge
     const cx1 = cx + connectorR * Math.cos(midAngle)
@@ -85,18 +84,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let nodeStr = ''
     nodeStr += `<path d="${path}" fill="${fill}">${itemTitleTag(item)}</path>`
     nodeStr += `<line x1="${cx1.toFixed(1)}" y1="${cy1.toFixed(1)}" x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="${fill}" stroke-width="1" opacity="0.7"/>`
-    let lblContent = lblTip
-    labelLines.forEach((line, li) => {
-      const ty = ly - totalH / 2 + li * labelLH + labelLH * 0.8
-      lblContent += `<text x="${lx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+    nodeStr += renderFitBlock(lx, ly, fit, {
+      labelFullText: lblDisplay,
+      valueFullText: item.value,
+      labelFill: theme.text,
+      valueFill: theme.textMuted,
+      labelWeight: '600',
+      anchor,
     })
-    nodeStr += aWrap(lblContent, lblUrl)
-    if (valueFit) {
-      const valueTip = valueFit.truncated ? `<title>${escapeXml(item.value!)}</title>` : ''
-      const ty = ly - totalH / 2 + labelLines.length * labelLH + valueLH * 0.8
-      nodeStr += `${valueTip}<text x="${lx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(valueFit.lines[0])}</text>`
-    }
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
   }
 
   if (animate) parts.unshift(seqSpotlightCSS(n, spec))

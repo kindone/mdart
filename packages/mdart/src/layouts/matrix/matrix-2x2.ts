@@ -1,17 +1,16 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, renderWrappedText, centeredTextY, wrapItem, shouldInstrument } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items.slice(0, 4)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const W = 500
   const TITLE_H = spec.title ? 28 : 0
   const CELL_W = W / 2
   const CELL_H = 168
   const H = TITLE_H + CELL_H * 2
-  const headerMax = Math.max(8, Math.floor((CELL_W - 24) / 5.0))
-  const bulletMax = Math.max(8, Math.floor((CELL_W - 28) / 4.3))
 
   const fills   = [`${theme.primary}22`, `${theme.secondary}1a`, `${theme.accent}1a`, `${theme.secondary}22`]
   const strokes = [theme.primary, theme.secondary, theme.accent, theme.secondary]
@@ -31,12 +30,31 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // here means "value is not rendered visibly on the header" (it isn't).
     const { display: itmDisplay, url: itmUrl } = displayLabel(item)
     unit.push(`<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${fills[i]}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(item)}</rect>`)
-    unit.push(aWrap(`<text x="${x + CELL_W / 2}" y="${y + 26}" text-anchor="middle" font-size="12" fill="${strokes[i]}" font-family="system-ui,sans-serif" font-weight="700">${tt(itmDisplay, headerMax, item)}</text>`, itmUrl))
+    const headerFit = fitTextToWidthShared([itmDisplay], CELL_W - 24, { maxSize: 12, minSize: 7, maxLines: 2, boxH: 34 })
+    unit.push(renderWrappedText(
+      x + CELL_W / 2,
+      centeredTextY(y + 8, 28, headerFit.results[0].lines.length, headerFit.lineHeight),
+      `text-anchor="middle" font-size="${headerFit.fontSize}" fill="${strokes[i]}" font-family="system-ui,sans-serif" font-weight="700"`,
+      itmDisplay,
+      { ...headerFit.results[0], url: itmUrl },
+      headerFit.lineHeight,
+      item,
+    ))
     item.children.slice(0, 5).forEach((ch, j) => {
       const { display: chDisplay, url: chUrl } = displayLabel(ch)
-      unit.push(aWrap(`<text x="${x + 12}" y="${y + 46 + j * 19}" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" opacity="0.85">${itemTitleTag(ch)}• ${tt(chDisplay, bulletMax, ch)}</text>`, chUrl))
+      const bulletText = `• ${chDisplay}`
+      const bulletFit = fitTextToWidthShared([bulletText], CELL_W - 24, { maxSize: 10, minSize: 6.5, maxLines: 2, boxH: 22 })
+      unit.push(renderWrappedText(
+        x + 12,
+        y + 50 + j * 22,
+        `font-size="${bulletFit.fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" opacity="0.85"`,
+        bulletText,
+        { ...bulletFit.results[0], url: chUrl },
+        bulletFit.lineHeight,
+        ch,
+      ))
     })
-    svgContent += animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join('')
+    svgContent += wrapItem(unit.join(''), i, animate, instrument)
   })
   // Center axis lines
   svgContent += `<line x1="${W / 2}" y1="${TITLE_H}" x2="${W / 2}" y2="${H}" stroke="${theme.border}" stroke-width="1.5"/>`

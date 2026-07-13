@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 import { countLeaves, maxDepth, layoutNodes, flatNodes } from './shared'
 
 const BOX_W = 110
@@ -11,6 +11,7 @@ const NODE_FS_MIN = 8
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const depth = maxDepth(spec.items)
   const totalLeaves = spec.items.reduce((s, i) => s + countLeaves(i), 0) || 1
@@ -68,7 +69,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       .map((l, li) => `<tspan x="${n.x.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
       .join('')
     unit.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${textStartY.toFixed(1)}" text-anchor="middle" font-size="${nodeFS}" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${fullTip}${spans}</text>`, nUrl))
-    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i, animate, instrument))
   }
   if (animate) parts.unshift(seqSpotlightCSS(flat.length, spec, { scale: false }))
 

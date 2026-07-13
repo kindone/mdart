@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -63,11 +63,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   // Spine line
   const spineY1 = TITLE_H + 12 + rows[0].rowH / 2
   const lastCy  = rowY[items.length - 1] + rows[items.length - 1].rowH / 2
-  parts.push(animate ? `<g class="mdart-n0"><line x1="${LINE_X}" y1="${spineY1.toFixed(1)}" x2="${LINE_X}" y2="${lastCy.toFixed(1)}" stroke="${theme.border}" stroke-width="2"/></g>` : `<line x1="${LINE_X}" y1="${spineY1.toFixed(1)}" x2="${LINE_X}" y2="${lastCy.toFixed(1)}" stroke="${theme.border}" stroke-width="2"/>`)
+  parts.push(wrapItem(`<line x1="${LINE_X}" y1="${spineY1.toFixed(1)}" x2="${LINE_X}" y2="${lastCy.toFixed(1)}" stroke="${theme.border}" stroke-width="2"/>`, 0, animate, instrument))
 
   items.forEach((item, i) => {
     const cy      = rowY[i] + rows[i].rowH / 2
@@ -103,7 +104,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const tagCol = done ? theme.accent : active ? '#fbbf24' : theme.textMuted
     const tagTip = tag.length > 16 ? `<title>${escapeXml(tag)}</title>` : ''
     unit.push(`<text x="${W - 10}" y="${(cy + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${tagCol}" font-family="system-ui,sans-serif">${tagTip}${escapeXml(tag.slice(0, 16))}</text>`)
-    parts.push(animate ? `<g class="mdart-n${i + 1}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i + 1, animate, instrument))
   })
 
   if (animate) parts.unshift(seqSpotlightCSS(items.length + 1, spec, { scale: false }))

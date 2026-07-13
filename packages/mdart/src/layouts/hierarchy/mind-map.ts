@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 // ── Node geometry ────────────────────────────────────────────────────────────
 // Three tiers, each an ellipse. Radii are fixed (tied to the R1/R2 radial
@@ -48,6 +48,7 @@ function mlText(
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   let centerLabel: string
   let branches: MdArtSpec['items']
 
@@ -139,9 +140,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       subCursor++
     }
     const unit = [...connectors, ...shapes, ...texts].join('')
-    parts.push(animate ? `<g class="mdart-n${i + 1}">${unit}</g>` : unit)
+    parts.push(wrapItem(unit, i + 1, animate, instrument))
   }
-  parts.push(animate ? `<g class="mdart-n0">${centerUnit}</g>` : centerUnit)
+  parts.push(wrapItem(centerUnit, 0, animate, instrument))
   if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">

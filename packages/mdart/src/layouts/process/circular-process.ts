@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, svgWrap, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { lerpColor, svgWrap, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument } from '../shared'
 
 /** Radial clearance from centre of a box to its silhouette edge at angle `a`. */
 function boxRadius(hw: number, hh: number, a: number): number {
@@ -20,11 +20,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const cx = W / 2, cy = titleH + (H - titleH) / 2
   const R = Math.min(160, (H - titleH - 48) / 2)
   const BOX_W = Math.min(104, Math.floor(2 * Math.PI * R / n * 0.70))
-  const BOX_H = 36
+  // Taller boxes when values exist: circBoxH grows from 28→48, giving
+  // enough budget that valueShare×48=21.6px ≥ 20.8px (2×size-8 lines).
+  const anyValue = items.some(it => !!it.value)
+  const BOX_H = anyValue ? 56 : 36
   const hw = BOX_W / 2, hh = BOX_H / 2
   const GAP = 6  // extra px gap between arrow tip and box edge
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
@@ -93,39 +97,31 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // since the effective per-size line cap floors at 1 before minSize is
     // ever reached. Guarantee at least that floor-line-pair's worth of
     // room so the mechanism can actually engage when genuinely needed.
-    const valueFitFull = item.value
-      ? fitTextToWidthShared([item.value], BOX_W - 10, {
-          maxSize: 9, minSize: 6, maxLines: 2, boxH: Math.max(6 * 1.3 * 2, circBoxH * 0.4),
-        })
-      : null
-    const valueFS = valueFitFull?.fontSize ?? 9
-    const valueLH = valueFitFull?.lineHeight ?? 9 * 1.3
-    const valueFit = valueFitFull?.results[0] ?? null
-    const valueBlockH = valueFit ? valueFit.lines.length * valueLH : 0
-    const reservedBoxH = valueFit ? Math.max(8, circBoxH - valueBlockH - 2) : circBoxH
-    const { fontSize: labelFS, lineHeight: lineH, results: [{ lines, truncated: labelTruncated }] } =
-      fitTextToWidthShared([itemLabel], BOX_W - 10, {
-        maxSize: 10.5, minSize: 6.5, maxLines: item.value ? 2 : 3, boxH: reservedBoxH,
-      })
-    const totalH = lines.length * lineH + (valueFit ? valueBlockH : 0)
+    const fit = fitLabelValueBlock(itemLabel, item.value, BOX_W - 10, circBoxH, {
+      labelMaxSize: 10.5,
+      labelMinSize: 6.5,
+      labelMaxLines: 2,
+      labelMaxLinesNoValue: 3,
+      valueMaxSize: 10.5,
+      valueMinSize: 6,
+      valueMaxLines: 2,
+      valueShare: 0.45,
+      gap: 0,
+    })
 
     // Box + label text wrapped in aWrap for clickable node
     let nodeContent = `<rect x="${rx}" y="${ry}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="1.8">${itemTitleTag(item)}</rect>`
     nodeContent += `<text x="${badgeX}" y="${badgeY}" font-size="8" fill="${fill}" font-family="system-ui,sans-serif" font-weight="800" opacity="0.85">${i + 1}</text>`
-    if (labelTruncated) nodeContent += `<title>${escapeXml(itemLabel)}</title>`
-    lines.forEach((line, li) => {
-      const ty = (by - totalH / 2 + lineH * li + lineH * 0.8).toFixed(1)
-      nodeContent += `<text x="${bx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+    nodeContent += renderFitBlock(bx, by, fit, {
+      labelFullText: itemLabel,
+      valueFullText: item.value,
+      labelFill: theme.text,
+      valueFill: theme.text,
+      labelWeight: '600',
+      valueExtraAttrs: 'opacity="0.7"',
     })
-    if (valueFit) {
-      const valueTip = valueFit.truncated ? `<title>${escapeXml(item.value!)}</title>` : ''
-      valueFit.lines.forEach((line, li) => {
-        const ty = (by - totalH / 2 + lines.length * lineH + li * valueLH + valueLH * 0.8).toFixed(1)
-        nodeContent += `${li === 0 ? valueTip : ''}<text x="${bx.toFixed(1)}" y="${ty}" text-anchor="middle" font-size="${valueFS}" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(line)}</text>`
-      })
-    }
     const nodeEl = aWrap(nodeContent, url)
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeEl}</g>` : nodeEl)
+    parts.push(wrapItem(nodeEl, i, animate, instrument))
   })
 
   if (animate) parts.unshift(seqSpotlightCSS(n, spec, { trailingArrowSlot: true }))

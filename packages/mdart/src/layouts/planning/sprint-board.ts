@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -76,6 +76,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   let totalPts = 0, donePts = 0
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   columns.forEach((col, ci) => {
     const colX    = GAP + ci * (COL_W + GAP)
@@ -130,7 +131,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
       cy += cardH + CARD_GAP
     })
-    parts.push(animate ? `<g class="mdart-n${ci}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), ci, animate, instrument))
   })
 
   // Progress bar + velocity
@@ -143,7 +144,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     summaryUnit.push(`<rect x="${barX}" y="${barY}" width="${fw.toFixed(1)}" height="10" rx="5" fill="${theme.accent}cc"/>`)
     summaryUnit.push(`<text x="${barX + barW / 2}" y="${(barY + 22).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">Velocity: ${donePts}/${totalPts} pts · ${Math.round(donePts / totalPts * 100)}% complete</text>`)
   }
-  parts.push(animate ? `<g class="mdart-n${n}">${summaryUnit.join('')}</g>` : summaryUnit.join(''))
+  parts.push(wrapItem(summaryUnit.join(''), n, animate, instrument))
 
   if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))
   return svgWrap(W, H, theme, spec.title, parts)

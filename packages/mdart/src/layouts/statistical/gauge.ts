@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqMeasureTiming, seqSpotlightCSS } from '../shared'
+import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqMeasureTiming, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -16,11 +16,23 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const n = items.length
   const GW = n <= 1 ? 240 : n <= 2 ? 220 : n <= 3 ? 180 : 150
-  const W = n * GW, TITLE_H = spec.title ? 30 : 10
-  const GH = GW * 0.62, H = TITLE_H + GH + 36
+  const GH = GW * 0.62
+  const TITLE_H = spec.title ? 30 : 10
+
+  // Pre-compute label fits for all gauges so H can account for the tallest.
+  // value: true — the dial already shows the numeric value, suppress " …".
+  const displays = items.map(item => displayLabel(item, { value: true }))
+  const labelFits = displays.map(({ display }) =>
+    fitTextToWidthShared([display], GW - 16, { maxSize: 10, minSize: 6.5, maxLines: 2 })
+  )
+  const maxLblH = Math.max(...labelFits.map(f => f.results[0].lines.length * f.lineHeight))
+  const LBL_ZONE = Math.max(28, Math.ceil(maxLblH) + 10)
+
+  const W = n * GW, H = TITLE_H + GH + LBL_ZONE
   const parts: string[] = []
 
   items.forEach((item, i) => {
@@ -76,10 +88,18 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     } else {
       unit.push(`<text x="${cx}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${pct}%</text>`)
     }
-    // value renders as the dial reading; attrs would otherwise be invisible
-    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true })
-    unit.push(aWrap(`<text x="${cx}" y="${(cy + 16).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${itemTitleTag(item)}${tt(itmDisplay, 16, item)}</text>`, itmUrl))
-    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+
+    // Per-gauge label fitting: long names wrap to 2 lines rather than truncate.
+    const { display: itmDisplay, url: itmUrl } = displays[i]
+    const { fontSize: lblFS, lineHeight: lblLH, results: [{ lines: lblLines, truncated: lblTruncated }] } = labelFits[i]
+    const lblTip = lblTruncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
+    const lblStartY = cy + 16  // first baseline just below the dial
+    const lblSpans = lblLines
+      .map((line, li) => `<tspan x="${cx.toFixed(1)}" dy="${li === 0 ? 0 : lblLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+      .join('')
+    unit.push(aWrap(`${lblTip}<text x="${cx.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${lblFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${itemTitleTag(item)}${lblSpans}</text>`, itmUrl))
+
+    parts.push(wrapItem(unit.join(''), i, animate, instrument))
   })
   if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
 

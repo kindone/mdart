@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -91,6 +91,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const n = items.length
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const parts: string[] = []
 
   if (spec.title) {
@@ -156,7 +157,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     nodeStr += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="6" height="${cellH}" rx="3" fill="${fill}"/>`
     nodeStr += aWrap(`<text x="${tx}" y="${(y + PAD_T).toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${lblTip}${lblSpans}</text>`, lblUrl)
     nodeStr += valStr + childStr
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
   })
 
   if (animate) parts.unshift(seqSpotlightCSS(n, spec))

@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 import { countLeaves, maxDepth } from './shared'
 
 // ── Node geometry ─────────────────────────────────────────────────────────────
@@ -28,6 +28,7 @@ function collectLabelsH(items: MdArtItem[]): string[] {
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const depth       = maxDepth(spec.items)
   const totalLeaves = spec.items.reduce((s, i) => s + countLeaves(i), 0) || 1
@@ -113,7 +114,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       .map((l, li) => `<tspan x="${n.x.toFixed(1)}" dy="${li === 0 ? 0 : n.lineHeight}">${escapeXml(l)}</tspan>`)
       .join('')
     unit.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${n.fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif">${itemTip}${spans}</text>`, n.url))
-    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i, animate, instrument))
   }
   if (animate) parts.unshift(seqSpotlightCSS(hnodes.length, spec, { scale: false }))
 

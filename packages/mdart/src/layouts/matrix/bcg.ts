@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS, type ItemLike } from '../shared'
+import { escapeXml, parseLink, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, renderWrappedText, centeredTextY, type ItemLike, wrapItem, shouldInstrument } from '../shared'
 
 const BCG_QUADS = [
   { key: 'stars',     keywords: ['star'],             label: '★ Stars',          sub: 'High growth · High share', fill: '#6d28d9', text: '#ffffff' },  // violet-700
@@ -19,6 +19,7 @@ const MONO_FILLS: Record<string, { fills: string[]; text: string }> = {
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const buckets: Record<string, BcgEntry[]> = Object.fromEntries(BCG_QUADS.map(q => [q.key, []]))
   let slotIdx = 0
   for (const item of spec.items) {
@@ -50,12 +51,38 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = mono ? mono.fills[i] : q.fill
     const text = mono ? mono.text : q.text
     unit.push(`<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${fill}"/>`)
-    unit.push(`<text x="${x + CELL_W / 2}" y="${y + 24}" text-anchor="middle" font-size="12" fill="${text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(q.label)}</text>`)
-    unit.push(`<text x="${x + CELL_W / 2}" y="${y + 38}" text-anchor="middle" font-size="8" fill="${text}" font-family="system-ui,sans-serif" opacity="0.65">${q.sub}</text>`)
+    const headerFit = fitTextToWidthShared([q.label], CELL_W - 20, { maxSize: 12, minSize: 7, maxLines: 2, boxH: 28 })
+    unit.push(renderWrappedText(
+      x + CELL_W / 2,
+      centeredTextY(y + 8, 24, headerFit.results[0].lines.length, headerFit.lineHeight),
+      `text-anchor="middle" font-size="${headerFit.fontSize}" fill="${text}" font-family="system-ui,sans-serif" font-weight="700"`,
+      q.label,
+      headerFit.results[0],
+      headerFit.lineHeight,
+    ))
+    const subFit = fitTextToWidthShared([q.sub], CELL_W - 20, { maxSize: 8, minSize: 6, maxLines: 2, boxH: 20 })
+    unit.push(renderWrappedText(
+      x + CELL_W / 2,
+      centeredTextY(y + 34, 18, subFit.results[0].lines.length, subFit.lineHeight),
+      `text-anchor="middle" font-size="${subFit.fontSize}" fill="${text}" font-family="system-ui,sans-serif" opacity="0.65"`,
+      q.sub,
+      subFit.results[0],
+      subFit.lineHeight,
+    ))
     buckets[q.key].slice(0, 4).forEach(({ display: lbl, url: lblUrl, src }, j) => {
-      unit.push(aWrap(`<text x="${x + 10}" y="${y + 56 + j * 18}" font-size="10" fill="${text}" font-family="system-ui,sans-serif" opacity="0.9">${itemTitleTag(src)}• ${tt(lbl, 22)}</text>`, lblUrl))
+      const bulletText = `• ${lbl}`
+      const bulletFit = fitTextToWidthShared([bulletText], CELL_W - 20, { maxSize: 10, minSize: 6.5, maxLines: 2, boxH: 24 })
+      unit.push(renderWrappedText(
+        x + 10,
+        y + 62 + j * 25,
+        `font-size="${bulletFit.fontSize}" fill="${text}" font-family="system-ui,sans-serif" opacity="0.9"`,
+        bulletText,
+        { ...bulletFit.results[0], url: lblUrl },
+        bulletFit.lineHeight,
+        src,
+      ))
     })
-    svgContent += animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join('')
+    svgContent += wrapItem(unit.join(''), i, animate, instrument)
   })
   // Grid lines
   svgContent += `<line x1="${W / 2}" y1="${TITLE_H}" x2="${W / 2}" y2="${TITLE_H + CELL_H * 2}" stroke="${theme.bg}" stroke-width="2"/>`

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, tt, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -60,6 +60,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   parts.push(`<defs>
     <marker id="sq-a" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
       <path d="M0,0 L7,3.5 L0,7 Z" fill="${theme.accent}"/>
@@ -81,7 +82,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     )
     unit.push(aWrap(`<text x="${x.toFixed(1)}" y="${textStartY.toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${fullTip}${spans}</text>`, actUrl))
     unit.push(`<line x1="${x.toFixed(1)}" y1="${lifeY1.toFixed(1)}" x2="${x.toFixed(1)}" y2="${lifeY2.toFixed(1)}" stroke="${theme.textMuted}9a" stroke-width="1" stroke-dasharray="4,4"/>`)
-    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i, animate, instrument))
   })
 
   messages.forEach((msg, mi) => {
@@ -106,7 +107,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         `<path d="M${x1.toFixed(1)},${y.toFixed(1)} C${lx.toFixed(1)},${(y - 10).toFixed(1)} ${lx.toFixed(1)},${(y + 10).toFixed(1)} ${x1.toFixed(1)},${(y + MSG_GAP * 0.55).toFixed(1)}" fill="none" stroke="${theme.accent}cc" stroke-width="1.5" marker-end="url(#sq-a)"/>`,
         msg.msg ? `<text x="${(x1 + 4).toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="start" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(msg.msg, maxCharsLoop)}</text>` : '',
       ].join('')
-      parts.push(animate ? `<g class="mdart-n${n + mi}">${unit}</g>` : unit)
+      parts.push(wrapItem(unit, n + mi, animate, instrument))
     } else {
       const isRet = ti < fi
       const dir = x2 > x1 ? 1 : -1
@@ -118,7 +119,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         `<line x1="${ex1.toFixed(1)}" y1="${y.toFixed(1)}" x2="${ex2.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${isRet ? theme.textMuted : theme.accent}" stroke-width="1.5"${isRet ? ' stroke-dasharray="5,3"' : ''} marker-end="${isRet ? 'url(#sq-b)' : 'url(#sq-a)'}"/>`,
         msg.msg ? `<text x="${midX.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(msg.msg, maxChars)}</text>` : '',
       ].join('')
-      parts.push(animate ? `<g class="mdart-n${n + mi}">${unit}</g>` : unit)
+      parts.push(wrapItem(unit, n + mi, animate, instrument))
     }
   })
 

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svgOut(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -16,6 +16,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const cols    = items.length <= 2 ? items.length : items.length <= 4 ? 2 : Math.min(4, items.length)
   const rowCount = Math.ceil(items.length / cols)
@@ -106,7 +107,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const lastLblBL = LBL1_BL + (lblLines.length - 1) * LBL_LH
       unit.push(`<text x="${cx}" y="${(y + lastLblBL + CHG_GAP).toFixed(1)}" text-anchor="middle" font-size="${CHG_FS}" fill="${chgColor}" font-family="system-ui,sans-serif">${escapeXml(change)}</text>`)
     }
-    cards.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    cards.push(wrapItem(unit.join(''), i, animate, instrument))
   })
   if (animate) cards.unshift(seqSpotlightCSS(items.length, spec, { scale: false }))
 

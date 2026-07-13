@@ -180,7 +180,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const childBaseY   = ly + (lblLines.length - 1) * lblLineH + childGap
     item.children.slice(0, maxChildren).forEach((ch, j) => {
       const fs = n === 2 ? 10 : 8.5
-      const max = n === 2 ? 13 : 10
+      // n=2: non-overlap zone is ~158 px wide; 18 chars at 10 pt ≈ 94 px — fits.
+      // n≥3: smaller zones, keep the tighter cap.
+      const max = n === 2 ? 18 : 10
       const trunc = truncate(ch.label, max)
       const chTip = trunc !== ch.label ? `<title>${escapeXml(ch.label)}</title>` : ''
       parts.push(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${(childBaseY + j * childSpacing).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${chTip}${escapeXml(trunc)}</text>`)
@@ -198,19 +200,41 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   intersects.forEach((ix, i) => {
     const names = intersectionNames(ix.label)
     const pos   = intersectionPos(names, circles, centres, allCentre, spread)
-    // Display text strips the separator-name list and shows just the value
-    // (if user wrote `A && B: caption`) or a clean "A ∩ B" form otherwise.
-    const display = ix.value ?? names.join(' ∩ ')
-    const { lines, truncated } = wrapLabel(display, 12)
     const lineH   = n === 2 ? 13 : 11
-    const startY  = pos.y - (lines.length - 1) * lineH / 2 + (n === 2 ? -4 : 3)
     const fs      = n === 2 ? 11 : 9
     const fw      = n === 2 ? '500' : '600'
-    const tip     = truncated ? `<title>${escapeXml(display)}</title>` : ''
+
+    // Primary overlap label: prefer explicit value; if absent, use the first
+    // child (short concept) rather than the full "A ∩ B" separator string,
+    // which wraps to many lines and crowds out the children below it.
+    const primaryText = ix.value
+      ?? (ix.children.length > 0 ? ix.children[0].label : names.join(' ∩ '))
+    // Children to display below the primary label. When the first child was
+    // promoted to primary, skip it so it isn't repeated.
+    const childrenToShow = (ix.value || ix.children.length === 0)
+      ? ix.children
+      : ix.children.slice(1)
+
+    const charLimit = n === 2 ? 14 : 10  // ~60 px @ fs=8 inside the lens
+    const { lines, truncated } = wrapLabel(primaryText, charLimit)
+    const startY  = pos.y - (lines.length - 1) * lineH / 2 + (n === 2 ? -4 : 3)
+    const tip     = truncated ? `<title>${escapeXml(primaryText)}</title>` : ''
     const tspans  = lines
       .map((line, li) => `<tspan x="${pos.x.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(line)}</tspan>`)
       .join('')
     parts.push(`<text class="${animate ? `mdart-n${n + i}` : ''}" x="${pos.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="${fw}">${tip}${tspans}</text>`)
+
+    // Remaining intersection children rendered in the overlap zone below the
+    // primary label. Cap at 3 for n=2 (tall lens), 1 for n≥3 (tiny centre).
+    const ixChMax  = n === 2 ? 3 : 1
+    const ixChFS   = 8, ixChLH = 11
+    const ixChW    = n === 2 ? 14 : 8  // chars that fit inside the lens
+    const ixChBaseY = startY + (lines.length - 1) * lineH + (n === 2 ? 10 : 7) + ixChFS
+    childrenToShow.slice(0, ixChMax).forEach((ch, j) => {
+      const trunc = truncate(ch.label, ixChW)
+      const chTip = trunc !== ch.label ? `<title>${escapeXml(ch.label)}</title>` : ''
+      parts.push(`<text class="${animate ? `mdart-n${n + i}` : ''}" x="${pos.x.toFixed(1)}" y="${(ixChBaseY + j * ixChLH).toFixed(1)}" text-anchor="middle" font-size="${ixChFS}" fill="${theme.accent}" opacity="0.75" font-family="system-ui,sans-serif">${chTip}${escapeXml(trunc)}</text>`)
+    })
   })
 
   if (animate) parts.unshift(seqSpotlightCSS(n + intersects.length, spec, { scale: false }))

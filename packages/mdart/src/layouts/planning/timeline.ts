@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -29,8 +29,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const MAX_CHARS = Math.max(10, Math.floor(slotW / 6.5))
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
-  parts.push(animate ? `<g class="mdart-n0"><line x1="${PAD}" y1="${LINE_Y}" x2="${W-PAD}" y2="${LINE_Y}" stroke="${theme.accent}66" stroke-width="2.5"/></g>` : `<line x1="${PAD}" y1="${LINE_Y}" x2="${W-PAD}" y2="${LINE_Y}" stroke="${theme.accent}66" stroke-width="2.5"/>`)
+  parts.push(wrapItem(`<line x1="${PAD}" y1="${LINE_Y}" x2="${W-PAD}" y2="${LINE_Y}" stroke="${theme.accent}66" stroke-width="2.5"/>`, 0, animate, instrument))
 
   items.forEach((item, i) => {
     const x = n === 1 ? W / 2 : PAD + i * spacing
@@ -73,7 +74,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         unit.push(`<text x="${x.toFixed(1)}" y="${(LINE_Y + r + stemH + 27).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(mainLabel, MAX_CHARS)}</text>`)
       }
     }
-    parts.push(animate ? `<g class="mdart-n${i + 1}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i + 1, animate, instrument))
   })
 
   if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))

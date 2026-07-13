@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, svgWrap, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { lerpColor, svgWrap, renderEmpty, parseLink, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, roundTextBox } from '../shared'
 
 function gearPath(cx: number, cy: number, outerR: number, innerR: number, teeth: number, phase: number): string {
   const points: string[] = []
@@ -34,44 +34,24 @@ function renderGearLabel(
   // already renders value as a subtitle line, so shows.value=true).
   const label = ellipsisIfDropped(rawDisplay, { label: rawLabel, value, attrs }, { value: true })
 
-  const valueMaxSize = Math.max(maxSize - 2, 8)
-  const valueFitFull = value
-    ? fitTextToWidthShared([value], boxW, { maxSize: valueMaxSize, minSize: 6.5, maxLines: 1 })
-    : null
-  const valueFS = valueFitFull?.fontSize ?? valueMaxSize
-  const valueLH = valueFitFull?.lineHeight ?? valueMaxSize * 1.3
-  const valueFit = valueFitFull?.results[0] ?? null
-  const reservedBoxH = valueFit ? Math.max(10, boxH - valueLH - 2) : boxH
-  const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines, truncated }] } =
-    fitTextToWidthShared([label], boxW, { maxSize, minSize: 6.5, maxLines: value ? 2 : 3, boxH: reservedBoxH })
-  const tip = truncated ? `<title>${escapeXml(label)}</title>` : ''
-  const totalH = lines.length * labelLH + (valueFit ? valueLH + 2 : 0)
-
-  let lblContent = tip
-  lines.forEach((line, li) => {
-    const ty = gy - totalH / 2 + li * labelLH + labelLH * 0.8
-    lblContent +=
-      `<text x="${gx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" ` +
-      `font-size="${labelFS}" fill="${labelFill}" ` +
-      `font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+  const fit = fitLabelValueBlock(label, value, boxW, boxH, {
+    labelUrl: lblUrl,
+    labelMaxSize: maxSize,
+    labelMinSize: 6.5,
+    labelMaxLines: 2,
+    labelMaxLinesNoValue: 3,
+    valueMaxSize: Math.max(maxSize - 2, 8),
+    valueMinSize: 6.5,
+    valueMaxLines: 1,
+    gap: 2,
   })
-  parts.push(aWrap(lblContent, lblUrl))
-
-  if (valueFit) {
-    const valueTip = valueFit.truncated ? `<title>${escapeXml(value!)}</title>` : ''
-    const ty = gy - totalH / 2 + lines.length * labelLH + valueLH * 0.8
-    parts.push(
-      `${valueTip}<text x="${gx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" ` +
-      `font-size="${valueFS}" fill="${theme.textMuted}" ` +
-      `font-family="system-ui,sans-serif">${escapeXml(valueFit.lines[0])}</text>`
-    )
-  }
-}
-
-/** Chord/height budget for a gear's flat centre disc of radius `r`, same
- *  taper heuristic as circle-process.ts's circleBoxW/circleBoxH. */
-function gearBox(r: number): { w: number; h: number } {
-  return { w: Math.max(20, r * 1.6 - 4), h: Math.max(6.5 * 1.3 * 3, r * 1.4) }
+  parts.push(renderFitBlock(gx, gy, fit, {
+    labelFullText: label,
+    valueFullText: value,
+    labelFill,
+    valueFill: theme.textMuted,
+    labelWeight: '600',
+  }))
 }
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
@@ -96,7 +76,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (animate) parts.push(`<g class="mdart-n0">`)
     parts.push(`<path d="${gearPath(cx, cy, 90, 68, 12, 0)}" fill="${fill}" opacity="0.8">${itemTitleTag(item)}</path>`)
     parts.push(`<circle cx="${cx}" cy="${cy}" r="52" fill="${theme.bg}"/>`)
-    { const { w, h } = gearBox(52); renderGearLabel(parts, cx, cy, item.label, item.value, item.attrs, 12, w, h, theme.text, theme) }
+    { const { w, h } = roundTextBox(52, { hMin: 6.5 * 1.3 * 3 }); renderGearLabel(parts, cx, cy, item.label, item.value, item.attrs, 12, w, h, theme.text, theme) }
     if (animate) parts.push(`</g>`)
 
   } else if (n === 2) {
@@ -111,7 +91,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       if (animate) parts.push(`<g class="mdart-n${i}">`)
       parts.push(`<path d="${gearPath(gx, cy, outerR, innerR, teeth, phase)}" fill="${fill}" opacity="0.8">${itemTitleTag(item)}</path>`)
       parts.push(`<circle cx="${gx}" cy="${cy}" r="52" fill="${theme.bg}"/>`)
-      { const { w, h } = gearBox(52); renderGearLabel(parts, gx, cy, item.label, item.value, item.attrs, 11, w, h, theme.text, theme) }
+      { const { w, h } = roundTextBox(52, { hMin: 6.5 * 1.3 * 3 }); renderGearLabel(parts, gx, cy, item.label, item.value, item.attrs, 11, w, h, theme.text, theme) }
       if (animate) parts.push(`</g>`)
     })
 
@@ -121,7 +101,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (animate) parts.push(`<g class="mdart-n0">`)
     parts.push(`<path d="${gearPath(cx, cy, 80, 60, 12, 0)}" fill="${centerFill}" opacity="0.8">${itemTitleTag(items[0])}</path>`)
     parts.push(`<circle cx="${cx}" cy="${cy}" r="46" fill="${theme.bg}"/>`)
-    { const { w, h } = gearBox(46); renderGearLabel(parts, cx, cy, items[0].label, items[0].value, items[0].attrs, 11, w, h, theme.text, theme) }
+    { const { w, h } = roundTextBox(46, { hMin: 6.5 * 1.3 * 3 }); renderGearLabel(parts, cx, cy, items[0].label, items[0].value, items[0].attrs, 11, w, h, theme.text, theme) }
     if (animate) parts.push(`</g>`)
 
     const sideAngles = [-Math.PI / 3, Math.PI / 3]
@@ -137,7 +117,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       if (animate) parts.push(`<g class="mdart-n${idx}">`)
       parts.push(`<path d="${gearPath(gx, gy, 55, 40, 8, phase)}" fill="${fill}" opacity="0.8">${itemTitleTag(item)}</path>`)
       parts.push(`<circle cx="${gx}" cy="${gy}" r="32" fill="${theme.bg}"/>`)
-      { const { w, h } = gearBox(32); renderGearLabel(parts, gx, gy, item.label, item.value, item.attrs, 10, w, h, theme.text, theme) }
+      { const { w, h } = roundTextBox(32, { hMin: 6.5 * 1.3 * 3 }); renderGearLabel(parts, gx, gy, item.label, item.value, item.attrs, 10, w, h, theme.text, theme) }
       if (animate) parts.push(`</g>`)
     })
 
@@ -175,7 +155,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       if (animate) parts.push(`<g class="mdart-n${i}">`)
       parts.push(`<path d="${gearPath(gx, gy, outerR, innerR, teeth, phase)}" fill="${fill}" opacity="0.8">${itemTitleTag(item)}</path>`)
       parts.push(`<circle cx="${gx}" cy="${gy}" r="24" fill="${theme.bg}"/>`)
-      { const { w, h } = gearBox(24); renderGearLabel(parts, gx, gy, item.label, item.value, item.attrs, 9, w, h, theme.text, theme) }
+      { const { w, h } = roundTextBox(24, { hMin: 6.5 * 1.3 * 3 }); renderGearLabel(parts, gx, gy, item.label, item.value, item.attrs, 9, w, h, theme.text, theme) }
       if (animate) parts.push(`</g>`)
     }
   }

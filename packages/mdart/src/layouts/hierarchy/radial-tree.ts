@@ -1,9 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const W = 600, H = 500
   const cx = W / 2, cy = H / 2
   let centerLabel: string, branches: MdArtSpec['items']
@@ -46,7 +47,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const m = Math.ceil(ws.length / 2)
       unit.push(aWrap(`<text x="${bx.toFixed(1)}" y="${(by - 1).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.bg}" font-weight="700" font-family="system-ui,sans-serif">${tt(ws.slice(0,m).join(' '), 9)}</text><text x="${bx.toFixed(1)}" y="${(by + 9).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.bg}" font-weight="700" font-family="system-ui,sans-serif">${tt(ws.slice(m).join(' '), 9)}</text>`, brUrl))
     }
-    parts.push(animate ? `<g class="mdart-n${i + 1}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i + 1, animate, instrument))
   }
   const centerUnit: string[] = []
   centerUnit.push(`<circle cx="${cx}" cy="${cy}" r="32" fill="${theme.accent}" stroke="${theme.bg}" stroke-width="2"/>`)
@@ -58,7 +59,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     centerUnit.push(`<text x="${cx}" y="${cy - 2}" text-anchor="middle" font-size="10" fill="${theme.bg}" font-weight="700" font-family="system-ui,sans-serif">${tt(cw.slice(0,m).join(' '), 12)}</text>`)
     centerUnit.push(`<text x="${cx}" y="${cy + 11}" text-anchor="middle" font-size="10" fill="${theme.bg}" font-weight="700" font-family="system-ui,sans-serif">${tt(cw.slice(m).join(' '), 12)}</text>`)
   }
-  parts.unshift(animate ? `<g class="mdart-n0">${centerUnit.join('')}</g>` : centerUnit.join(''))
+  parts.unshift(wrapItem(centerUnit.join(''), 0, animate, instrument))
   if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${parts.join('\n  ')}

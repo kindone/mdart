@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -8,13 +8,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const n = items.length
   const W = Math.max(500, n * 100 + 80)
-  const H = 140
-  const LINE_Y = 80
+  const H = 160
+  const LINE_Y = 90
   const DOT_R = 8
   const PAD = 50
   const spacing = (W - PAD * 2) / (n - 1 || 1)
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   let svgContent = ''
 
   // Timeline backbone — always visible
@@ -36,7 +37,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = n > 1 ? i / (n - 1) : 0.5
     const fill = lerpColor(theme.secondary, theme.primary, t)
     const above = i % 2 === 0
-    const labelY = above ? LINE_Y - 22 : LINE_Y + 36
     const lineEndY = above ? LINE_Y - 14 : LINE_Y + 14
 
     const { url: itmUrl, display: itmDisplay } = displays[i]
@@ -46,6 +46,24 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       ? fitTextToWidthShared([item.value], labelBoxW, { maxSize: 9, minSize: 6, maxLines: 1 })
       : null
     const valueFS = valueFitFull?.fontSize ?? 9
+    const valueLH = valueFS * 1.3
+    // Anchor the label block relative to the connector endpoint AFTER
+    // fitting, so the gap is consistent regardless of how many lines the
+    // label wraps to. Fixed offsets computed before fitting caused the
+    // connector to cut through the text when a label wrapped to 2 lines.
+    const numValueLines = valueFitFull?.results[0].lines.length ?? 0
+    // Distance from first baseline to the visual bottom of the last line.
+    // Cap-height ≈ 0.8×fontSize above baseline; descender ≈ 0.2×fontSize
+    // below — so we add only 0.2×fontSize for the trailing descent, not
+    // the full fontSize or a whole lineHeight (which would include an
+    // inter-line gap that belongs only between adjacent lines).
+    const lastDescent = (numValueLines > 0 ? valueFS : labelFS) * 0.2
+    const lastBaselineFromFirst = numValueLines > 0
+      ? lines.length * lineH + (numValueLines - 1) * valueLH
+      : (lines.length - 1) * lineH
+    const labelY = above
+      ? lineEndY - 4 - lastBaselineFromFirst - lastDescent  // visual bottom 4px above connector
+      : lineEndY + 4 + labelFS * 0.8                        // visual top 4px below connector
     let lblContent = truncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
     lines.forEach((line, li) => {
       const ly = labelY + li * lineH
@@ -62,7 +80,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const valueTip = valueFit.truncated ? `<title>${escapeXml(item.value!)}</title>` : ''
       nodeStr += `${valueTip}<text x="${x}" y="${(labelY + lines.length * lineH).toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(valueFit.lines[0])}</text>`
     }
-    svgContent += animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr
+    svgContent += wrapItem(nodeStr, i, animate, instrument)
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">

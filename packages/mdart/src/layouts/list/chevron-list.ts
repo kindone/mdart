@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -18,6 +18,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const H = titleH + items.length * (ROW_H + GAP) + 8
   const n = items.length
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const parts: string[] = []
   if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
   items.forEach((item, i) => {
@@ -38,7 +39,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     nodeStr += `<path d="${d}" fill="${fill}33" stroke="${fill}" stroke-width="1">${itemTitleTag(item)}</path>`
     nodeStr += aWrap(`<text x="${(x0 + x1) / 2 + NOTCH/2}" y="${(mid + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, labelMax, item)}</text>`, lblUrl)
     if (caption) nodeStr += `<text x="${W - NOTCH - 6}" y="${(mid + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, 16)}</text>`
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
   })
   if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svg(W, H, theme, parts)

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -25,6 +25,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   ])
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const drawn = new Set<string>()
   const edges: string[] = []
   const edge = (i: number, j: number) => {
@@ -37,14 +38,41 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (n <= 7) edge(i, (i + 2) % n)
     if (n <= 4) for (let j = i + 1; j < n; j++) edge(i, j)
   }
-  parts.push(animate ? `<g class="mdart-n0">${edges.join('')}</g>` : edges.join(''))
+  parts.push(wrapItem(edges.join(''), 0, animate, instrument))
+
+  // nodeR grows as item count drops (more room per node). At n=2 it's 34, at n≥4 it's 22.
   const nodeR = Math.max(22, Math.min(34, 72 / n))
+  // Usable text box inside the circle — safe chord width for up to 3 lines.
+  // For r=22 and 3 lines at lh≈9.1, extremes sit ±9.1px from centre;
+  // chord at y=9.1 is 2√(22²−9.1²)≈40px, so 1.5×r≈33 is comfortably inscribed.
+  // boxH = 1.4×r lets the 3rd line unlock at font ≈7 (3×9.1=27.3 ≤ 30.8).
+  const nodeBoxW = nodeR * 1.5
+  const nodeBoxH = nodeR * 1.4
+  const nodeMaxSize = Math.max(8, Math.min(10, nodeR * 0.5))
+
   items.forEach((item, i) => {
     const [nx, ny] = pos[i]
     const { display: itmDisplay, url: itmUrl } = displayLabel(item)
+
+    // Per-node fitting: short labels stay large; long labels shrink and wrap
+    // to up to 2 lines rather than being hard-truncated at 9 chars.
+    const { fontSize, lineHeight: lh, results: [{ lines, truncated }] } =
+      fitTextToWidthShared([itmDisplay], nodeBoxW, {
+        maxSize: nodeMaxSize,
+        minSize: 6,
+        maxLines: 3,
+        boxH: nodeBoxH,
+      })
+    const tip = truncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
+    // Vertically centre the text block in the circle
+    const startY = ny - ((lines.length - 1) * lh) / 2 + fontSize * 0.35
+    const spans = lines
+      .map((line, li) => `<tspan x="${nx.toFixed(1)}" dy="${li === 0 ? 0 : lh.toFixed(1)}">${escapeXml(line)}</tspan>`)
+      .join('')
+
     const unit = `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${nodeR}" fill="${theme.surface}" stroke="${theme.primary}99" stroke-width="1.8">${itemTitleTag(item)}</circle>`
-      + aWrap(`<text x="${nx.toFixed(1)}" y="${(ny + 4).toFixed(1)}" text-anchor="middle" font-size="${Math.max(8, Math.min(10, nodeR * 0.5)).toFixed(0)}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, 9, item)}</text>`, itmUrl)
-    parts.push(animate ? `<g class="mdart-n${i + 1}">${unit}</g>` : unit)
+      + aWrap(`${tip}<text x="${nx.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${spans}</text>`, itmUrl)
+    parts.push(wrapItem(unit, i + 1, animate, instrument))
   })
   if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))
   return svg(W, H, theme, spec.title, parts)

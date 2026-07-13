@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 const DONE_ATTRS = ['done', '✓', 'complete']
 const isDone = (it: { attrs: string[] }) => it.attrs.some(a => DONE_ATTRS.includes(a))
@@ -103,6 +103,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const n = items.length
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   let svgContent = ''
   if (spec.title) {
     svgContent += `<text x="${PAD}" y="${PAD + 16}" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
@@ -183,7 +184,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       nodeStr += `<text x="${W - PAD}" y="${labelY}" text-anchor="end" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">[${extraAttrs.join(', ')}]</text>`
     }
     nodeStr += valStr + subStr
-    svgContent += animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr
+    svgContent += wrapItem(nodeStr, i, animate, instrument)
 
     // ── Separator — not part of the item ──────────────────────────────────────
     if (i < items.length - 1) {

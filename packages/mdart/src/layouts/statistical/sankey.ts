@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -16,6 +16,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const colors = [theme.primary, theme.secondary, theme.accent, theme.muted, ...theme.palette]
 
@@ -34,8 +35,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       flows.push({ si, dst: ch.label, w: fw })
       dstMap.set(ch.label, (dstMap.get(ch.label) ?? 0) + fw)
       if (!dstDisplayMap.has(ch.label)) {
-        // ch already exposes value/attrs — apply ellipsis cue when value/attrs
-        // would otherwise be hidden in the dst column (only label is shown).
         const { display, url } = displayLabel(ch, { value: !!ch.value })
         dstDisplayMap.set(ch.label, display)
         dstUrlMap.set(ch.label, url)
@@ -49,6 +48,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const W = 520, TITLE_H = spec.title ? 30 : 10
   const BOX_W = 112, GAP = 8, CONTENT_H = 280
   const H = TITLE_H + CONTENT_H + GAP * 2
+  const NODE_TEXT_W = BOX_W - 16  // usable text width inside a node box
 
   const srcScale = (CONTENT_H - (items.length - 1) * GAP) / totalSrc
   type Node = { y: number; h: number }
@@ -94,23 +94,40 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     flowParts.set(f.dst, list)
   })
 
+  // Helper: render node label fitted to the node's height.
+  // boxH drives fitTextToWidthShared so the line count adapts to tall vs short nodes.
+  const renderNodeLabel = (
+    nodeX: number, n: Node, text: string, url: string | null, anchor: 'middle',
+  ): string => {
+    if (n.h < 10) return ''
+    const { fontSize: fs, lineHeight: lh, results: [{ lines, truncated }] } =
+      fitTextToWidthShared([text], NODE_TEXT_W, { maxSize: 10, minSize: 6, maxLines: 4, boxH: n.h - 4 })
+    const tip = truncated ? `<title>${escapeXml(text)}</title>` : ''
+    const startY = n.y + n.h / 2 - ((lines.length - 1) * lh) / 2 + fs * 0.35
+    const spans = lines
+      .map((line, li) => `<tspan x="${nodeX.toFixed(1)}" dy="${li === 0 ? 0 : lh.toFixed(1)}">${escapeXml(line)}</tspan>`)
+      .join('')
+    return aWrap(`${tip}<text x="${nodeX.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="${anchor}" font-size="${fs}" fill="${theme.text}" font-family="system-ui,sans-serif">${spans}</text>`, url)
+  }
+
   srcNodes.forEach((n, i) => {
     const unit: string[] = []
     const col = colors[i % colors.length]
     const item = items[i]
     const { display: srcDisplay, url: srcUrl } = displayLabel(item, { value: !!item.value, attrs: !!item.attrs?.length })
     unit.push(`<rect x="0" y="${n.y.toFixed(1)}" width="${BOX_W - 8}" height="${n.h.toFixed(1)}" rx="4" fill="${col}44" stroke="${col}99" stroke-width="1">${itemTitleTag(item)}</rect>`)
-    if (n.h >= 14) unit.push(aWrap(`<text x="${(BOX_W - 8) / 2}" y="${(n.y + n.h / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(srcDisplay, 13, item)}</text>`, srcUrl))
-    sourceParts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    unit.push(renderNodeLabel((BOX_W - 8) / 2, n, srcDisplay, srcUrl, 'middle'))
+    sourceParts.push(wrapItem(unit.join(''), i, animate, instrument))
   })
 
   dstNames.forEach((name, i) => {
     const unit: string[] = [...(flowParts.get(name) ?? [])]
     const n = dstNodes.get(name)!
     unit.push(`<rect x="${W - BOX_W + 8}" y="${n.y.toFixed(1)}" width="${BOX_W - 8}" height="${n.h.toFixed(1)}" rx="4" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>`)
-    if (n.h >= 14) unit.push(aWrap(`<text x="${W - (BOX_W - 8) / 2}" y="${(n.y + n.h / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(dstDisplayMap.get(name) ?? name, 13)}</text>`, dstUrlMap.get(name) ?? null))
-    destParts.push(animate ? `<g class="mdart-n${items.length + i}">${unit.join('')}</g>` : unit.join(''))
+    unit.push(renderNodeLabel(W - (BOX_W - 8) / 2, n, dstDisplayMap.get(name) ?? name, dstUrlMap.get(name) ?? null, 'middle'))
+    destParts.push(wrapItem(unit.join(''), items.length + i, animate, instrument))
   })
+
   const parts = [...destParts, ...sourceParts]
   if (animate) parts.unshift(seqSpotlightCSS(items.length + dstNames.length, spec, { scale: false }))
 

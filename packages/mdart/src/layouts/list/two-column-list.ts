@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -80,6 +80,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
   const H = cumY - ROW_GAP + PAD
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   let svgContent = ''
 
@@ -135,7 +136,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let rowStr = ''
     if (leftLayouts[r]) rowStr += renderColItem(left[r], leftLayouts[r], PAD, rH, rY, r)
     if (rightLayouts[r]) rowStr += renderColItem(right[r], rightLayouts[r], HALF + PAD, rH, rY, half + r)
-    svgContent += animate ? `<g class="mdart-n${r}">${rowStr}</g>` : rowStr
+    svgContent += wrapItem(rowStr, r, animate, instrument)
 
     if (r < maxRows - 1) {
       svgContent += `<line x1="${PAD}" y1="${rY + rH}" x2="${W - PAD}" y2="${rY + rH}" stroke="${theme.border}" stroke-width="0.5" />`

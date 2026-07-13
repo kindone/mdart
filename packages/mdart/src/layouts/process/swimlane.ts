@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, escapeXml, parseLink, shouldAnimate, seqSpotlightCSS, seqSpotlightTiming, fitTextToWidthShared } from '../shared'
+import { lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, escapeXml, parseLink, shouldAnimate, seqSpotlightCSS, seqSpotlightTiming, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -42,6 +42,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const globalPosFor = (c: number, si: number) => R > 1 ? rankFor(c, si) / (R - 1) : 1
 
   const animate = shouldAnimate(spec) && R > 0
+  const instrument = shouldInstrument()
   // Pull the exact numeric timing seqSpotlightCSS(R, spec, {scale:false})
   // will emit as CSS, so the delays below (entrance AND loop) stay in sync
   // with it — R (not the raw max step count) is the true number of
@@ -164,7 +165,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       // per-lane instead of snapped to that slot grid.
       const slot = slotFor(si)
       const stepEnterStyle = `animation:mdart-enter ${enterDur}ms ease-out ${delayFor(si)}ms 1 both`
-      parts.push(animate ? `<g class="mdart-n${slot}" style="${stepEnterStyle}">${stepStr}</g>` : stepStr)
+      const _sg = wrapItem(stepStr, slot, animate, instrument)
+      parts.push(animate ? _sg.replace('<g ', `<g style="${stepEnterStyle}" `) : _sg)
       if (si < steps.length - 1) {
         const ax1 = sx + stepW + 2, ax2 = sx + stepW + stepGap - 4
         const connEl = `<line x1="${ax1.toFixed(1)}" y1="${(sy + STEP_H / 2).toFixed(1)}" x2="${ax2.toFixed(1)}" y2="${(sy + STEP_H / 2).toFixed(1)}" stroke="${theme.primary}99" stroke-width="1" marker-end="url(#sl-arr)"/>`

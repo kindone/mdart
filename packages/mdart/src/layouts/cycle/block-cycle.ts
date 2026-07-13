@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, escapeXml, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { lerpColor, escapeXml, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 import { render as renderCircleCycle } from './cycle'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
@@ -56,6 +56,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   // Draw boxes
   for (let i = 0; i < n; i++) {
@@ -85,12 +86,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       : (item.value ? [item.value] : [])
     const bodyAreaH = BOX_H - HEADER_H - 4
     const { fontSize: bodyFS, lineHeight: lineH, results: bodyFits } = bodyTexts.length
-      ? fitTextToWidthShared(bodyTexts, bodyBoxW, { maxSize: 9, minSize: 6.5, maxLines: 1, boxH: bodyAreaH })
+      ? fitTextToWidthShared(bodyTexts, bodyBoxW, { maxSize: 9, minSize: 6.5, maxLines: 2, boxH: bodyAreaH })
       : { fontSize: 9, lineHeight: 9 * 1.3, results: [] as ReturnType<typeof fitTextToWidthShared>['results'] }
 
     // Vertically centre the text block inside the body area
     const bodyMidY = y + HEADER_H + (BOX_H - HEADER_H) / 2
-    const firstBaselineY = bodyMidY - (bodyFits.length * lineH) / 2 + bodyFS * 0.75  // 0.75 ≈ cap-height ratio
+    const bodyLineCount = bodyFits.reduce((sum, fit) => sum + fit.lines.length, 0)
+    const firstBaselineY = bodyMidY - (bodyLineCount * lineH) / 2 + bodyFS * 0.75  // 0.75 ≈ cap-height ratio
 
     let nodeStr = ''
     // Box bg — tooltip carries full label/value/attrs even when body shows only one
@@ -98,11 +100,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Colored header (top corners rounded)
     nodeStr += `<path d="M ${x + 5} ${y} L ${x + BOX_W - 5} ${y} Q ${x + BOX_W} ${y} ${x + BOX_W} ${y + 5} L ${x + BOX_W} ${y + HEADER_H} L ${x} ${y + HEADER_H} L ${x} ${y + 5} Q ${x} ${y} ${x + 5} ${y} Z" fill="${headerFill}"/>`
     nodeStr += aWrap(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="${headerFS}" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="600">${headerTip}${escapeXml(headerLines[0])}</text>`, lblUrl)
+    let lineOffset = 0
     bodyFits.forEach(({ lines, truncated }, li) => {
       const bodyTip = truncated ? `<title>${escapeXml(bodyTexts[li])}</title>` : ''
-      nodeStr += `${bodyTip}<text x="${x + 6}" y="${(firstBaselineY + li * lineH).toFixed(1)}" font-size="${bodyFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(lines[0])}</text>`
+      const spans = lines
+        .map((line, idx) => `<tspan x="${x + 6}" dy="${idx === 0 ? 0 : lineH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+        .join('')
+      nodeStr += `${bodyTip}<text x="${x + 6}" y="${(firstBaselineY + lineOffset * lineH).toFixed(1)}" font-size="${bodyFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${spans}</text>`
+      lineOffset += lines.length
     })
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
   }
 
   // Draw arrows between consecutive items (clockwise). Each arrow fades in

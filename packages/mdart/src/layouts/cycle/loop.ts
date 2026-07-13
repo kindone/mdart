@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -33,6 +33,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
   // ── Arrowhead markers ──────────────────────────────────────────────────────
@@ -106,6 +107,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // worth of room.
   const nodeBoxH = Math.max(nodeR * 1.4, 6.5 * 1.3 * 2)
   const halo = `stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill"`
+  // Value caption width: use inter-node spacing minus padding when multiple
+  // nodes exist; fall back to a fixed cap for single-node diagrams.
+  const valueBoxW = n > 1 ? Math.max(nodeBoxW, spacing - 12) : Math.min(200, W - 2 * padX)
 
   // ── Nodes ──────────────────────────────────────────────────────────────────
   items.forEach((item, i) => {
@@ -113,7 +117,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t    = i / Math.max(n - 1, 1)
     const fill = lerpColor(theme.primary, theme.secondary, t)
 
-    const { display: lblDisplay, url: lblUrl } = displayLabel(item)
+    // value: true tells ellipsisIfDropped the value IS shown (below the
+    // circle), so it won't append " …" to the main label inside the node.
+    const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
     const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines, truncated }] } =
       fitTextToWidthShared([lblDisplay], nodeBoxW, { maxSize: fontSize, minSize: 6.5, maxLines: 2, boxH: nodeBoxH })
     const tip = truncated ? `<title>${escapeXml(lblDisplay)}</title>` : ''
@@ -133,7 +139,21 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     nodeStr += aWrap(lblContent, lblUrl)
     nodeStr += `<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="7" fill="${theme.bg}" stroke="${fill}" stroke-width="1.5"/>`
     nodeStr += `<text x="${bx.toFixed(1)}" y="${(by + 3.5).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui,sans-serif" fill="${fill}">${i + 1}</text>`
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+
+    // Value caption below the circle — rendered in the space between the node
+    // and the return arc (dipAmt gives ample vertical clearance).
+    if (item.value) {
+      const { fontSize: valFS, lineHeight: valLH, results: [{ lines: valLines, truncated: valTruncated }] } =
+        fitTextToWidthShared([item.value], valueBoxW, { maxSize: 8, minSize: 6, maxLines: 2 })
+      const valTip = valTruncated ? `<title>${escapeXml(item.value)}</title>` : ''
+      const valStartY = rowY + nodeR + 7 + valFS * 0.75
+      const valSpans = valLines
+        .map((line, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : valLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+        .join('')
+      nodeStr += `${valTip}<text x="${x.toFixed(1)}" y="${valStartY.toFixed(1)}" text-anchor="middle" font-size="${valFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${valSpans}</text>`
+    }
+
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
   })
 
   if (animate) parts.unshift(seqSpotlightCSS(n, spec, { trailingArrowSlot: true }))

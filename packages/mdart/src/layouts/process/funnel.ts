@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 /** Parse a strictly-numeric string (allowing commas, underscores, whitespace). */
 function parseNum(s: string): number | null {
@@ -72,6 +72,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   })
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   let svg = ''
   if (spec.title) {
     svg += `<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
@@ -140,7 +141,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         nodeStr += `<text x="${W - 8}" y="${(y + STEP_H / 2 + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="700">↓ ${pctText}</text>`
       }
     }
-    svg += animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr
+    svg += wrapItem(nodeStr, i, animate, instrument)
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">

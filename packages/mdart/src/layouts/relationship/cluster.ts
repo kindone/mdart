@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -23,6 +23,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const colors = [theme.primary, theme.secondary, theme.accent, theme.primary, theme.secondary]
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   items.forEach((group, i) => {
     const col = i % cols, row = Math.floor(i / cols)
     const gx = 10 + col * (clW + 10) + clW / 2
@@ -94,7 +95,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       unit.push(`<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="${mR}" fill="${color}2a" stroke="${color}66" stroke-width="1">${itemTitleTag(m)}</circle>`)
       unit.push(`<text x="${mx.toFixed(1)}" y="${(my + 4).toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(mDisplay, labelMax, m)}</text>`)
     })
-    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i, animate, instrument))
   })
   if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
   return svg(W, H, theme, spec.title, parts)

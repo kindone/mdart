@@ -1,9 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, tt, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   // Each contestant carries a wins counter, summed across three notations:
   //   • `[w]` (or `[win]`, `[winner]`)   — repetition: each occurrence = 1 win
   //   • `[wN]`                           — compact: e.g. `[w3]` = 3 wins
@@ -114,7 +115,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
           `<polyline points="${x+BOX_W},${yB.toFixed(1)} ${armX},${yB.toFixed(1)} ${armX},${yMid.toFixed(1)}" fill="none" stroke="${theme.textMuted}aa" stroke-width="1.5"/>`,
           `<line x1="${armX}" y1="${yMid.toFixed(1)}" x2="${nextX}" y2="${yMid.toFixed(1)}" stroke="${theme.textMuted}aa" stroke-width="1.5"/>`,
         ].join('')
-        connectorParts.push(animate ? `<g class="mdart-n${r + 1}">${connectorUnit}</g>` : connectorUnit)
+        connectorParts.push(wrapItem(connectorUnit, r + 1, animate, instrument))
       }
     }
     const tot = allRounds.length - 1
@@ -123,7 +124,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       ? (champCrowned ? '🏆 Champion' : 'Champion')
       : r === tot - 1 ? 'Final' : r === tot - 2 && tot >= 3 ? 'Semi' : `Round ${r + 1}`
     roundUnit.push(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(TITLE_H + leafH + 16).toFixed(1)}" text-anchor="middle" font-size="8" fill="${champCrowned ? theme.accent : theme.textMuted}" font-family="system-ui,sans-serif">${lbl}</text>`)
-    parts.push(animate ? `<g class="mdart-n${r}">${roundUnit.join('')}</g>` : roundUnit.join(''))
+    parts.push(wrapItem(roundUnit.join(''), r, animate, instrument))
   }
   const style = animate ? seqSpotlightCSS(allRounds.length, spec, { scale: false }) : ''
 

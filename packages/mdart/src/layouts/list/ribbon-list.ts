@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -22,6 +22,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const H = titleH + items.length * (rowH + GAP) + 8
   const n = items.length
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const parts: string[] = []
   if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
   items.forEach((item, i) => {
@@ -39,7 +40,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     nodeStr += `<polygon points="${W-TAIL/2},${mid} ${W},${y} ${W},${y+RIB_H}" fill="${dark}"/>`
     nodeStr += aWrap(`<text x="${FOLD + 10}" y="${(mid + 4).toFixed(1)}" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700" letter-spacing="0.06em">${tt(ribDisplay.toUpperCase(), ribLabelMax)}</text>`, ribUrl)
     if (caption) nodeStr += `<text x="${W/2}" y="${(y + RIB_H + 12).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, captionMax)}</text>`
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
   })
   if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
   return svg(W, H, theme, parts)

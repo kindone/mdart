@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, lerpColor, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, wrapLabel, lerpColor, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 
@@ -147,6 +147,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   if (spec.title) {
     parts.push(`<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`)
@@ -179,7 +180,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         const ax = W / 2, ay1 = y + layerH
         unit.push(`<line x1="${ax}" y1="${ay1.toFixed(1)}" x2="${ax}" y2="${(ay1 + GAP).toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1.5" marker-end="url(#la-arr)"/>`)
       }
-      parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+      parts.push(wrapItem(unit.join(''), i, animate, instrument))
       return
     }
 
@@ -216,7 +217,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const ax = W / 2, ay1 = y + layerH
       unit.push(`<line x1="${ax}" y1="${ay1.toFixed(1)}" x2="${ax}" y2="${(ay1 + GAP).toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1.5" marker-end="url(#la-arr)"/>`)
     }
-    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i, animate, instrument))
   })
 
   if (animate) parts.unshift(seqSpotlightCSS(layers.length, spec, { scale: false }))

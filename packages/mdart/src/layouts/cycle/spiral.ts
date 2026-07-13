@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -25,6 +25,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
@@ -77,7 +78,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       lblContent += `<text x="${labelX.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
     })
     unit += aWrap(lblContent, lblUrl)
-    parts.push(animate ? `<g class="mdart-n${k}">${unit}</g>` : unit)
+    parts.push(wrapItem(unit, k, animate, instrument))
   }
 
   if (animate) parts.unshift(seqSpotlightCSS(n, spec))

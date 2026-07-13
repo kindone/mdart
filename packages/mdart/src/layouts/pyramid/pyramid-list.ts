@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 /**
  * pyramid-list — numbered horizontal bars, widening toward the bottom.
@@ -10,6 +10,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const n = items.length
   const W = 600
@@ -25,7 +26,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const DESC_PAD = 5   // gap between bar bottom and first desc baseline
   const DESC_MAX = Math.max(16, Math.floor((W - 80) / 5.0))  // ~104 chars
 
-  const BAR_MAX = W - 80
+  // Shrink bars when values exist so each value can be placed outside
+  // (right of) the bar instead of cramming it inside the narrow top tier.
+  // BAR_MAX=380 keeps the widest bar's right edge at ~490 px, leaving ≥100 px
+  // of right-zone even at the bottom tier.
+  const hasValue = items.some(it => !!it.value)
+  const BAR_MAX = hasValue ? W - 220 : W - 80
   const cx = W / 2
 
   // Pre-compute descriptions
@@ -76,16 +82,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       `<text x="${badgeCx.toFixed(1)}" y="${(badgeCy + 4).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="${theme.bg}" font-family="system-ui,sans-serif">${i + 1}</text>`
     )
 
-    // Label centred in bar — leave a value-shaped gutter on the right when
-    // a value is present so they don't collide.
+    // Label — uses the full bar width now that the value is external.
     const valueText = item.value ?? ''
-    const valueW    = valueText ? valueText.length * 7 + 12 : 0
-    const labelW    = Math.max(40, barW - valueW)
-    const maxChars  = Math.max(5, Math.floor(labelW / 7.5))
-    // value badge is drawn separately to the right; children render as a
-    // description below the bar. So shows.value=!!valueText and shows.children
-    // is implicit. Ellipsis fires when attrs are non-empty.
-    const labelStr = ellipsisIfDropped(item.label, item, { value: !!valueText })
+    const maxChars  = Math.max(5, Math.floor(barW / 7.5))
+    const labelStr  = ellipsisIfDropped(item.label, item, { value: !!valueText })
     const { lines, truncated, url: lblUrl } = wrapLabel(labelStr, maxChars)
     const firstY = y + ROW_H / 2 - ((lines.length - 1) * LINE_H) / 2 + 4
     const tip    = truncated ? `<title>${escapeXml(item.label)}</title>` : ''
@@ -96,13 +96,21 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       aWrap(`<text x="${cx.toFixed(1)}" y="${firstY.toFixed(1)}" text-anchor="middle" font-size="12" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tip}${tspans}</text>`, lblUrl)
     )
 
-    // Value badge — right-aligned inside the bar, dimmer than the label
+    // Value — rendered outside (right of) the bar so narrow top-tier bars
+    // aren't squeezed. Pixel-accurate wrapping via wrapLabel opts.
     if (valueText) {
-      const valX = barX + barW - 10
-      const valY = y + ROW_H / 2 + 4
-      unit.push(
-        `<text x="${valX.toFixed(1)}" y="${valY.toFixed(1)}" text-anchor="end" font-size="11" font-weight="700" fill="${theme.bg}" opacity="0.8" font-family="system-ui,sans-serif">${escapeXml(valueText)}</text>`
-      )
+      const VAL_FS = 9, VAL_LH = VAL_FS * 1.3
+      const valX    = cx + barW / 2 + 8
+      const valMaxW = W - 8 - valX
+      const valChars = Math.max(4, Math.floor(valMaxW / (VAL_FS * 0.52)))
+      const { lines: valLines } = wrapLabel(valueText, valChars, 2, { boxW: valMaxW, fontSize: VAL_FS })
+      // Vertically centre the value block on the bar's mid-line.
+      const valStartY = y + ROW_H / 2 - ((valLines.length - 1) * VAL_LH) / 2 + VAL_FS * 0.3
+      valLines.forEach((vl, vli) => {
+        unit.push(
+          `<text x="${valX.toFixed(1)}" y="${(valStartY + vli * VAL_LH).toFixed(1)}" text-anchor="start" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(vl)}</text>`
+        )
+      })
     }
 
     // Description below bar (from children)
@@ -117,7 +125,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         `<text x="${cx.toFixed(1)}" y="${descY.toFixed(1)}" text-anchor="middle" font-size="${DESC_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${dTip}${dSpans}</text>`
       )
     }
-    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i, animate, instrument))
   }
   if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
 

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -19,6 +19,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const bx = W / 2, beamY = TITLE_H + 76, beamW = 400, plateW = 130, plateH = 18
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   parts.push(`<polygon points="${bx},${beamY + 4} ${bx - 18},${beamY + 44} ${bx + 18},${beamY + 44}" fill="${theme.surface}" stroke="${theme.textMuted}" stroke-width="1.5"/>`)
   parts.push(`<rect x="${bx - 30}" y="${beamY + 44}" width="60" height="8" rx="2" fill="${theme.surface}" stroke="${theme.textMuted}" stroke-width="1"/>`)
   parts.push(`<rect x="${(bx - beamW / 2).toFixed(1)}" y="${(beamY - 4).toFixed(1)}" width="${beamW}" height="8" rx="3" fill="${theme.surface}" stroke="${theme.textMuted}" stroke-width="1.5"/>`)
@@ -34,7 +35,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   left.children.slice(0, 4).forEach((ch, i) => {
     leftUnit.push(`<text x="${lx.toFixed(1)}" y="${(beamY + 66 + i * 14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 16)}</text>`)
   })
-  parts.push(animate ? `<g class="mdart-n0">${leftUnit.join('')}</g>` : leftUnit.join(''))
+  parts.push(wrapItem(leftUnit.join(''), 0, animate, instrument))
   const rx = bx + beamW / 2 - plateW / 2 + 6
   parts.push(`<line x1="${rx}" y1="${beamY}" x2="${rx}" y2="${beamY + 38}" stroke="${theme.textMuted}99" stroke-width="1.5"/>`)
   const rightUnit: string[] = []
@@ -43,7 +44,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   right.children.slice(0, 4).forEach((ch, i) => {
     rightUnit.push(`<text x="${rx.toFixed(1)}" y="${(beamY + 66 + i * 14).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 16)}</text>`)
   })
-  parts.push(animate ? `<g class="mdart-n1">${rightUnit.join('')}</g>` : rightUnit.join(''))
+  parts.push(wrapItem(rightUnit.join(''), 1, animate, instrument))
   if (animate) parts.unshift(seqSpotlightCSS(2, spec, { scale: false }))
   return svg(W, H, theme, spec.title, parts)
 }

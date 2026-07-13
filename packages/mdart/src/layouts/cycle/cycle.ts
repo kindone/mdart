@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock } from '../shared'
+import { escapeXml, lerpColor, contrastColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, shouldInstrument, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -41,6 +41,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   // ── Arrows — SVG arcs along the orbit circle ─────────────────────────────
   // Arc endpoints are inset by an angular clearance so they sit just outside
@@ -105,12 +106,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       valueMaxSize: 9, valueMinSize: 6.5,
     })
 
-    svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}>`
+    svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}${instrument ? ` data-item-index="${i}"` : ''}>`
     svgContent += `<rect x="${(nx - hw).toFixed(1)}" y="${(ny - hh).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${fill}">${itemTitleTag(item)}</rect>`
+    // Nodes have solid fills — pick text colour by fill luminance so it
+    // contrasts in both light and dark modes.
+    const textColor = contrastColor(fill)
     svgContent += renderFitBlock(nx, ny, fit, {
       labelFullText: lblDisplay, valueFullText: item.value ?? undefined,
-      labelFill: theme.text, valueFill: theme.text,
-      labelWeight: '600', valueExtraAttrs: 'opacity="0.7"',
+      labelFill: textColor, valueFill: textColor,
+      labelWeight: '600', valueExtraAttrs: 'opacity="0.85"',
     })
     svgContent += `</g>`
   }

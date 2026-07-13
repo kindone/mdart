@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 // hierarchy-list renders a compact tree outline; rows are intentionally tight.
@@ -25,6 +25,7 @@ const MAX_D2 = Math.max(20, Math.floor((W - PAD * 2 - INDENT * 2) / 5.5)) // ~90
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   interface Row { label: string; truncated: boolean; url: string | null; depth: number; isLast: boolean; parentHasSibling: boolean[]; src: MdArtItem }
   const rows: Row[] = []
 
@@ -81,7 +82,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const tf    = row.depth === 0 ? theme.text : row.depth === 1 ? theme.text : theme.textMuted
     const tip   = row.truncated ? `<title>${escapeXml(row.label)}</title>` : ''
     unit.push(aWrap(`<text x="${textX.toFixed(1)}" y="${(y + 4).toFixed(1)}" font-size="${fs}" fill="${tf}" font-family="system-ui,sans-serif" font-weight="${fw}">${tip}${escapeXml(row.label)}</text>`, row.url))
-    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i, animate, instrument))
 
     curY += rowH
   })

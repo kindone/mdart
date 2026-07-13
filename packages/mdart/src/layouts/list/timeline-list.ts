@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -73,6 +73,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const n = items.length
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   let svgContent = ''
 
   if (spec.title) {
@@ -124,7 +125,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       textY += SEC_G
       nodeStr += `<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${ATTR_FS}" fill="${theme.accent}" font-family="system-ui,sans-serif">${escapeXml(item.attrs.join(', '))}</text>`
     }
-    svgContent += animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr
+    svgContent += wrapItem(nodeStr, i, animate, instrument)
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, lerpColor, contrastColor, itemTitleTag, displayLabel, shouldAnimate, shouldInstrument, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock } from '../shared'
 
 function renderVerticalProcess(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -20,9 +20,6 @@ function renderVerticalProcess(spec: MdArtSpec, theme: MdArtTheme): string {
   // neighbor. This fallback previously had no wrap/truncation mechanism at
   // all — a long label just rendered past the box edges unbounded.
   const displays = items.map(item => displayLabel(item, { value: !!item.value }))
-  const nodeFits = displays.map(d =>
-    fitTextToWidthShared([d.display], NODE_W - 24, { maxSize: 12, minSize: 6.5, maxLines: 2 }),
-  )
 
   let svgContent = ''
   if (spec.title) {
@@ -30,6 +27,7 @@ function renderVerticalProcess(spec: MdArtSpec, theme: MdArtTheme): string {
   }
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   for (let i = 0; i < n; i++) {
     const item = items[i]
@@ -37,11 +35,22 @@ function renderVerticalProcess(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.secondary, theme.primary, t)
     const y = PAD + titleH + i * (ROW_H + ARROW_H)
     const { url: itmUrl, display: itmDisplay } = displays[i]
-    const { fontSize: nodeFS, lineHeight: lineH, results: [{ lines, truncated }] } = nodeFits[i]
+    const fit = fitLabelValueBlock(itmDisplay, item.value, NODE_W - 24, ROW_H - 12, {
+      labelUrl: itmUrl,
+      labelMaxSize: 12,
+      labelMinSize: 6.5,
+      labelMaxLines: 1,
+      labelMaxLinesNoValue: 2,
+      valueMaxSize: 10.5,
+      valueMinSize: 6,
+      valueMaxLines: 3,
+      valueShare: 0.65,
+      gap: 3,
+    })
     const cy = y + ROW_H / 2
 
     // Arrow from previous node lives inside this node's <g> so it fades in together.
-    svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}>`
+    svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}${instrument ? ` data-item-index="${i}"` : ''}>`
     if (i > 0) {
       const prevT = n > 1 ? (i - 1) / (n - 1) : 0.5
       const prevFill = lerpColor(theme.secondary, theme.primary, prevT)
@@ -49,12 +58,14 @@ function renderVerticalProcess(spec: MdArtSpec, theme: MdArtTheme): string {
       svgContent += `<polygon points="${W / 2 - 8},${ay} ${W / 2 + 8},${ay} ${W / 2},${ay + ARROW_H - 2}" fill="${prevFill}" />`
     }
     svgContent += `<rect x="${nodeX}" y="${y}" width="${NODE_W}" height="${ROW_H}" rx="6" fill="${fill}" >${itemTitleTag(item)}</rect>`
-    const tip = truncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
-    const spans = lines.map((l, li) => {
-      const ly = cy + 5 + (li - (lines.length - 1) / 2) * lineH
-      return `<text x="${W / 2}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${nodeFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(l)}</text>`
-    }).join('')
-    svgContent += aWrap(`${tip}${spans}`, itmUrl)
+    svgContent += renderFitBlock(W / 2, cy, fit, {
+      labelFullText: itmDisplay,
+      valueFullText: item.value,
+      labelFill: contrastColor(fill),
+      valueFill: contrastColor(fill),
+      labelWeight: '600',
+      valueExtraAttrs: 'opacity="0.85"',
+    })
     svgContent += `</g>`
   }
 
@@ -90,6 +101,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const cy = PAD + titleH + nodeH / 2          // centre of boxes, below title strip
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   let svgContent = ''
 
   // Per-node fitting: every box shares nodeW, but each label is sized
@@ -98,9 +110,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // long label could grow past nodeH with nothing to stop it) plus an
   // arbitrary 12px/11px split between single- and multi-line nodes.
   const displays = items.map(item => displayLabel(item, { value: !!item.value }))
-  const nodeFits = displays.map(d =>
-    fitTextToWidthShared([d.display], nodeW - 12, { maxSize: 12, minSize: 6.5, maxLines: 2 }),
-  )
 
   for (let i = 0; i < n; i++) {
     const item = items[i]
@@ -109,10 +118,21 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const t = n > 1 ? i / (n - 1) : 0.5
     const fill = lerpColor(theme.secondary, theme.primary, t)
     const { url: itmUrl, display: itmDisplay } = displays[i]
-    const { fontSize: nodeFS, lineHeight: lineH, results: [{ lines, truncated }] } = nodeFits[i]
+    const fit = fitLabelValueBlock(itmDisplay, item.value, nodeW - 12, nodeH - 12, {
+      labelUrl: itmUrl,
+      labelMaxSize: 12,
+      labelMinSize: 6.5,
+      labelMaxLines: 1,
+      labelMaxLinesNoValue: 2,
+      valueMaxSize: 10.5,
+      valueMinSize: 6,
+      valueMaxLines: 3,
+      valueShare: 0.65,
+      gap: 3,
+    })
 
     // Arrow from previous node lives inside this node's <g> so it fades in together.
-    svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}>`
+    svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}${instrument ? ` data-item-index="${i}"` : ''}>`
     if (i > 0) {
       const ax = x - ARROW_W + 2
       const prevT = n > 1 ? (i - 1) / (n - 1) : 0.5
@@ -121,19 +141,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     }
     svgContent += `<rect x="${x}" y="${y}" width="${nodeW}" height="${nodeH}" rx="6" fill="${fill}" >${itemTitleTag(item)}</rect>`
 
-    // Visual centring: SVG <text y> is the baseline, so add ~font-size * 0.35
-    // to nudge the glyph body down to the box midline.
-    const hasValue = !!item.value
-    const textY = cy + (hasValue ? -6 : 4)
-    const tip = truncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
-    const lblContent = tip + lines.map((line, li) => {
-      const ly = textY + (li - (lines.length - 1) / 2) * lineH
-      return `<text x="${x + nodeW / 2}" y="${ly}" text-anchor="middle" font-size="${nodeFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
-    }).join('')
-    svgContent += aWrap(lblContent, itmUrl)
-    if (hasValue) {
-      svgContent += `<text x="${x + nodeW / 2}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="#ffffffcc" font-family="system-ui,sans-serif">${escapeXml(item.value!)}</text>`
-    }
+    svgContent += renderFitBlock(x + nodeW / 2, cy, fit, {
+      labelFullText: itmDisplay,
+      valueFullText: item.value,
+      labelFill: contrastColor(fill),
+      valueFill: contrastColor(fill),
+      labelWeight: '600',
+      valueExtraAttrs: 'opacity="0.85"',
+    })
     svgContent += `</g>`
   }
 

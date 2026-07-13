@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -18,6 +18,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const titleH = spec.title ? 28 : 8
   const H = titleH + CARD_H + 16
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
@@ -82,7 +83,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const ty = bodyCy + (visible.length - (totalRows - 1) / 2) * rowH + 4
       cardStr += `<text x="${(x + CARD_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${subFS}" fill="${theme.textMuted}" fill-opacity="0.7" font-family="system-ui,sans-serif" font-style="italic">+${moreCount} more</text>`
     }
-    parts.push(animate ? `<g class="mdart-n${i}">${cardStr}</g>` : cardStr)
+    parts.push(wrapItem(cardStr, i, animate, instrument))
     if (i < n - 1) {
       const op = i === n - 2 ? '=' : '+'
       const opX = x + CARD_W + opW / 2

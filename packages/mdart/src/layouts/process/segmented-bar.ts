@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -18,6 +18,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const BAR_Y = titleH + 12, PAD = 8
   const BAR_W = W - PAD * 2
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
@@ -67,7 +68,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lx = curX + segW / 2
     segStr += aWrap(`${labelTip}<text x="${lx.toFixed(1)}" y="${(BAR_Y + BAR_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(labelLines[0])}</text>`, itmUrl)
     segStr += `${pctTip}<text x="${lx.toFixed(1)}" y="${(BAR_Y + BAR_H + 14).toFixed(1)}" text-anchor="middle" font-size="${pctFS}" fill="${fill}" font-family="system-ui,sans-serif">${escapeXml(pctLines[0])}</text>`
-    parts.push(animate ? `<g class="mdart-n${i}">${segStr}</g>` : segStr)
+    parts.push(wrapItem(segStr, i, animate, instrument))
     curX += segW
   })
   if (animate) parts.unshift(seqSpotlightCSS(items.length, spec, { scale: false }))

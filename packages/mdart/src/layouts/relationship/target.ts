@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -21,6 +21,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const MAX_R = Math.min(cx - 10, (H - TITLE_H) / 2 - 12)
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   parts.push(`<line x1="${cx - MAX_R - 6}" y1="${cy}" x2="${cx + MAX_R + 6}" y2="${cy}" stroke="${theme.border}28" stroke-width="1"/>`)
   parts.push(`<line x1="${cx}" y1="${cy - MAX_R - 6}" x2="${cx}" y2="${cy + MAX_R + 6}" stroke="${theme.border}28" stroke-width="1"/>`)
   for (let i = n - 1; i >= 0; i--) {
@@ -33,7 +34,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const bandR = r - MAX_R / n / 2
     const { display: itmDisplay, url: itmUrl } = displayLabel(item)
     unit.push(aWrap(`<text x="${cx}" y="${(cy - bandR + 5).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="${i === n - 1 ? '700' : '400'}">${tt(itmDisplay, 18, item)}</text>`, itmUrl))
-    parts.push(animate ? `<g class="mdart-n${n - 1 - i}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), n - 1 - i, animate, instrument))
   }
   if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
   return svg(W, H, theme, spec.title, parts)

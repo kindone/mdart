@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap, wrapLabel, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap, wrapLabel, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -79,6 +79,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const H      = titleH + CARD_H + 8
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const parts: string[] = []
   if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
 
@@ -126,7 +127,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       nodeStr += `<text x="${cx}" y="${(y+HEADER_H+13).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" fill-opacity="0.85" font-family="system-ui,sans-serif" font-style="italic">${tt(item.value, valueMax)}</text>`
     }
     nodeStr += childStr
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
   })
 
   if (animate) parts.unshift(seqSpotlightCSS(n, spec))

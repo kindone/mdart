@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -40,6 +40,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const displays = items.map(it => displayLabel(it, { value: !!it.value }))
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   items.forEach((item, i) => {
     const x    = n === 1 ? W / 2 : PAD + i * spacing
     const t    = n > 1 ? i / (n - 1) : 0
@@ -48,8 +49,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const tickStart = above ? SPINE_Y - 6  : SPINE_Y + 6
     const tickEnd   = above ? SPINE_Y - 18 : SPINE_Y + 18
     const { url: itmUrl, display: itmDisplay } = displays[i]
-    const { fontSize: labelFS, results: [{ lines: labelLines, truncated: labelTruncated }] } =
-      fitTextToWidthShared([itmDisplay], colW, { maxSize: 10, minSize: 6.5, maxLines: 1 })
+    const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines: labelLines, truncated: labelTruncated }] } =
+      fitTextToWidthShared([itmDisplay], colW, { maxSize: 10, minSize: 6.5, maxLines: 2, boxH: 22 })
     const valueFitFull = item.value
       ? fitTextToWidthShared([item.value], colW, { maxSize: 9, minSize: 6, maxLines: 2 })
       : null
@@ -63,21 +64,28 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     nodeStr += `<line x1="${x.toFixed(1)}" y1="${tickStart}" x2="${x.toFixed(1)}" y2="${tickEnd}" stroke="${fill}" stroke-width="1"/>`
     if (above) {
       const labelY = tickEnd - 4
-      nodeStr += aWrap(`${labelTip}<text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(labelLines[0])}</text>`, itmUrl)
+      const labelStartY = labelY - (labelLines.length - 1) * labelLH
+      const labelSpans = labelLines
+        .map((line, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : labelLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+        .join('')
+      nodeStr += aWrap(`${labelTip}<text x="${x.toFixed(1)}" y="${labelStartY.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${labelSpans}</text>`, itmUrl)
       const L = valueLines.length
       valueLines.forEach((line, j) => {
-        const vy = labelY - 11 - (L - 1 - j) * 10
+        const vy = labelStartY - 11 - (L - 1 - j) * 10
         nodeStr += `${j === 0 ? valueTip : ''}<text x="${x.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(line)}</text>`
       })
     } else {
       const labelY = tickEnd + 12
-      nodeStr += aWrap(`${labelTip}<text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(labelLines[0])}</text>`, itmUrl)
+      const labelSpans = labelLines
+        .map((line, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : labelLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+        .join('')
+      nodeStr += aWrap(`${labelTip}<text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${labelSpans}</text>`, itmUrl)
       valueLines.forEach((line, j) => {
-        const vy = labelY + 11 + j * 10
+        const vy = labelY + (labelLines.length - 1) * labelLH + 11 + j * 10
         nodeStr += `${j === 0 ? valueTip : ''}<text x="${x.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(line)}</text>`
       })
     }
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
   })
 
   if (animate) parts.unshift(seqSpotlightCSS(n, spec))

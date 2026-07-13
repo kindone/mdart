@@ -1,11 +1,12 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty, ellipsisIfDropped, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty, ellipsisIfDropped, itemTitleTag, shouldAnimate, seqSpotlightCSS, renderWrappedText, wrapItem, shouldInstrument } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const rows = spec.items
   if (rows.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const numCols    = Math.max(...rows.map(r => r.children.length), 1)
   const COL_W      = Math.min(160, Math.max(90, 520 / numCols))
@@ -63,12 +64,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     label: string,
     wrap: { lines: string[]; truncated: boolean; url?: string | null },
   ): string {
-    const { lines, truncated, url = null } = wrap
-    const tip   = truncated ? `<title>${escapeXml(label)}</title>` : ''
-    const spans = lines
-      .map((l, i) => `<tspan x="${cx}" dy="${i === 0 ? 0 : LINE_H}">${escapeXml(l)}</tspan>`)
-      .join('')
-    return aWrap(`<text x="${cx}" y="${y1}" ${attrs}>${tip}${spans}</text>`, url)
+    return renderWrappedText(cx, y1, attrs, label, wrap, LINE_H)
   }
 
   /** First-line baseline that centres n lines vertically in cellH. */
@@ -95,7 +91,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       `text-anchor="middle" font-size="11" fill="${theme.primary}" font-family="system-ui,sans-serif" font-weight="700"`,
       colHeaders[c], w))
   }
-  svg += animate ? `<g class="mdart-n0">${headerUnit.join('')}</g>` : headerUnit.join('')
+  svg += wrapItem(headerUnit.join(''), 0, animate, instrument)
 
   // Rows
   for (let r = 0; r < rows.length; r++) {
@@ -125,7 +121,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
           cell.label, cw))
       }
     }
-    svg += animate ? `<g class="mdart-n${r + 1}">${rowUnit.join('')}</g>` : rowUnit.join('')
+    svg += wrapItem(rowUnit.join(''), r + 1, animate, instrument)
   }
   if (animate) svg = seqSpotlightCSS(rows.length + 1, spec, { scale: false, loopStartIndex: 1 }) + svg
 

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, getCaption, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -46,6 +46,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const n = items.length
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const parts: string[] = []
   if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
 
@@ -61,40 +62,28 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Value/caption fit first (its own boxH share, a minority of hexBoxH
     // since the label is the primary text), then label reserves whatever's
     // left — same joint pattern as circle-process/chevron-process.
-    const valueFitFull = caption
-      ? fitTextToWidthShared([caption], hexBoxW, { maxSize: 9, minSize: 6.5, maxLines: 2, boxH: Math.max(10, hexBoxH * 0.4) })
-      : null
-    const valueFS = valueFitFull?.fontSize ?? 9
-    const valueLH = valueFitFull?.lineHeight ?? 9 * 1.3
-    const valueFit = valueFitFull?.results[0] ?? null
-    const valueBlockH = valueFit ? valueFit.lines.length * valueLH : 0
-    const reservedBoxH = valueFit ? Math.max(10, hexBoxH - valueBlockH - 3) : hexBoxH
-    const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines: labelLines, truncated: labelTruncated }] } =
-      fitTextToWidthShared([rawLabel], hexBoxW, {
-        maxSize: 11, minSize: 6.5, maxLines: caption ? 2 : 3, boxH: reservedBoxH,
-      })
-    const labelTip = labelTruncated ? `<title>${escapeXml(rawLabel)}</title>` : ''
-    // Centre the whole block (label lines + optional value lines) on cy —
-    // generalized so it works for any line-count combination the fit above
-    // lands on, instead of assuming exactly 1 or 2 label lines.
-    const totalH = labelLines.length * labelLH + (valueFit ? valueBlockH + 3 : 0)
-
-    let hexContent = labelTip
-    labelLines.forEach((line, li) => {
-      const ty = cy - totalH / 2 + li * labelLH + labelLH * 0.8
-      hexContent += `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line)}</text>`
+    const fit = fitLabelValueBlock(rawLabel, caption, hexBoxW, hexBoxH, {
+      labelUrl: lblUrl,
+      labelMaxSize: 11,
+      labelMinSize: 6.5,
+      labelMaxLines: 2,
+      labelMaxLinesNoValue: 3,
+      valueMaxSize: 9,
+      valueMinSize: 6.5,
+      valueMaxLines: 2,
+      valueShare: 0.4,
+      gap: 3,
     })
-    if (valueFit) {
-      const valueTip = valueFit.truncated ? `<title>${escapeXml(caption!)}</title>` : ''
-      valueFit.lines.forEach((line, li) => {
-        const ty = cy - totalH / 2 + labelLines.length * labelLH + li * valueLH + valueLH * 0.8
-        hexContent += `${li === 0 ? valueTip : ''}<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(line)}</text>`
-      })
-    }
     let nodeStr = ''
     nodeStr += `<polygon points="${hexPoints(cx, cy)}" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</polygon>`
-    nodeStr += aWrap(hexContent, lblUrl)
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    nodeStr += renderFitBlock(cx, cy, fit, {
+      labelFullText: rawLabel,
+      valueFullText: caption ?? undefined,
+      labelFill: theme.text,
+      valueFill: theme.textMuted,
+      labelWeight: '700',
+    })
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
   })
   if (animate) parts.unshift(seqSpotlightCSS(n, spec))
   return svg(W, H, theme, parts)

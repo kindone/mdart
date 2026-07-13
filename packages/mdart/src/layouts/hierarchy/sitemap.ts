@@ -1,11 +1,12 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 import { countLeaves, maxDepth } from './shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   interface SNode { label: string; value?: string; attrs?: string[]; level: number; x: number; y: number; parentX?: number; parentY?: number }
   const snodes: SNode[] = []
   const W = 640, levelH = 52, TITLE_H = spec.title ? 28 : 10
@@ -44,7 +45,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     unit.push(`<rect x="${(n.x - bw(n.level)/2).toFixed(1)}" y="${(n.y - bh(n.level)/2).toFixed(1)}" width="${bw(n.level)}" height="${bh(n.level)}" rx="4" fill="${fill}" stroke="${theme.bg}" stroke-width="1.5">${itemTitleTag(n)}</rect>`)
     const fs = n.level === 0 ? 10 : n.level === 1 ? 9 : 8
     unit.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${(n.y + 4).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="600">${tt(nDisplay, 12, n)}</text>`, nUrl))
-    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i, animate, instrument))
   }
   if (animate) parts.unshift(seqSpotlightCSS(snodes.length, spec, { scale: false }))
 

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { lerpColor, contrastColor, titleEl, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument } from '../shared'
 import { render as renderProcess } from './process'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
@@ -28,6 +28,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const cy = y + chevH / 2
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
 
@@ -82,43 +83,30 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // vertical room) so it can wrap to a 2nd line too when it's long enough
     // to need it — short values still land on 1 line at max size exactly
     // as before, since the search only wraps when width actually demands it.
-    const valueFitFull = item.value
-      ? fitTextToWidthShared([item.value], bodyW, {
-          maxSize: 9, minSize: 6, maxLines: 2, boxH: Math.max(10, chevBoxH * 0.4),
-        })
-      : null
-    const valueFS = valueFitFull?.fontSize ?? 9
-    const valueLH = valueFitFull?.lineHeight ?? 9 * 1.3
-    const valueFit = valueFitFull?.results[0] ?? null
-    const valueBlockH = valueFit ? valueFit.lines.length * valueLH : 0
-    const reservedBoxH = valueFit ? Math.max(10, chevBoxH - valueBlockH - 3) : chevBoxH
-    const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines: labelLines, truncated: labelTruncated }] } =
-      fitTextToWidthShared([itmDisplay], bodyW, {
-        maxSize: 10.5, minSize: 6.5, maxLines: item.value ? 3 : 4, boxH: reservedBoxH,
-      })
-    const labelTip = labelTruncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
-    // Centre the whole block (label lines + optional value lines) on cy —
-    // generalized so it works for any line-count combination the fit above
-    // lands on, instead of assuming exactly 1 label/value line.
-    const totalH = labelLines.length * labelLH + (valueFit ? valueBlockH + 3 : 0)
+    const fit = fitLabelValueBlock(itmDisplay, item.value, bodyW, chevBoxH, {
+      labelUrl: itmUrl,
+      labelMaxSize: 10.5,
+      labelMinSize: 6.5,
+      labelMaxLines: 3,
+      labelMaxLinesNoValue: 4,
+      valueMaxSize: 9,
+      valueMinSize: 6,
+      valueMaxLines: 2,
+      valueShare: 0.4,
+      gap: 3,
+    })
 
     let nodeStr = `<polygon points="${pts}" fill="${fill}ee" stroke="${theme.bg}" stroke-width="2.5">${itemTitleTag(item)}</polygon>`
-    let lblContent = labelTip
-    labelLines.forEach((line, li) => {
-      const ty = cy - totalH / 2 + li * labelLH + labelLH * 0.8
-      lblContent += `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+    const textColor = contrastColor(fill)
+    nodeStr += renderFitBlock(tx, cy, fit, {
+      labelFullText: itmDisplay,
+      valueFullText: item.value,
+      labelFill: textColor,
+      valueFill: textColor,
+      labelWeight: '600',
+      valueExtraAttrs: 'opacity="0.85"',
     })
-    nodeStr += aWrap(lblContent, itmUrl)
-    if (valueFit) {
-      const valueTip = valueFit.truncated ? `<title>${escapeXml(item.value!)}</title>` : ''
-      let valueContent = valueTip
-      valueFit.lines.forEach((line, li) => {
-        const ty = cy - totalH / 2 + labelLines.length * labelLH + li * valueLH + valueLH * 0.8
-        valueContent += `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.text}" fill-opacity="0.72" font-family="system-ui,sans-serif">${escapeXml(line)}</text>`
-      })
-      nodeStr += valueContent
-    }
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
   })
 
   if (animate) parts.unshift(seqSpotlightCSS(n, spec))

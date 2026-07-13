@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, aWrap, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, aWrap, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 import { countLeaves, maxDepth, layoutNodes, flatNodes } from './shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
@@ -36,6 +36,7 @@ function collectLabels(items: MdArtItem[]): string[] {
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const depth       = maxDepth(spec.items)
   const totalLeaves = spec.items.reduce((s, i) => s + countLeaves(i), 0) || 1
@@ -110,7 +111,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       `<text x="${n.x.toFixed(1)}" y="${textStartY.toFixed(1)}" text-anchor="middle" font-size="${nodeFS}" fill="${theme.text}" font-family="system-ui,sans-serif">${fullTip}${spans}</text>`,
       lblUrl,
     ))
-    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i, animate, instrument))
   }
   if (animate) parts.unshift(seqSpotlightCSS(flat.length, spec, { scale: false }))
 

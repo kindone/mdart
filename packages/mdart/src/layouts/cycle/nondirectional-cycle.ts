@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, roundTextBox } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, roundTextBox, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -32,6 +32,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   }
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   // Per-node fitting: every node shares nodeR (like circle-process.ts's
   // circles), so each label/value pair is sized independently — a short
@@ -69,7 +70,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       labelWeight: '600', valueWeight: '400',
       extraAttrs: halo,
     })
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
   }
 
   if (animate) parts.unshift(seqSpotlightCSS(n, spec))

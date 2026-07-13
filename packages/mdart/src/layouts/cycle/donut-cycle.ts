@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, lerpColor, contrastColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, shouldInstrument, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -27,6 +27,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const wedgeBoxH = Math.max(16, (outerR - innerR) * 0.7)
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   let svgContent = ''
 
   for (let i = 0; i < n; i++) {
@@ -57,33 +58,30 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lx = cx + labelR * Math.cos(midAngle)
     const ly = cy + labelR * Math.sin(midAngle)
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
-    const valueFitFull = item.value
-      ? fitTextToWidthShared([item.value], wedgeBoxW, { maxSize: 8, minSize: 6, maxLines: 1 })
-      : null
-    const valueFS = valueFitFull?.fontSize ?? 8
-    const valueLH = valueFitFull?.lineHeight ?? 8 * 1.3
-    const valueFit = valueFitFull?.results[0] ?? null
-    const reservedBoxH = valueFit ? Math.max(10, wedgeBoxH - valueLH - 2) : wedgeBoxH
-    const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines: labelLines, truncated: labelTruncated }] } =
-      fitTextToWidthShared([lblDisplay], wedgeBoxW, {
-        maxSize: 10, minSize: 6.5, maxLines: item.value ? 2 : 3, boxH: reservedBoxH,
-      })
-    const labelTip = labelTruncated ? `<title>${escapeXml(lblDisplay)}</title>` : ''
-    const totalH = labelLines.length * labelLH + (valueFit ? valueLH + 2 : 0)
-
-    svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}>`
-    svgContent += `<path d="${path}" fill="${fill}">${itemTitleTag(item)}</path>`
-    let lblContent = labelTip
-    labelLines.forEach((line, li) => {
-      const ty = ly - totalH / 2 + li * labelLH + labelLH * 0.8
-      lblContent += `<text x="${lx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+    const fit = fitLabelValueBlock(lblDisplay, item.value, wedgeBoxW, wedgeBoxH, {
+      labelUrl: lblUrl,
+      labelMaxSize: 10,
+      labelMinSize: 6.5,
+      labelMaxLines: 2,
+      labelMaxLinesNoValue: 3,
+      valueMaxSize: 8,
+      valueMinSize: 6,
+      valueMaxLines: 1,
+      gap: 2,
     })
-    svgContent += aWrap(lblContent, lblUrl)
-    if (valueFit) {
-      const valueTip = valueFit.truncated ? `<title>${escapeXml(item.value!)}</title>` : ''
-      const ty = ly - totalH / 2 + labelLines.length * labelLH + valueLH * 0.8
-      svgContent += `${valueTip}<text x="${lx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.text}" opacity="0.7" font-family="system-ui,sans-serif">${escapeXml(valueFit.lines[0])}</text>`
-    }
+
+    svgContent += `<g${animate ? ` class="mdart-n${i}"` : ''}${instrument ? ` data-item-index="${i}"` : ''}>`
+    svgContent += `<path d="${path}" fill="${fill}">${itemTitleTag(item)}</path>`
+    // Segments have solid fills — pick text colour by fill luminance.
+    const textColor = contrastColor(fill)
+    svgContent += renderFitBlock(lx, ly, fit, {
+      labelFullText: lblDisplay,
+      valueFullText: item.value,
+      labelFill: textColor,
+      valueFill: textColor,
+      labelWeight: '600',
+      valueExtraAttrs: 'opacity="0.85"',
+    })
     svgContent += `</g>`
   }
 

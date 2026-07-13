@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -43,6 +43,7 @@ function colText(
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   let pros: MdArtItem[] = []
   let cons: MdArtItem[] = []
   let currentSection: 'pros' | 'cons' | null = null
@@ -113,7 +114,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     `<rect x="${HALF}" y="${baseY}" width="${HALF}" height="${HEADER_H}" fill="#4c0519" />`,
     `<text x="${HALF + HALF / 2}" y="${baseY + 25}" text-anchor="middle" font-size="13" fill="#fda4af" font-family="system-ui,sans-serif" font-weight="700">Cons</text>`,
   ].join('')
-  svgContent += animate ? `<g class="mdart-n0">${headerUnit}</g>` : headerUnit
+  svgContent += wrapItem(headerUnit, 0, animate, instrument)
 
   for (let i = 0; i < maxRows; i++) {
     const unit: string[] = []
@@ -138,7 +139,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (i < maxRows - 1) {
       unit.push(`<line x1="0" y1="${rY + rH}" x2="${W}" y2="${rY + rH}" stroke="${theme.border}" stroke-width="0.5" />`)
     }
-    svgContent += animate ? `<g class="mdart-n${i + 1}">${unit.join('')}</g>` : unit.join('')
+    svgContent += wrapItem(unit.join(''), i + 1, animate, instrument)
   }
 
   svgContent += `<line x1="${HALF}" y1="${baseY}" x2="${HALF}" y2="${H}" stroke="${theme.bg}" stroke-width="2" />`

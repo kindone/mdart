@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -26,6 +26,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   for (let i = n - 1; i >= 0; i--) {
     const item = items[i]
@@ -42,7 +43,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     unit.push(
       aWrap(`<text x="${cxPos.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(lblDisplay, 18, item)}</text>`, lblUrl),
     )
-    parts.push(animate ? `<g class="mdart-n${n - 1 - i}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), n - 1 - i, animate, instrument))
   }
 
   if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))

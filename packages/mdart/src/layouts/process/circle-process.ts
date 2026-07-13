@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { lerpColor, titleEl, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, roundTextBox, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -30,11 +30,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // its own label/value length. Short labels ("Design") get to stay large;
   // only the genuinely long one shrinks/wraps. Trade-off: node text sizes
   // may visibly differ across the diagram, unlike the shared-size approach.
-  const circleBoxW = Math.max(20, R * 1.6 - 4)
-  const circleBoxH = Math.max(14, R * 1.4)  // vertical band, symmetric to the width approximation above
+  const { w: circleBoxW, h: circleBoxH } = roundTextBox(R)
   const displays = items.map(item => displayLabel(item, { value: !!item.value }))
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   items.forEach((item, i) => {
     const cx = 16 + i * spacing + spacing / 2
     const cy = titleH + R + 6
@@ -42,34 +42,26 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const { url: itmUrl, display: itmDisplay } = displays[i]
 
-    const valueFit = item.value
-      ? fitTextToWidthShared([item.value], circleBoxW, { maxSize: 8, minSize: 6, maxLines: 1 })
-      : null
-    const reservedBoxH = valueFit ? Math.max(10, circleBoxH - valueFit.lineHeight - 3) : circleBoxH
-    const labelFit = fitTextToWidthShared([itmDisplay], circleBoxW, {
-      maxSize: 10, minSize: 6.5, maxLines: 3, boxH: reservedBoxH,
+    const fit = fitLabelValueBlock(itmDisplay, item.value, circleBoxW, circleBoxH, {
+      labelUrl: itmUrl,
+      labelMaxSize: 10,
+      labelMinSize: 6.5,
+      labelMaxLines: 3,
+      labelMaxLinesNoValue: 3,
+      valueMaxSize: 9.5,
+      valueMinSize: 6,
+      valueMaxLines: 2,
+      gap: 3,
     })
-    const labelFS = labelFit.fontSize, labelLH = labelFit.lineHeight
-    const { lines: labelLines, truncated: labelTruncated } = labelFit.results[0]
-    const labelTip = labelTruncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
-    // Centre the whole block (label lines + optional value line) on cy —
-    // generalized so it works for any line-count combination the fit above
-    // lands on, instead of assuming exactly 1 label line.
-    const totalH = labelLines.length * labelLH + (valueFit ? valueFit.lineHeight + 3 : 0)
     let nodeStr = `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${R}" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</circle>`
-    let textContent = labelTip
-    labelLines.forEach((line, li) => {
-      const ty = cy - totalH / 2 + li * labelLH + labelLH * 0.8
-      textContent += `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line)}</text>`
+    nodeStr += renderFitBlock(cx, cy, fit, {
+      labelFullText: itmDisplay,
+      valueFullText: item.value,
+      labelFill: theme.text,
+      valueFill: theme.textMuted,
+      labelWeight: '700',
     })
-    nodeStr += aWrap(textContent, itmUrl)
-    if (valueFit) {
-      const { lines: valLines, truncated: valTruncated } = valueFit.results[0]
-      const valTip = valTruncated ? `<title>${escapeXml(item.value!)}</title>` : ''
-      const ty = cy - totalH / 2 + labelLines.length * labelLH + valueFit.lineHeight * 0.8
-      nodeStr += `${valTip}<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${valueFit.fontSize}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(valLines[0])}</text>`
-    }
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
     // Arrow fades in with the destination node it points to.
     if (i < n - 1) {
       const x1 = cx + R + 2, x2 = cx + spacing - R - 6

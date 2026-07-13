@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -19,11 +19,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const W = BASE_W + TURN_EXT * 2
   // Grow box height when any item carries a value so label + subtitle fit cleanly.
   const anyValue = items.some(it => !!it.value)
-  const BOX_W = (BASE_W - 16) / COLS - 6, BOX_H = anyValue ? 44 : 36, ROW_GAP = 24
+  // Taller boxes when values exist: value boxH budget grows to 24px so
+  // linesAtSize reaches 2 at size 8 (2×10.4=20.8px < 24px).
+  const BOX_W = (BASE_W - 16) / COLS - 6, BOX_H = anyValue ? 60 : 44, ROW_GAP = 24
   const rows = Math.ceil(n / COLS)
   const titleH = spec.title ? 28 : 8
   const H = titleH + rows * (BOX_H + ROW_GAP) + 8
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
   parts.push(`<defs>
@@ -50,24 +53,38 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fill = lerpColor(theme.primary, theme.secondary, t)
     const isLast = i === n - 1
     const { url: itmUrl, display: itmDisplay } = displays[i]
-    const { fontSize: labelFS, results: [{ lines: labelLines, truncated: labelTruncated }] } =
-      fitTextToWidthShared([itmDisplay], BOX_W - 8, { maxSize: 10, minSize: 6.5, maxLines: 1 })
+    const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines: labelLines, truncated: labelTruncated }] } =
+      fitTextToWidthShared([itmDisplay], BOX_W - 8, { maxSize: 10, minSize: 6.5, maxLines: item.value ? 2 : 3, boxH: item.value ? 34 : BOX_H - 8 })
     const valueFitFull = item.value
-      ? fitTextToWidthShared([item.value], BOX_W - 8, { maxSize: 8.5, minSize: 6, maxLines: 1 })
+      ? fitTextToWidthShared([item.value], BOX_W - 8, { maxSize: 9.5, minSize: 6, maxLines: 3, boxH: 30 })
       : null
     const valueFS = valueFitFull?.fontSize ?? 8.5
+    const valueLH = valueFitFull?.lineHeight ?? valueFS * 1.3
     const labelTip = labelTruncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
 
     let nodeStr = `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W.toFixed(1)}" height="${BOX_H}" rx="5" fill="${isLast ? theme.accent + '33' : fill + '33'}" stroke="${isLast ? theme.accent : fill}" stroke-width="1.2">${itemTitleTag(item)}</rect>`
     if (item.value) {
-      nodeStr += aWrap(`${labelTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 17).toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelLines[0])}</text>`, itmUrl)
       const { lines: valLines, truncated: valTruncated } = valueFitFull!.results[0]
       const valTip = valTruncated ? `<title>${escapeXml(item.value)}</title>` : ''
-      nodeStr += `${valTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + 32).toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(valLines[0])}</text>`
+      const totalTextH = labelLines.length * labelLH + 2 + valLines.length * valueLH
+      const labelStartY = y + BOX_H / 2 - totalTextH / 2 + labelLH * 0.8
+      const labelSpans = labelLines
+        .map((line, li) => `<tspan x="${(x + BOX_W / 2).toFixed(1)}" dy="${li === 0 ? 0 : labelLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+        .join('')
+      nodeStr += aWrap(`${labelTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${labelStartY.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${labelSpans}</text>`, itmUrl)
+      const valStartY = labelStartY + (labelLines.length - 1) * labelLH + valueLH + 2
+      const valSpans = valLines
+        .map((line, li) => `<tspan x="${(x + BOX_W / 2).toFixed(1)}" dy="${li === 0 ? 0 : valueLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+        .join('')
+      nodeStr += `${valTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${valStartY.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${valSpans}</text>`
     } else {
-      nodeStr += aWrap(`${labelTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${(y + BOX_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(labelLines[0])}</text>`, itmUrl)
+      const labelStartY = y + BOX_H / 2 - ((labelLines.length - 1) * labelLH) / 2 + labelLH * 0.35
+      const labelSpans = labelLines
+        .map((line, li) => `<tspan x="${(x + BOX_W / 2).toFixed(1)}" dy="${li === 0 ? 0 : labelLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+        .join('')
+      nodeStr += aWrap(`${labelTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${labelStartY.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${labelSpans}</text>`, itmUrl)
     }
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
 
     // Connectors fade in with the destination node they point to.
     if (i < n - 1) {

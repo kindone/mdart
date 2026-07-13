@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -30,6 +30,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const SRC_X = 10, TGT_X = W - 130
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   parts.push(`<defs><marker id="arr-c" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 Z" fill="${theme.accent}cc"/></marker></defs>`)
   const tBH = Math.min(64, n * 18 + 20)
   const { display: tgtDisplay, url: tgtUrl } = displayLabel(target)
@@ -39,7 +40,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const tgtContent = `<text x="${(TGT_X + 58).toFixed(1)}" y="${tw.length > 1 ? (cy - 2).toFixed(1) : (cy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(tw.slice(0, tm).join(' '), 13)}</text>`
     + (tw.length > 1 ? `<text x="${(TGT_X + 58).toFixed(1)}" y="${(cy + 12).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(tw.slice(tm).join(' '), 13)}</text>` : '')
   targetUnit.push(aWrap(tgtContent, tgtUrl))
-  parts.push(animate ? `<g class="mdart-n0">${targetUnit.join('')}</g>` : targetUnit.join(''))
+  parts.push(wrapItem(targetUnit.join(''), 0, animate, instrument))
   sources.forEach((item, i) => {
     const sy = n === 1 ? cy : TITLE_H + 20 + i * (H - TITLE_H - 40) / (n - 1)
     const { display: srcDisplay, url: srcUrl } = displayLabel(item)
@@ -49,7 +50,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const x1 = SRC_X + 112, x2 = TGT_X - 4
     const mid = (x1 + x2) / 2
     unit.push(`<path d="M${x1},${sy.toFixed(1)} C${mid},${sy.toFixed(1)} ${mid},${cy.toFixed(1)} ${x2},${cy.toFixed(1)}" fill="none" stroke="${theme.primary}66" stroke-width="1.5" marker-end="url(#arr-c)"/>`)
-    parts.push(animate ? `<g class="mdart-n${i + 1}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), i + 1, animate, instrument))
   })
   if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))
   return svg(W, H, theme, spec.title, parts)

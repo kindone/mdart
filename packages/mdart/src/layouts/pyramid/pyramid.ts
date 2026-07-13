@@ -1,11 +1,12 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, truncate, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, truncate, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const inverted = spec.type === 'inverted-pyramid' || spec.type === 'inverted'
   const n = items.length
@@ -82,7 +83,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       )
     }
     const animIndex = inverted ? i : n - 1 - i
-    parts.push(animate ? `<g class="mdart-n${animIndex}">${unit.join('')}</g>` : unit.join(''))
+    parts.push(wrapItem(unit.join(''), animIndex, animate, instrument))
   }
   if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
 

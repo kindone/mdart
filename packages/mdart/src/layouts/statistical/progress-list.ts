@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqMeasureTiming, seqSpotlightCSS } from '../shared'
+import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqMeasureTiming, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -16,21 +16,41 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   const W = 520
-  const ROW_H = 40
   const LABEL_W = 155
   const BAR_X = LABEL_W + 20
   const BAR_W = W - BAR_X - 52
+  const BAR_H = 16
+  const PAD_V = 8
+  const MIN_ROW_H = 40
   const TITLE_H = spec.title ? 30 : 10
-  const H = TITLE_H + items.length * ROW_H + 12
+
+  // Pre-compute label fits so row heights are known before rendering.
+  // value: true — the bar IS showing the value visually, so no " …" ellipsis.
+  const displays = items.map(item => displayLabel(item, { value: true }))
+  const labelFits = displays.map(({ display }) =>
+    fitTextToWidthShared([display], LABEL_W - 12, { maxSize: 12, minSize: 7, maxLines: 3 })
+  )
+  // Each row grows to accommodate wrapped label lines; bar stays vertically
+  // centred within the row regardless of how many lines the label uses.
+  const rowHeights = labelFits.map(fit =>
+    Math.max(MIN_ROW_H, PAD_V * 2 + fit.results[0].lines.length * fit.lineHeight)
+  )
+  const rowYs: number[] = []
+  let cursorY = TITLE_H
+  for (const h of rowHeights) { rowYs.push(cursorY); cursorY += h }
+  const H = cursorY + 12
 
   const rows: string[] = []
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
-    const y = TITLE_H + i * ROW_H + 4
-    const barY = y + 11
+    const rowY = rowYs[i]
+    const rowH = rowHeights[i]
+    // Centre the bar vertically in the row
+    const barY = rowY + Math.round((rowH - BAR_H) / 2)
 
     const raw = (item.value ?? item.attrs[0] ?? '0').replace('%', '')
     const num = parseFloat(raw)
@@ -44,17 +64,22 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const barColor = pct >= 70 ? theme.accent : pct >= 40 ? theme.warning : theme.danger
 
-    // Value rendered as % bar + numeric on right; some attrs (the first one)
-    // become the value source. We pass shows.value=true since the bar IS
-    // showing the value visibly. attrs may still drop silently.
-    const { display: itmDisplay, url: itmUrl } = displayLabel(item, { value: true })
+    const { display: itmDisplay, url: itmUrl } = displays[i]
+    const { fontSize: lblFS, lineHeight: lblLH, results: [{ lines: lblLines, truncated: lblTruncated }] } = labelFits[i]
+    const lblTip = lblTruncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
+    // Vertically centre the multi-line label block alongside the bar.
+    const lblStartY = rowY + rowH / 2 - ((lblLines.length - 1) * lblLH) / 2 + lblFS * 0.35
+    const lblSpans = lblLines
+      .map((line, li) => `<tspan x="${LABEL_W}" dy="${li === 0 ? 0 : lblLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+      .join('')
+
     const unit = [
-      `<rect x="${BAR_X}" y="${barY}" width="${BAR_W}" height="16" rx="8" fill="${theme.muted}33">${itemTitleTag(item)}</rect>`,
-      `<rect class="mdart-bar-grow" x="${BAR_X}" y="${barY}" width="${animate ? 0 : fillWidth}" height="16" rx="8" fill="${barColor}">${itemTitleTag(item)}${widthAnim}</rect>`,
-      aWrap(`<text x="${LABEL_W}" y="${barY + 11}" text-anchor="end" font-size="12" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(itmDisplay, 20, item)}</text>`, itmUrl),
-      `<text x="${BAR_X + BAR_W + 8}" y="${barY + 11}" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${pct % 1 === 0 ? pct : pct.toFixed(1)}%</text>`,
+      `<rect x="${BAR_X}" y="${barY}" width="${BAR_W}" height="${BAR_H}" rx="8" fill="${theme.muted}33">${itemTitleTag(item)}</rect>`,
+      `<rect class="mdart-bar-grow" x="${BAR_X}" y="${barY}" width="${animate ? 0 : fillWidth}" height="${BAR_H}" rx="8" fill="${barColor}">${itemTitleTag(item)}${widthAnim}</rect>`,
+      aWrap(`${lblTip}<text x="${LABEL_W}" y="${lblStartY.toFixed(1)}" text-anchor="end" font-size="${lblFS}" fill="${theme.text}" font-family="system-ui,sans-serif">${lblSpans}</text>`, itmUrl),
+      `<text x="${BAR_X + BAR_W + 8}" y="${(barY + BAR_H - 3).toFixed(1)}" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${pct % 1 === 0 ? pct : pct.toFixed(1)}%</text>`,
     ].join('')
-    rows.push(animate ? `<g class="mdart-n${i}">${unit}</g>` : unit)
+    rows.push(wrapItem(unit, i, animate, instrument))
   }
   if (animate) rows.unshift(seqSpotlightCSS(items.length, spec, { scale: false }))
 

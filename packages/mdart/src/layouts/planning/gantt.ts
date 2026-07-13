@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
@@ -12,31 +12,49 @@ function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefi
 </svg>`
 }
 
+/** Parse a gantt range string into { start, end, isMilestone }.
+ *  A trailing '*' in the range attr marks a milestone: e.g. "wk8*" or "8*".
+ *  Single numbers without a range (e.g. "wk8") are point-in-time tasks (1-unit wide).
+ */
+function parseGanttRange(raw: string): { start: number; end: number; isMilestone: boolean } {
+  const isMilestone = raw.includes('*')
+  const rangeStr = raw.replace(/\*/g, '')
+  const rangeMatch = rangeStr.match(/(\d+)[^\d]+(\d+)/)
+  let start = 0, end = 1
+  if (rangeMatch) {
+    start = parseInt(rangeMatch[1]) - 1
+    end   = parseInt(rangeMatch[2])
+  } else {
+    const single = rangeStr.match(/(\d+)/)
+    if (single) {
+      const n = parseInt(single[1])
+      start = n - 1
+      end   = n
+    }
+  }
+  return { start, end, isMilestone }
+}
+
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
   if (items.length === 0) return renderEmpty(theme)
 
-  interface GanttRow { label: string; start: number; end: number; url: string | null; src: typeof items[0] }
+  interface GanttRow {
+    label: string; start: number; end: number
+    isMilestone: boolean; url: string | null; src: typeof items[0]
+  }
 
   let maxEnd = 0
   const rows: GanttRow[] = items.map(item => {
-    const rangeStr = item.attrs.find(a => /\d/.test(a)) ?? item.value ?? ''
-    const match = rangeStr.match(/(\d+)[^\d]+(\d+)/)
-    let start = 0, end = 1
-    if (match) {
-      start = parseInt(match[1]) - 1
-      end = parseInt(match[2])
-    } else if (/^\d+$/.test(rangeStr)) {
-      start = parseInt(rangeStr) - 1
-      end = parseInt(rangeStr)
-    }
+    const rawRange = item.attrs.find(a => /[\d*]/.test(a)) ?? item.value ?? ''
+    const { start, end, isMilestone } = parseGanttRange(rawRange)
     maxEnd = Math.max(maxEnd, end)
     // gantt already shows the week range visibly via the bar position, and
     // the value/attr is used as the range source. Ellipsis only fires for
     // additional non-range attrs.
     const { display, url } = parseLink(item.label)
     const lbl = ellipsisIfDropped(display, item, { value: true, attrs: true })
-    return { label: lbl, start, end, url, src: item }
+    return { label: lbl, start, end, isMilestone, url, src: item }
   })
   if (maxEnd === 0) maxEnd = 8
 
@@ -50,6 +68,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const parts: string[] = []
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
 
   for (let t = 0; t <= maxEnd; t++) {
     const x = LABEL_W + (t / maxEnd) * BAR_AREA
@@ -69,10 +88,23 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     unit.push(aWrap(`<text x="${(LABEL_W - 8).toFixed(1)}" y="${(y + 21).toFixed(1)}" text-anchor="end" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(row.label, 18)}</text>`, row.url))
 
-    const barX = LABEL_W + (row.start / maxEnd) * BAR_AREA
-    const barW = Math.max(6, ((row.end - row.start) / maxEnd) * BAR_AREA)
-    unit.push(`<rect x="${barX.toFixed(1)}" y="${(y + 8).toFixed(1)}" width="${barW.toFixed(1)}" height="18" rx="4" fill="${theme.accent}88" stroke="${theme.accent}" stroke-width="1">${itemTitleTag(row.src)}</rect>`)
-    parts.push(animate ? `<g class="mdart-n${i}">${unit.join('')}</g>` : unit.join(''))
+    if (row.isMilestone) {
+      // Diamond snapped to the week-N grid tick.
+      // Grid label t+1 appears at x-position t/maxEnd, so week N's left edge
+      // is at t=N-1 (= row.start). Placing the diamond here aligns it exactly
+      // with the "N" label, keeping tasks that follow (e.g. [wkN+1-...]) visually
+      // to the right of the diamond.
+      const mx = LABEL_W + (row.start / maxEnd) * BAR_AREA
+      const my = y + ROW_H / 2
+      const r  = 7
+      unit.push(`<line x1="${LABEL_W}" y1="${my.toFixed(1)}" x2="${(mx - r).toFixed(1)}" y2="${my.toFixed(1)}" stroke="${theme.border}" stroke-width="1" stroke-dasharray="3,3"/>`)
+      unit.push(`<polygon points="${mx.toFixed(1)},${(my - r).toFixed(1)} ${(mx + r).toFixed(1)},${my.toFixed(1)} ${mx.toFixed(1)},${(my + r).toFixed(1)} ${(mx - r).toFixed(1)},${my.toFixed(1)}" fill="${theme.accent}" stroke="${theme.accent}" stroke-width="1.5" opacity="0.9">${itemTitleTag(row.src)}</polygon>`)
+    } else {
+      const barX = LABEL_W + (row.start / maxEnd) * BAR_AREA
+      const barW = Math.max(6, ((row.end - row.start) / maxEnd) * BAR_AREA)
+      unit.push(`<rect x="${barX.toFixed(1)}" y="${(y + 8).toFixed(1)}" width="${barW.toFixed(1)}" height="18" rx="4" fill="${theme.accent}88" stroke="${theme.accent}" stroke-width="1">${itemTitleTag(row.src)}</rect>`)
+    }
+    parts.push(wrapItem(unit.join(''), i, animate, instrument))
   })
 
   if (animate) parts.unshift(seqSpotlightCSS(rows.length, spec, { scale: false }))
