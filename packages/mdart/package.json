@@ -33,5 +33,7 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "jsproptest": "^0.5.5"
+  }
 }
