@@ -516,6 +516,11 @@ The intersection label is split on the separator and routed to the geometric cen
 
 `venn`, `venn-3`, and `venn-4` all use the same renderer — the layout (2 circles / triangle / 2×2 grid) is auto-selected from the count of non-intersection items.
 
+> **Content constraints (geometry is fixed):**
+> - Circle children: **≤ 3 words** each. The non-overlap zone is narrow; long phrases will be truncated.
+> - Intersection children: **≤ 2–3 words** each. The lens overlap is only ~72 px wide for 2-circle layouts. The **first child of an intersection item** is used as the primary overlap label, so make it the single clearest concept (e.g. `- Quantum objects`). Additional children appear as smaller annotations below.
+> - If you need to show detailed bullet points in each section, use `two-column-compare` instead — it is designed for richer per-row content.
+
 ```
 - Design
   - UX Research
@@ -1156,4 +1161,3 @@ title: E-Commerce Schema
   <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/entity-be98f56ce5.svg">
   <img alt="entity" src="./examples/syntax/entity-be98f56ce5-light.svg">
 </picture>
-
