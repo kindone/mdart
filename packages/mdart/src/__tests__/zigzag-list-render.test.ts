@@ -2,7 +2,7 @@
 // @type: example
 
 import { describe, it, expect } from 'vitest'
-import { renderMdArt } from './renderer'
+import { renderMdArt } from '../renderer'
 
 describe('zigzag-list render', () => {
   it('stacks key and value vertically for top-level key-value items', () => {
@@ -10,9 +10,10 @@ describe('zigzag-list render', () => {
 - Revenue: 42M
 - Retention: 91%`)
 
-    expect(svg).toMatch(/<text[^>]*>(?:(?!<\/text>)[\s\S])*Revenue<\/text>/)
+    // Labels use <tspan> wrappers via fitTextToWidthShared; values render directly in <text>
+    expect(svg).toContain('>Revenue</tspan>')
     expect(svg).toMatch(/<text[^>]*>42M<\/text>/)
-    expect(svg).toMatch(/<text[^>]*>(?:(?!<\/text>)[\s\S])*Retention<\/text>/)
+    expect(svg).toContain('>Retention</tspan>')
     expect(svg).toMatch(/<text[^>]*>91%<\/text>/)
   })
 })

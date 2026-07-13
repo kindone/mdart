@@ -2,7 +2,7 @@
 // @type: example
 
 import { describe, it, expect } from 'vitest'
-import { renderMdArt } from './renderer'
+import { renderMdArt } from '../renderer'
 
 describe('checklist render', () => {
   it('done items stay readable: no strikethrough, italic + fill-opacity', () => {

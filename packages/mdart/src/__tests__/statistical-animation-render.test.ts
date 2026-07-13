@@ -2,7 +2,7 @@
 // @type: example
 
 import { describe, it, expect } from 'vitest'
-import { renderMdArt } from './renderer'
+import { renderMdArt } from '../renderer'
 
 const values = `- Alpha: 75
 - Beta: 45

@@ -2,7 +2,7 @@
 // @type: example
 
 import { describe, expect, it } from 'vitest'
-import { renderMdArt } from './renderer'
+import { renderMdArt } from '../renderer'
 
 describe('technical layout animation', () => {
   it('animates pipeline arrows with their destination stage', () => {

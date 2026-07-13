@@ -2,7 +2,7 @@
 // @type: example
 
 import { describe, it, expect } from 'vitest'
-import { renderMdArt } from './renderer'
+import { renderMdArt } from '../renderer'
 
 describe('staircase render', () => {
   it.each(['step-up', 'step-down'])(
@@ -16,7 +16,7 @@ describe('staircase render', () => {
       expect(svg).toMatch(/<text[^>]*>42M<\/text>/)
       expect(svg).toMatch(/<text[^>]*>(?:(?!<\/text>)[\s\S])*Retention<\/text>/)
       expect(svg).toMatch(/<text[^>]*>91%<\/text>/)
-      expect(svg).toMatch(/<rect[^>]*height="44"/)
+      expect(svg).toMatch(/<rect[^>]*height="56"/)
     }
   )
 })

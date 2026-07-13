@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { configureMdArt, resetMdArtConfig, getGlobalConfig } from './config'
-import { renderMdArt } from './renderer'
+import { configureMdArt, resetMdArtConfig, getGlobalConfig } from '../config'
+import { renderMdArt } from '../renderer'
 
 beforeEach(() => resetMdArtConfig())
 
@@ -28,11 +28,14 @@ describe('getGlobalConfig', () => {
 // ── Theme priority ───────────────────────────────────────────────────────────
 
 describe('theme priority', () => {
-  // Unique fill colours per theme (confirmed from renderer output):
-  //   mono-light: bg=#ffffff (unique to light)
-  //   mono-dark:  text=#f9fafb (unique to dark)
-  const LIGHT_ONLY = 'fill="#ffffff"'   // mono-light bg
-  const DARK_ONLY  = 'fill="#f9fafb"'  // mono-dark text
+  // Unique fill colours per theme, anchored to the background rect (rx="8").
+  // We can't use bare 'fill="#ffffff"' because the process renderer uses
+  // contrastColor(nodeFill) for text, which produces white text on dark-gray
+  // nodes in *both* themes. The background rect (rx="8") is the stable
+  // discriminator: it always carries theme.bg, unique per theme.
+  //   mono-light: bg=#ffffff  mono-dark: bg=#111827
+  const LIGHT_ONLY = 'fill="#ffffff" rx="8"'   // background rect, mono-light
+  const DARK_ONLY  = 'fill="#111827" rx="8"'  // background rect, mono-dark
 
   it('applies global theme when no per-fence theme is set', () => {
     configureMdArt({ theme: 'mono-light' })

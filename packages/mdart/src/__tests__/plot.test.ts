@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { parseMdArt } from './parser'
-import { renderMdArt } from './renderer'
+import { parseMdArt } from '../parser'
+import { renderMdArt } from '../renderer'
 
 describe('plot family — parser', () => {
   // ── Front-matter parsing ──────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 // @type: example
 
 import { describe, expect, it } from 'vitest'
-import { renderMdArt } from './renderer'
+import { renderMdArt } from '../renderer'
 
 describe('planning layout animation', () => {
   it('animates timeline baseline and entries', () => {

@@ -2,7 +2,7 @@
 // @type: example
 
 import { describe, it, expect } from 'vitest'
-import { activateMdArtTab, tryActivateMdArtTabFromEventTarget } from './tabListInteract'
+import { activateMdArtTab, tryActivateMdArtTabFromEventTarget } from '../tabListInteract'
 
 const miniSvg = `
 <svg xmlns="http://www.w3.org/2000/svg">

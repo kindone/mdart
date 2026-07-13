@@ -7,7 +7,7 @@
 // These tests pin the new strict-match + attr-override behaviour.
 
 import { describe, it, expect } from 'vitest'
-import { renderMdArt } from './renderer'
+import { renderMdArt } from '../renderer'
 
 // The pros-cons renderer column-aligns the marker (✓/✗) and the label by
 // putting them in separate <tspan>s at distinct x-coords inside one <text>.

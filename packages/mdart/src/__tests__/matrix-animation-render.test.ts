@@ -2,7 +2,7 @@
 // @type: example
 
 import { describe, it, expect } from 'vitest'
-import { renderMdArt } from './renderer'
+import { renderMdArt } from '../renderer'
 
 describe('matrix layout animation', () => {
   it.each(['matrix-2x2', 'swot', 'bcg', 'ansoff'])(

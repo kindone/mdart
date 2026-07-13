@@ -2,7 +2,7 @@
 // @type: example
 
 import { describe, it, expect } from 'vitest'
-import { renderMdArt } from './renderer'
+import { renderMdArt } from '../renderer'
 
 describe('swimlane render', () => {
   it('wraps long step labels across two visible lines instead of forcing one-line truncation', () => {
@@ -22,8 +22,9 @@ title: Unified go() execution model
     const svg = renderMdArt(src)
     expect(svg).toContain('>for each run:</text>')
     expect(svg).toContain('>invoke(rand)</text>')
-    expect(svg).toContain('>initialGen(rand)</text>')
-    expect(svg).toContain('>→ obj, model</text>')
+    // "initialGen(rand) → obj, model" word-wraps at the arrow → two separate lines
+    expect(svg).toContain('>initialGen(rand) →</text>')
+    expect(svg).toContain('>obj, model</text>')
     expect(svg).toContain('viewBox="0 0 560 142"')
   })
 })

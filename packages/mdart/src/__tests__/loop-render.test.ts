@@ -2,8 +2,8 @@
 // @type: example
 
 import { describe, it, expect } from 'vitest'
-import { renderMdArt } from './renderer'
-import { getTheme } from './theme'
+import { renderMdArt } from '../renderer'
+import { getTheme } from '../theme'
 
 describe('loop layout render', () => {
   it('uses theme.bg for node labels so they contrast against the coloured circle fills', () => {

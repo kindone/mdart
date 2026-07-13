@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseMdArt } from './parser'
+import { parseMdArt } from '../parser'
 
 describe('parseMdArt', () => {
   // ── Arrow chain ──────────────────────────────────────────────────────────
@@ -308,14 +308,25 @@ describe('parseMdArt', () => {
     expect(spec.items[1].label).toBe('Step two')
   })
 
-  // ── Milestone ──────────────────────────────────────────────────────────────
+  // ── Milestone / * bullet ──────────────────────────────────────────────────
 
-  it('parses * milestone items', () => {
-    const src = '- Regular\n* Milestone item'
+  it('treats * as a generic list bullet (same as -)', () => {
+    // * is no longer a milestone marker in the parser; it is a regular bullet.
+    // Milestones are encoded via [wkN*] in the range attr, detected by the renderer.
+    const src = '- Regular\n* Also regular'
     const spec = parseMdArt(src)
-    const milestone = spec.items.find(i => i.isMilestone)
-    expect(milestone).toBeDefined()
-    expect(milestone?.label).toBe('Milestone item')
+    expect(spec.items).toHaveLength(2)
+    expect(spec.items[0].label).toBe('Regular')
+    expect(spec.items[1].label).toBe('Also regular')
+    // Neither item should have isMilestone set
+    expect(spec.items.every(i => !i.isMilestone)).toBe(true)
+  })
+
+  it('* bullet nests children like - does', () => {
+    const src = '* Parent\n  * Child A\n  * Child B'
+    const spec = parseMdArt(src)
+    expect(spec.items).toHaveLength(1)
+    expect(spec.items[0].children).toHaveLength(2)
   })
 
   // ── Nodes/edges sections ──────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 // @type: example
 
 import { describe, expect, it } from 'vitest'
-import { renderMdArt } from './renderer'
+import { renderMdArt } from '../renderer'
 
 describe('relationship layout animation', () => {
   it('animates radial center and spokes without scale distortion', () => {
