@@ -1,9 +1,11 @@
 import { parseMdArt } from './parser'
 import { getTheme } from './theme'
 import { getGlobalConfig } from './config'
+import { validateMdArt } from './validator'
 import type { MdArtConfig } from './config'
 import type { MdArtSpec } from './parser'
 import type { MdArtTheme } from './theme'
+import type { ValidationIssue } from './validator'
 
 // process family
 import { render as renderProcess } from './layouts/process/process'
@@ -263,18 +265,64 @@ const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
   'bar-chart': renderBarChart,
 }
 
+/** All valid diagram type names. Derived from LAYOUT_RENDERERS at module load. */
+export const KNOWN_TYPES: ReadonlySet<string> = new Set(Object.keys(LAYOUT_RENDERERS))
+
 /**
- * Render an MdArt source string to SVG.
+ * The return value of `renderMdArtDetailed`: the rendered SVG plus any
+ * validation issues found during rendering (empty when `validate: 'silent'`).
+ */
+export interface RenderResult {
+  /** The rendered SVG string (may be an error SVG if `validate: 'error'` triggered) */
+  svg: string
+  /** Validation issues collected during this render. Empty when validate is 'silent'. */
+  issues: ValidationIssue[]
+}
+
+/**
+ * Render an MdArt source string to SVG, returning the SVG together with any
+ * validation issues found.
+ *
+ * Validation is controlled by the `validate` field in `pluginConfig` (or the
+ * global config set via `configureMdArt()`):
+ *
+ * - `'silent'`  — skip validation; `issues` is always `[]`.
+ * - `'warning'` — (default) validate and collect issues; rendering always proceeds.
+ * - `'error'`   — validate; abort and return an error SVG if any error-level issue exists.
  *
  * @param raw          - Raw mdart source (front-matter + items)
  * @param hintType     - Optional layout type hint from the fence header
  * @param pluginConfig - Optional plugin-level config (merged on top of global,
  *                       below per-fence front-matter)
  */
-export function renderMdArt(raw: string, hintType?: string, pluginConfig?: MdArtConfig): string {
+export function renderMdArtDetailed(
+  raw: string,
+  hintType?: string,
+  pluginConfig?: MdArtConfig,
+): RenderResult {
+  const issues: ValidationIssue[] = []
+
   try {
     const spec      = parseMdArt(raw, hintType)
     const globalCfg = getGlobalConfig()
+
+    // Validation
+    const validateMode = pluginConfig?.validate ?? globalCfg.validate ?? 'warning'
+    const onIssue      = pluginConfig?.onIssue  ?? globalCfg.onIssue
+
+    if (validateMode !== 'silent') {
+      for (const issue of validateMdArt(spec)) {
+        issues.push(issue)
+        onIssue?.(issue)
+      }
+      if (validateMode === 'error' && issues.some(i => i.level === 'error')) {
+        const msg = issues
+          .filter(i => i.level === 'error')
+          .map(i => i.message)
+          .join('; ')
+        return { svg: renderError(msg), issues }
+      }
+    }
 
     // Theme resolution: per-fence > plugin > global > category default
     const themeKey = spec.theme ?? pluginConfig?.theme ?? globalCfg.theme
@@ -287,12 +335,28 @@ export function renderMdArt(raw: string, hintType?: string, pluginConfig?: MdArt
     if (spec.colors && Object.keys(spec.colors).length > 0) {
       theme = { ...theme, ...spec.colors } as typeof theme
     }
+
     const renderer = LAYOUT_RENDERERS[spec.type]
     const svg = renderer ? renderer(spec, theme) : renderFallback(spec, theme)
-    return scopeSvgAnimation(svg, raw, hintType, spec.type)
+    return { svg: scopeSvgAnimation(svg, raw, hintType, spec.type), issues }
   } catch (e) {
-    return renderError(String(e))
+    return { svg: renderError(String(e)), issues }
   }
+}
+
+/**
+ * Render an MdArt source string to SVG.
+ *
+ * This is a thin wrapper around `renderMdArtDetailed` for backward
+ * compatibility. For access to validation issues, use `renderMdArtDetailed`.
+ *
+ * @param raw          - Raw mdart source (front-matter + items)
+ * @param hintType     - Optional layout type hint from the fence header
+ * @param pluginConfig - Optional plugin-level config (merged on top of global,
+ *                       below per-fence front-matter)
+ */
+export function renderMdArt(raw: string, hintType?: string, pluginConfig?: MdArtConfig): string {
+  return renderMdArtDetailed(raw, hintType, pluginConfig).svg
 }
 
 function scopeSvgAnimation(svg: string, raw: string, hintType: string | undefined, type: string): string {

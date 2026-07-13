@@ -59,11 +59,23 @@ export function truncate(s: string, max: number): string {
 export function wrapLabel(
   label: string,
   perLineChars: number,
-  maxLines = 2
+  maxLines = 2,
+  opts?: { boxW?: number; fontSize?: number },
 ): { lines: string[]; truncated: boolean; url: string | null } {
   const { display, url } = parseLink(label)
   const trimmed = display.trim()
   if (!trimmed) return { lines: [''], truncated: false, url }
+
+  // Pixel-accurate mode: when the caller supplies the actual box width and
+  // font size, use estimateTextWidth for all fit decisions so that full-width
+  // CJK glyphs (each ~1.0× font-size wide) don't get the Latin 'n' budget
+  // (0.52× per char) that perLineChars is calibrated to.
+  const usePx = opts?.boxW !== undefined && opts?.fontSize !== undefined
+  const pxW   = usePx ? opts!.boxW! : 0
+  const fs    = usePx ? opts!.fontSize! : 0
+  const fits  = usePx
+    ? (s: string) => estimateTextWidth(s, fs) <= pxW
+    : (s: string) => s.length <= perLineChars
 
   const words = trimmed.split(/\s+/)
   const lines: string[] = []
@@ -83,12 +95,19 @@ export function wrapLabel(
     let line = ''
     while (wordIdx < words.length) {
       const next = line ? `${line} ${words[wordIdx]}` : words[wordIdx]
-      if (next.length <= perLineChars) { line = next; wordIdx++ }
+      if (fits(next)) { line = next; wordIdx++ }
       else break
     }
     if (!line) {
       // Single word too long — hard-truncate it
-      line = words[wordIdx].slice(0, perLineChars - 1) + '…'
+      if (usePx) {
+        // Trim code-points one at a time until the truncated string fits
+        const cps = [...words[wordIdx]]
+        while (cps.length > 1 && !fits(cps.join('') + '…')) cps.pop()
+        line = cps.join('') + '…'
+      } else {
+        line = words[wordIdx].slice(0, perLineChars - 1) + '…'
+      }
       wordIdx++
       hardTruncated = true
     }
@@ -107,10 +126,17 @@ export function wrapLabel(
   const leftoverWords = wordIdx < words.length
   if (leftoverWords && lines.length > 0) {
     const last = lines[lines.length - 1]
-    if (!last.endsWith('…'))
-      lines[lines.length - 1] = last.length < perLineChars
-        ? last + '…'
-        : last.slice(0, perLineChars - 1) + '…'
+    if (!last.endsWith('…')) {
+      if (usePx) {
+        const cps = [...last]
+        while (cps.length > 0 && !fits(cps.join('') + '…')) cps.pop()
+        lines[lines.length - 1] = cps.join('') + '…'
+      } else {
+        lines[lines.length - 1] = last.length < perLineChars
+          ? last + '…'
+          : last.slice(0, perLineChars - 1) + '…'
+      }
+    }
   }
 
   // The value returned to callers still needs to reflect BOTH ways content
@@ -137,6 +163,7 @@ const CHAR_W_WIDE    = 0.82  // M W m w @ % Q
 const CHAR_W_UPPER   = 0.64  // other A-Z
 const CHAR_W_DIGIT   = 0.56  // 0-9 (usually tabular)
 const CHAR_W_SPACE   = 0.28
+const CHAR_W_CJK     = 1.00  // Hangul / CJK Ideographs / Hiragana / Katakana — square full-width glyphs
 const CHAR_W_DEFAULT = 0.52  // lowercase / other, average case
 
 const NARROW_CHARS = new Set('iljI.,\'|!tf;:')
@@ -146,12 +173,22 @@ const WIDE_CHARS   = new Set('MWmw@%Q')
 export function estimateTextWidth(s: string, fontSize: number): number {
   let units = 0
   for (const ch of s) {
-    if (ch === ' ')             units += CHAR_W_SPACE
-    else if (NARROW_CHARS.has(ch)) units += CHAR_W_NARROW
-    else if (WIDE_CHARS.has(ch))   units += CHAR_W_WIDE
-    else if (ch >= 'A' && ch <= 'Z') units += CHAR_W_UPPER
-    else if (ch >= '0' && ch <= '9') units += CHAR_W_DIGIT
-    else units += CHAR_W_DEFAULT
+    if (ch === ' ')                    units += CHAR_W_SPACE
+    else if (NARROW_CHARS.has(ch))     units += CHAR_W_NARROW
+    else if (WIDE_CHARS.has(ch))       units += CHAR_W_WIDE
+    else if (ch >= 'A' && ch <= 'Z')   units += CHAR_W_UPPER
+    else if (ch >= '0' && ch <= '9')   units += CHAR_W_DIGIT
+    // Full-width CJK scripts — each glyph occupies ~1× font-size in system-ui.
+    // Ranges: Hangul Jamo (1100–11FF), CJK Symbols + Hiragana + Katakana +
+    // CJK Unified Ideographs + extensions (3000–9FFF), Hangul Syllables
+    // (AC00–D7AF), CJK Compatibility Ideographs (F900–FAFF).
+    else if (
+      (ch >= 'ᄀ' && ch <= 'ᇿ') ||
+      (ch >= '　' && ch <= '鿿') ||
+      (ch >= '가' && ch <= '힯') ||
+      (ch >= '豈' && ch <= '﫿')
+    )                                  units += CHAR_W_CJK
+    else                               units += CHAR_W_DEFAULT
   }
   return units * fontSize
 }
@@ -203,7 +240,7 @@ export function fitTextToWidthShared(
     const perLine = charsPerLine(boxW, fontSize)
     const lineHeight = fontSize * lineHeightRatio
     const linesAtSize = boxH !== undefined ? Math.max(1, Math.floor(boxH / lineHeight)) : Infinity
-    const results = labels.map((l, idx) => wrapLabel(l, perLine, Math.min(maxLinesFor(idx), linesAtSize)))
+    const results = labels.map((l, idx) => wrapLabel(l, perLine, Math.min(maxLinesFor(idx), linesAtSize), { boxW, fontSize }))
     return { fontSize, lineHeight, results }
   }
   // Decrementing maxSize by 1 each step doesn't necessarily land exactly on
@@ -391,6 +428,40 @@ export function shouldAnimate(spec: MdArtSpec): boolean {
   if (spec.animate === false) return false
   if (getGlobalConfig().animate === false) return false
   return true
+}
+
+/**
+ * Returns true when the current render should emit `data-item-index` attributes
+ * on per-item groups, independently of animation state.
+ *
+ * Controlled exclusively by `instrument: true` in global config (there is no
+ * per-fence front-matter equivalent — this flag is for tooling, not content).
+ * Used by the test harness (`checkSvg`, `annotateSvg`) for stable per-item
+ * SVG hooks that don't depend on animation being enabled.
+ */
+export function shouldInstrument(): boolean {
+  return getGlobalConfig().instrument === true
+}
+
+/**
+ * Wrap a rendered item string in a `<g>` group when animation or
+ * instrumentation is active.
+ *
+ * - Emits `class="mdart-n{i}"` when `animate` is true (for CSS animation hooks)
+ * - Emits `data-item-index="{i}"` when `instrument` is true (for stable test hooks)
+ * - Both attributes are emitted when both flags are true
+ * - Returns `content` unchanged when neither flag is set
+ *
+ * @param content    The rendered SVG string for this item
+ * @param i          Zero-based item index
+ * @param animate    Whether animation groups are active (from `shouldAnimate`)
+ * @param instrument Whether test instrumentation is active (from `shouldInstrument`)
+ */
+export function wrapItem(content: string, i: number, animate: boolean, instrument: boolean): string {
+  if (!animate && !instrument) return content
+  const cls = animate ? ` class="mdart-n${i}"` : ''
+  const idx = instrument ? ` data-item-index="${i}"` : ''
+  return `<g${cls}${idx}>${content}</g>`
 }
 
 /**
@@ -615,6 +686,34 @@ export function tt(s: string, max: number, item?: ItemLike): string {
   return `<title>${escapeXml(s)}</title>${escapeXml(tr)}`
 }
 
+export interface WrappedTextResult {
+  lines: string[]
+  truncated: boolean
+  url?: string | null
+}
+
+export function centeredTextY(baseY: number, boxH: number, lineCount: number, lineH: number): number {
+  return baseY + boxH / 2 - ((lineCount - 1) * lineH) / 2 + lineH * 0.35
+}
+
+export function renderWrappedText(
+  x: number | string,
+  y1: number,
+  attrs: string,
+  fullText: string,
+  wrap: WrappedTextResult,
+  lineH = 12,
+  item?: ItemLike,
+): string {
+  const { lines, truncated, url = null } = wrap
+  const sx = typeof x === 'number' ? x.toFixed(1) : x
+  const tip = item ? itemTitleTag(item) : (truncated ? `<title>${escapeXml(fullText)}</title>` : '')
+  const spans = lines
+    .map((line, idx) => `<tspan x="${sx}" dy="${idx === 0 ? 0 : lineH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+    .join('')
+  return aWrap(`<text x="${sx}" y="${y1.toFixed(1)}" ${attrs}>${tip}${spans}</text>`, url)
+}
+
 // ── Item-tooltip helpers ──────────────────────────────────────────────────────
 //
 // Every renderer should expose ALL of an item's data — label, value, attrs —
@@ -625,9 +724,9 @@ export function tt(s: string, max: number, item?: ItemLike): string {
 // SVG <title> element. Wrap the per-item primary shape (rect/circle/polygon/
 // path) or its parent <g> with this tag to make the full data hover-revealed.
 //
-// `ellipsisIfDropped` appends a trailing " …" to a label when the renderer
-// is about to omit visible value/attrs — a visual cue that "there's more,
-// hover to see it" so authors notice the silent drop and check.
+// `ellipsisIfDropped` appends a trailing " …" only when the renderer is
+// about to omit a visible value. Attrs stay in the tooltip, but do not alter
+// the visible key text.
 
 export interface ItemLike {
   label: string
@@ -650,18 +749,20 @@ export function itemTitleTag(item: ItemLike): string {
   return s ? `<title>${escapeXml(s)}</title>` : ''
 }
 
-/** Append " …" when the renderer is about to drop value or attrs from the
- *  visible label. Caller passes flags for what *will* render visibly. */
+/** Append " …" when the renderer is about to drop a value from the visible
+ *  label. Caller passes flags for what *will* render visibly.
+ *
+ * Attrs remain available through the node's <title> tooltip, but they are
+ * too secondary to justify adding a visible ellipsis to the main key text.
+ */
 export function ellipsisIfDropped(
   label: string,
   item: ItemLike,
   shows: { value?: boolean; attrs?: boolean } = {},
 ): string {
   const hasVal   = !!(item.value && item.value.length > 0)
-  const hasAttrs = !!(item.attrs && item.attrs.length > 0)
   const dropVal  = hasVal   && !shows.value
-  const dropAttr = hasAttrs && !shows.attrs
-  return (dropVal || dropAttr) ? `${label} …` : label
+  return dropVal ? `${label} …` : label
 }
 
 /** Combined parseLink + ellipsisIfDropped: extracts URL from a markdown-style
@@ -707,6 +808,27 @@ export function lerpColor(c1: string, c2: string, t: number): string {
   return '#' + [lerp(r1, r2), lerp(g1, g2), lerp(b1, b2)].map(v => v.toString(16).padStart(2, '0')).join('')
 }
 
+/**
+ * Returns `light` or `dark` — whichever has more contrast against `fill`.
+ * Uses the W3C perceived-brightness formula (YIQ, 0–255 scale).
+ * Threshold 140: colours below this tend to be dark enough for white text,
+ * above it for dark text.  Works correctly for all theme primaries/secondaries
+ * at both dark and light mode — e.g. violet #8b5cf6 → brightness 124 → white,
+ * amber #f59e0b → brightness 167 → dark.
+ *
+ * Use instead of `theme.bg` or `theme.text` when text sits on a solid
+ * coloured fill whose luminance varies (cycle nodes, donut slices, etc.).
+ */
+export function contrastColor(
+  fill: string,
+  light = '#ffffff',
+  dark  = '#111111',
+): string {
+  const [r, g, b] = hexToRgb(fill)
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000
+  return brightness < 140 ? light : dark
+}
+
 // ── SVG wrappers ──────────────────────────────────────────────────────────────
 
 export function renderEmpty(theme: MdArtTheme): string {
@@ -741,13 +863,14 @@ export function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: b
   const BOX_W = Math.min(110, Math.floor((W - 16 - (n - 1) * GAP_X) / n))
   const captions = items.map(item => getCaption(item))
   const hasSecondary = items.some((item, i) => !!item.value || !!captions[i])
-  const BOX_H = hasSecondary ? 44 : 36
+  const BOX_H = hasSecondary ? 56 : 36
   const titleH = spec.title ? 28 : 8
   const totalDiagH = (n - 1) * (BOX_H + GAP_Y) + BOX_H
   const H = titleH + totalDiagH + 16
   const startX = 8
 
   const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
   const parts: string[] = []
   if (spec.title) parts.push(titleEl(W, spec.title, theme))
   parts.push(`<defs><marker id="step-arr" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto"><polygon points="0,0 5,2.5 0,5" fill="${theme.accent}"/></marker></defs>`)
@@ -777,22 +900,31 @@ export function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: b
 
     const secondary = secondaries[i]
     const { url: staircaseUrl, display: itmDisplay } = displays[i]
+    // Value gets half of staircaseBoxH as its sizing budget. At maxSize 9.5
+    // that's 1 line (12.35px < 24px); at size 8 the font steps down enough
+    // that linesAtSize jumps to 2 (10.4×2=20.8px < 24px) — so short values
+    // render big and clear, long ones wrap to a second line instead of
+    // truncating at tiny font.
+    const secBoxH = staircaseBoxH * 0.5
     const secFitFull = secondary
-      ? fitTextToWidthShared([secondary], BOX_W - 8, { maxSize: 8, minSize: 6, maxLines: 1 })
+      ? fitTextToWidthShared([secondary], BOX_W - 8, { maxSize: 9.5, minSize: 6, maxLines: 2, boxH: secBoxH })
       : null
-    const secFS = secFitFull?.fontSize ?? 8
-    const secLH = secFitFull?.lineHeight ?? 8 * 1.3
+    const secFS = secFitFull?.fontSize ?? 9.5
+    const secLH = secFitFull?.lineHeight ?? 9.5 * 1.3
     const secFit = secFitFull?.results[0] ?? null
-    const reservedBoxH = secFit ? Math.max(10, staircaseBoxH - secLH - 3) : staircaseBoxH
+    // Use the actual rendered line count (not a fixed 1) so the label
+    // always gets an accurate reserved height.
+    const secBlockH = secFit ? secFit.lines.length * secLH : 0
+    const reservedBoxH = secFit ? Math.max(10, staircaseBoxH - secBlockH - 3) : staircaseBoxH
     const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines: labelLines, truncated: labelTruncated }] } =
       fitTextToWidthShared([itmDisplay], BOX_W - 8, {
         maxSize: 10, minSize: 6.5, maxLines: secFit ? 2 : 3, boxH: reservedBoxH,
       })
     const cy = y + BOX_H / 2
-    // Centre the whole block (label lines + optional secondary line) on cy
+    // Centre the whole block (label lines + optional secondary lines) on cy
     // — generalized so it works for any line-count combination the fit
-    // above lands on, instead of assuming exactly 1 label line.
-    const totalH = labelLines.length * labelLH + (secFit ? secLH + 3 : 0)
+    // above lands on, instead of assuming exactly 1 label + 1 value line.
+    const totalH = labelLines.length * labelLH + (secFit ? secBlockH + 3 : 0)
     let nodeStr = `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.2">${itemTitleTag(item)}</rect>`
     const labelTip = labelTruncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
     let lblContent = labelTip
@@ -804,9 +936,12 @@ export function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: b
     if (secFit) {
       const ty = cy - totalH / 2 + labelLines.length * labelLH + secLH * 0.8
       const secTip = secFit.truncated ? `<title>${escapeXml(secondary!)}</title>` : ''
-      nodeStr += `${secTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${secFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(secFit.lines[0])}</text>`
+      const secContent = secFit.lines.length === 1
+        ? escapeXml(secFit.lines[0])
+        : secFit.lines.map((l, li) => `<tspan x="${(x + BOX_W / 2).toFixed(1)}" dy="${li === 0 ? 0 : secLH.toFixed(1)}">${escapeXml(l)}</tspan>`).join('')
+      nodeStr += `${secTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${secFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${secContent}</text>`
     }
-    parts.push(animate ? `<g class="mdart-n${i}">${nodeStr}</g>` : nodeStr)
+    parts.push(wrapItem(nodeStr, i, animate, instrument))
 
     // Arrow fades in with the destination step it points to.
     if (i < n - 1) {

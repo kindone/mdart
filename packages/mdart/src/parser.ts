@@ -521,29 +521,16 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
       continue
     }
 
-    // Milestone: * prefix
-    if (trimmed.startsWith('* ')) {
+    // Regular list item: - or * prefix
+    // Both '-' and '*' are treated as generic bullets. The only special case is
+    // that '-' at depth 0 in swot/pros-cons is also treated as a SWOT weakness
+    // marker (assigning prefix: '-'). '*' never gets a SWOT prefix, so it can
+    // be used for items that intentionally have no quadrant assignment.
+    // NOTE: milestones in gantt are encoded via the range attr, e.g. [wk8*],
+    // NOT via the '*' bullet prefix.
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
       const rest = trimmed.slice(2).trim()
-      const item = parseItem(rest)
-      item.isMilestone = true
-      // Find correct parent from stack
-      while (stack.length > 0 && stack[stack.length - 1].depth >= depth) {
-        stack.pop()
-      }
-      if (stack.length === 0) {
-        spec.items.push(item)
-      } else {
-        stack[stack.length - 1].item.children.push(item)
-      }
-      stack.push({ item, depth })
-      continue
-    }
-
-    // Regular list item: - prefix
-    // Special case: for swot type, top-level (depth 0) '-' items are SWOT weakness markers.
-    if (trimmed.startsWith('- ')) {
-      const rest = trimmed.slice(2).trim()
-      if ((spec.type === 'swot' || spec.type === 'pros-cons') && depth === 0) {
+      if ((spec.type === 'swot' || spec.type === 'pros-cons') && depth === 0 && trimmed.startsWith('- ')) {
         // Treat as SWOT weakness prefix item (flat, no parent-child nesting)
         const item = parseItem(rest)
         item.prefix = '-'

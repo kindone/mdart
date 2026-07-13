@@ -1,4 +1,5 @@
 import type { MdArtTheme, ThemeMode } from './theme'
+import type { ValidationIssue } from './validator'
 
 /**
  * Global configuration for MdArt.
@@ -41,6 +42,48 @@ export interface MdArtConfig {
    * Per-fence `animate-speed:` overrides this.
    */
   animateSpeed?: number
+
+  /**
+   * Validation mode for `renderMdArtDetailed` (and the `renderMdArt` wrapper).
+   *
+   * - `'silent'`  — skip validation entirely; `issues` array is always empty.
+   * - `'warning'` — (default) run validation; issues are collected and passed to
+   *                 `onIssue`, but rendering still proceeds regardless of level.
+   * - `'error'`   — run validation; if any error-level issue is found, rendering
+   *                 is aborted and the SVG is replaced with an error SVG.
+   *
+   * Per-call `pluginConfig.validate` overrides this global setting.
+   */
+  validate?: 'silent' | 'warning' | 'error'
+
+  /**
+   * Callback invoked once per validation issue (when `validate !== 'silent'`).
+   * Useful for logging issues without needing to inspect the returned array.
+   *
+   * @example
+   * configureMdArt({
+   *   onIssue: (issue) => console.warn(`[mdart] ${issue.code}: ${issue.message}`)
+   * })
+   */
+  onIssue?: (issue: ValidationIssue) => void
+
+  /**
+   * Emit `data-item-index="{i}"` on every per-item `<g>` group, independently
+   * of animation state.
+   *
+   * When `false` (default), item groups are only emitted when `animate: true`.
+   * When `true`, every renderer that supports item grouping will emit a `<g>`
+   * wrapper with a stable `data-item-index` attribute regardless of whether
+   * animation is on or off.
+   *
+   * Intended for the test harness and tooling (e.g. `checkSvg` heuristics,
+   * `annotateSvg` overlays). Not recommended in production renders — it adds
+   * wrapper elements that slightly increase SVG output size.
+   *
+   * @example
+   * configureMdArt({ instrument: true, animate: false })
+   */
+  instrument?: boolean
 }
 
 // ── Module-level singleton ────────────────────────────────────────────────────
