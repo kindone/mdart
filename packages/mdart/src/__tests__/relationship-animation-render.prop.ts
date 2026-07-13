@@ -22,44 +22,56 @@
 import { describe, it } from 'vitest'
 import { forAll, Gen } from 'jsproptest'
 import { renderMdArt } from '../renderer'
+import { genLabelAny } from './domains'
+
+// ── Label sanitiser ────────────────────────────────────────────────────────────
+//
+// Strips characters that have special meaning in the MdArt parser:
+//   ∩  — venn intersection marker (clashes with the hardcoded `∩` in buildVennSrc)
+//   :  — KV split (avoids accidental label:value parse)
+//   →  — flow arrow
+//   []/newline — attribute and line-break syntax
+//
+// Appends an index to ensure uniqueness within a source so the duplicate-sibling
+// validation code never rejects any generated input as a false positive.
+
+function relLabel(raw: string, idx: number): string {
+  const clean = raw
+    .replace(/[\n:→\[\]∩]/g, '')
+    .replace(/^[-+?!*\s]+/, '')
+    .trimEnd()
+    .slice(0, 20)
+  return `${clean || 'L'}${idx}`
+}
 
 // ── Source builders ────────────────────────────────────────────────────────────
 
-const LABELS = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta']
-
-/** Build a radial source: one hub item + n spoke items. */
-function buildRadialSrc(n: number, offset: number): string {
-  const items = Array.from({ length: n + 1 }, (_, i) =>
-    `- ${LABELS[(offset + i) % LABELS.length]}`
-  ).join('\n')
+/** Build a radial source: first item = hub, rest = spokes. */
+function buildRadialSrc(labels: string[]): string {
+  const items = labels.map(l => `- ${l}`).join('\n')
   return `type: radial\ntitle: Hub\n${items}`
 }
 
 /**
- * Build a converging source: one outcome at top level; k inputs as children.
- * Converging syntax: top-level = central concept; children = inputs.
+ * Build a converging source: first item = central concept (top-level);
+ * remaining items = sources (indented children).
  */
-function buildConvergingSrc(k: number, offset: number): string {
-  const outcome = LABELS[offset % LABELS.length]
-  const inputs = Array.from({ length: k }, (_, i) =>
-    `  - ${LABELS[(offset + i + 1) % LABELS.length]}`
-  ).join('\n')
-  return `type: converging\n- ${outcome}\n${inputs}`
+function buildConvergingSrc(labels: string[]): string {
+  const [outcome, ...inputs] = labels
+  const children = inputs.map(l => `  - ${l}`).join('\n')
+  return `type: converging\n- ${outcome}\n${children}`
 }
 
-/** Build a venn source: 2 circles + 1 intersection item. */
-function buildVennSrc(offset: number): string {
-  const a = LABELS[offset % LABELS.length]
-  const b = LABELS[(offset + 1) % LABELS.length]
-  return `type: venn\n- ${a}\n- ${b}\n- ${a} ∩ ${b}: Overlap`
+/** Build a 2-circle venn source with a synthetic intersection item. */
+function buildVennSrc(labelA: string, labelB: string): string {
+  return `type: venn\n- ${labelA}\n- ${labelB}\n- ${labelA} ∩ ${labelB}: Overlap`
 }
 
-/** Build a plus source: one centre + 4 arm items (exactly 5 items total). */
-function buildPlusSrc(offset: number): string {
-  const items = Array.from({ length: 5 }, (_, i) =>
-    `- ${LABELS[(offset + i) % LABELS.length]}`
-  ).join('\n')
-  return `type: plus\n${items}`
+/** Build a plus source: 5 items (centre + 4 arms). */
+function buildPlusSrc(labels: string[]): string {
+  // plus always expects exactly 5 items; if fewer are provided, pad with fallbacks
+  const padded = Array.from({ length: 5 }, (_, i) => labels[i] ?? `Arm${i}`)
+  return `type: plus\n${padded.map(l => `- ${l}`).join('\n')}`
 }
 
 /** Extract all mdart-n{i} class values from SVG (in order). */
@@ -71,44 +83,45 @@ function nodeGroupClasses(svg: string): string[] {
 
 describe('radial: scoped animation + hub-and-spoke groups', () => {
 
-  it('∀ n≥2 spokes: scoped @keyframes present, mdart-n0 present, no mdart-loop', { timeout: 20000 }, () => {
+  it('∀ n≥2 items: scoped @keyframes present, mdart-n0 present, no mdart-loop', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildRadialSrc(n, offset))
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(relLabel)
+        const svg = renderMdArt(buildRadialSrc(labels))
         return !!svg.match(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
           && svg.includes('class="mdart-n0"')
           && !svg.includes('mdart-loop')
       },
-      Gen.inRange(2, 5),
-      Gen.inRange(0, LABELS.length - 1),
+      Gen.array(genLabelAny, 2, 5),
     )
   })
 
-  it('∀ n≥2 spokes: spoke groups mdart-n1..mdart-n{n} are present', { timeout: 20000 }, () => {
+  it('∀ n items: spoke groups mdart-n1..mdart-n{n-1} are present', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildRadialSrc(n, offset))
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(relLabel)
+        const n = labels.length
+        const svg = renderMdArt(buildRadialSrc(labels))
         const classes = nodeGroupClasses(svg)
-        // Hub is mdart-n0; spokes are n1..n{n}
-        return Array.from({ length: n }, (_, i) => `mdart-n${i + 1}`)
+        // n items: hub = mdart-n0, spokes = mdart-n1..mdart-n{n-1}
+        return Array.from({ length: n - 1 }, (_, i) => `mdart-n${i + 1}`)
           .every(cls => classes.includes(cls))
       },
-      Gen.inRange(2, 5),
-      Gen.inRange(0, LABELS.length - 1),
+      Gen.array(genLabelAny, 2, 5),
     )
   })
 
   it('∀ radial: no crash, valid viewBox, no NaN', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(relLabel)
         try {
-          const svg = renderMdArt(buildRadialSrc(n, offset))
+          const svg = renderMdArt(buildRadialSrc(labels))
           return svg.includes('<svg') && svg.includes('viewBox=')
             && !svg.includes('="NaN"') && !svg.includes('="Infinity"')
         } catch { return false }
       },
-      Gen.inRange(1, 6),
-      Gen.inRange(0, LABELS.length - 1),
+      Gen.array(genLabelAny, 1, 6),
     )
   })
 
@@ -118,41 +131,42 @@ describe('radial: scoped animation + hub-and-spoke groups', () => {
 
 describe('converging: hub group + incoming arrow marker', () => {
 
-  it('∀ k≥1 sources: mdart-n0 present, url(#arr-c) connector marker present', { timeout: 20000 }, () => {
+  it('∀ k≥1 source items: mdart-n0 present, url(#arr-c) connector marker present', { timeout: 20000 }, () => {
     forAll(
-      (k: number, offset: number) => {
-        const svg = renderMdArt(buildConvergingSrc(k, offset))
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(relLabel)
+        const svg = renderMdArt(buildConvergingSrc(labels))
         return svg.includes('class="mdart-n0"')
           && svg.includes('marker-end="url(#arr-c)"')
       },
-      Gen.inRange(1, 4),
-      Gen.inRange(0, LABELS.length - 1),
+      Gen.array(genLabelAny, 2, 5),   // ≥2: one outcome + ≥1 source
     )
   })
 
   it('∀ k sources: source groups mdart-n1..mdart-n{k} present', { timeout: 20000 }, () => {
     forAll(
-      (k: number, offset: number) => {
-        const svg = renderMdArt(buildConvergingSrc(k, offset))
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(relLabel)
+        const k = labels.length - 1   // first label is the outcome
+        const svg = renderMdArt(buildConvergingSrc(labels))
         const classes = nodeGroupClasses(svg)
         return Array.from({ length: k }, (_, i) => `mdart-n${i + 1}`)
           .every(cls => classes.includes(cls))
       },
-      Gen.inRange(2, 4),
-      Gen.inRange(0, LABELS.length - 1),
+      Gen.array(genLabelAny, 3, 5),   // ≥3: one outcome + ≥2 sources to have n1+n2
     )
   })
 
   it('∀ converging: no crash, valid viewBox', { timeout: 20000 }, () => {
     forAll(
-      (k: number, offset: number) => {
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(relLabel)
         try {
-          const svg = renderMdArt(buildConvergingSrc(k, offset))
+          const svg = renderMdArt(buildConvergingSrc(labels))
           return svg.includes('<svg') && svg.includes('viewBox=')
         } catch { return false }
       },
-      Gen.inRange(1, 5),
-      Gen.inRange(0, LABELS.length - 1),
+      Gen.array(genLabelAny, 2, 6),
     )
   })
 
@@ -162,46 +176,55 @@ describe('converging: hub group + incoming arrow marker', () => {
 
 describe('venn: scoped animation + circle groups, no mdart-loop', () => {
 
-  it('∀ offset: scoped keyframes, mdart-n0/n1/n2 present, no mdart-loop', { timeout: 15000 }, () => {
+  it('∀ (labelA, labelB): scoped keyframes, mdart-n0/n1/n2 present, no mdart-loop', { timeout: 15000 }, () => {
     forAll(
-      (offset: number) => {
-        const svg = renderMdArt(buildVennSrc(offset))
+      (rawA: string, rawB: string) => {
+        const a = relLabel(rawA, 0)
+        const b = relLabel(rawB, 1)
+        const svg = renderMdArt(buildVennSrc(a, b))
         return !!svg.match(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
           && svg.includes('class="mdart-n0"')
           && svg.includes('class="mdart-n1"')
           && svg.includes('class="mdart-n2"')
           && !svg.includes('mdart-loop')
       },
-      Gen.inRange(0, LABELS.length - 2),   // -2 ensures offset+1 stays in range
+      genLabelAny,
+      genLabelAny,
     )
   })
 
-  it('∀ 2-circle venn: no NaN coords, valid viewBox', { timeout: 15000 }, () => {
+  it('∀ venn: no NaN coords, valid viewBox', { timeout: 15000 }, () => {
     forAll(
-      (offset: number) => {
+      (rawA: string, rawB: string) => {
+        const a = relLabel(rawA, 0)
+        const b = relLabel(rawB, 1)
         try {
-          const svg = renderMdArt(buildVennSrc(offset))
+          const svg = renderMdArt(buildVennSrc(a, b))
           return svg.includes('viewBox=')
             && !svg.includes('="NaN"') && !svg.includes('="Infinity"')
         } catch { return false }
       },
-      Gen.inRange(0, LABELS.length - 2),
+      genLabelAny,
+      genLabelAny,
     )
   })
 
-  it('∀ venn: two renders with different labels → different scope tokens', { timeout: 15000 }, () => {
-    // Scope is hash-based; different label content → different scope
+  it('∀ venn (A,B) ≠ (A,B)′: two different inputs → different scope tokens', { timeout: 15000 }, () => {
+    // Scope is hash-based on the full source string. Two distinct (a, b) pairs
+    // produce different sources → different scopes.
     forAll(
-      (i: number, j: number) => {
-        if (i === j) return true   // same source → same scope, skip
-        const svgA = renderMdArt(buildVennSrc(i % (LABELS.length - 1)))
-        const svgB = renderMdArt(buildVennSrc(j % (LABELS.length - 1)))
-        const sA = svgA.match(/data-mdart-scope="([^"]+)"/)?.[1]
-        const sB = svgB.match(/data-mdart-scope="([^"]+)"/)?.[1]
-        return !!sA && !!sB && (i === j ? sA === sB : sA !== sB)
+      (rawA1: string, rawB1: string, rawA2: string, rawB2: string) => {
+        const a1 = relLabel(rawA1, 0); const b1 = relLabel(rawB1, 1)
+        const a2 = relLabel(rawA2, 2); const b2 = relLabel(rawB2, 3)
+        const src1 = buildVennSrc(a1, b1)
+        const src2 = buildVennSrc(a2, b2)
+        if (src1 === src2) return true   // same source → same scope, skip
+        const sA = renderMdArt(src1).match(/data-mdart-scope="([^"]+)"/)?.[1]
+        const sB = renderMdArt(src2).match(/data-mdart-scope="([^"]+)"/)?.[1]
+        return !!sA && !!sB && sA !== sB
       },
-      Gen.inRange(0, LABELS.length - 2),
-      Gen.inRange(0, LABELS.length - 2),
+      genLabelAny, genLabelAny,
+      genLabelAny, genLabelAny,
     )
   })
 
@@ -213,39 +236,41 @@ describe('plus: arm connector groups contain <line before <rect', () => {
 
   it('∀ 5-item plus: mdart-n1..n4 each contain a <line and a <rect (arm layout)', { timeout: 15000 }, () => {
     forAll(
-      (offset: number) => {
-        const svg = renderMdArt(buildPlusSrc(offset))
-        // The plus renderer wraps each arm as: <g class="mdart-n{i}"><line…/><rect…/>
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(relLabel)
+        const svg = renderMdArt(buildPlusSrc(labels))
         return svg.match(/<g class="mdart-n1"><line[\s\S]*?<rect/) !== null
           && svg.match(/<g class="mdart-n2"><line[\s\S]*?<rect/) !== null
           && svg.match(/<g class="mdart-n3"><line[\s\S]*?<rect/) !== null
           && svg.match(/<g class="mdart-n4"><line[\s\S]*?<rect/) !== null
       },
-      Gen.inRange(0, LABELS.length - 1),
+      Gen.array(genLabelAny, 5, 5),   // plus is always 5-item (centre + 4 arms)
     )
   })
 
   it('∀ plus: mdart-n0 present (centre box), no transform:scale', { timeout: 15000 }, () => {
     forAll(
-      (offset: number) => {
-        const svg = renderMdArt(buildPlusSrc(offset))
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(relLabel)
+        const svg = renderMdArt(buildPlusSrc(labels))
         return svg.includes('class="mdart-n0"')
           && !svg.includes('transform:scale')
       },
-      Gen.inRange(0, LABELS.length - 1),
+      Gen.array(genLabelAny, 5, 5),
     )
   })
 
   it('∀ plus: no crash, valid viewBox, no NaN', { timeout: 15000 }, () => {
     forAll(
-      (offset: number) => {
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(relLabel)
         try {
-          const svg = renderMdArt(buildPlusSrc(offset))
+          const svg = renderMdArt(buildPlusSrc(labels))
           return svg.includes('<svg') && svg.includes('viewBox=')
             && !svg.includes('="NaN"') && !svg.includes('="Infinity"')
         } catch { return false }
       },
-      Gen.inRange(0, LABELS.length - 1),
+      Gen.array(genLabelAny, 5, 5),
     )
   })
 
@@ -257,10 +282,10 @@ describe('all relationship types: cross-type animation invariants', () => {
 
   it('all four relationship types: @keyframes always scoped (no bare mdart-enter)', { timeout: 15000 }, () => {
     const srcs = [
-      buildRadialSrc(3, 0),
-      buildConvergingSrc(2, 0),
-      buildVennSrc(0),
-      buildPlusSrc(0),
+      buildRadialSrc(['Hub', 'Alpha', 'Beta', 'Gamma']),
+      buildConvergingSrc(['Outcome', 'InputA', 'InputB']),
+      buildVennSrc('Left', 'Right'),
+      buildPlusSrc(['Centre', 'North', 'East', 'South', 'West']),
     ]
     for (const src of srcs) {
       const svg = renderMdArt(src)
@@ -274,14 +299,16 @@ describe('all relationship types: cross-type animation invariants', () => {
     // radial and converging use the brightness-spotlight animation (mdart-bright-loop),
     // same as zigzag-list/ribbon-list. They do NOT use mdart-loop (cycle-closing arrow).
     forAll(
-      (n: number, offset: number) => {
-        const svgR = renderMdArt(buildRadialSrc(n, offset))
-        const svgC = renderMdArt(buildConvergingSrc(n, offset))
+      (rawRadial: string[], rawConverging: string[]) => {
+        const radialLabels     = rawRadial.map(relLabel)
+        const convergingLabels = rawConverging.map(relLabel)
+        const svgR = renderMdArt(buildRadialSrc(radialLabels))
+        const svgC = renderMdArt(buildConvergingSrc(convergingLabels))
         return svgR.includes('mdart-bright-loop') && !svgR.includes('class="mdart-loop"')
           && svgC.includes('mdart-bright-loop') && !svgC.includes('class="mdart-loop"')
       },
-      Gen.inRange(2, 4),
-      Gen.inRange(0, LABELS.length - 1),
+      Gen.array(genLabelAny, 2, 4),
+      Gen.array(genLabelAny, 2, 4),
     )
   })
 

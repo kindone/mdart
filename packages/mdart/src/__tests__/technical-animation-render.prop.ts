@@ -21,32 +21,46 @@
 import { describe, it } from 'vitest'
 import { forAll, Gen } from 'jsproptest'
 import { renderMdArt } from '../renderer'
+import { genLabelAny } from './domains'
+
+// ── Label sanitiser ────────────────────────────────────────────────────────────
+//
+// Technical source builders use label strings in TWO places:
+//   1. As a top-level item declaration:   `- <label>`
+//   2. As a cross-reference target:       `  -> <label>: event`
+//
+// For the reference to match the declaration, both must use the SAME cleaned
+// string. `techLabel` strips parser-special characters and appends the item
+// index to guarantee uniqueness within a single source.
+
+function techLabel(raw: string, idx: number): string {
+  const clean = raw
+    .replace(/[\n:→\[\]∩]/g, '')   // strip syntax-special chars
+    .replace(/^[-+?!*\s]+/, '')     // strip SWOT/bullet/milestone prefix chars
+    .trimEnd()
+    .slice(0, 20)
+  return `${clean || 'N'}${idx}`   // index suffix ensures uniqueness
+}
 
 // ── Source builders ────────────────────────────────────────────────────────────
+//
+// Each builder accepts an already-cleaned labels array and constructs the source
+// string for its type. The caller is responsible for sanitising with techLabel.
 
-const STAGE_NAMES = ['Parse', 'Validate', 'Transform', 'Render', 'Emit', 'Persist', 'Audit', 'Notify']
-const ACTOR_NAMES = ['Client', 'Server', 'DB', 'Cache', 'Worker', 'Gateway', 'Auth', 'Queue']
-const STATE_NAMES = ['Idle', 'Running', 'Paused', 'Stopped', 'Failed', 'Done', 'Pending', 'Active']
-const NODE_NAMES  = ['API', 'DB', 'Cache', 'Worker', 'Gateway', 'Auth', 'Queue', 'Proxy']
-
-/** Build a pipeline source with n stages. */
-function buildPipelineSrc(n: number, offset: number): string {
-  const stages = Array.from({ length: n }, (_, i) =>
-    `- ${STAGE_NAMES[(offset + i) % STAGE_NAMES.length]}`
-  ).join('\n')
-  return `type: pipeline\n${stages}`
+/** Build a pipeline source from a pre-cleaned labels array. */
+function buildPipelineSrc(labels: string[]): string {
+  return `type: pipeline\n${labels.map(l => `- ${l}`).join('\n')}`
 }
 
 /**
- * Build a sequence source with n actors and one message between each adjacent pair.
- * Source syntax:  top-level items = actors, children = `-> Target: message`
+ * Build a sequence source: each actor sends one message to the next (wrapping).
+ * Labels must be pre-cleaned (no `:`, `→`, `[`, etc.) so they survive as
+ * cross-reference targets in the `-> Target: msg` syntax.
  */
-function buildSequenceSrc(n: number, offset: number): string {
-  const actors = Array.from({ length: n }, (_, i) => ACTOR_NAMES[(offset + i) % ACTOR_NAMES.length])
+function buildSequenceSrc(actors: string[]): string {
   const lines: string[] = []
   for (let i = 0; i < actors.length; i++) {
     lines.push(`- ${actors[i]}`)
-    // Each actor sends a message to the next (wrap around for last)
     const target = actors[(i + 1) % actors.length]
     lines.push(`  -> ${target}: msg${i}`)
   }
@@ -54,10 +68,10 @@ function buildSequenceSrc(n: number, offset: number): string {
 }
 
 /**
- * Build a state-machine source with n states and one transition each.
+ * Build a state-machine source: each state transitions to the next (wrapping).
+ * Labels must be pre-cleaned for the same cross-reference reason as sequence.
  */
-function buildStateMachineSrc(n: number, offset: number): string {
-  const states = Array.from({ length: n }, (_, i) => STATE_NAMES[(offset + i) % STATE_NAMES.length])
+function buildStateMachineSrc(states: string[]): string {
   const lines: string[] = []
   for (let i = 0; i < states.length; i++) {
     lines.push(`- ${states[i]}`)
@@ -68,22 +82,17 @@ function buildStateMachineSrc(n: number, offset: number): string {
 }
 
 /**
- * Build a network source with n nodes (first node has edges to the rest).
+ * Build a network source: first node has directed edges to all others;
+ * remaining nodes are listed as standalone items.
  */
-function buildNetworkSrc(n: number, offset: number): string {
-  const nodes = Array.from({ length: n }, (_, i) => NODE_NAMES[(offset + i) % NODE_NAMES.length])
-  const lines: string[] = []
-  // First node has directed edges to all others
-  lines.push(`- ${nodes[0]}`)
-  for (let i = 1; i < nodes.length; i++) {
-    lines.push(`  -> ${nodes[i]}`)
-  }
-  // Remaining nodes as standalone items
-  for (let i = 1; i < nodes.length; i++) {
-    lines.push(`- ${nodes[i]}`)
-  }
+function buildNetworkSrc(nodes: string[]): string {
+  const lines: string[] = [`- ${nodes[0]}`]
+  for (let i = 1; i < nodes.length; i++) lines.push(`  -> ${nodes[i]}`)
+  for (let i = 1; i < nodes.length; i++) lines.push(`- ${nodes[i]}`)
   return `type: network\n${lines.join('\n')}`
 }
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 /** Extract data-mdart-scope token from SVG. */
 function scopeOf(svg: string): string | undefined {
@@ -101,57 +110,55 @@ describe('pipeline: scoped animation + connector grouping', () => {
 
   it('∀ n≥1 stages: scoped @keyframes mdart-enter present and mdart-n0 present', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildPipelineSrc(n, offset))
-        const hasScope = !!scopeOf(svg)
-        const hasKeyframes = !!svg.match(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
-        const hasN0 = svg.includes('class="mdart-n0"')
-        return hasScope && hasKeyframes && hasN0
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(techLabel)
+        const svg = renderMdArt(buildPipelineSrc(labels))
+        return !!scopeOf(svg)
+          && !!svg.match(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
+          && svg.includes('class="mdart-n0"')
       },
-      Gen.inRange(1, 5),
-      Gen.inRange(0, STAGE_NAMES.length - 1),
+      Gen.array(genLabelAny, 1, 5),
     )
   })
 
   it('∀ n≥2 stages: connector path groups present at mdart-n1..mdart-n{n-1}', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildPipelineSrc(n, offset))
-        // For n stages: mdart-n1 through mdart-n{n-1} should each contain a <path
-        // (connector) immediately followed by a <rect (stage box).
-        // Check that the second stage group contains both a path and a rect.
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(techLabel)
+        const svg = renderMdArt(buildPipelineSrc(labels))
+        // For n stages: the second stage group (mdart-n1) must contain a connector
+        // <path immediately followed by a <rect (stage box).
         return svg.match(/<g class="mdart-n1">[\s\S]*?<path[\s\S]*?<rect/) !== null
       },
-      Gen.inRange(2, 5),
-      Gen.inRange(0, STAGE_NAMES.length - 1),
+      Gen.array(genLabelAny, 2, 5),
     )
   })
 
   it('∀ n stages: no crash, valid viewBox, no NaN', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(techLabel)
         try {
-          const svg = renderMdArt(buildPipelineSrc(n, offset))
+          const svg = renderMdArt(buildPipelineSrc(labels))
           return svg.includes('<svg') && svg.includes('viewBox=')
             && !svg.includes('="NaN"') && !svg.includes('="Infinity"')
         } catch { return false }
       },
-      Gen.inRange(1, 6),
-      Gen.inRange(0, STAGE_NAMES.length - 1),
+      Gen.array(genLabelAny, 1, 6),
     )
   })
 
   it('∀ n≥3 stages: n node groups are present', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildPipelineSrc(n, offset))
+      (rawLabels: string[]) => {
+        const labels = rawLabels.map(techLabel)
+        const n = labels.length
+        const svg = renderMdArt(buildPipelineSrc(labels))
         const classes = nodeGroupClasses(svg)
-        // All n stages should have a group class
         return Array.from({ length: n }, (_, i) => `mdart-n${i}`)
           .every(cls => classes.includes(cls))
       },
-      Gen.inRange(3, 5),
-      Gen.inRange(0, STAGE_NAMES.length - 1),
+      Gen.array(genLabelAny, 3, 5),
     )
   })
 
@@ -163,40 +170,40 @@ describe('sequence: actor groups + arrow marker', () => {
 
   it('∀ n≥2 actors: mdart-n0 present, url(#sq-a) marker present', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildSequenceSrc(n, offset))
+      (rawLabels: string[]) => {
+        const actors = rawLabels.map(techLabel)
+        const svg = renderMdArt(buildSequenceSrc(actors))
         return svg.includes('class="mdart-n0"')
           && svg.includes('marker-end="url(#sq-a)"')
       },
-      Gen.inRange(2, 4),
-      Gen.inRange(0, ACTOR_NAMES.length - 1),
+      Gen.array(genLabelAny, 2, 4),
     )
   })
 
   it('∀ n≥2 actors: at least n animation groups present', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildSequenceSrc(n, offset))
+      (rawLabels: string[]) => {
+        const actors = rawLabels.map(techLabel)
+        const n = actors.length
+        const svg = renderMdArt(buildSequenceSrc(actors))
         const classes = nodeGroupClasses(svg)
-        // Each actor gets at least one group; must have groups 0..n-1
         return Array.from({ length: n }, (_, i) => `mdart-n${i}`)
           .every(cls => classes.includes(cls))
       },
-      Gen.inRange(2, 4),
-      Gen.inRange(0, ACTOR_NAMES.length - 1),
+      Gen.array(genLabelAny, 2, 4),
     )
   })
 
   it('∀ sequence: no crash, valid viewBox', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
+      (rawLabels: string[]) => {
+        const actors = rawLabels.map(techLabel)
         try {
-          const svg = renderMdArt(buildSequenceSrc(n, offset))
+          const svg = renderMdArt(buildSequenceSrc(actors))
           return svg.includes('<svg') && svg.includes('viewBox=')
         } catch { return false }
       },
-      Gen.inRange(2, 5),
-      Gen.inRange(0, ACTOR_NAMES.length - 1),
+      Gen.array(genLabelAny, 2, 5),
     )
   })
 
@@ -208,43 +215,43 @@ describe('state-machine: scoped keyframes + transition marker', () => {
 
   it('∀ n≥2 states: scoped keyframes, mdart-n0 + mdart-n1, url(#sm-a) present', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildStateMachineSrc(n, offset))
-        const hasScope = !!svg.match(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
-        const hasN0 = svg.includes('class="mdart-n0"')
-        const hasN1 = svg.includes('class="mdart-n1"')
-        const hasMarker = svg.includes('marker-end="url(#sm-a)"')
-        return hasScope && hasN0 && hasN1 && hasMarker
+      (rawLabels: string[]) => {
+        const states = rawLabels.map(techLabel)
+        const svg = renderMdArt(buildStateMachineSrc(states))
+        return !!svg.match(/@keyframes mdart-s[a-z0-9]+-mdart-enter/)
+          && svg.includes('class="mdart-n0"')
+          && svg.includes('class="mdart-n1"')
+          && svg.includes('marker-end="url(#sm-a)"')
       },
-      Gen.inRange(2, 4),
-      Gen.inRange(0, STATE_NAMES.length - 1),
+      Gen.array(genLabelAny, 2, 4),
     )
   })
 
   it('∀ n states: node groups mdart-n0..n{n-1} are present', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildStateMachineSrc(n, offset))
+      (rawLabels: string[]) => {
+        const states = rawLabels.map(techLabel)
+        const n = states.length
+        const svg = renderMdArt(buildStateMachineSrc(states))
         const classes = nodeGroupClasses(svg)
         return Array.from({ length: n }, (_, i) => `mdart-n${i}`)
           .every(cls => classes.includes(cls))
       },
-      Gen.inRange(2, 4),
-      Gen.inRange(0, STATE_NAMES.length - 1),
+      Gen.array(genLabelAny, 2, 4),
     )
   })
 
   it('∀ state-machine: no crash, valid viewBox, no NaN', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
+      (rawLabels: string[]) => {
+        const states = rawLabels.map(techLabel)
         try {
-          const svg = renderMdArt(buildStateMachineSrc(n, offset))
+          const svg = renderMdArt(buildStateMachineSrc(states))
           return svg.includes('<svg') && svg.includes('viewBox=')
             && !svg.includes('="NaN"') && !svg.includes('="Infinity"')
         } catch { return false }
       },
-      Gen.inRange(2, 5),
-      Gen.inRange(0, STATE_NAMES.length - 1),
+      Gen.array(genLabelAny, 2, 5),
     )
   })
 
@@ -254,53 +261,52 @@ describe('state-machine: scoped keyframes + transition marker', () => {
 
 describe('network: arrow marker defs + node groups + connector lines', () => {
 
-  it('∀ n≥2 nodes with edges: id="net-arr" defined, mdart-n1 + mdart-n2 present', { timeout: 20000 }, () => {
+  it('∀ n≥3 nodes with edges: id="net-arr" defined, mdart-n1 + mdart-n2 present', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildNetworkSrc(n, offset))
+      (rawLabels: string[]) => {
+        const nodes = rawLabels.map(techLabel)
+        const svg = renderMdArt(buildNetworkSrc(nodes))
         return svg.includes('id="net-arr"')
           && svg.includes('class="mdart-n1"')
           && svg.includes('class="mdart-n2"')
       },
-      Gen.inRange(3, 5),   // n≥3 so we reliably have n1 and n2
-      Gen.inRange(0, NODE_NAMES.length - 1),
+      Gen.array(genLabelAny, 3, 5),
     )
   })
 
   it('∀ n≥2 nodes: connector lines reference url(#net-arr)', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildNetworkSrc(n, offset))
+      (rawLabels: string[]) => {
+        const nodes = rawLabels.map(techLabel)
+        const svg = renderMdArt(buildNetworkSrc(nodes))
         return svg.includes('marker-end="url(#net-arr)"')
       },
-      Gen.inRange(2, 5),
-      Gen.inRange(0, NODE_NAMES.length - 1),
+      Gen.array(genLabelAny, 2, 5),
     )
   })
 
   it('∀ n≥2 nodes: connector group contains both <line and url(#net-arr)', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildNetworkSrc(n, offset))
-        // A connector group should contain a line element with the net-arr marker
+      (rawLabels: string[]) => {
+        const nodes = rawLabels.map(techLabel)
+        const svg = renderMdArt(buildNetworkSrc(nodes))
         return svg.match(/<g class="mdart-n\d+"><line[\s\S]*?marker-end="url\(#net-arr\)"/) !== null
       },
-      Gen.inRange(2, 5),
-      Gen.inRange(0, NODE_NAMES.length - 1),
+      Gen.array(genLabelAny, 2, 5),
     )
   })
 
   it('∀ network: no crash, valid viewBox, no NaN', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
+      (rawLabels: string[]) => {
+        const nodes = rawLabels.map(techLabel)
         try {
-          const svg = renderMdArt(buildNetworkSrc(n, offset))
+          const svg = renderMdArt(buildNetworkSrc(nodes))
           return svg.includes('<svg') && svg.includes('viewBox=')
             && !svg.includes('="NaN"') && !svg.includes('="Infinity"')
         } catch { return false }
       },
-      Gen.inRange(1, 6),
-      Gen.inRange(0, NODE_NAMES.length - 1),
+      Gen.array(genLabelAny, 1, 6),
     )
   })
 
@@ -312,55 +318,53 @@ describe('all technical types: cross-type invariants', () => {
 
   it('all four technical types: @keyframes always scoped (no bare mdart-enter)', { timeout: 20000 }, () => {
     const srcs = [
-      buildPipelineSrc(3, 0),
-      buildSequenceSrc(2, 0),
-      buildStateMachineSrc(2, 0),
-      buildNetworkSrc(3, 0),
+      buildPipelineSrc(['Parse', 'Validate', 'Transform']),
+      buildSequenceSrc(['Client', 'Server', 'DB']),
+      buildStateMachineSrc(['Idle', 'Running', 'Done']),
+      buildNetworkSrc(['API', 'DB', 'Cache', 'Worker']),
     ]
     for (const src of srcs) {
       const svg = renderMdArt(src)
-      // Bare unscoped keyframe would start "@keyframes mdart-enter " (no scope prefix)
       if (svg.includes('@keyframes mdart-enter ') || svg.match(/@keyframes mdart-enter[^-]/)) {
         throw new Error(`unscoped @keyframes mdart-enter found in: ${src.split('\n')[0]}`)
       }
     }
   })
 
-  it('all four technical types: scope tokens are per-source (different sources → different scopes)', { timeout: 20000 }, () => {
+  it('∀ two technical types: scope tokens differ (hash is source-content-based)', { timeout: 20000 }, () => {
+    // Different source strings → different scope hash.
+    // `type: pipeline` vs `type: network` guarantees the full source strings differ
+    // even if their labels happen to match, so scopes are always distinct.
     forAll(
-      (n: number, offset: number) => {
-        const svgPipeline = renderMdArt(buildPipelineSrc(n, offset))
-        const svgNetwork  = renderMdArt(buildNetworkSrc(n + 1, offset))
+      (pipeLabels: string[], netLabels: string[]) => {
+        const svgPipeline = renderMdArt(buildPipelineSrc(pipeLabels.map(techLabel)))
+        const svgNetwork  = renderMdArt(buildNetworkSrc(netLabels.map(techLabel)))
         const s1 = scopeOf(svgPipeline)
         const s2 = scopeOf(svgNetwork)
-        // Both must have scopes; different sources → different scopes
         return !!s1 && !!s2 && s1 !== s2
       },
-      Gen.inRange(2, 4),
-      Gen.inRange(0, NODE_NAMES.length - 1),
+      Gen.array(genLabelAny, 2, 4),
+      Gen.array(genLabelAny, 2, 4),
     )
   })
 
   it('∀ pipeline with 1–5 stages: mdart-n0 class always appears', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildPipelineSrc(n, offset))
+      (rawLabels: string[]) => {
+        const svg = renderMdArt(buildPipelineSrc(rawLabels.map(techLabel)))
         return svg.includes('class="mdart-n0"')
       },
-      Gen.inRange(1, 5),
-      Gen.inRange(0, STAGE_NAMES.length - 1),
+      Gen.array(genLabelAny, 1, 5),
     )
   })
 
   it('∀ state-machine with 2–4 states: no transform:scale (fade-in, not pulse)', { timeout: 20000 }, () => {
     forAll(
-      (n: number, offset: number) => {
-        const svg = renderMdArt(buildStateMachineSrc(n, offset))
-        // Technical types use fade-in (opacity) not scale-pulse
+      (rawLabels: string[]) => {
+        const svg = renderMdArt(buildStateMachineSrc(rawLabels.map(techLabel)))
         return !svg.includes('transform:scale')
       },
-      Gen.inRange(2, 4),
-      Gen.inRange(0, STATE_NAMES.length - 1),
+      Gen.array(genLabelAny, 2, 4),
     )
   })
 
