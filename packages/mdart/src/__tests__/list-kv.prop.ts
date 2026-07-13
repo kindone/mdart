@@ -12,7 +12,7 @@
 // @mode:       verification
 
 import { describe, it } from 'vitest'
-import { forAll, Gen } from 'jsproptest'
+import { forAll, Gen, Property } from 'jsproptest'
 import { renderMdArt } from '../renderer'
 import { genLabelPlain } from './domains'
 
@@ -59,6 +59,42 @@ describe('KV list renderers: label and value appear in SVG', () => {
       Gen.inRange(0, KEYS.length - 1),
       Gen.inRange(0, VALUES.length - 1),
     )
+  })
+
+})
+
+// ── Markup structure: tspan wrapping and rect height ─────────────────────────
+
+describe('KV list renderers: markup structure', () => {
+
+  it('zigzag-list: KV labels use <tspan> wrappers (not bare <text>)', () => {
+    // zigzag-list sends labels through fitTextToWidthShared which emits <tspan>
+    // elements; values are rendered as a direct <text> node alongside.
+    // Pinned with specific examples and verified across all key/value combos.
+    const prop = new Property((ki: number, vi: number) => {
+      const k = KEYS[ki % KEYS.length]
+      const v = VALUES[vi % VALUES.length]
+      const svg = renderMdArt(`type: zigzag-list\n- ${k}: ${v}\n- Other: 50%`)
+      return svg.includes(`>${k}</tspan>`)           // label wrapped in tspan
+        && svg.match(new RegExp(`<text[^>]*>${v}</text>`)) !== null  // value in text
+    })
+    prop.example(0, 0)   // Revenue: 42M  — original example case
+    prop.example(1, 1)   // Retention: 91%
+    prop.forAll(Gen.inRange(0, KEYS.length - 1), Gen.inRange(0, VALUES.length - 1))
+  })
+
+  it.each(['step-up', 'step-down'] as const)('%s: KV blocks use 56px rect height', (type) => {
+    // step-up and step-down use a fixed-height staircase block. 56px is the
+    // layout constant; if it changes, visual alignment breaks — pin it here.
+    const prop = new Property((ki: number, vi: number) => {
+      const k = KEYS[ki % KEYS.length]
+      const v = VALUES[vi % VALUES.length]
+      const svg = renderMdArt(`type: ${type}\n- ${k}: ${v}\n- Other: 50%`)
+      return /<rect[^>]*height="56"/.test(svg)
+    })
+    prop.example(0, 0)   // Revenue: 42M
+    prop.example(1, 1)   // Retention: 91%
+    prop.forAll(Gen.inRange(0, KEYS.length - 1), Gen.inRange(0, VALUES.length - 1))
   })
 
 })

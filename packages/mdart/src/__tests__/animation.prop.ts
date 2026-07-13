@@ -20,8 +20,9 @@
 // @mode:       verification
 
 import { describe, it } from 'vitest'
-import { forAll, Gen } from 'jsproptest'
+import { forAll, Gen, Property } from 'jsproptest'
 import { renderMdArt } from '../renderer'
+import { getTheme } from '../theme'
 
 const LABELS_3 = '- A\n- B\n- C'
 const LABELS_4 = '- A\n- B\n- C\n- D'
@@ -170,6 +171,21 @@ describe('cycle family: closing arrow fades after last node', () => {
       },
       Gen.inRange(2, 6),
     )
+  })
+
+  it('loop: node labels painted in theme.bg for contrast against coloured circle fills', () => {
+    // Design decision: loop places labels inside filled circles; text must use
+    // theme.bg so it reads against the primary colour. Verified here as a pinned
+    // example AND as a property across item counts.
+    const theme = getTheme('loop')
+    const prop = new Property((n: number) => {
+      const items = Array.from({ length: n }, (_, i) => `- Step ${i}`).join('\n')
+      const svg = renderMdArt(`type: loop\n${items}`)
+      return svg.includes(`fill="${theme.bg}"`)
+    })
+    prop.example(2)   // minimum loop — original regression case
+    prop.example(3)   // three items
+    prop.forAll(Gen.inRange(2, 5))
   })
 
 })
