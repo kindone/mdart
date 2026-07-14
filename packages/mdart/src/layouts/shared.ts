@@ -8,6 +8,171 @@ export function escapeXml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
+export interface InlineTextStyle {
+  bold?: boolean
+  italic?: boolean
+  strike?: boolean
+  code?: boolean
+}
+
+export interface InlineTextRun {
+  text: string
+  style: InlineTextStyle
+}
+
+function sameInlineStyle(a: InlineTextStyle, b: InlineTextStyle): boolean {
+  return !!a.bold === !!b.bold
+    && !!a.italic === !!b.italic
+    && !!a.strike === !!b.strike
+    && !!a.code === !!b.code
+}
+
+function mergeInlineRuns(runs: InlineTextRun[]): InlineTextRun[] {
+  const merged: InlineTextRun[] = []
+  for (const run of runs) {
+    if (!run.text) continue
+    const prev = merged[merged.length - 1]
+    if (prev && sameInlineStyle(prev.style, run.style)) prev.text += run.text
+    else merged.push({ text: run.text, style: { ...run.style } })
+  }
+  return merged
+}
+
+function findClosingMarker(input: string, marker: string, from: number): number {
+  for (let i = from; i <= input.length - marker.length; i++) {
+    if (input[i] === '\\') { i++; continue }
+    if (input.startsWith(marker, i)) return i
+  }
+  return -1
+}
+
+export function parseInlineMarkdown(input: string, baseStyle: InlineTextStyle = {}): InlineTextRun[] {
+  const runs: InlineTextRun[] = []
+  let plain = ''
+  const flush = () => {
+    if (plain) {
+      runs.push({ text: plain, style: { ...baseStyle } })
+      plain = ''
+    }
+  }
+  const pushStyled = (inner: string, style: InlineTextStyle) => {
+    flush()
+    runs.push(...parseInlineMarkdown(inner, { ...baseStyle, ...style }))
+  }
+
+  for (let i = 0; i < input.length;) {
+    const ch = input[i]
+    if (ch === '\\' && i + 1 < input.length && /[*~`\\]/.test(input[i + 1])) {
+      plain += input[i + 1]
+      i += 2
+      continue
+    }
+
+    if (input.startsWith('`', i)) {
+      const end = findClosingMarker(input, '`', i + 1)
+      if (end !== -1) {
+        flush()
+        runs.push({ text: input.slice(i + 1, end), style: { ...baseStyle, code: true } })
+        i = end + 1
+        continue
+      }
+    }
+    if (input.startsWith('***', i)) {
+      const end = findClosingMarker(input, '***', i + 3)
+      if (end !== -1) {
+        pushStyled(input.slice(i + 3, end), { bold: true, italic: true })
+        i = end + 3
+        continue
+      }
+    }
+    if (input.startsWith('**', i)) {
+      const end = findClosingMarker(input, '**', i + 2)
+      if (end !== -1) {
+        pushStyled(input.slice(i + 2, end), { bold: true })
+        i = end + 2
+        continue
+      }
+    }
+    if (input.startsWith('~~', i)) {
+      const end = findClosingMarker(input, '~~', i + 2)
+      if (end !== -1) {
+        pushStyled(input.slice(i + 2, end), { strike: true })
+        i = end + 2
+        continue
+      }
+    }
+    if (input.startsWith('*', i)) {
+      const end = findClosingMarker(input, '*', i + 1)
+      if (end !== -1) {
+        pushStyled(input.slice(i + 1, end), { italic: true })
+        i = end + 1
+        continue
+      }
+    }
+
+    plain += ch
+    i++
+  }
+  flush()
+  return mergeInlineRuns(runs)
+}
+
+export function inlineMarkdownText(input: string): string {
+  return parseInlineMarkdown(input).map(run => run.text).join('')
+}
+
+function visibleTextLength(input: string): number {
+  return [...inlineMarkdownText(input)].length
+}
+
+function markdownSourceForRun(run: InlineTextRun): string {
+  let out = run.text
+  if (run.style.code) out = `\`${out}\``
+  if (run.style.bold && run.style.italic) out = `***${out}***`
+  else if (run.style.bold) out = `**${out}**`
+  else if (run.style.italic) out = `*${out}*`
+  if (run.style.strike) out = `~~${out}~~`
+  return out
+}
+
+function truncateInlineMarkdownSource(input: string, maxVisibleChars: number): string {
+  if (maxVisibleChars <= 0) return ''
+  if (visibleTextLength(input) <= maxVisibleChars) return input
+
+  let remaining = Math.max(0, maxVisibleChars - 1)
+  const out: InlineTextRun[] = []
+  for (const run of parseInlineMarkdown(input)) {
+    if (remaining <= 0) break
+    const chars = [...run.text]
+    const take = Math.min(chars.length, remaining)
+    if (take > 0) out.push({ text: chars.slice(0, take).join(''), style: { ...run.style } })
+    remaining -= take
+  }
+  if (out.length === 0) return '…'
+  out[out.length - 1].text += '…'
+  return out.map(markdownSourceForRun).join('')
+}
+
+function inlineStyleAttrs(style: InlineTextStyle): string {
+  const attrs: string[] = []
+  if (style.bold) attrs.push('font-weight="700"')
+  if (style.italic) attrs.push('font-style="italic"')
+  if (style.strike) attrs.push('text-decoration="line-through"')
+  if (style.code) attrs.push('font-family="ui-monospace,monospace"')
+  return attrs.length ? ` ${attrs.join(' ')}` : ''
+}
+
+export function renderInlineMarkdown(text: string, opts: { x?: string | number; dy?: string | number } = {}): string {
+  const runs = parseInlineMarkdown(text)
+  if (runs.length === 0) return ''
+  return runs.map((run, idx) => {
+    const attrs: string[] = []
+    if (idx === 0 && opts.x !== undefined) attrs.push(`x="${typeof opts.x === 'number' ? opts.x.toFixed(1) : opts.x}"`)
+    if (idx === 0 && opts.dy !== undefined) attrs.push(`dy="${typeof opts.dy === 'number' ? opts.dy.toFixed(1) : opts.dy}"`)
+    return `<tspan${attrs.length ? ` ${attrs.join(' ')}` : ''}${inlineStyleAttrs(run.style)}>${escapeXml(run.text)}</tspan>`
+  }).join('')
+}
+
 /**
  * Parse a markdown-style link from a label string.
  * Supports full-label links `[display](url)` and inline links embedded in text.
@@ -45,7 +210,7 @@ export function aWrap(content: string, url: string | null): string {
 }
 
 export function truncate(s: string, max: number): string {
-  return s.length > max ? s.slice(0, max - 1) + '…' : s
+  return truncateInlineMarkdownSource(s, max)
 }
 
 /**
@@ -75,7 +240,7 @@ export function wrapLabel(
   const fs    = usePx ? opts!.fontSize! : 0
   const fits  = usePx
     ? (s: string) => estimateTextWidth(s, fs) <= pxW
-    : (s: string) => s.length <= perLineChars
+    : (s: string) => visibleTextLength(s) <= perLineChars
 
   const words = trimmed.split(/\s+/)
   const lines: string[] = []
@@ -101,12 +266,14 @@ export function wrapLabel(
     if (!line) {
       // Single word too long — hard-truncate it
       if (usePx) {
-        // Trim code-points one at a time until the truncated string fits
-        const cps = [...words[wordIdx]]
-        while (cps.length > 1 && !fits(cps.join('') + '…')) cps.pop()
-        line = cps.join('') + '…'
+        let visibleChars = visibleTextLength(words[wordIdx])
+        line = truncateInlineMarkdownSource(words[wordIdx], visibleChars)
+        while (visibleChars > 1 && !fits(line)) {
+          visibleChars--
+          line = truncateInlineMarkdownSource(words[wordIdx], visibleChars)
+        }
       } else {
-        line = words[wordIdx].slice(0, perLineChars - 1) + '…'
+        line = truncateInlineMarkdownSource(words[wordIdx], perLineChars)
       }
       wordIdx++
       hardTruncated = true
@@ -128,13 +295,17 @@ export function wrapLabel(
     const last = lines[lines.length - 1]
     if (!last.endsWith('…')) {
       if (usePx) {
-        const cps = [...last]
-        while (cps.length > 0 && !fits(cps.join('') + '…')) cps.pop()
-        lines[lines.length - 1] = cps.join('') + '…'
+        let visibleChars = visibleTextLength(last) + 1
+        let candidate = `${last}…`
+        while (visibleChars > 1 && !fits(candidate)) {
+          visibleChars--
+          candidate = truncateInlineMarkdownSource(last, visibleChars)
+        }
+        lines[lines.length - 1] = candidate
       } else {
-        lines[lines.length - 1] = last.length < perLineChars
+        lines[lines.length - 1] = visibleTextLength(last) < perLineChars
           ? last + '…'
-          : last.slice(0, perLineChars - 1) + '…'
+          : truncateInlineMarkdownSource(last, perLineChars)
       }
     }
   }
@@ -172,7 +343,7 @@ const WIDE_CHARS   = new Set('MWmw@%Q')
 /** Estimated rendered width of `s` at `fontSize`, in the same units as fontSize. */
 export function estimateTextWidth(s: string, fontSize: number): number {
   let units = 0
-  for (const ch of s) {
+  for (const ch of inlineMarkdownText(s)) {
     if (ch === ' ')                    units += CHAR_W_SPACE
     else if (NARROW_CHARS.has(ch))     units += CHAR_W_NARROW
     else if (WIDE_CHARS.has(ch))       units += CHAR_W_WIDE
@@ -390,7 +561,7 @@ export function renderFitBlock(
   let labelOut = labelTip
   labelLines.forEach((line, li) => {
     const ty = cy - totalH / 2 + li * labelLH + labelLH * 0.8
-    labelOut += `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${labelFS}" fill="${labelFill}" ${labelExtraAttrs} font-family="system-ui,sans-serif" font-weight="${labelWeight}">${escapeXml(line)}</text>`
+    labelOut += `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${labelFS}" fill="${labelFill}" ${labelExtraAttrs} font-family="system-ui,sans-serif" font-weight="${labelWeight}">${renderInlineMarkdown(line)}</text>`
   })
   let out = aWrap(labelOut, labelUrl)
 
@@ -399,7 +570,7 @@ export function renderFitBlock(
     out += valueTip
     valueLines.forEach((line, li) => {
       const ty = cy - totalH / 2 + labelLines.length * labelLH + li * valueLH + valueLH * 0.8
-      out += `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${valueFS}" fill="${valueFill}" ${valueExtraAttrs} font-family="system-ui,sans-serif" font-weight="${valueWeight}">${escapeXml(line)}</text>`
+      out += `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${valueFS}" fill="${valueFill}" ${valueExtraAttrs} font-family="system-ui,sans-serif" font-weight="${valueWeight}">${renderInlineMarkdown(line)}</text>`
     })
   }
   return out
@@ -681,9 +852,9 @@ export function seqSpotlightCSS(n: number, spec: MdArtSpec, options: SeqSpotligh
  */
 export function tt(s: string, max: number, item?: ItemLike): string {
   const tr = truncate(s, max)
-  if (item) return `<title>${escapeXml(itemSummary(item))}</title>${escapeXml(tr)}`
-  if (tr === s) return escapeXml(s)
-  return `<title>${escapeXml(s)}</title>${escapeXml(tr)}`
+  if (item) return `<title>${escapeXml(itemSummary(item))}</title>${renderInlineMarkdown(tr)}`
+  if (tr === s) return renderInlineMarkdown(s)
+  return `<title>${escapeXml(s)}</title>${renderInlineMarkdown(tr)}`
 }
 
 export interface WrappedTextResult {
@@ -709,7 +880,7 @@ export function renderWrappedText(
   const sx = typeof x === 'number' ? x.toFixed(1) : x
   const tip = item ? itemTitleTag(item) : (truncated ? `<title>${escapeXml(fullText)}</title>` : '')
   const spans = lines
-    .map((line, idx) => `<tspan x="${sx}" dy="${idx === 0 ? 0 : lineH.toFixed(1)}">${escapeXml(line)}</tspan>`)
+    .map((line, idx) => renderInlineMarkdown(line, { x: sx, dy: idx === 0 ? 0 : lineH }))
     .join('')
   return aWrap(`<text x="${sx}" y="${y1.toFixed(1)}" ${attrs}>${tip}${spans}</text>`, url)
 }

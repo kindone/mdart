@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap, wrapLabel, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap, wrapLabel, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -102,17 +102,17 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         const vw = cl.valWrap!
         // Key block
         const keyTip   = kw.truncated ? `<title>${escapeXml(child.label)}</title>` : ''
-        const keySpans = kw.lines.map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : KV_KEY_LH}">${escapeXml(l)}</tspan>`).join('')
+        const keySpans = kw.lines.map((l, li) => renderInlineMarkdown(l, { x: cx, dy: li === 0 ? 0 : KV_KEY_LH })).join('')
         childStr += aWrap(`<text x="${cx}" y="${(rowTop + KV_KEY_FS).toFixed(1)}" text-anchor="middle" font-size="${KV_KEY_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${keyTip}${keySpans}</text>`, kw.url)
         // Value block — starts after all key lines + inner gap
         const valY     = rowTop + kw.lines.length * KV_KEY_LH + KV_INNER_G + KV_VAL_FS
         const valTip   = vw.truncated ? `<title>${escapeXml(child.value!)}</title>` : ''
-        const valSpans = vw.lines.map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : KV_VAL_LH}">${escapeXml(l)}</tspan>`).join('')
+        const valSpans = vw.lines.map((l, li) => renderInlineMarkdown(l, { x: cx, dy: li === 0 ? 0 : KV_VAL_LH })).join('')
         childStr += aWrap(`<text x="${cx}" y="${valY.toFixed(1)}" text-anchor="middle" font-size="${KV_VAL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif">${valTip}${valSpans}</text>`, vw.url)
       } else {
         const pw = cl.plainWrap!
         const tip   = pw.truncated ? `<title>${escapeXml(child.label)}</title>` : ''
-        const spans = pw.lines.map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : PLAIN_LH}">${escapeXml(l)}</tspan>`).join('')
+        const spans = pw.lines.map((l, li) => renderInlineMarkdown(l, { x: cx, dy: li === 0 ? 0 : PLAIN_LH })).join('')
         childStr += aWrap(`<text x="${cx}" y="${(rowTop + PLAIN_FS).toFixed(1)}" text-anchor="middle" font-size="${PLAIN_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tip}${spans}</text>`, pw.url)
       }
       rowTop += cl.slotH

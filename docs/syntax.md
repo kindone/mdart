@@ -59,6 +59,30 @@ Arrow chain shorthand: `Step 1 -> Step 2 -> Step 3`
 
 ---
 
+## Inline text styling
+
+Labels and values support a small, safe inline Markdown subset:
+
+| Syntax | SVG styling |
+|---|---|
+| `**bold**` | bold text |
+| `*italic*` | italic text |
+| `***bold italic***` | bold + italic text |
+| `~~removed~~` | strikethrough text |
+| `` `code` `` | monospace text |
+| `[label](https://example.com)` | link, when a renderer wraps that text as a link |
+
+Backslash escapes marker characters: `\*`, `\~`, `` \` ``, and `\\`.
+Raw HTML is escaped, not interpreted. Underline is intentionally unsupported
+for now because it is not part of standard Markdown emphasis and can read as a
+link in diagrams.
+
+Use inline styling for short emphasis only. The diagram type, structure,
+values, and attributes should carry meaning; styling should not compensate for
+overlong labels or the wrong layout.
+
+---
+
 ## Syntax patterns
 
 Most of the 101 layout types share one of six input patterns. Visual rendering varies; syntax does not.

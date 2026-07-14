@@ -31,6 +31,17 @@ For full grammar: see `packages/mdart/docs/syntax.md` in the mdart repo.
 
 For deep anti-pattern catalog: read `anti-patterns.md` in this skill directory before committing to a non-default type.
 
+**Inline text styling:** labels and values may use a small Markdown subset for
+short emphasis: `**bold**`, `*italic*`, `***bold italic***`, `~~strike~~`,
+`` `code` ``, and links (`[label](https://...)`) where the renderer supports
+link wrapping. Backslash escapes marker characters. Raw HTML is escaped.
+Underline is intentionally unsupported for now.
+
+Use styling sparingly. It should highlight a word or token inside an already
+good diagram; it must not carry structure, replace `key: value` syntax, or
+make verbose node text acceptable. If you need styling to make the diagram
+understandable, choose a better type or split the content.
+
 ---
 
 ## §1 — Family cheat sheet
@@ -177,8 +188,8 @@ or `icon-list` is the more generic, text-friendly choice.
 
 ### 7. Containment / set overlap?
 - 2–4 overlapping sets → `venn`, `venn-3`, `venn-4`
-- Nested rings (broader → narrower scope) → `concentric`
-- Concentric rings centred on a goal → `target`
+- Nested rings (outer → inner scope; first item outermost) → `concentric`
+- Target/bullseye rings (inner → outer; first item centre) → `target`
 - Spokes around a hub → `radial`
 - Grouped buckets without overlap → `cluster`
 

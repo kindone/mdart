@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -103,7 +103,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // ── Main label (bold, up to 2 lines) ─────────────────────────────────────
     const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
-      .map((l, li) => `<tspan x="${mainTextStart}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
+      .map((l, li) => renderInlineMarkdown(l, { x: mainTextStart, dy: li === 0 ? 0 : LBL_LH }))
       .join('')
 
     // ── Value subtitle (italic muted, up to 2 lines) ──────────────────────────
@@ -112,7 +112,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const valBL    = y + firstValBL
       const valTip   = valTrunc ? `<title>${escapeXml(item.value ?? '')}</title>` : ''
       const valSpans = valLines
-        .map((l, li) => `<tspan x="${mainTextStart}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
+        .map((l, li) => renderInlineMarkdown(l, { x: mainTextStart, dy: li === 0 ? 0 : VAL_LH }))
         .join('')
       valStr = aWrap(`<text x="${mainTextStart}" y="${valBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic">${valTip}${valSpans}</text>`, valUrl)
     }
@@ -126,7 +126,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       chdStr += `<circle cx="${subMarkerX}" cy="${childMarkerCy}" r="3" fill="${fill}" fill-opacity="0.7" />`
       const chTip   = chTrunc ? `<title>${escapeXml(child.label)}</title>` : ''
       const chSpans = chLines
-        .map((l, li) => `<tspan x="${subTextStart}" dy="${li === 0 ? 0 : CHD_LH}">${escapeXml(l)}</tspan>`)
+        .map((l, li) => renderInlineMarkdown(l, { x: subTextStart, dy: li === 0 ? 0 : CHD_LH }))
         .join('')
       chdStr += `<text x="${subTextStart}" y="${chdBL}" font-size="${CHD_FS}" fill="${theme.text}" fill-opacity="0.85" font-family="system-ui,sans-serif">${chTip}${chSpans}</text>`
       chdBL += chLines.length * CHD_LH

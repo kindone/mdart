@@ -76,7 +76,7 @@ describe('KV list renderers: markup structure', () => {
       const v = VALUES[vi % VALUES.length]
       const svg = renderMdArt(`type: zigzag-list\n- ${k}: ${v}\n- Other: 50%`)
       return svg.includes(`>${k}</tspan>`)           // label wrapped in tspan
-        && svg.match(new RegExp(`<text[^>]*>${v}</text>`)) !== null  // value in text
+        && svg.match(new RegExp(`<text[^>]*>(?:(?!</text>)[\\s\\S])*${v}(?:(?!</text>)[\\s\\S])*</text>`)) !== null  // value in text
     })
     prop.example(0, 0)   // Revenue: 42M  — original example case
     prop.example(1, 1)   // Retention: 91%

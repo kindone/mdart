@@ -26,7 +26,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const instrument = shouldInstrument()
   items.forEach((group, i) => {
     const col = i % cols, row = Math.floor(i / cols)
-    const gx = 10 + col * (clW + 10) + clW / 2
+    // If the last item is alone in its row (orphan), centre it horizontally
+    // rather than leaving it pinned to the left column.
+    const isOrphan = n % cols !== 0 && i === n - 1
+    const gx = isOrphan ? W / 2 : 10 + col * (clW + 10) + clW / 2
     const gy = TITLE_H + 10 + row * (clH + 10) + clH / 2
     const color = colors[i % colors.length]
     const { display: grpDisplay, url: grpUrl } = displayLabel(group)

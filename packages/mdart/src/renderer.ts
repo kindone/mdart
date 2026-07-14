@@ -2,6 +2,7 @@ import { parseMdArt } from './parser'
 import { getTheme } from './theme'
 import { getGlobalConfig } from './config'
 import { validateMdArt } from './validator'
+import { renderInlineMarkdown } from './layouts/shared'
 import type { MdArtConfig } from './config'
 import type { MdArtSpec } from './parser'
 import type { MdArtTheme } from './theme'
@@ -338,7 +339,8 @@ export function renderMdArtDetailed(
 
     const renderer = LAYOUT_RENDERERS[spec.type]
     const svg = renderer ? renderer(spec, theme) : renderFallback(spec, theme)
-    return { svg: scopeSvgAnimation(svg, raw, hintType, spec.type), issues }
+    const styledSvg = applyInlineMarkdownToSvgText(svg)
+    return { svg: scopeSvgAnimation(styledSvg, raw, hintType, spec.type), issues }
   } catch (e) {
     return { svg: renderError(String(e)), issues }
   }
@@ -357,6 +359,25 @@ export function renderMdArtDetailed(
  */
 export function renderMdArt(raw: string, hintType?: string, pluginConfig?: MdArtConfig): string {
   return renderMdArtDetailed(raw, hintType, pluginConfig).svg
+}
+
+function applyInlineMarkdownToSvgText(svg: string): string {
+  return svg.replace(
+    /<(text|tspan)\b([^>]*)>([^<]*[*~`][^<]*)<\/\1>/g,
+    (match, tag: string, attrs: string, content: string) => {
+      const decoded = decodeXmlText(content)
+      const rendered = renderInlineMarkdown(decoded)
+      return rendered === content ? match : `<${tag}${attrs}>${rendered}</${tag}>`
+    },
+  )
+}
+
+function decodeXmlText(s: string): string {
+  return s
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
 }
 
 function scopeSvgAnimation(svg: string, raw: string, hintType: string | undefined, type: string): string {

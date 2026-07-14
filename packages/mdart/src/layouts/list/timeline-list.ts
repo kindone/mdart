@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -104,7 +104,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
     const lblSpans = lblLines
-      .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
+      .map((l, li) => renderInlineMarkdown(l, { x: cx, dy: li === 0 ? 0 : LBL_LH }))
       .join('')
 
     let nodeStr = ''
@@ -116,7 +116,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       textY += SEC_G
       const capTip   = capTrunc ? `<title>${escapeXml(caption!)}</title>` : ''
       const capSpans = capLines
-        .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : CAP_LH}">${escapeXml(l)}</tspan>`)
+        .map((l, li) => renderInlineMarkdown(l, { x: cx, dy: li === 0 ? 0 : CAP_LH }))
         .join('')
       nodeStr += `<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${CAP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`
       textY += capLines.length * CAP_LH

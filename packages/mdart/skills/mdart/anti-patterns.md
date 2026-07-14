@@ -198,6 +198,10 @@ See SKILL.md §3 for length budgets per node kind. Common manifestations:
 - **Numerical breakdowns inside labels.** "Revenue (was $1.2M in Q1, $1.5M
   in Q2, projected $1.8M in Q3)" → use a `bullet-chart` or `progress-list`
   with the numbers as values, label is just "Revenue".
+- **Styling as a substitute for structure.** Inline `**bold**`, `*italic*`,
+  `~~strike~~`, and `` `code` `` are for small emphasis only. They do not make
+  sentence-length nodes readable, and they must not replace `key: value`
+  rows, attributes, comparison columns, or a more suitable diagram type.
 - **Long historical / temporal events forced into `process` or `timeline-h`.**
   A path like `Planck (1900): Energy is quantized` → `Einstein (1905): Light
   is quantized` is a chronological story, not compact process steps. Use

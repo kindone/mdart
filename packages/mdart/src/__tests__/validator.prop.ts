@@ -39,8 +39,9 @@ import {
 function cleanLabel(s: string): string {
   return s
     .replace(/:/g, '-').replace(/→/g, '-').replace(/\[/g, '(').replace(/]/g, ')')
+    .replace(/\\/g, '')
     .replace(/∩/g, 'x').replace(/&&/g, 'xx')   // intersection markers → plain chars
-    .replace(/\\/g, '').replace(/\n/g, ' ')
+    .replace(/\n/g, ' ')
     .replace(/^\s*$/, 'x')
 }
 

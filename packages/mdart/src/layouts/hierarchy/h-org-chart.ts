@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, centeredTextY } from '../shared'
 import { countLeaves, maxDepth } from './shared'
 
 // ── Node geometry ─────────────────────────────────────────────────────────────
@@ -108,8 +108,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     unit.push(`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="5" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${itemTip}</rect>`)
 
     // Multi-line label centred in node
-    const textBlockH = n.lines.length * n.lineHeight
-    const startY     = n.y - textBlockH / 2 + n.fontSize * 0.75
+    const startY     = centeredTextY(by, NODE_H, n.lines.length, n.lineHeight)
     const spans      = n.lines
       .map((l, li) => `<tspan x="${n.x.toFixed(1)}" dy="${li === 0 ? 0 : n.lineHeight}">${escapeXml(l)}</tspan>`)
       .join('')
