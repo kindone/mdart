@@ -1000,6 +1000,46 @@ export function contrastColor(
   return brightness < 140 ? light : dark
 }
 
+// ── Geometry helpers ─────────────────────────────────────────────────────────
+
+export function regularPolygonPoints(
+  cx: number,
+  cy: number,
+  radius: number,
+  sides: number,
+  rotation = -Math.PI / 2,
+): string {
+  return Array.from({ length: sides }, (_, i) => {
+    const a = rotation + i * (Math.PI * 2 / sides)
+    return `${(cx + radius * Math.cos(a)).toFixed(1)},${(cy + radius * Math.sin(a)).toFixed(1)}`
+  }).join(' ')
+}
+
+export function roundedRectPath(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: { tl?: number; tr?: number; br?: number; bl?: number },
+): string {
+  const tl = Math.max(0, Math.min(r.tl ?? 0, w / 2, h / 2))
+  const tr = Math.max(0, Math.min(r.tr ?? 0, w / 2, h / 2))
+  const br = Math.max(0, Math.min(r.br ?? 0, w / 2, h / 2))
+  const bl = Math.max(0, Math.min(r.bl ?? 0, w / 2, h / 2))
+  return [
+    `M${(x + tl).toFixed(1)},${y}`,
+    `H${(x + w - tr).toFixed(1)}`,
+    tr ? `A${tr},${tr} 0 0,1 ${(x + w).toFixed(1)},${(y + tr).toFixed(1)}` : '',
+    `V${(y + h - br).toFixed(1)}`,
+    br ? `A${br},${br} 0 0,1 ${(x + w - br).toFixed(1)},${(y + h).toFixed(1)}` : '',
+    `H${(x + bl).toFixed(1)}`,
+    bl ? `A${bl},${bl} 0 0,1 ${x.toFixed(1)},${(y + h - bl).toFixed(1)}` : '',
+    `V${(y + tl).toFixed(1)}`,
+    tl ? `A${tl},${tl} 0 0,1 ${(x + tl).toFixed(1)},${y}` : '',
+    'Z',
+  ].filter(Boolean).join(' ')
+}
+
 // ── SVG wrappers ──────────────────────────────────────────────────────────────
 
 export function renderEmpty(theme: MdArtTheme): string {

@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { renderMdArt } from '../renderer'
-import { estimateTextWidth, truncate, wrapLabel } from '../layouts/shared'
+import { estimateTextWidth, regularPolygonPoints, roundedRectPath, truncate, wrapLabel } from '../layouts/shared'
 
 describe('inline markdown rendering', () => {
+  it('builds shared geometry primitives deterministically', () => {
+    expect(regularPolygonPoints(10, 20, 5, 4, 0)).toBe('15.0,20.0 10.0,25.0 5.0,20.0 10.0,15.0')
+    expect(roundedRectPath(0, 0, 20, 10, { tl: 2, tr: 3, br: 4, bl: 5 })).toBe(
+      'M2.0,0 H17.0 A3,3 0 0,1 20.0,3.0 V6.0 A4,4 0 0,1 16.0,10.0 H5.0 A5,5 0 0,1 0.0,5.0 V2.0 A2,2 0 0,1 2.0,0 Z',
+    )
+  })
+
   it('measures wraps and truncates against visible inline text', () => {
     expect(estimateTextWidth('**State**', 12)).toBe(estimateTextWidth('State', 12))
 

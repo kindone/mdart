@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, getCaption, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, getCaption, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument, regularPolygonPoints } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -22,12 +22,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const startX = (W - totalW) / 2 + HEX_W / 2
   const titleH = spec.title ? 30 : 8
   const H = titleH + rows * ROW_H + R * 0.25 + 8
-
-  const hexPoints = (cx: number, cy: number) =>
-    Array.from({ length: 6 }, (_, k) => {
-      const a = Math.PI / 6 + k * Math.PI / 3
-      return `${(cx + R * Math.cos(a)).toFixed(1)},${(cy + R * Math.sin(a)).toFixed(1)}`
-    }).join(' ')
 
   // Per-node fitting: every hexagon shares R (like circle-process.ts's
   // circles), so each label/value pair is sized independently — a short
@@ -75,7 +69,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       gap: 3,
     })
     let nodeStr = ''
-    nodeStr += `<polygon points="${hexPoints(cx, cy)}" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</polygon>`
+    nodeStr += `<polygon points="${regularPolygonPoints(cx, cy, R, 6, Math.PI / 6)}" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</polygon>`
     nodeStr += renderFitBlock(cx, cy, fit, {
       labelFullText: rawLabel,
       valueFullText: caption ?? undefined,

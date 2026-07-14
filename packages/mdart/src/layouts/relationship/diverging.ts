@@ -1,49 +1,7 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, fitTextToWidthShared, renderWrappedText, centeredTextY } from '../shared'
-
-function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
-  const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
-    : ''
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${titleEl}
-  ${parts.join('\n  ')}
-</svg>`
-}
-
-function itemLabel(item: MdArtSpec['items'][number]): { label: string; url: string | null } {
-  const { display, url } = displayLabel(item, { value: !!item.value })
-  return { label: display, url }
-}
-
-function fittedBoxText(
-  cx: number,
-  y: number,
-  boxW: number,
-  boxH: number,
-  item: MdArtSpec['items'][number],
-  theme: MdArtTheme,
-  weight = '600',
-): string {
-  const { label } = itemLabel(item)
-  if (!item.value) {
-    const fit = fitTextToWidthShared([label], boxW - 12, { maxSize: 11, minSize: 8, maxLines: 3, boxH: boxH - 8 })
-    const wrap = fit.results[0]
-    const textY = centeredTextY(y, boxH, wrap.lines.length, fit.lineHeight)
-    return renderWrappedText(cx, textY, `text-anchor="middle" font-size="${fit.fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="${weight}"`, label, wrap, fit.lineHeight, item)
-  }
-
-  const labelFit = fitTextToWidthShared([label], boxW - 12, { maxSize: 10.5, minSize: 8, maxLines: 1, boxH: 13 })
-  const valueFit = fitTextToWidthShared([item.value], boxW - 12, { maxSize: 9.5, minSize: 7.5, maxLines: 2, boxH: boxH - 20 })
-  const labelWrap = labelFit.results[0]
-  const valueWrap = valueFit.results[0]
-  const totalH = labelWrap.lines.length * labelFit.lineHeight + 2 + valueWrap.lines.length * valueFit.lineHeight
-  const labelY = y + boxH / 2 - totalH / 2 + labelFit.lineHeight * 0.35
-  const valueY = labelY + labelWrap.lines.length * labelFit.lineHeight + 2
-  return renderWrappedText(cx, labelY, `text-anchor="middle" font-size="${labelFit.fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="${weight}"`, label, labelWrap, labelFit.lineHeight, item)
-    + renderWrappedText(cx, valueY, `text-anchor="middle" font-size="${valueFit.fontSize}" fill="${theme.textMuted}" font-family="system-ui,sans-serif"`, item.value, valueWrap, valueFit.lineHeight)
-}
+import { renderEmpty, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, svgWrap } from '../shared'
+import { relationshipItemLabel, renderRelationshipBoxText } from './shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -64,24 +22,24 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
   parts.push(`<defs><marker id="arr-d" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L7,4 L0,8 Z" fill="${theme.primary}cc"/></marker></defs>`)
-  const { url: srcUrl } = itemLabel(source)
+  const { url: srcUrl } = relationshipItemLabel(source)
   const sBH = Math.min(84, Math.max(44, n * 18 + 24))
   const sourceUnit: string[] = []
   sourceUnit.push(`<rect x="${SRC_X}" y="${(cy - sBH / 2).toFixed(1)}" width="116" height="${sBH}" rx="6" fill="${theme.primary}28" stroke="${theme.primary}" stroke-width="1.5">${itemTitleTag(source)}</rect>`)
-  sourceUnit.push(aWrap(fittedBoxText(SRC_X + 58, cy - sBH / 2, 116, sBH, source, theme, '700'), srcUrl))
+  sourceUnit.push(aWrap(renderRelationshipBoxText(SRC_X + 58, cy - sBH / 2, 116, sBH, source, theme, '700'), srcUrl))
   parts.push(wrapItem(sourceUnit.join(''), 0, animate, instrument))
   targets.forEach((item, i) => {
     const ty = n === 1 ? cy : TITLE_H + 20 + i * (H - TITLE_H - 40) / (n - 1)
-    const { url: tgtUrl } = itemLabel(item)
+    const { url: tgtUrl } = relationshipItemLabel(item)
     const unit: string[] = []
     const tgtH = 42
     unit.push(`<rect x="${TGT_X}" y="${(ty - tgtH / 2).toFixed(1)}" width="112" height="${tgtH}" rx="5" fill="${theme.surface}" stroke="${theme.secondary}66" stroke-width="1.2">${itemTitleTag(item)}</rect>`)
-    unit.push(aWrap(fittedBoxText(TGT_X + 56, ty - tgtH / 2, 112, tgtH, item, theme), tgtUrl))
+    unit.push(aWrap(renderRelationshipBoxText(TGT_X + 56, ty - tgtH / 2, 112, tgtH, item, theme), tgtUrl))
     const x1 = SRC_X + 116 + 4, x2 = TGT_X
     const mid = (x1 + x2) / 2
     unit.push(`<path d="M${x1},${cy.toFixed(1)} C${mid},${cy.toFixed(1)} ${mid},${ty.toFixed(1)} ${x2},${ty.toFixed(1)}" fill="none" stroke="${theme.secondary}66" stroke-width="1.5" marker-end="url(#arr-d)"/>`)
     parts.push(wrapItem(unit.join(''), i + 1, animate, instrument))
   })
   if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))
-  return svg(W, H, theme, spec.title, parts)
+  return svgWrap(W, H, theme, spec.title, parts)
 }
