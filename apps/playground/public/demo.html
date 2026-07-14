@@ -132,6 +132,7 @@ body.svg-light .preview-body svg { box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 @media (min-width: 768px) {
   body.renderer-mode #example-select { display: none; }
 }
+body.generator-mode #example-select { display: none; }
 
 /* ── Mobile tab bar ── */
 .mobile-tabs {
@@ -530,6 +531,7 @@ pre.int-code {
   <div class="mode-toggle">
     <button class="mode-btn active" data-mode="mdart">MdArt</button>
     <button class="mode-btn" data-mode="markdown">Markdown</button>
+    <button class="mode-btn" data-mode="generator">Generator</button>
     <button class="mode-btn" data-mode="renderer">Renderer</button>
   </div>
 
@@ -549,6 +551,14 @@ pre.int-code {
       <option value="unified">unified / remark</option>
     </select>
     <button class="btn btn-primary" id="btn-render-md">Render</button>
+  </div>
+
+  <!-- Generator controls -->
+  <div class="ctrl-group hidden" id="ctrl-generator">
+    <select id="generator-type" title="Generator target">
+      <option value="any">Any type</option>
+    </select>
+    <button class="btn btn-primary" id="btn-generate">Generate</button>
   </div>
 
   <!-- Renderer controls -->
@@ -990,7 +1000,7 @@ function buildIntegrationHTML(adapter) {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
-let mode = 'mdart'           // 'mdart' | 'markdown' | 'renderer'
+let mode = 'mdart'           // 'mdart' | 'markdown' | 'generator' | 'renderer'
 // SVG colour-mode for the rendered diagram (NOT the page chrome). Persisted
 // to localStorage so the choice survives reload. The page editor stays dark
 // either way; only the preview pane and the SVG itself flip.
@@ -1013,7 +1023,7 @@ let renderTimer = null
 let previewSubTab = 'preview'
 let chatStreaming = false
 // Per-mode editor content saved on mode switch so switching back restores where you left off
-const savedContent = { mdart: '', markdown: '', renderer: '' }
+const savedContent = { mdart: '', markdown: '', generator: '', renderer: '' }
 let currentExample = null  // { category: 'mdart'|'markdown'|'types', slug: string } | null
 let exampleBaseContent = ''  // content at time of load, for dirty detection
 // Source pane (renderer mode) — independent of Monaco's example tracking
@@ -1043,6 +1053,7 @@ function setMode(newMode) {
   // Show/hide toolbar control groups
   document.getElementById('ctrl-mdart').classList.toggle('hidden', newMode !== 'mdart')
   document.getElementById('ctrl-markdown').classList.toggle('hidden', newMode !== 'markdown')
+  document.getElementById('ctrl-generator').classList.toggle('hidden', newMode !== 'generator')
   document.getElementById('ctrl-renderer').classList.toggle('hidden', newMode !== 'renderer')
 
   // Source pane: only in renderer mode
@@ -1052,13 +1063,14 @@ function setMode(newMode) {
   document.getElementById('preview-subtabs').classList.toggle('visible', newMode === 'markdown')
 
   // Preview footer (SVG export): only in mdart mode
-  document.getElementById('preview-footer').classList.toggle('visible', newMode === 'mdart')
+  document.getElementById('preview-footer').classList.toggle('visible', newMode === 'mdart' || newMode === 'generator')
 
   // body class for markdown iframe styling
   document.body.classList.toggle('markdown-mode', newMode === 'markdown')
   // body class lets CSS hide redundant toolbar controls in renderer mode
   // (the source-pane has its own type-example-select on desktop)
   document.body.classList.toggle('renderer-mode', newMode === 'renderer')
+  document.body.classList.toggle('generator-mode', newMode === 'generator')
 
   // Integration panel: hide when leaving markdown
   if (newMode !== 'markdown') hideIntegration()
@@ -1077,7 +1089,7 @@ function setMode(newMode) {
   if (newMode === 'renderer') {
     filename.textContent = currentFile.split('/').pop()
   } else {
-    filename.textContent = newMode === 'markdown' ? 'markdown source' : 'mdart source'
+    filename.textContent = newMode === 'markdown' ? 'markdown source' : newMode === 'generator' ? 'generated mdart source' : 'mdart source'
   }
 
   // Dirty dot: only in renderer mode
@@ -1085,7 +1097,7 @@ function setMode(newMode) {
   document.getElementById('dirty-dot-header').classList.toggle('visible', newMode === 'renderer' && isDirty)
 
   // Auto-render toggle: irrelevant in renderer mode (always manual there)
-  document.getElementById('btn-auto-render').classList.toggle('hidden', newMode === 'renderer')
+  document.getElementById('btn-auto-render').classList.toggle('hidden', newMode === 'renderer' || newMode === 'generator')
 
   // Populate example select for current mode
   populateExampleSelect()
@@ -1115,6 +1127,9 @@ function setMode(newMode) {
       // Restore saved markdown content, or fall back to first example
       monacoEditor.setValue(savedContent.markdown || (examples.markdown[0]?.content ?? ''))
       renderMarkdown(true)
+    } else if (newMode === 'generator') {
+      monacoEditor.setValue(savedContent.generator || 'Press Generate to create a fresh MdArt sample.')
+      if (savedContent.generator) renderMdArt(true)
     } else {
       // Restore saved mdart content, or fall back to default example
       monacoEditor.setValue(savedContent.mdart || (examples.mdart[0]?.content ?? ''))
@@ -1129,8 +1144,8 @@ function populateExampleSelect() {
   const sel = document.getElementById('example-select')
   while (sel.options.length > 1) sel.remove(1)
 
-  if (mode === 'renderer') {
-    // 101 types grouped by family; `— family —` decorates the optgroup label
+  if (mode === 'renderer' || mode === 'generator') {
+    // Types grouped by family; `— family —` decorates the optgroup label
     // so it reads as a header, matching the toolbar's left file-select.
     for (const [fam, types] of Object.entries(families)) {
       const grp = document.createElement('optgroup')
@@ -1154,8 +1169,12 @@ function populateExampleSelect() {
 
 document.getElementById('example-select').addEventListener('change', function() {
   if (!this.value) return
-  if (mode === 'renderer') {
-    loadTypeExample(this.value)
+  if (mode === 'renderer' || mode === 'generator') {
+    if (mode === 'renderer') loadTypeExample(this.value)
+    else {
+      document.getElementById('generator-type').value = this.value
+      generateFresh()
+    }
   } else {
     const slug = this.value
     const arr = mode === 'markdown' ? examples.markdown : examples.mdart
@@ -1230,6 +1249,22 @@ function updateSourceDirty() {
 // read as headers (and don't blend into options like `process`, `cycle`).
 ;(function() {
   const sel = document.getElementById('type-example-select')
+  for (const [fam, types] of Object.entries(families)) {
+    const grp = document.createElement('optgroup')
+    grp.label = `— ${fam} —`
+    for (const t of types) {
+      const opt = document.createElement('option')
+      opt.value = t; opt.textContent = t
+      grp.appendChild(opt)
+    }
+    sel.appendChild(grp)
+  }
+})()
+
+// Populate generator type picker. The generator accepts "any" or a concrete
+// type; families mirror the renderer/example groupings.
+;(function() {
+  const sel = document.getElementById('generator-type')
   for (const [fam, types] of Object.entries(families)) {
     const grp = document.createElement('optgroup')
     grp.label = `— ${fam} —`
@@ -1360,6 +1395,32 @@ async function renderMarkdown(explicit = false) {
   }
 }
 
+async function generateFresh() {
+  const type = document.getElementById('generator-type').value || 'any'
+  setStatus('busy', 'generating…')
+  try {
+    const res = await fetch('/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, mode: svgMode, theme: svgTheme || undefined }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
+    if (monacoEditor) monacoEditor.setValue(data.source)
+    savedContent.generator = data.source
+    currentExample = null
+    lastSVG = data.svg
+    showSVG(data.svg)
+    const chip = document.getElementById('type-chip')
+    chip.textContent = `generated — ${data.type}`
+    setStatus('ok', data.type)
+    if (isMobile()) showMobPane('preview')
+  } catch (err) {
+    showError(err.message)
+    setStatus('error', 'generate error')
+  }
+}
+
 async function saveRenderer() {
   if (!monacoEditor) return false
   const content = monacoEditor.getValue()
@@ -1414,7 +1475,7 @@ async function renderOnly() {
 }
 
 function dispatchRender(explicit = false) {
-  if (mode === 'mdart') renderMdArt(explicit)
+  if (mode === 'mdart' || mode === 'generator') renderMdArt(explicit)
   else if (mode === 'markdown') renderMarkdown(explicit)
   // renderer mode: manual save only (don't auto-render TypeScript changes)
 }
@@ -1541,6 +1602,7 @@ function hideIntegration() {
 
 document.getElementById('btn-render').addEventListener('click', () => renderMdArt(true))
 document.getElementById('btn-render-md').addEventListener('click', () => renderMarkdown(true))
+document.getElementById('btn-generate').addEventListener('click', generateFresh)
 document.getElementById('btn-apply').addEventListener('click', saveRenderer)
 
 // Auto-render toggle
@@ -1552,6 +1614,7 @@ function syncAutoBtn() {
   document.getElementById('btn-render').classList.toggle('hidden', autoRender)
   document.getElementById('btn-render-md').classList.toggle('hidden', autoRender)
   document.getElementById('btn-render-only').classList.toggle('hidden', autoRender)
+  document.getElementById('btn-generate').classList.remove('hidden')
 }
 
 function updateSaveBtn() {
@@ -2376,6 +2439,10 @@ require(['vs/editor/editor.main'], async function() {
       document.getElementById('btn-apply').disabled = !isDirty
       return
     }
+    if (mode === 'generator') {
+      savedContent.generator = monacoEditor.getValue()
+      return
+    }
     if (!autoRender) return
     clearTimeout(renderTimer)
     updateSaveBtn()
@@ -2399,7 +2466,8 @@ require(['vs/editor/editor.main'], async function() {
   }
 
   // Restore last-used mode (default mdart)
-  const savedMode = localStorage.getItem('mdart-mode') ?? 'mdart'
+  const savedRawMode = localStorage.getItem('mdart-mode') ?? 'mdart'
+  const savedMode = ['mdart', 'markdown', 'generator', 'renderer'].includes(savedRawMode) ? savedRawMode : 'mdart'
   setMode(savedMode)
   // mdart: setMode guard returns early (mode already === 'mdart'), trigger render manually
   // markdown/renderer: setMode runs fully and triggers their own renders

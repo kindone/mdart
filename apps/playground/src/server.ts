@@ -8,6 +8,7 @@
  *   POST /render            → { svg, type, title, tabCount }
  *   POST /render/states     → { states: string[], type, tabCount }
  *   POST /render/ecosystem  → { html, adapter }
+ *   POST /generate          → { source, svg, type }
  *   GET  /lab/source        → { content } — read a layout source file
  *   POST /lab/apply         → { svg, buildMs } — write + rebuild + render
  *   POST /lab/render        → { svg } — render with current build (no rebuild)
@@ -48,6 +49,7 @@ import rehypeStringify from 'rehype-stringify'
 
 import { renderMdArt, parseMdArt } from 'mdart'
 import { adapters, defaultCliName, getAdapter, normalizeCliName, type CliName } from './cli/index.js'
+import { generateMdart, GENERATOR_FAMILIES } from './generators.js'
 
 // Ecosystem adapters — each is a real adapter package (workspace-resolved locally,
 // published to npm when ready).
@@ -642,6 +644,23 @@ app.post('/render/ecosystem', async (req, res) => {
     }
     const html = await renderMarkdownFresh(source, name, mode, theme)
     res.json({ html, adapter: name })
+  } catch (err) {
+    res.status(400).json({ error: String(err) })
+  }
+})
+
+/**
+ * POST /generate
+ * Generate a fresh mdart source sample and render it through the current build.
+ */
+app.post('/generate', async (req, res) => {
+  const { type } = req.body as { type?: string }
+  const mode  = parseMode((req.body as { mode?: unknown }).mode)
+  const theme = parseTheme((req.body as { theme?: unknown }).theme)
+  try {
+    const generated = generateMdart(type || 'any')
+    const svg = await renderFresh(generated.source, mode, theme, generated.type)
+    res.json({ ...generated, svg, families: GENERATOR_FAMILIES })
   } catch (err) {
     res.status(400).json({ error: String(err) })
   }
