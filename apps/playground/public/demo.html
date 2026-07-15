@@ -555,6 +555,10 @@ pre.int-code {
 
   <!-- Generator controls -->
   <div class="ctrl-group hidden" id="ctrl-generator">
+    <select id="generator-strategy" title="Generator strategy">
+      <option value="curated">Curated</option>
+      <option value="property">Property test</option>
+    </select>
     <select id="generator-type" title="Generator target">
       <option value="any">Any type</option>
     </select>
@@ -1022,6 +1026,7 @@ let currentFile = localStorage.getItem('mdart-renderer-file') || 'layouts/proces
 let renderTimer = null
 let previewSubTab = 'preview'
 let chatStreaming = false
+let lastGenerated = null // { type, strategy, domain }
 // Per-mode editor content saved on mode switch so switching back restores where you left off
 const savedContent = { mdart: '', markdown: '', generator: '', renderer: '' }
 let currentExample = null  // { category: 'mdart'|'markdown'|'types', slug: string } | null
@@ -1396,24 +1401,26 @@ async function renderMarkdown(explicit = false) {
 }
 
 async function generateFresh() {
+  const strategy = document.getElementById('generator-strategy').value || 'curated'
   const type = document.getElementById('generator-type').value || 'any'
   setStatus('busy', 'generating…')
   try {
     const res = await fetch('/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, mode: svgMode, theme: svgTheme || undefined }),
+      body: JSON.stringify({ type, strategy, mode: svgMode, theme: svgTheme || undefined }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
     if (monacoEditor) monacoEditor.setValue(data.source)
     savedContent.generator = data.source
+    lastGenerated = { type: data.type, strategy, domain: data.domain ?? null }
     currentExample = null
     lastSVG = data.svg
     showSVG(data.svg)
     const chip = document.getElementById('type-chip')
-    chip.textContent = `generated — ${data.type}`
-    setStatus('ok', data.type)
+    chip.textContent = data.domain ? `property — ${data.type} — ${data.domain}` : `generated — ${data.type}`
+    setStatus('ok', data.domain ? `${data.type} / ${data.domain}` : data.type)
     if (isMobile()) showMobPane('preview')
   } catch (err) {
     showError(err.message)
@@ -2115,6 +2122,12 @@ async function sendChat() {
   if (document.getElementById('chat-include-ctx').checked) {
     if (mode === 'renderer' && monacoEditor) {
       context = `Current renderer file: ${currentFile}\n\`\`\`typescript\n${monacoEditor.getValue().slice(0,4000)}\n\`\`\`\n\nCurrent mdart source:\n\`\`\`\n${document.getElementById('mdart-source').value.slice(0,1000)}\n\`\`\``
+    } else if (mode === 'generator' && monacoEditor) {
+      const strategy = document.getElementById('generator-strategy').value || 'curated'
+      const target = document.getElementById('generator-type').value || 'any'
+      const generatedType = lastGenerated?.type ?? target
+      const domain = lastGenerated?.domain ? `\nProperty domain: ${lastGenerated.domain}` : ''
+      context = `Current generator strategy: ${strategy}\nGenerator target type: ${target}\nGenerated type: ${generatedType}${domain}\n\nCurrent generated mdart source:\n\`\`\`mdart\n${monacoEditor.getValue().slice(0,3000)}\n\`\`\``
     } else if (monacoEditor) {
       context = `Current ${mode} source:\n\`\`\`\n${monacoEditor.getValue().slice(0,2000)}\n\`\`\``
     }

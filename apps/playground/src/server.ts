@@ -654,11 +654,11 @@ app.post('/render/ecosystem', async (req, res) => {
  * Generate a fresh mdart source sample and render it through the current build.
  */
 app.post('/generate', async (req, res) => {
-  const { type } = req.body as { type?: string }
+  const { type, strategy } = req.body as { type?: string; strategy?: string }
   const mode  = parseMode((req.body as { mode?: unknown }).mode)
   const theme = parseTheme((req.body as { theme?: unknown }).theme)
   try {
-    const generated = generateMdart(type || 'any')
+    const generated = generateMdart(type || 'any', strategy === 'property' ? 'property' : 'curated')
     const svg = await renderFresh(generated.source, mode, theme, generated.type)
     res.json({ ...generated, svg, families: GENERATOR_FAMILIES })
   } catch (err) {

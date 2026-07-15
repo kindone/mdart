@@ -1,6 +1,8 @@
 import { KNOWN_TYPES } from 'mdart'
+import { generatePropertyMdart } from '../../../packages/mdart/src/__tests__/sample-generator'
 
 export type GenerateKind = 'any' | string
+export type GenerateStrategy = 'curated' | 'property'
 
 const FAMILIES: Record<string, string[]> = {
   process: ['process', 'chevron-process', 'arrow-process', 'circular-process', 'funnel', 'roadmap', 'waterfall', 'snake-process', 'step-up', 'step-down', 'circle-process', 'equation', 'bending-process', 'segmented-bar', 'phase-process', 'timeline-h', 'timeline-v', 'swimlane'],
@@ -24,7 +26,30 @@ const WORDS = [
   'Index', 'Kernel', 'Ledger', 'Matrix', 'Nimbus', 'Orbit', 'Pulse', 'Queue',
   'Relay', 'Signal', 'Trace', 'Vector', 'Workflow', 'Zenith',
 ]
-const VALUES = ['stable', '42%', 'high priority', 'phase 2', 'blocked by API', 'owner review', '3.14', '100 ms']
+const PHRASES = [
+  'cross region rollout dependency',
+  'customer migration readiness checkpoint',
+  'multi tenant billing reconciliation',
+  'streaming parser backpressure window',
+  'operator approval before deployment',
+  'fallback cache invalidation strategy',
+  'regression suite coverage expansion',
+  'workspace permission inheritance edge case',
+]
+const VALUES = [
+  'stable',
+  '42%',
+  'high priority',
+  'phase 2',
+  'blocked by API',
+  'owner review',
+  '3.14',
+  '100 ms',
+  'requires manual verification before release',
+  'pending contract test fixture coverage',
+  'depends on upstream schema migration',
+  'watch for noisy retry behavior under load',
+]
 const ATTRS = ['active', 'done', 'risk', 'critical', 'w=4', 'dashed', 'smooth']
 
 function pick<T>(xs: readonly T[]): T {
@@ -36,7 +61,11 @@ function int(min: number, max: number): number {
 }
 
 function label(i = 0): string {
-  const parts = Array.from({ length: int(1, 4) }, () => pick(WORDS))
+  if (Math.random() < 0.35) {
+    const phrase = pick(PHRASES)
+    return Math.random() < 0.3 ? `${phrase} ${pick(WORDS)} ${i + 1}` : phrase
+  }
+  const parts = Array.from({ length: int(2, 8) }, () => pick(WORDS))
   if (Math.random() < 0.25) parts.push(String(i + 1))
   return parts.join(' ')
 }
@@ -96,7 +125,12 @@ function plot(type: string): string {
   return lines.join('\n')
 }
 
-export function generateMdart(kind: GenerateKind = 'any'): { type: string; source: string } {
+export function generateMdart(
+  kind: GenerateKind = 'any',
+  strategy: GenerateStrategy = 'curated',
+): { type: string; source: string; domain?: string } {
+  if (strategy === 'property') return generatePropertyMdart(kind)
+
   const requested = kind === 'any' ? pick(TYPES) : kind
   const type = TYPES.includes(requested) ? requested : pick(TYPES)
 
