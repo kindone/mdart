@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, renderEmpty, shouldAnimate, seqSpotlightCSS, renderWrappedText, type ItemLike, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty, shouldAnimate, seqSpotlightCSS, renderWrappedText, type ItemLike, wrapItem, shouldInstrument, FONT_SANS_ATTR, FONT_MONO_ATTR } from '../shared'
 
 function lerpColorLocal(c1: string, c2: string, t: number): string {
   const hexToRgb = (hex: string) => {
@@ -49,13 +49,13 @@ function renderComparisonError(theme: MdArtTheme): string {
   const titleY = 40, descY = 75, boxY = 110
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
-    <text x="${W / 2}" y="${titleY}" text-anchor="middle" font-size="15" fill="${theme.danger}" font-family="system-ui,sans-serif" font-weight="700">Invalid comparison diagram syntax</text>
-    <text x="${W / 2}" y="${descY}" text-anchor="middle" font-size="12" fill="${theme.textMuted}" font-family="system-ui,sans-serif">Comparison needs at least one child row:</text>
+    <text x="${W / 2}" y="${titleY}" text-anchor="middle" font-size="15" fill="${theme.danger}" ${FONT_SANS_ATTR} font-weight="700">Invalid comparison diagram syntax</text>
+    <text x="${W / 2}" y="${descY}" text-anchor="middle" font-size="12" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>Comparison needs at least one child row:</text>
     <rect x="80" y="${boxY}" width="${W - 160}" height="${lineH * 6 + pad * 2}" rx="6" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>
-    <text x="96" y="${boxY + pad + 14}" font-size="12" fill="${theme.text}" font-family="ui-monospace,monospace">- Option A</text>
+    <text x="96" y="${boxY + pad + 14}" font-size="12" fill="${theme.text}" ${FONT_MONO_ATTR}>- Option A</text>
     <text x="112" y="${boxY + pad + 14 + lineH}" font-size="12" fill="${theme.text}">  - Start: CLI command</text>
     <text x="112" y="${boxY + pad + 14 + lineH * 2}" font-size="12" fill="${theme.text}">  - Fit: Human-facing</text>
-    <text x="96" y="${boxY + pad + 14 + lineH * 3}" font-size="12" fill="${theme.text}" font-family="ui-monospace,monospace">- Option B</text>
+    <text x="96" y="${boxY + pad + 14 + lineH * 3}" font-size="12" fill="${theme.text}" ${FONT_MONO_ATTR}>- Option B</text>
     <text x="112" y="${boxY + pad + 14 + lineH * 4}" font-size="12" fill="${theme.text}">  - Start: API call</text>
     <text x="112" y="${boxY + pad + 14 + lineH * 5}" font-size="12" fill="${theme.text}">  - Fit: Automation</text>
   </svg>`
@@ -133,7 +133,7 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
 
   let svg = ''
   if (spec.title) {
-    svg += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svg += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   const baseY = PAD + titleH
@@ -143,7 +143,7 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
   // Row label column header (corner)
   headerUnit.push(`<rect x="0" y="${baseY}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" />`)
   headerUnit.push(labelText(LABEL_W / 2, centerY(baseY, HEADER_H, cornerWrap.lines.length),
-    `text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
+    `text-anchor="middle" font-size="11" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600"`,
     rowLabelColHeader, cornerWrap))
 
   // Data column headers
@@ -156,7 +156,7 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
     const hw   = colHeaderWraps[ci]
     const hy   = centerY(baseY, HEADER_H, hw.lines.length)
     headerUnit.push(labelText(colX + COL_W / 2, hy,
-      `text-anchor="middle" font-size="12" fill="#bfdbfe" font-family="system-ui,sans-serif" font-weight="700"`,
+      `text-anchor="middle" font-size="12" fill="#bfdbfe" ${FONT_SANS_ATTR} font-weight="700"`,
       col.label, hw, LINE_H, col))
   }
   svg += wrapItem(headerUnit.join(''), 0, animate, instrument)
@@ -177,7 +177,7 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
     // Row label
     const rlW = rowLabelWraps[ri]
     rowUnit.push(labelText(PAD, centerY(ry, rH, rlW.lines.length),
-      `font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif"`,
+      `font-size="11" fill="${theme.textMuted}" ${FONT_SANS_ATTR}`,
       rowLabel, rlW))
 
     // Data cells
@@ -187,7 +187,7 @@ function renderLR(spec: MdArtSpec, theme: MdArtTheme): string {
       const cw   = cellWraps[ri][ci]
       const ci_  = cellItems[ri][ci]
       rowUnit.push(labelText(colX + COL_W / 2, centerY(ry, rH, cw.lines.length),
-        `text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif"`,
+        `text-anchor="middle" font-size="11" fill="${theme.text}" ${FONT_SANS_ATTR}`,
         val, cw, LINE_H, ci_))
     }
 
@@ -298,7 +298,7 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
 
   let svg = ''
   if (spec.title) {
-    svg += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svg += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   const baseY = PAD + titleH
@@ -309,7 +309,7 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
   headerUnit.push(`<rect x="0" y="${baseY}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" />`)
   if (topLeftHeader && cornerWrap) {
     headerUnit.push(labelText(LABEL_W / 2, centerY(baseY, HEADER_H, cornerWrap.lines.length),
-      `text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
+      `text-anchor="middle" font-size="11" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600"`,
       topLeftHeader, cornerWrap))
   }
   for (let ci = 0; ci < numCols; ci++) {
@@ -318,7 +318,7 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
     const hw   = colHeaderWraps[ci]
     const hy   = centerY(baseY, HEADER_H, hw.lines.length)
     headerUnit.push(labelText(colX + COL_W / 2, hy,
-      `text-anchor="middle" font-size="11" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
+      `text-anchor="middle" font-size="11" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600"`,
       colLabels[ci], hw))
   }
   svg += wrapItem(headerUnit.join(''), 0, animate, instrument)
@@ -339,7 +339,7 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
     rowUnit.push(`<rect x="0" y="${ry}" width="${LABEL_W}" height="${rH}" fill="${fill}" />`)
     const rlW = rowLabelWraps[ri]
     rowUnit.push(labelText(LABEL_W / 2, centerY(ry, rH, rlW.lines.length),
-      `text-anchor="middle" font-size="11" fill="#bfdbfe" font-family="system-ui,sans-serif" font-weight="700"`,
+      `text-anchor="middle" font-size="11" fill="#bfdbfe" ${FONT_SANS_ATTR} font-weight="700"`,
       row.label, rlW, LINE_H, row))
 
     const rowBg = ri % 2 === 0 ? theme.surface : theme.bg
@@ -352,7 +352,7 @@ function renderTB(spec: MdArtSpec, theme: MdArtTheme): string {
       const ci_  = cellItems[ri][ci]
       rowUnit.push(`<rect x="${colX}" y="${ry}" width="${COL_W}" height="${rH}" fill="${rowBg}" />`)
       rowUnit.push(labelText(colX + COL_W / 2, centerY(ry, rH, cw.lines.length),
-        `text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif"`,
+        `text-anchor="middle" font-size="11" fill="${theme.text}" ${FONT_SANS_ATTR}`,
         val, cw, LINE_H, ci_))
     }
 

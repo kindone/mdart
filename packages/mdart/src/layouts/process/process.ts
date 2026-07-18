@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, contrastColor, itemTitleTag, displayLabel, shouldAnimate, shouldInstrument, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock } from '../shared'
+import { escapeXml, lerpColor, contrastColor, itemTitleTag, displayLabel, shouldAnimate, shouldInstrument, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, FONT_SANS_ATTR } from '../shared'
 
 function renderVerticalProcess(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -23,7 +23,7 @@ function renderVerticalProcess(spec: MdArtSpec, theme: MdArtTheme): string {
 
   let svgContent = ''
   if (spec.title) {
-    svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   const animate = shouldAnimate(spec)
@@ -65,6 +65,7 @@ function renderVerticalProcess(spec: MdArtSpec, theme: MdArtTheme): string {
       valueFill: contrastColor(fill),
       labelWeight: '600',
       valueExtraAttrs: 'opacity="0.85"',
+      shapeBounds: { x: nodeX, y, w: NODE_W, h: ROW_H, label: 'process-node' },
     })
     svgContent += `</g>`
   }
@@ -81,7 +82,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (items.length === 0) {
     return `<svg viewBox="0 0 400 80" xmlns="http://www.w3.org/2000/svg">
       <rect width="400" height="80" fill="${theme.bg}" rx="6"/>
-      <text x="200" y="44" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif">No items</text>
+      <text x="200" y="44" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>No items</text>
     </svg>`
   }
 
@@ -148,6 +149,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       valueFill: contrastColor(fill),
       labelWeight: '600',
       valueExtraAttrs: 'opacity="0.85"',
+      shapeBounds: { x, y, w: nodeW, h: nodeH, label: 'process-node' },
     })
     svgContent += `</g>`
   }
@@ -155,7 +157,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
     ${animate ? seqSpotlightCSS(n, spec) : ''}
-    ${spec.title ? `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>` : ''}
+    ${spec.title ? `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>` : ''}
     ${svgContent}
   </svg>`
 }

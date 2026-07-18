@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, getCaption, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -20,7 +20,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
   const parts: string[] = []
-  if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
+  if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`)
   items.forEach((item, i) => {
     const y = titleH + i * (ROW_H + GAP)
     const t = items.length > 1 ? i / (items.length - 1) : 0
@@ -37,8 +37,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: !!caption })
     let nodeStr = ''
     nodeStr += `<path d="${d}" fill="${fill}33" stroke="${fill}" stroke-width="1">${itemTitleTag(item)}</path>`
-    nodeStr += aWrap(`<text x="${(x0 + x1) / 2 + NOTCH/2}" y="${(mid + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(lblDisplay, labelMax, item)}</text>`, lblUrl)
-    if (caption) nodeStr += `<text x="${W - NOTCH - 6}" y="${(mid + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(caption, 16)}</text>`
+    nodeStr += aWrap(`<text x="${(x0 + x1) / 2 + NOTCH/2}" y="${(mid + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${tt(lblDisplay, labelMax, item)}</text>`, lblUrl)
+    if (caption) nodeStr += `<text x="${W - NOTCH - 6}" y="${(mid + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${tt(caption, 16)}</text>`
     parts.push(wrapItem(nodeStr, i, animate, instrument))
   })
   if (animate) parts.unshift(seqSpotlightCSS(n, spec))

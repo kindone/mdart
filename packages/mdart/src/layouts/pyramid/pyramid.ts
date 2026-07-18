@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, truncate, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, truncate, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -68,7 +68,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       .map((l, li) => `<tspan x="${cxPos.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
       .join('')
     unit.push(
-      aWrap(`<text x="${cxPos.toFixed(1)}" y="${firstY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${tspans}</text>`, lblUrl),
+      aWrap(`<text x="${cxPos.toFixed(1)}" y="${firstY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR}>${tip}${tspans}</text>`, lblUrl),
     )
 
     // Side label for very narrow layers (top of upright / bottom of inverted)
@@ -79,7 +79,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const sideTrunc = truncate(sideText, 24)
       const sideTip   = sideTrunc !== sideText ? `<title>${escapeXml(sideText)}</title>` : ''
       unit.push(
-        `<text x="${sideX.toFixed(1)}" y="${sideY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${sideTip}${escapeXml(sideTrunc)}</text>`,
+        `<text x="${sideX.toFixed(1)}" y="${sideY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${sideTip}${escapeXml(sideTrunc)}</text>`,
       )
     }
     const animIndex = inverted ? i : n - 1 - i
@@ -88,7 +88,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${spec.title ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>` : ''}
+  ${spec.title ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>` : ''}
   ${parts.join('\n  ')}
 </svg>`
 }

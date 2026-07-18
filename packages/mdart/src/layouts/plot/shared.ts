@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, renderEmpty, shouldAnimate, animateSpeed } from '../shared'
+import { escapeXml, renderEmpty, shouldAnimate, animateSpeed, FONT_SANS_ATTR } from '../shared'
 
 /**
  * X-Y plot family — line-chart, scatter, area-chart, bar-chart.
@@ -414,7 +414,7 @@ export function renderPlot(spec: MdArtSpec, theme: MdArtTheme, kind: PlotKind): 
 
   // ── SVG construction ────────────────────────────────────────────────────
   const out: string[] = []
-  out.push(`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px" font-family="system-ui,sans-serif" font-size="11">`)
+  out.push(`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px" ${FONT_SANS_ATTR} font-size="11">`)
 
   if (animate) {
     out.push(`<style>` +

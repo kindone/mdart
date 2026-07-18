@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ function colText(
       ? `<tspan x="${startX}">${escapeXml(prefix)}</tspan><tspan x="${textX}">${escapeXml(l)}</tspan>`
       : `<tspan x="${textX}" dy="${LBL_LH}">${escapeXml(l)}</tspan>`)
     .join('')
-  return aWrap(`<text x="${startX}" y="${textY.toFixed(1)}" font-size="${LBL_FS}" fill="${color}" font-family="system-ui,sans-serif">${tip}${spans}</text>`, url)
+  return aWrap(`<text x="${startX}" y="${textY.toFixed(1)}" font-size="${LBL_FS}" fill="${color}" ${FONT_SANS_ATTR}>${tip}${spans}</text>`, url)
 }
 
 // ── Renderer ─────────────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   let svgContent = ''
 
   if (spec.title) {
-    svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   // Item text colors: light tints for dark-mode row backgrounds, dark shades for light-mode
@@ -110,9 +110,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const headerUnit = [
     `<rect x="0" y="${baseY}" width="${HALF}" height="${HEADER_H}" fill="#064e3b" />`,
-    `<text x="${HALF / 2}" y="${baseY + 25}" text-anchor="middle" font-size="13" fill="#6ee7b7" font-family="system-ui,sans-serif" font-weight="700">Pros</text>`,
+    `<text x="${HALF / 2}" y="${baseY + 25}" text-anchor="middle" font-size="13" fill="#6ee7b7" ${FONT_SANS_ATTR} font-weight="700">Pros</text>`,
     `<rect x="${HALF}" y="${baseY}" width="${HALF}" height="${HEADER_H}" fill="#4c0519" />`,
-    `<text x="${HALF + HALF / 2}" y="${baseY + 25}" text-anchor="middle" font-size="13" fill="#fda4af" font-family="system-ui,sans-serif" font-weight="700">Cons</text>`,
+    `<text x="${HALF + HALF / 2}" y="${baseY + 25}" text-anchor="middle" font-size="13" fill="#fda4af" ${FONT_SANS_ATTR} font-weight="700">Cons</text>`,
   ].join('')
   svgContent += wrapItem(headerUnit, 0, animate, instrument)
 

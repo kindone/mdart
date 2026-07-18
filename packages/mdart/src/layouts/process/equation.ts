@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -64,7 +64,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     cardStr += `<rect x="${x.toFixed(1)}" y="${cardY.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${CARD_H}" rx="7" fill="${fill}22" stroke="${fill}88" stroke-width="1.5">${itemTitleTag(item)}</rect>`
     cardStr += `<rect x="${x.toFixed(1)}" y="${cardY.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="22" rx="7" fill="${fill}"/>`
     cardStr += `<rect x="${x.toFixed(1)}" y="${(cardY + 14).toFixed(1)}" width="${CARD_W.toFixed(1)}" height="8" fill="${fill}"/>`
-    cardStr += aWrap(`${headerTip}<text x="${(x + CARD_W / 2).toFixed(1)}" y="${(cardY + 14).toFixed(1)}" text-anchor="middle" font-size="${headerFS}" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(headerLines[0])}</text>`, itmUrl)
+    cardStr += aWrap(`${headerTip}<text x="${(x + CARD_W / 2).toFixed(1)}" y="${(cardY + 14).toFixed(1)}" text-anchor="middle" font-size="${headerFS}" fill="#fff" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(headerLines[0])}</text>`, itmUrl)
     const subs = subsPerItem[i]
     const visible = visiblePerItem[i]
     const moreCount = subs.length - visible.length
@@ -77,17 +77,17 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const { lines: subLines, truncated: subTruncated } = subFits[subCursor++]
       const ty = bodyCy + (si - (totalRows - 1) / 2) * rowH + 4
       const subTip = subTruncated ? `<title>${escapeXml(subs[si])}</title>` : ''
-      cardStr += `${subTip}<text x="${(x + CARD_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${subFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(subLines[0])}</text>`
+      cardStr += `${subTip}<text x="${(x + CARD_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${subFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${escapeXml(subLines[0])}</text>`
     })
     if (moreCount > 0) {
       const ty = bodyCy + (visible.length - (totalRows - 1) / 2) * rowH + 4
-      cardStr += `<text x="${(x + CARD_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${subFS}" fill="${theme.textMuted}" fill-opacity="0.7" font-family="system-ui,sans-serif" font-style="italic">+${moreCount} more</text>`
+      cardStr += `<text x="${(x + CARD_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${subFS}" fill="${theme.textMuted}" fill-opacity="0.7" ${FONT_SANS_ATTR} font-style="italic">+${moreCount} more</text>`
     }
     parts.push(wrapItem(cardStr, i, animate, instrument))
     if (i < n - 1) {
       const op = i === n - 2 ? '=' : '+'
       const opX = x + CARD_W + opW / 2
-      const opEl = `<text x="${opX.toFixed(1)}" y="${(cardY + CARD_H / 2 + 8).toFixed(1)}" text-anchor="middle" font-size="20" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="400">${op}</text>`
+      const opEl = `<text x="${opX.toFixed(1)}" y="${(cardY + CARD_H / 2 + 8).toFixed(1)}" text-anchor="middle" font-size="20" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="400">${op}</text>`
       parts.push(animate ? `<g class="mdart-arr-n${i + 1}">${opEl}</g>` : opEl)
     }
   })

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, getCaption, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument, regularPolygonPoints } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, getCaption, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument, regularPolygonPoints, FONT_SANS_ATTR } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -42,7 +42,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
   const parts: string[] = []
-  if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
+  if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`)
 
   items.forEach((item, i) => {
     const col = i % COLS, row = Math.floor(i / COLS)
@@ -76,6 +76,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       labelFill: theme.text,
       valueFill: theme.textMuted,
       labelWeight: '700',
+      shapeBounds: { x: cx - R, y: cy - R, w: R * 2, h: R * 2, label: 'hexagon-node' },
     })
     parts.push(wrapItem(nodeStr, i, animate, instrument))
   })

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -86,7 +86,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const parts: string[] = []
 
   if (spec.title) {
-    parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
+    parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`)
   }
 
   items.forEach((item, i) => {
@@ -119,7 +119,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     let nodeStr = ''
     nodeStr += `<path d="${d}" fill="${fill}33" stroke="${fill}" stroke-width="1">${itemTitleTag(item)}</path>`
-    nodeStr += aWrap(`<text x="${W / 2}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
+    nodeStr += aWrap(`<text x="${W / 2}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
 
     // ── Caption (muted, below label block, up to 3 lines) ────────────────────
     if (capLines.length > 0) {
@@ -128,7 +128,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const capSpans  = capLines
         .map((l, li) => `<tspan x="${W / 2}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      nodeStr += `<text x="${W / 2}" y="${capStartY.toFixed(1)}" text-anchor="middle" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`
+      nodeStr += `<text x="${W / 2}" y="${capStartY.toFixed(1)}" text-anchor="middle" font-size="${VAL_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${capTip}${capSpans}</text>`
     }
     parts.push(wrapItem(nodeStr, i, animate, instrument))
   })

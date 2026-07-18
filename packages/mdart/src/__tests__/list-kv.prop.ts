@@ -11,7 +11,7 @@
 // @type:       property
 // @mode:       verification
 
-import { describe, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { forAll, Gen, Property } from 'jsproptest'
 import { renderMdArt } from '../renderer'
 import { genLabelPlain, genLabelAny, compactLabel } from './domains'
@@ -68,8 +68,9 @@ describe('KV list renderers: label and value appear in SVG', () => {
 describe('KV list renderers: markup structure', () => {
 
   it('zigzag-list: KV labels use <tspan> wrappers (not bare <text>)', () => {
-    // zigzag-list sends labels through fitTextToWidthShared which emits <tspan>
-    // elements; values are rendered as a direct <text> node alongside.
+    // zigzag-list sends labels through the shared fitted-block helper. Labels
+    // and values are rendered in separate text nodes so each gets its own
+    // line budget.
     // Pinned with specific examples and verified across all key/value combos.
     const prop = new Property((ki: number, vi: number) => {
       const k = KEYS[ki % KEYS.length]
@@ -81,6 +82,42 @@ describe('KV list renderers: markup structure', () => {
     prop.example(0, 0)   // Revenue: 42M  — original example case
     prop.example(1, 1)   // Retention: 91%
     prop.forAll(Gen.inRange(0, KEYS.length - 1), Gen.inRange(0, VALUES.length - 1))
+  })
+
+  it('zigzag-list: long values can use two value lines', () => {
+    const svg = renderMdArt(`
+type: zigzag-list
+- Intake: Customer readiness assessment requires manual verification
+- Build: 50%
+`, 'zigzag-list')
+
+    expect(svg).toContain('Customer readiness')
+    expect(svg).toContain('manual')
+    expect(svg).not.toContain('Customer readiness assessment requires manual verification…')
+  })
+
+  it('zigzag-list: truncated long values keep a visible ellipsis cue', () => {
+    const svg = renderMdArt(`
+type: zigzag-list
+- Prevention: Capacity test added to release checklist with new tenant-volume fixture
+`, 'zigzag-list')
+
+    expect(svg).toContain('Capacity test added to release')
+    expect(svg).toContain('tenant-volume…')
+    expect(svg).not.toContain('tenant-volume fixture</tspan>')
+  })
+
+  it('zigzag-list: very long values can use a third value line before truncating', () => {
+    const svg = renderMdArt(`
+type: zigzag-list
+- Containment: Feature flag disabled secondary enrichment path sdfasfd asd fasdf asdf sadfasdf asdfasdf asdfasdf ㄴㅁㅇㄹㅁㄴㅇㄹ
+`, 'zigzag-list')
+    const valueLines = [...svg.matchAll(/<text[^>]*fill="#6ee7b7"[\s\S]*?<\/text>/g)]
+
+    expect(valueLines).toHaveLength(3)
+    expect(svg).toContain('Feature flag disabled secondary')
+    expect(svg).toContain('sdfasfd asd fasdf asdf')
+    expect(svg).toContain('…')
   })
 
   it.each(['step-up', 'step-down'] as const)('%s: KV blocks use 56px rect height', (type) => {

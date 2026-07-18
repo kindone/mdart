@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown, FONT_SANS_ATTR } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ const mainTextStart = PAD + BADGE_W + 8       // 46
 const subBadgeX     = PAD + 16
 const subTextStart  = subBadgeX + SUB_W + 6   // 52
 
-// Right margin = PAD (16 px); px/char calibrated to system-ui at each font size
+// Right margin = PAD (16 px); px/char calibrated to common sans fonts at each font size
 const LABEL_MAX = Math.max(12, Math.floor((W - PAD * 2 - mainTextStart) / 6.5))  // 12 px → ~58
 const VALUE_MAX = Math.max(12, Math.floor((W - PAD * 2 - mainTextStart) / 6.0))  // 11 px → ~63
 const CHILD_MAX = Math.max(12, Math.floor((W - PAD * 2 - subTextStart)  / 6.0))  // 11 px → ~62
@@ -92,7 +92,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const instrument = shouldInstrument()
   let svg = ''
   if (spec.title) {
-    svg += `<text x="${PAD}" y="${PAD + 16}" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svg += `<text x="${PAD}" y="${PAD + 16}" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   let y = PAD + titleH
@@ -121,7 +121,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const valSpans = valLines
         .map((l, li) => renderInlineMarkdown(l, { x: mainTextStart, dy: li === 0 ? 0 : VAL_LH }))
         .join('')
-      valStr = aWrap(`<text x="${mainTextStart}" y="${valBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic">${valTip}${valSpans}</text>`, valUrl)
+      valStr = aWrap(`<text x="${mainTextStart}" y="${valBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-style="italic">${valTip}${valSpans}</text>`, valUrl)
     }
 
     // ── Child rows with letter badges (up to 2 lines each) ───────────────────
@@ -135,7 +135,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
       if (useLetterBadge) {
         chdStr += `<rect x="${subBadgeX}" y="${(subCy - SUB_H / 2).toFixed(1)}" width="${SUB_W}" height="${SUB_H}" rx="3" fill="${fill}" fill-opacity="0.6" />`
-        chdStr += `<text x="${(subBadgeX + SUB_W / 2).toFixed(1)}" y="${(subCy + 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${subLetter(j)}</text>`
+        chdStr += `<text x="${(subBadgeX + SUB_W / 2).toFixed(1)}" y="${(subCy + 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${subLetter(j)}</text>`
       } else {
         chdStr += `<circle cx="${(subBadgeX + SUB_W / 2).toFixed(1)}" cy="${subCy.toFixed(1)}" r="4" fill="${fill}" fill-opacity="0.7" />`
       }
@@ -145,7 +145,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const chSpans = chLines
         .map((l, li) => renderInlineMarkdown(l, { x: subTextStart, dy: li === 0 ? 0 : CHD_LH }))
         .join('')
-      chdStr += `<text x="${subTextStart}" y="${chdBL}" font-size="${CHD_FS}" fill="${theme.text}" fill-opacity="0.85" font-family="system-ui,sans-serif">${chTip}${chSpans}</text>`
+      chdStr += `<text x="${subTextStart}" y="${chdBL}" font-size="${CHD_FS}" fill="${theme.text}" fill-opacity="0.85" ${FONT_SANS_ATTR}>${chTip}${chSpans}</text>`
 
       chdBL += chLines.length * CHD_LH   // advance by actual wrapped line count
     })
@@ -153,8 +153,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // ── Assemble node (badge + label + value + children) ─────────────────────
     const nodeStr =
       `<rect x="${mainBadgeX}" y="${(badgeCy - BADGE_H / 2).toFixed(1)}" width="${BADGE_W}" height="${BADGE_H}" rx="4" fill="${fill}" >${itemTitleTag(item)}</rect>` +
-      `<text x="${(mainBadgeX + BADGE_W / 2).toFixed(1)}" y="${(badgeCy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${i + 1}</text>` +
-      aWrap(`<text x="${mainTextStart}" y="${labelBL}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl) +
+      `<text x="${(mainBadgeX + BADGE_W / 2).toFixed(1)}" y="${(badgeCy + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${i + 1}</text>` +
+      aWrap(`<text x="${mainTextStart}" y="${labelBL}" font-size="${LBL_FS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl) +
       valStr + chdStr
     svg += wrapItem(nodeStr, i, animate, instrument)
 

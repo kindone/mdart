@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, escapeXml, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { lerpColor, escapeXml, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 import { render as renderCircleCycle } from './cycle'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
@@ -99,14 +99,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     nodeStr += `<rect x="${x}" y="${y}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${theme.surface}" stroke="${headerFill}" stroke-opacity="0.55" stroke-width="1">${itemTitleTag(item)}</rect>`
     // Colored header (top corners rounded)
     nodeStr += `<path d="M ${x + 5} ${y} L ${x + BOX_W - 5} ${y} Q ${x + BOX_W} ${y} ${x + BOX_W} ${y + 5} L ${x + BOX_W} ${y + HEADER_H} L ${x} ${y + HEADER_H} L ${x} ${y + 5} Q ${x} ${y} ${x + 5} ${y} Z" fill="${headerFill}"/>`
-    nodeStr += aWrap(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="${headerFS}" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="600">${headerTip}${escapeXml(headerLines[0])}</text>`, lblUrl)
+    nodeStr += aWrap(`<text x="${x + BOX_W / 2}" y="${y + HEADER_H - 5}" text-anchor="middle" font-size="${headerFS}" fill="#ffffff" ${FONT_SANS_ATTR} font-weight="600">${headerTip}${escapeXml(headerLines[0])}</text>`, lblUrl)
     let lineOffset = 0
     bodyFits.forEach(({ lines, truncated }, li) => {
       const bodyTip = truncated ? `<title>${escapeXml(bodyTexts[li])}</title>` : ''
       const spans = lines
         .map((line, idx) => `<tspan x="${x + 6}" dy="${idx === 0 ? 0 : lineH.toFixed(1)}">${escapeXml(line)}</tspan>`)
         .join('')
-      nodeStr += `${bodyTip}<text x="${x + 6}" y="${(firstBaselineY + lineOffset * lineH).toFixed(1)}" font-size="${bodyFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${spans}</text>`
+      nodeStr += `${bodyTip}<text x="${x + 6}" y="${(firstBaselineY + lineOffset * lineH).toFixed(1)}" font-size="${bodyFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${spans}</text>`
       lineOffset += lines.length
     })
     parts.push(wrapItem(nodeStr, i, animate, instrument))

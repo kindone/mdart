@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function wrapLabel(label: string, maxPerLine: number): string[] {
   if (label.length <= maxPerLine) return [label];
@@ -26,7 +26,7 @@ function wrapLabel(label: string, maxPerLine: number): string[] {
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -67,13 +67,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // kanban already shows attrs as visual treatments (line-through, active outline),
     // so shows.attrs=true on cards. Column header gets the standard treatment.
     const { display: colDisplay, url: colUrl } = displayLabel(col)
-    unit.push(aWrap(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${(colY + 21).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="600">${tt(colDisplay, 14, col)}</text>`, colUrl))
+    unit.push(aWrap(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${(colY + 21).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.accent}" ${FONT_SANS_ATTR} font-weight="600">${tt(colDisplay, 14, col)}</text>`, colUrl))
 
     if (col.children.length > 0) {
       const bx = colX + COL_W - 18
       unit.push(
         `<circle cx="${bx.toFixed(1)}" cy="${(colY + 17).toFixed(1)}" r="9" fill="${theme.accent}44"/>`,
-        `<text x="${bx.toFixed(1)}" y="${(colY + 21).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" font-family="system-ui,sans-serif">${col.children.length}</text>`,
+        `<text x="${bx.toFixed(1)}" y="${(colY + 21).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" ${FONT_SANS_ATTR}>${col.children.length}</text>`,
       )
     }
 
@@ -103,11 +103,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       )
       if (n === 1) {
         unit.push(
-          aWrap(`<text x="${textX}" y="${y1.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[0])}</text>`, cardUrl),
+          aWrap(`<text x="${textX}" y="${y1.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" ${FONT_SANS_ATTR} ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[0])}</text>`, cardUrl),
         )
       } else {
         unit.push(
-          aWrap(`<text x="${textX}" y="${y1.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[0])}</text><text x="${textX}" y="${y2.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" font-family="system-ui,sans-serif" ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[1])}</text>`, cardUrl),
+          aWrap(`<text x="${textX}" y="${y1.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" ${FONT_SANS_ATTR} ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[0])}</text><text x="${textX}" y="${y2.toFixed(1)}" font-size="11" fill="${isDone ? theme.muted : theme.text}" ${FONT_SANS_ATTR} ${isDone ? 'text-decoration="line-through"' : ''}>${escapeXml(lines[1])}</text>`, cardUrl),
         )
       }
     })

@@ -1,8 +1,13 @@
 import type { MdArtTheme } from '../theme'
 import type { MdArtItem, MdArtSpec } from '../parser'
-import { getGlobalConfig } from '../config'
+import { getActiveConfig, getGlobalConfig, getTextBoundsDebugMode } from '../config'
 
 // ── XML / text helpers ────────────────────────────────────────────────────────
+
+export const FONT_FAMILY_SANS = "'Noto Sans', 'Noto Sans CJK', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+export const FONT_FAMILY_MONO = "'Noto Sans Mono', 'JetBrains Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace"
+export const FONT_SANS_ATTR = `font-family="${FONT_FAMILY_SANS}"`
+export const FONT_MONO_ATTR = `font-family="${FONT_FAMILY_MONO}"`
 
 export function escapeXml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -158,7 +163,7 @@ function inlineStyleAttrs(style: InlineTextStyle): string {
   if (style.bold) attrs.push('font-weight="700"')
   if (style.italic) attrs.push('font-style="italic"')
   if (style.strike) attrs.push('text-decoration="line-through"')
-  if (style.code) attrs.push('font-family="ui-monospace,monospace"')
+  if (style.code) attrs.push(FONT_MONO_ATTR)
   return attrs.length ? ` ${attrs.join(' ')}` : ''
 }
 
@@ -349,7 +354,7 @@ export function estimateTextWidth(s: string, fontSize: number): number {
     else if (WIDE_CHARS.has(ch))       units += CHAR_W_WIDE
     else if (ch >= 'A' && ch <= 'Z')   units += CHAR_W_UPPER
     else if (ch >= '0' && ch <= '9')   units += CHAR_W_DIGIT
-    // Full-width CJK scripts — each glyph occupies ~1× font-size in system-ui.
+    // Full-width CJK scripts — each glyph occupies ~1× font-size in common sans fonts.
     // Ranges: Hangul Jamo (1100–11FF), CJK Symbols + Hiragana + Katakana +
     // CJK Unified Ideographs + extensions (3000–9FFF), Hangul Syllables
     // (AC00–D7AF), CJK Compatibility Ideographs (F900–FAFF).
@@ -373,6 +378,10 @@ export interface FitTextResult {
   lines: string[]
   truncated: boolean
   url: string | null
+  boxW?: number
+  boxH?: number
+  fontSize?: number
+  lineHeight?: number
 }
 
 /**
@@ -411,7 +420,13 @@ export function fitTextToWidthShared(
     const perLine = charsPerLine(boxW, fontSize)
     const lineHeight = fontSize * lineHeightRatio
     const linesAtSize = boxH !== undefined ? Math.max(1, Math.floor(boxH / lineHeight)) : Infinity
-    const results = labels.map((l, idx) => wrapLabel(l, perLine, Math.min(maxLinesFor(idx), linesAtSize), { boxW, fontSize }))
+    const results = labels.map((l, idx) => ({
+      ...wrapLabel(l, perLine, Math.min(maxLinesFor(idx), linesAtSize), { boxW, fontSize }),
+      boxW,
+      boxH,
+      fontSize,
+      lineHeight,
+    }))
     return { fontSize, lineHeight, results }
   }
   // Decrementing maxSize by 1 each step doesn't necessarily land exactly on
@@ -440,6 +455,8 @@ export function fitTextToWidthShared(
 // individual files) lives in exactly one place.
 
 export interface FitBlockResult {
+  boxW: number
+  boxH: number
   labelFS: number
   labelLH: number
   labelLines: string[]
@@ -524,7 +541,7 @@ export function fitLabelValueBlock(
   const { lines: labelLines, truncated: labelTruncated } = lf.results[0]
   const totalH = labelLines.length * labelLH + valueBlockH
 
-  return { labelFS, labelLH, labelLines, labelTruncated, labelUrl, hasValue, valueFS, valueLH, valueLines, valueTruncated, totalH }
+  return { boxW, boxH, labelFS, labelLH, labelLines, labelTruncated, labelUrl, hasValue, valueFS, valueLH, valueLines, valueTruncated, totalH }
 }
 
 /**
@@ -548,20 +565,27 @@ export function renderFitBlock(
     labelExtraAttrs?: string
     valueExtraAttrs?: string
     anchor?: 'start' | 'middle' | 'end'
+    shapeBounds?: { x: number; y: number; w: number; h: number; label?: string }
   },
 ): string {
   const {
     labelFullText, valueFullText, labelFill, valueFill,
     labelWeight = '700', valueWeight = '400', extraAttrs = '',
     labelExtraAttrs = extraAttrs, valueExtraAttrs = extraAttrs, anchor = 'middle',
+    shapeBounds,
   } = opts
-  const { labelFS, labelLH, labelLines, labelTruncated, labelUrl, hasValue, valueFS, valueLH, valueLines, valueTruncated, totalH } = fit
+  const { boxW, boxH, labelFS, labelLH, labelLines, labelTruncated, labelUrl, hasValue, valueFS, valueLH, valueLines, valueTruncated, totalH } = fit
 
   const labelTip = labelTruncated ? `<title>${escapeXml(labelFullText)}</title>` : ''
-  let labelOut = labelTip
+  const pairId = shapeBounds ? debugBoundsPairId(cx, cy, boxW, boxH, shapeBounds) : undefined
+  let labelOut = shapeBounds
+    ? debugShapeBoundsRect(shapeBounds.x, shapeBounds.y, shapeBounds.w, shapeBounds.h, shapeBounds.label, pairId)
+    : ''
+  labelOut += debugTextBoundsRect(cx - boxW / 2, cy - boxH / 2, boxW, boxH, 'fit-block', pairId)
+    + labelTip
   labelLines.forEach((line, li) => {
     const ty = cy - totalH / 2 + li * labelLH + labelLH * 0.8
-    labelOut += `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${labelFS}" fill="${labelFill}" ${labelExtraAttrs} font-family="system-ui,sans-serif" font-weight="${labelWeight}">${renderInlineMarkdown(line)}</text>`
+    labelOut += `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${labelFS}" fill="${labelFill}" ${labelExtraAttrs} ${FONT_SANS_ATTR} font-weight="${labelWeight}">${renderInlineMarkdown(line)}</text>`
   })
   let out = aWrap(labelOut, labelUrl)
 
@@ -570,10 +594,23 @@ export function renderFitBlock(
     out += valueTip
     valueLines.forEach((line, li) => {
       const ty = cy - totalH / 2 + labelLines.length * labelLH + li * valueLH + valueLH * 0.8
-      out += `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${valueFS}" fill="${valueFill}" ${valueExtraAttrs} font-family="system-ui,sans-serif" font-weight="${valueWeight}">${renderInlineMarkdown(line)}</text>`
+      out += `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}" font-size="${valueFS}" fill="${valueFill}" ${valueExtraAttrs} ${FONT_SANS_ATTR} font-weight="${valueWeight}">${renderInlineMarkdown(line)}</text>`
     })
   }
   return out
+}
+
+function debugBoundsPairId(
+  cx: number,
+  cy: number,
+  boxW: number,
+  boxH: number,
+  shapeBounds: { x: number; y: number; w: number; h: number; label?: string },
+): string {
+  return [
+    shapeBounds.label ?? 'shape',
+    cx, cy, boxW, boxH, shapeBounds.x, shapeBounds.y, shapeBounds.w, shapeBounds.h,
+  ].map(part => typeof part === 'number' ? part.toFixed(1) : part).join(':')
 }
 
 /**
@@ -597,7 +634,7 @@ export function roundTextBox(r: number, opts: { wRatio?: number; wMargin?: numbe
  */
 export function shouldAnimate(spec: MdArtSpec): boolean {
   if (spec.animate === false) return false
-  if (getGlobalConfig().animate === false) return false
+  if (getActiveConfig().animate === false) return false
   return true
 }
 
@@ -612,6 +649,43 @@ export function shouldAnimate(spec: MdArtSpec): boolean {
  */
 export function shouldInstrument(): boolean {
   return getGlobalConfig().instrument === true
+}
+
+export function shouldDebugTextBounds(): boolean {
+  const mode = getTextBoundsDebugMode(getActiveConfig())
+  return mode === 'red' || mode === 'both'
+}
+
+export function debugTextBoundsRect(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  label = 'text',
+  pairId?: string,
+): string {
+  if (!shouldDebugTextBounds()) return ''
+  if (![x, y, w, h].every(Number.isFinite) || w <= 0 || h <= 0) return ''
+  return `<rect data-mdart-debug="text-bounds" data-mdart-debug-label="${escapeXml(label)}" ` +
+    `${pairId ? `data-mdart-debug-pair="${escapeXml(pairId)}" ` : ''}` +
+    `x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" ` +
+    `fill="rgba(236,72,153,0.08)" stroke="#ec4899" stroke-width="1" stroke-dasharray="3 2" pointer-events="none"/>`
+}
+
+export function debugShapeBoundsRect(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  label = 'text-container',
+  pairId?: string,
+): string {
+  if (!shouldDebugTextBounds()) return ''
+  if (![x, y, w, h].every(Number.isFinite) || w <= 0 || h <= 0) return ''
+  return `<rect data-mdart-debug="shape-bounds" data-mdart-debug-label="${escapeXml(label)}" ` +
+    `${pairId ? `data-mdart-debug-pair="${escapeXml(pairId)}" ` : ''}` +
+    `x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" ` +
+    `fill="none" stroke="#22c55e" stroke-width="1" stroke-opacity="0.35" stroke-dasharray="4 3" pointer-events="none"/>`
 }
 
 /**
@@ -861,6 +935,10 @@ export interface WrappedTextResult {
   lines: string[]
   truncated: boolean
   url?: string | null
+  boxW?: number
+  boxH?: number
+  fontSize?: number
+  lineHeight?: number
 }
 
 export function centeredTextY(baseY: number, boxH: number, lineCount: number, lineH: number): number {
@@ -879,10 +957,17 @@ export function renderWrappedText(
   const { lines, truncated, url = null } = wrap
   const sx = typeof x === 'number' ? x.toFixed(1) : x
   const tip = item ? itemTitleTag(item) : (truncated ? `<title>${escapeXml(fullText)}</title>` : '')
+  const anchor = attrs.match(/text-anchor="([^"]+)"/)?.[1] ?? 'start'
+  const boxW = wrap.boxW ?? Math.max(1, ...lines.map(line => estimateTextWidth(line, wrap.fontSize ?? lineH / 1.3)))
+  const boxH = wrap.boxH ?? Math.max(lineH, lines.length * lineH)
+  const nx = typeof x === 'number' ? x : Number.parseFloat(x)
+  const left = anchor === 'middle' ? nx - boxW / 2 : anchor === 'end' ? nx - boxW : nx
+  const top = y1 - lineH * 0.85
+  const debugBox = Number.isFinite(left) ? debugTextBoundsRect(left, top, boxW, boxH, 'wrapped-text') : ''
   const spans = lines
     .map((line, idx) => renderInlineMarkdown(line, { x: sx, dy: idx === 0 ? 0 : lineH }))
     .join('')
-  return aWrap(`<text x="${sx}" y="${y1.toFixed(1)}" ${attrs}>${tip}${spans}</text>`, url)
+  return debugBox + aWrap(`<text x="${sx}" y="${y1.toFixed(1)}" ${attrs}>${tip}${spans}</text>`, url)
 }
 
 // ── Item-tooltip helpers ──────────────────────────────────────────────────────
@@ -1045,13 +1130,13 @@ export function roundedRectPath(
 export function renderEmpty(theme: MdArtTheme): string {
   return `<svg viewBox="0 0 400 80" xmlns="http://www.w3.org/2000/svg">
     <rect width="400" height="80" fill="${theme.bg}" rx="6"/>
-    <text x="200" y="44" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif">No items</text>
+    <text x="200" y="44" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>No items</text>
   </svg>`
 }
 
 export function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -1060,7 +1145,7 @@ export function svgWrap(W: number, H: number, theme: MdArtTheme, title: string |
 }
 
 export function titleEl(W: number, title: string, theme: MdArtTheme): string {
-  return `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+  return `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
 }
 
 // ── Staircase helper (shared by step-up and step-down) ────────────────────────
@@ -1141,7 +1226,7 @@ export function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: b
     let lblContent = labelTip
     labelLines.forEach((line, li) => {
       const ty = cy - totalH / 2 + li * labelLH + labelLH * 0.8
-      lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+      lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(line)}</text>`
     })
     nodeStr += aWrap(lblContent, staircaseUrl)
     if (secFit) {
@@ -1150,7 +1235,7 @@ export function renderStaircase(spec: MdArtSpec, theme: MdArtTheme, ascending: b
       const secContent = secFit.lines.length === 1
         ? escapeXml(secFit.lines[0])
         : secFit.lines.map((l, li) => `<tspan x="${(x + BOX_W / 2).toFixed(1)}" dy="${li === 0 ? 0 : secLH.toFixed(1)}">${escapeXml(l)}</tspan>`).join('')
-      nodeStr += `${secTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${secFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${secContent}</text>`
+      nodeStr += `${secTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${secFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${secContent}</text>`
     }
     parts.push(wrapItem(nodeStr, i, animate, instrument))
 

@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svgOut(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -90,7 +90,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     unit.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${cardH}" rx="8" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1">${itemTitleTag(item)}</rect>`)
 
     // Big metric value
-    unit.push(`<text x="${cx}" y="${(y + VAL_BL).toFixed(1)}" text-anchor="middle" font-size="${VAL_FS}" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(value)}</text>`)
+    unit.push(`<text x="${cx}" y="${(y + VAL_BL).toFixed(1)}" text-anchor="middle" font-size="${VAL_FS}" fill="${theme.accent}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(value)}</text>`)
 
     // Label — multi-line, width-aware
     const lblTip   = lblTrunc ? `<title>${escapeXml(display)}</title>` : ''
@@ -98,14 +98,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
     unit.push(aWrap(
-      `<text x="${cx}" y="${(y + LBL1_BL).toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${lblTip}${lblSpans}</text>`,
+      `<text x="${cx}" y="${(y + LBL1_BL).toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${lblTip}${lblSpans}</text>`,
       url,
     ))
 
     // Change indicator
     if (change) {
       const lastLblBL = LBL1_BL + (lblLines.length - 1) * LBL_LH
-      unit.push(`<text x="${cx}" y="${(y + lastLblBL + CHG_GAP).toFixed(1)}" text-anchor="middle" font-size="${CHG_FS}" fill="${chgColor}" font-family="system-ui,sans-serif">${escapeXml(change)}</text>`)
+      unit.push(`<text x="${cx}" y="${(y + lastLblBL + CHG_GAP).toFixed(1)}" text-anchor="middle" font-size="${CHG_FS}" fill="${chgColor}" ${FONT_SANS_ATTR}>${escapeXml(change)}</text>`)
     }
     cards.push(wrapItem(unit.join(''), i, animate, instrument))
   })

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown, FONT_SANS_ATTR } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -74,7 +74,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const instrument = shouldInstrument()
   const parts: string[] = []
   if (spec.title) {
-    parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
+    parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`)
   }
 
   items.forEach((item, i) => {
@@ -92,16 +92,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let nodeStr = ''
     nodeStr += `<circle cx="${LEFT}" cy="${cy.toFixed(1)}" r="${CIRCLE_R}" fill="${fill}">${itemTitleTag(item)}</circle>`
     if (icon) {
-      nodeStr += `<text x="${LEFT}" y="${(cy + 5).toFixed(1)}" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">${escapeXml(icon)}</text>`
+      nodeStr += `<text x="${LEFT}" y="${(cy + 5).toFixed(1)}" text-anchor="middle" font-size="14" ${FONT_SANS_ATTR}>${escapeXml(icon)}</text>`
     }
-    nodeStr += aWrap(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
+    nodeStr += aWrap(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
     if (capLines.length > 0) {
       const capStartY = lblStartY + lblLines.length * LBL_LH + SEC_G
       const capTip    = capTrunc ? `<title>${escapeXml(caption!)}</title>` : ''
       const capSpans  = capLines
         .map((l, li) => renderInlineMarkdown(l, { x: textX, dy: li === 0 ? 0 : CAP_LH }))
         .join('')
-      nodeStr += `<text x="${textX}" y="${capStartY.toFixed(1)}" font-size="${CAP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`
+      nodeStr += `<text x="${textX}" y="${capStartY.toFixed(1)}" font-size="${CAP_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${capTip}${capSpans}</text>`
     }
     parts.push(wrapItem(nodeStr, i, animate, instrument))
 

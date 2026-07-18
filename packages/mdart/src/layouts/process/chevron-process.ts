@@ -51,14 +51,23 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const isFirst = i === 0
     const isLast = i === n - 1
     const bodyX = x + (isFirst ? 0 : P / 2)
-    const bodyW = chevW - (isFirst ? P : 0) - (isLast ? 0 : P)
-    return { x, isFirst, isLast, bodyX, bodyW: Math.max(4, bodyW - 6) }
+    // Correct text-zone width per shape:
+    //   first:  flat left, arrow right  → exclude right arrow P
+    //   middle: notch left, arrow right → bodyX already offset P/2; exclude right arrow P
+    //   last:   notch left, flat right  → bodyX already offset P/2; exclude left notch P/2
+    // Old formula: chevW-(isFirst?P:0)-(isLast?0:P) subtracted an extra P
+    // for the first chevron (which has no left notch), giving only 47 px
+    // instead of the correct 73 px for n=6. tx was also off-centre as a result.
+    const rawBodyW = isLast ? chevW - Math.round(P / 2) : chevW - P
+    const bodyW    = Math.max(4, rawBodyW - 6)   // -6 inner padding for fitting
+    const tx       = bodyX + rawBodyW / 2         // true centre of the text zone
+    return { x, isFirst, isLast, bodyW, tx }
   })
 
   const displays = items.map(it => displayLabel(it, { value: !!it.value }))
 
   items.forEach((item, i) => {
-    const { x, isFirst, isLast, bodyX, bodyW } = geoms[i]
+    const { x, isFirst, isLast, bodyW, tx } = geoms[i]
     const t = n > 1 ? i / (n - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
 
@@ -73,7 +82,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       pts = `${x},${y} ${x + chevW - P},${y} ${x + chevW},${cy} ${x + chevW - P},${y + chevH} ${x},${y + chevH} ${x + P},${cy}`
     }
 
-    const tx = bodyX + bodyW / 2
     const { url: itmUrl, display: itmDisplay } = displays[i]
     // Value used to be capped at a flat maxLines: 1 with no boxH — so a
     // long value just kept shrinking down to the font floor and then
@@ -105,6 +113,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       valueFill: textColor,
       labelWeight: '600',
       valueExtraAttrs: 'opacity="0.85"',
+      shapeBounds: { x, y, w: chevW, h: chevH, label: 'chevron-node' },
     })
     parts.push(wrapItem(nodeStr, i, animate, instrument))
   })

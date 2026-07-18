@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -76,9 +76,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const legSpans = legLines
       .map((line, li) => `<tspan x="${PAD + 16}" dy="${li === 0 ? 0 : legLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
       .join('')
-    categoryParts[i].push(aWrap(`${legTip}<text x="${PAD + 16}" y="${legStartY.toFixed(1)}" font-size="${legFS}" fill="${theme.text}" font-family="system-ui,sans-serif">${legSpans}</text>`, itmUrl))
+    categoryParts[i].push(aWrap(`${legTip}<text x="${PAD + 16}" y="${legStartY.toFixed(1)}" font-size="${legFS}" fill="${theme.text}" ${FONT_SANS_ATTR}>${legSpans}</text>`, itmUrl))
     // Percentage right-aligned on the first line
-    categoryParts[i].push(`<text x="${W - PAD}" y="${legStartY.toFixed(1)}" text-anchor="end" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${squares[i]}%</text>`)
+    categoryParts[i].push(`<text x="${W - PAD}" y="${legStartY.toFixed(1)}" text-anchor="end" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${squares[i]}%</text>`)
   })
 
   const parts = categoryParts.map((unit, i) => wrapItem(unit.join(''), i, animate, instrument))

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, tt, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
@@ -77,7 +77,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const H = TITLE_H + leafH + 22
 
   const titlePart = spec.title
-    ? `<text x="${(W/2).toFixed(1)}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`
+    ? `<text x="${(W/2).toFixed(1)}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`
     : ''
   const connectorParts: string[] = []
   const parts: string[] = []
@@ -98,14 +98,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         const op     = lost ? '0.45' : '1'
         const tip = slot.src ? itemTitleTag(slot.src) : ''
         roundUnit.push(`<rect x="${x}" y="${boxY.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="3" fill="${fill}" stroke="${stroke}${isWinner ? '' : 'cc'}" stroke-width="1.2" opacity="${op}">${tip}</rect>`)
-        roundUnit.push(aWrap(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(nodeY + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isWinner ? theme.bg : theme.text}" font-family="system-ui,sans-serif" font-weight="${fw}" opacity="${op}">${tt(slot.label, 13)}</text>`, slot.url))
+        roundUnit.push(aWrap(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(nodeY + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isWinner ? theme.bg : theme.text}" ${FONT_SANS_ATTR} font-weight="${fw}" opacity="${op}">${tt(slot.label, 13)}</text>`, slot.url))
       } else {
         // Distinguish two empty-slot reasons:
         //   r === 0  → bye (not enough contestants for a power-of-two field)
         //   r  >  0  → match pending (winner not yet declared via [w] attrs)
         const placeholder = r === 0 ? 'bye' : 'TBD'
         roundUnit.push(`<rect x="${x}" y="${boxY.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="3" fill="none" stroke="${theme.textMuted}55" stroke-width="1" stroke-dasharray="3,2"/>`)
-        roundUnit.push(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(nodeY + 4).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}77" font-family="system-ui,sans-serif">${placeholder}</text>`)
+        roundUnit.push(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(nodeY + 4).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}77" ${FONT_SANS_ATTR}>${placeholder}</text>`)
       }
       if (!isWinner && s % 2 === 0 && s + 1 < round.length) {
         const yA = nodeY, yB = TITLE_H + (s + 1) * slotH + slotH / 2, yMid = (yA + yB) / 2
@@ -123,7 +123,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lbl = isWinner
       ? (champCrowned ? '🏆 Champion' : 'Champion')
       : r === tot - 1 ? 'Final' : r === tot - 2 && tot >= 3 ? 'Semi' : `Round ${r + 1}`
-    roundUnit.push(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(TITLE_H + leafH + 16).toFixed(1)}" text-anchor="middle" font-size="8" fill="${champCrowned ? theme.accent : theme.textMuted}" font-family="system-ui,sans-serif">${lbl}</text>`)
+    roundUnit.push(`<text x="${(x + BOX_W/2).toFixed(1)}" y="${(TITLE_H + leafH + 16).toFixed(1)}" text-anchor="middle" font-size="8" fill="${champCrowned ? theme.accent : theme.textMuted}" ${FONT_SANS_ATTR}>${lbl}</text>`)
     parts.push(wrapItem(roundUnit.join(''), r, animate, instrument))
   }
   const style = animate ? seqSpotlightCSS(allRounds.length, spec, { scale: false }) : ''

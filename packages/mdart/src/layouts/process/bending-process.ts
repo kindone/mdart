@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -71,18 +71,18 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const labelSpans = labelLines
         .map((line, li) => `<tspan x="${(x + BOX_W / 2).toFixed(1)}" dy="${li === 0 ? 0 : labelLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
         .join('')
-      nodeStr += aWrap(`${labelTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${labelStartY.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${labelSpans}</text>`, itmUrl)
+      nodeStr += aWrap(`${labelTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${labelStartY.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${labelSpans}</text>`, itmUrl)
       const valStartY = labelStartY + (labelLines.length - 1) * labelLH + valueLH + 2
       const valSpans = valLines
         .map((line, li) => `<tspan x="${(x + BOX_W / 2).toFixed(1)}" dy="${li === 0 ? 0 : valueLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
         .join('')
-      nodeStr += `${valTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${valStartY.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${valSpans}</text>`
+      nodeStr += `${valTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${valStartY.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${valSpans}</text>`
     } else {
       const labelStartY = y + BOX_H / 2 - ((labelLines.length - 1) * labelLH) / 2 + labelLH * 0.35
       const labelSpans = labelLines
         .map((line, li) => `<tspan x="${(x + BOX_W / 2).toFixed(1)}" dy="${li === 0 ? 0 : labelLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
         .join('')
-      nodeStr += aWrap(`${labelTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${labelStartY.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${labelSpans}</text>`, itmUrl)
+      nodeStr += aWrap(`${labelTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${labelStartY.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${labelSpans}</text>`, itmUrl)
     }
     parts.push(wrapItem(nodeStr, i, animate, instrument))
 

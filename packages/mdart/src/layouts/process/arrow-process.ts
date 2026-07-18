@@ -76,6 +76,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       valueFill: theme.text,
       labelWeight: '600',
       valueExtraAttrs: 'fill-opacity="0.72"',
+      shapeBounds: { x, y: bY, w: BOX_W, h: BOX_H, label: 'arrow-node' },
     })
     parts.push(wrapItem(nodeStr, i, animate, instrument))
 

@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, wrapLabel, renderWrappedText } from '../shared'
+import { escapeXml, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, wrapLabel, renderWrappedText, FONT_SANS_ATTR } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -51,13 +51,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const rowY = dotY
     const labelBoxW = Math.max(44, Math.min(116, Math.max(42, r - innerR + 54)))
     const labelWrap = { ...wrapLabel(lblDisplay, Math.max(8, Math.floor(labelBoxW / 6)), 1), url: lblUrl }
-    unit.push(renderWrappedText(labelX, labelY + 4, `text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700"`, lblDisplay, labelWrap, 12, item))
+    unit.push(renderWrappedText(labelX, labelY + 4, `text-anchor="middle" font-size="10.5" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700"`, lblDisplay, labelWrap, 12, item))
     if (item.value) {
       unit.push(`<circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="3" fill="${theme.primary}" opacity="0.85"/>`)
       unit.push(`<path d="M${(dotX + 5).toFixed(1)},${dotY.toFixed(1)} L${(textX - 18).toFixed(1)},${rowY.toFixed(1)}" fill="none" stroke="${theme.primary}66" stroke-width="1"/>`)
       const valueWrap = wrapLabel(item.value, 50, 3)
       const valueY = rowY - ((valueWrap.lines.length - 1) * 12) / 2 + 4
-      unit.push(renderWrappedText(textX, valueY, `font-size="9.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif"`, item.value, valueWrap, 12))
+      unit.push(renderWrappedText(textX, valueY, `font-size="9.5" fill="${theme.textMuted}" ${FONT_SANS_ATTR}`, item.value, valueWrap, 12))
     }
     parts.push(wrapItem(unit.join(''), n - 1 - i, animate, instrument))
   }

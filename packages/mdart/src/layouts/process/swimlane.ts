@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, escapeXml, parseLink, shouldAnimate, seqSpotlightCSS, seqSpotlightTiming, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, escapeXml, parseLink, shouldAnimate, seqSpotlightCSS, seqSpotlightTiming, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -195,6 +195,6 @@ function renderCenteredLines(opts: {
   return lines.map((line, idx) => {
     const y = centerY + (idx - (lines.length - 1) / 2) * lineGap
     const tip = idx === 0 && truncated ? `<title>${escapeXml(fullText)}</title>` : ''
-    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="${fontWeight}">${tip}${escapeXml(line)}</text>`
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${fill}" ${FONT_SANS_ATTR} font-weight="${fontWeight}">${tip}${escapeXml(line)}</text>`
   }).join('')
 }

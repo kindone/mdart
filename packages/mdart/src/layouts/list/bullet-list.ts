@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown, FONT_SANS_ATTR } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const instrument = shouldInstrument()
   let svg = ''
   if (spec.title) {
-    svg += `<text x="${PAD}" y="${PAD + 16}" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svg += `<text x="${PAD}" y="${PAD + 16}" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   let y = PAD + titleH
@@ -114,7 +114,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const valSpans = valLines
         .map((l, li) => renderInlineMarkdown(l, { x: mainTextStart, dy: li === 0 ? 0 : VAL_LH }))
         .join('')
-      valStr = aWrap(`<text x="${mainTextStart}" y="${valBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic">${valTip}${valSpans}</text>`, valUrl)
+      valStr = aWrap(`<text x="${mainTextStart}" y="${valBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-style="italic">${valTip}${valSpans}</text>`, valUrl)
     }
 
     // ── Child rows (up to 2 lines each) ──────────────────────────────────────
@@ -128,14 +128,14 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const chSpans = chLines
         .map((l, li) => renderInlineMarkdown(l, { x: subTextStart, dy: li === 0 ? 0 : CHD_LH }))
         .join('')
-      chdStr += `<text x="${subTextStart}" y="${chdBL}" font-size="${CHD_FS}" fill="${theme.text}" fill-opacity="0.85" font-family="system-ui,sans-serif">${chTip}${chSpans}</text>`
+      chdStr += `<text x="${subTextStart}" y="${chdBL}" font-size="${CHD_FS}" fill="${theme.text}" fill-opacity="0.85" ${FONT_SANS_ATTR}>${chTip}${chSpans}</text>`
       chdBL += chLines.length * CHD_LH
     })
 
     // ── Assemble node (bullet + label + value + children) ─────────────────────
     const nodeStr =
       `<circle cx="${mainMarkerX}" cy="${markerCy}" r="5" fill="${fill}" >${itemTitleTag(item)}</circle>` +
-      aWrap(`<text x="${mainTextStart}" y="${labelBL}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl) +
+      aWrap(`<text x="${mainTextStart}" y="${labelBL}" font-size="${LBL_FS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl) +
       valStr + chdStr
     svg += wrapItem(nodeStr, i, animate, instrument)
 

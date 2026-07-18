@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, wrapLabel, renderWrappedText } from '../shared'
+import { escapeXml, tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, wrapLabel, renderWrappedText, FONT_SANS_ATTR } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -31,16 +31,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const { display: rightDisplay, url: rightUrl } = displayLabel(right, { value: !!right.value })
   const leftUnit: string[] = []
   leftUnit.push(`<rect x="${(lx - plateW / 2).toFixed(1)}" y="${(beamY + 38).toFixed(1)}" width="${plateW}" height="${plateH}" rx="4" fill="${theme.primary}30" stroke="${theme.primary}77" stroke-width="1.2">${itemTitleTag(left)}</rect>`)
-  leftUnit.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(beamY + 38 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(leftDisplay, 24, left)}</text>`, leftUrl))
+  leftUnit.push(aWrap(`<text x="${lx.toFixed(1)}" y="${(beamY + 38 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${tt(leftDisplay, 24, left)}</text>`, leftUrl))
   let leftDetailY = beamY + 66
   if (left.value) {
     const wrap = wrapLabel(left.value, 34, 2)
-    leftUnit.push(renderWrappedText(lx, leftDetailY, `text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif"`, left.value, wrap, 12))
+    leftUnit.push(renderWrappedText(lx, leftDetailY, `text-anchor="middle" font-size="9" fill="${theme.textMuted}" ${FONT_SANS_ATTR}`, left.value, wrap, 12))
     leftDetailY += wrap.lines.length * 12 + 3
   }
   left.children.slice(0, 4).forEach((ch) => {
     const wrap = wrapLabel(ch.label, 34, 2)
-    leftUnit.push(renderWrappedText(lx, leftDetailY, `text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif"`, ch.label, wrap, 12, ch))
+    leftUnit.push(renderWrappedText(lx, leftDetailY, `text-anchor="middle" font-size="9" fill="${theme.textMuted}" ${FONT_SANS_ATTR}`, ch.label, wrap, 12, ch))
     leftDetailY += wrap.lines.length * 12
   })
   parts.push(wrapItem(leftUnit.join(''), 0, animate, instrument))
@@ -48,16 +48,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   parts.push(`<line x1="${rx}" y1="${beamY}" x2="${rx}" y2="${beamY + 38}" stroke="${theme.textMuted}99" stroke-width="1.5"/>`)
   const rightUnit: string[] = []
   rightUnit.push(`<rect x="${(rx - plateW / 2).toFixed(1)}" y="${(beamY + 38).toFixed(1)}" width="${plateW}" height="${plateH}" rx="4" fill="${theme.secondary}30" stroke="${theme.secondary}77" stroke-width="1.2">${itemTitleTag(right)}</rect>`)
-  rightUnit.push(aWrap(`<text x="${rx.toFixed(1)}" y="${(beamY + 38 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(rightDisplay, 24, right)}</text>`, rightUrl))
+  rightUnit.push(aWrap(`<text x="${rx.toFixed(1)}" y="${(beamY + 38 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${tt(rightDisplay, 24, right)}</text>`, rightUrl))
   let rightDetailY = beamY + 66
   if (right.value) {
-    const wrap = wrapLabel(right.value, 34, 2)
-    rightUnit.push(renderWrappedText(rx, rightDetailY, `text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif"`, right.value, wrap, 12))
+    const wrap = wrapLabel(right.value, 50, 2)
+    rightUnit.push(renderWrappedText(rx, rightDetailY, `text-anchor="middle" font-size="9" fill="${theme.textMuted}" ${FONT_SANS_ATTR}`, right.value, wrap, 12))
     rightDetailY += wrap.lines.length * 12 + 3
   }
   right.children.slice(0, 4).forEach((ch) => {
-    const wrap = wrapLabel(ch.label, 34, 2)
-    rightUnit.push(renderWrappedText(rx, rightDetailY, `text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif"`, ch.label, wrap, 12, ch))
+    const wrap = wrapLabel(ch.label, 50, 2)
+    rightUnit.push(renderWrappedText(rx, rightDetailY, `text-anchor="middle" font-size="9" fill="${theme.textMuted}" ${FONT_SANS_ATTR}`, ch.label, wrap, 12, ch))
     rightDetailY += wrap.lines.length * 12
   })
   parts.push(wrapItem(rightUnit.join(''), 1, animate, instrument))

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap, wrapLabel, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown } from '../shared'
+import { escapeXml, lerpColor, tt, renderEmpty, parseLink, aWrap, wrapLabel, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown, FONT_SANS_ATTR } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -81,7 +81,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
   const parts: string[] = []
-  if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
+  if (spec.title) parts.push(`<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`)
 
   slice.forEach((item, i) => {
     const x    = i * (CARD_W + GAP), y = titleH
@@ -103,17 +103,17 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         // Key block
         const keyTip   = kw.truncated ? `<title>${escapeXml(child.label)}</title>` : ''
         const keySpans = kw.lines.map((l, li) => renderInlineMarkdown(l, { x: cx, dy: li === 0 ? 0 : KV_KEY_LH })).join('')
-        childStr += aWrap(`<text x="${cx}" y="${(rowTop + KV_KEY_FS).toFixed(1)}" text-anchor="middle" font-size="${KV_KEY_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${keyTip}${keySpans}</text>`, kw.url)
+        childStr += aWrap(`<text x="${cx}" y="${(rowTop + KV_KEY_FS).toFixed(1)}" text-anchor="middle" font-size="${KV_KEY_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${keyTip}${keySpans}</text>`, kw.url)
         // Value block — starts after all key lines + inner gap
         const valY     = rowTop + kw.lines.length * KV_KEY_LH + KV_INNER_G + KV_VAL_FS
         const valTip   = vw.truncated ? `<title>${escapeXml(child.value!)}</title>` : ''
         const valSpans = vw.lines.map((l, li) => renderInlineMarkdown(l, { x: cx, dy: li === 0 ? 0 : KV_VAL_LH })).join('')
-        childStr += aWrap(`<text x="${cx}" y="${valY.toFixed(1)}" text-anchor="middle" font-size="${KV_VAL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif">${valTip}${valSpans}</text>`, vw.url)
+        childStr += aWrap(`<text x="${cx}" y="${valY.toFixed(1)}" text-anchor="middle" font-size="${KV_VAL_FS}" fill="${theme.text}" ${FONT_SANS_ATTR}>${valTip}${valSpans}</text>`, vw.url)
       } else {
         const pw = cl.plainWrap!
         const tip   = pw.truncated ? `<title>${escapeXml(child.label)}</title>` : ''
         const spans = pw.lines.map((l, li) => renderInlineMarkdown(l, { x: cx, dy: li === 0 ? 0 : PLAIN_LH })).join('')
-        childStr += aWrap(`<text x="${cx}" y="${(rowTop + PLAIN_FS).toFixed(1)}" text-anchor="middle" font-size="${PLAIN_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tip}${spans}</text>`, pw.url)
+        childStr += aWrap(`<text x="${cx}" y="${(rowTop + PLAIN_FS).toFixed(1)}" text-anchor="middle" font-size="${PLAIN_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${tip}${spans}</text>`, pw.url)
       }
       rowTop += cl.slotH
     })
@@ -122,9 +122,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Card body + coloured header band — tooltip on the whole card body
     nodeStr += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CARD_W.toFixed(1)}" height="${CARD_H}" rx="7" fill="${theme.surface}" stroke="${fill}66" stroke-width="1.2">${itemTitleTag(item)}</rect>`
     nodeStr += `<path d="M${(x+7).toFixed(1)},${y.toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${x.toFixed(1)},${(y+7).toFixed(1)} L${x.toFixed(1)},${(y+HEADER_H).toFixed(1)} L${(x+CARD_W).toFixed(1)},${(y+HEADER_H).toFixed(1)} L${(x+CARD_W).toFixed(1)},${(y+7).toFixed(1)} Q${(x+CARD_W).toFixed(1)},${y.toFixed(1)} ${(x+CARD_W-7).toFixed(1)},${y.toFixed(1)} Z" fill="${fill}"/>`
-    nodeStr += aWrap(`<text x="${cx}" y="${(y+HEADER_H/2+4).toFixed(1)}" text-anchor="middle" font-size="11" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${tt(lblDisplay, headerMax)}</text>`, lblUrl)
+    nodeStr += aWrap(`<text x="${cx}" y="${(y+HEADER_H/2+4).toFixed(1)}" text-anchor="middle" font-size="11" fill="#fff" ${FONT_SANS_ATTR} font-weight="700">${tt(lblDisplay, headerMax)}</text>`, lblUrl)
     if (anyVal && item.value) {
-      nodeStr += `<text x="${cx}" y="${(y+HEADER_H+13).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" fill-opacity="0.85" font-family="system-ui,sans-serif" font-style="italic">${tt(item.value, valueMax)}</text>`
+      nodeStr += `<text x="${cx}" y="${(y+HEADER_H+13).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" fill-opacity="0.85" ${FONT_SANS_ATTR} font-style="italic">${tt(item.value, valueMax)}</text>`
     }
     nodeStr += childStr
     parts.push(wrapItem(nodeStr, i, animate, instrument))

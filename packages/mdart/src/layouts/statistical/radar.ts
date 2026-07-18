@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -37,7 +37,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`
     })
     gridUnit.push(`<polygon points="${pts.join(' ')}" fill="none" stroke="${theme.border}cc" stroke-width="1"/>`)
-    gridUnit.push(`<text x="${cx}" y="${(cy - r + 3).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" font-family="system-ui,sans-serif" opacity="0.7">${ring * 25}%</text>`)
+    gridUnit.push(`<text x="${cx}" y="${(cy - r + 3).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.textMuted}" ${FONT_SANS_ATTR} opacity="0.7">${ring * 25}%</text>`)
   }
 
   const vpts = items.map((_, i) => {
@@ -73,7 +73,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblSpans = lblLines
       .map((line, li) => `<tspan x="${lx.toFixed(1)}" dy="${li === 0 ? 0 : lblLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
       .join('')
-    unit.push(aWrap(`${lblTip}<text x="${lx.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="${anchor}" font-size="${lblFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblSpans}</text>`, itmUrl))
+    unit.push(aWrap(`${lblTip}<text x="${lx.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="${anchor}" font-size="${lblFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblSpans}</text>`, itmUrl))
     parts.push(wrapItem(unit.join(''), i + 1, animate, instrument))
   })
   if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))

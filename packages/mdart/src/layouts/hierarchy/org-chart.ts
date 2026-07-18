@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 import { countLeaves, maxDepth, layoutNodes, flatNodes } from './shared'
 
-const BOX_W = 110
-const BOX_H = 30
+const BOX_W = 124
+const BOX_H = 38
 const NODE_FS_MAX = 11
 const NODE_FS_MIN = 8
 
@@ -37,7 +37,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   // fitTextToWidthShared the real vertical budget (BOX_H is fixed — used
   // by the connector math above — so text can't grow the box, only use
   // more of the room already in it).
-  const displays = flat.map(n => displayLabel(n))
+  const displays = flat.map(n => displayLabel(n, { value: true }))
   const orgBoxH = BOX_H - 6
 
   const parts: string[] = []
@@ -59,28 +59,36 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     unit.push(
       `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="6" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${tip}</rect>`,
     )
-    const { fontSize: nodeFS, lineHeight: lineH, results: [{ lines, truncated }] } = fitTextToWidthShared(
-      [nDisplay], BOX_W - 16, { maxSize: NODE_FS_MAX, minSize: NODE_FS_MIN, maxLines: 2, boxH: orgBoxH },
-    )
-    const textBlockH = lines.length * lineH
-    const textStartY = n.y - textBlockH / 2 + lineH - 2
-    const fullTip = truncated ? `<title>${escapeXml(nDisplay)}</title>` : ''
-    const spans = lines
-      .map((l, li) => `<tspan x="${n.x.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(l)}</tspan>`)
-      .join('')
-    unit.push(aWrap(`<text x="${n.x.toFixed(1)}" y="${textStartY.toFixed(1)}" text-anchor="middle" font-size="${nodeFS}" fill="${theme.text}" font-family="system-ui,sans-serif">${tip}${fullTip}${spans}</text>`, nUrl))
+    const fit = fitLabelValueBlock(nDisplay, n.value, BOX_W - 16, orgBoxH, {
+      labelUrl: nUrl,
+      labelMaxSize: NODE_FS_MAX,
+      labelMinSize: NODE_FS_MIN,
+      labelMaxLines: 1,
+      labelMaxLinesNoValue: 2,
+      valueMaxSize: 9,
+      valueMinSize: 7,
+      valueMaxLines: 1,
+      valueShare: 0.34,
+    })
+    unit.push(renderFitBlock(n.x, n.y, fit, {
+      labelFullText: nDisplay,
+      valueFullText: n.value,
+      labelFill: theme.text,
+      valueFill: theme.textMuted,
+      labelWeight: '600',
+    }))
     parts.push(wrapItem(unit.join(''), i, animate, instrument))
   }
   if (animate) parts.unshift(seqSpotlightCSS(flat.length, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${spec.title ? `<text x="${(W / 2).toFixed(1)}" y="18" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>` : ''}
+  ${spec.title ? `<text x="${(W / 2).toFixed(1)}" y="18" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>` : ''}
   ${parts.join('\n  ')}
 </svg>`
 }
 
 function renderEmpty(theme: MdArtTheme): string {
   return `<svg viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  <text x="150" y="42" text-anchor="middle" font-size="12" fill="${theme.textMuted}" font-family="system-ui,sans-serif">No items</text>
+  <text x="150" y="42" text-anchor="middle" font-size="12" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>No items</text>
 </svg>`
 }

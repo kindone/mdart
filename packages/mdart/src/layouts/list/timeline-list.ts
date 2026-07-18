@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, renderInlineMarkdown, FONT_SANS_ATTR } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -77,7 +77,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   let svgContent = ''
 
   if (spec.title) {
-    svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   // Vertical timeline line — always visible backbone
@@ -110,7 +110,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let nodeStr = ''
     nodeStr += `<rect x="${cardX}" y="${cy0}" width="${CARD_W}" height="${cardH}" rx="6" fill="${theme.surface}" stroke="${fill}" stroke-width="1.5" >${itemTitleTag(item)}</rect>`
     nodeStr += `<circle cx="${LINE_X}" cy="${cy}" r="${DOT_R}" fill="${fill}" />`
-    nodeStr += aWrap(`<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
+    nodeStr += aWrap(`<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
     textY += lblLines.length * LBL_LH
     if (capLines.length > 0) {
       textY += SEC_G
@@ -118,12 +118,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const capSpans = capLines
         .map((l, li) => renderInlineMarkdown(l, { x: cx, dy: li === 0 ? 0 : CAP_LH }))
         .join('')
-      nodeStr += `<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${CAP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`
+      nodeStr += `<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${CAP_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${capTip}${capSpans}</text>`
       textY += capLines.length * CAP_LH
     }
     if (hasAttr) {
       textY += SEC_G
-      nodeStr += `<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${ATTR_FS}" fill="${theme.accent}" font-family="system-ui,sans-serif">${escapeXml(item.attrs.join(', '))}</text>`
+      nodeStr += `<text x="${cx}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${ATTR_FS}" fill="${theme.accent}" ${FONT_SANS_ATTR}>${escapeXml(item.attrs.join(', '))}</text>`
     }
     svgContent += wrapItem(nodeStr, i, animate, instrument)
   }

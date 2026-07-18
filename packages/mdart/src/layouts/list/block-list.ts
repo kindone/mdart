@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -95,7 +95,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const parts: string[] = []
 
   if (spec.title) {
-    parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
+    parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`)
   }
 
   items.forEach((item, i) => {
@@ -127,7 +127,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const valSpans = valLines
         .map((l, li) => `<tspan x="${tx}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      valStr = aWrap(`<text x="${tx}" y="${textY.toFixed(1)}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-style="italic" font-family="system-ui,sans-serif">${valTip}${valSpans}</text>`, valUrl)
+      valStr = aWrap(`<text x="${tx}" y="${textY.toFixed(1)}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-style="italic" ${FONT_SANS_ATTR}>${valTip}${valSpans}</text>`, valUrl)
       textY += valLines.length * VAL_LH
     }
 
@@ -146,7 +146,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
             ? `<tspan x="${tx}"  dy="0">· ${escapeXml(l)}</tspan>`
             : `<tspan x="${ctx}" dy="${CHD_LH}">${escapeXml(l)}</tspan>`)
           .join('')
-        childStr += `<text x="${tx}" y="${textY.toFixed(1)}" font-size="${CHD_FS}" fill="${theme.textMuted}" fill-opacity="${op}" font-family="system-ui,sans-serif">${chTip}${spans}</text>`
+        childStr += `<text x="${tx}" y="${textY.toFixed(1)}" font-size="${CHD_FS}" fill="${theme.textMuted}" fill-opacity="${op}" ${FONT_SANS_ATTR}>${chTip}${spans}</text>`
         textY += lines.length * CHD_LH
       })
     }
@@ -155,7 +155,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     // Cell background rect + left accent bar — tooltip carries full item
     nodeStr += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${CELL_W.toFixed(1)}" height="${cellH}" rx="8" fill="${fill}33" stroke="${fill}88" stroke-width="1.5">${itemTitleTag(item)}</rect>`
     nodeStr += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="6" height="${cellH}" rx="3" fill="${fill}"/>`
-    nodeStr += aWrap(`<text x="${tx}" y="${(y + PAD_T).toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${lblTip}${lblSpans}</text>`, lblUrl)
+    nodeStr += aWrap(`<text x="${tx}" y="${(y + PAD_T).toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${lblTip}${lblSpans}</text>`, lblUrl)
     nodeStr += valStr + childStr
     parts.push(wrapItem(nodeStr, i, animate, instrument))
   })

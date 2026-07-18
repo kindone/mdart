@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -91,7 +91,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     const colLabelMax = Math.max(6, Math.floor((COL_W - 10) / 6.5))
     const { lines: colLabelLines } = wrapLabel(col.label, colLabelMax, 1)
-    unit.push(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${colY + 19}" text-anchor="middle" font-size="12" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(colLabelLines[0] ?? col.label)}</text>`)
+    unit.push(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${colY + 19}" text-anchor="middle" font-size="12" fill="${theme.accent}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(colLabelLines[0] ?? col.label)}</text>`)
 
     let colPts = 0
     col.children.forEach(c => {
@@ -99,7 +99,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       colPts += p; totalPts += p
       if (isDoneCol || c.attrs.includes('done')) donePts += p
     })
-    unit.push(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${colY + 34}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${colPts} pts</text>`)
+    unit.push(`<text x="${(colX + COL_W / 2).toFixed(1)}" y="${colY + 34}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${colPts} pts</text>`)
     unit.push(`<line x1="${colX}" y1="${colY + HEADER_H}" x2="${(colX + COL_W).toFixed(1)}" y2="${colY + HEADER_H}" stroke="${theme.border}" stroke-width="1"/>`)
 
     let cy = colY + HEADER_H + CARD_PAD
@@ -120,13 +120,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         .map((l, li) => `<tspan x="${(tx + 2).toFixed(1)}" dy="${li === 0 ? 0 : CARD_LH}">${escapeXml(l)}</tspan>`)
         .join('')
       const textY = cy + CARD_PAD + CARD_LH * 0.75
-      unit.push(aWrap(`<text x="${(tx + 2).toFixed(1)}" y="${textY.toFixed(1)}" font-size="11" fill="${done ? theme.textMuted : theme.text}" font-family="system-ui,sans-serif" ${done ? 'text-decoration="line-through"' : ''}>${tip}${spans}</text>`, url))
+      unit.push(aWrap(`<text x="${(tx + 2).toFixed(1)}" y="${textY.toFixed(1)}" font-size="11" fill="${done ? theme.textMuted : theme.text}" ${FONT_SANS_ATTR} ${done ? 'text-decoration="line-through"' : ''}>${tip}${spans}</text>`, url))
 
       if (pts > 0) {
         const bx = cx + cw - 13
         const bcy = cy + cardH / 2
         unit.push(`<circle cx="${bx.toFixed(1)}" cy="${bcy.toFixed(1)}" r="9" fill="${theme.accent}30"/>`)
-        unit.push(`<text x="${bx.toFixed(1)}" y="${(bcy + 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="600">${pts}</text>`)
+        unit.push(`<text x="${bx.toFixed(1)}" y="${(bcy + 3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.accent}" ${FONT_SANS_ATTR} font-weight="600">${pts}</text>`)
       }
 
       cy += cardH + CARD_GAP
@@ -142,7 +142,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (totalPts > 0) {
     const fw = Math.max(0, (donePts / totalPts) * barW)
     summaryUnit.push(`<rect x="${barX}" y="${barY}" width="${fw.toFixed(1)}" height="10" rx="5" fill="${theme.accent}cc"/>`)
-    summaryUnit.push(`<text x="${barX + barW / 2}" y="${(barY + 22).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">Velocity: ${donePts}/${totalPts} pts · ${Math.round(donePts / totalPts * 100)}% complete</text>`)
+    summaryUnit.push(`<text x="${barX + barW / 2}" y="${(barY + 22).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>Velocity: ${donePts}/${totalPts} pts · ${Math.round(donePts / totalPts * 100)}% complete</text>`)
   }
   parts.push(wrapItem(summaryUnit.join(''), n, animate, instrument))
 

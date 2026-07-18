@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqMeasureTiming, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqMeasureTiming, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -83,10 +83,10 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         const anim = isLast
           ? `<animate attributeName="opacity" from="0" to="1" begin="${Math.max(delayMs, begin - fadeDur)}ms" dur="${fadeDur}ms" fill="freeze"/>`
           : `<animate attributeName="opacity" from="0" to="1" begin="${Math.max(delayMs, begin - fadeDur)}ms" dur="${fadeDur}ms" fill="freeze"/><animate attributeName="opacity" from="1" to="0" begin="${begin + stepDur - fadeDur}ms" dur="${fadeDur}ms" fill="freeze"/>`
-        unit.push(`<text class="mdart-counter-step" opacity="0" x="${cx}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${anim}${step}%</text>`)
+        unit.push(`<text class="mdart-counter-step" opacity="0" x="${cx}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${anim}${step}%</text>`)
       })
     } else {
-      unit.push(`<text x="${cx}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${pct}%</text>`)
+      unit.push(`<text x="${cx}" y="${(cy - 6).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${pct}%</text>`)
     }
 
     // Per-gauge label fitting: long names wrap to 2 lines rather than truncate.
@@ -97,7 +97,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblSpans = lblLines
       .map((line, li) => `<tspan x="${cx.toFixed(1)}" dy="${li === 0 ? 0 : lblLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
       .join('')
-    unit.push(aWrap(`${lblTip}<text x="${cx.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${lblFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${itemTitleTag(item)}${lblSpans}</text>`, itmUrl))
+    unit.push(aWrap(`${lblTip}<text x="${cx.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${lblFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${itemTitleTag(item)}${lblSpans}</text>`, itmUrl))
 
     parts.push(wrapItem(unit.join(''), i, animate, instrument))
   })

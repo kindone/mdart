@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, renderEmpty, ellipsisIfDropped, itemTitleTag, shouldAnimate, seqSpotlightCSS, renderWrappedText, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, renderEmpty, ellipsisIfDropped, itemTitleTag, shouldAnimate, seqSpotlightCSS, renderWrappedText, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const rows = spec.items
@@ -76,7 +76,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   let svg = ''
   if (spec.title) {
-    svg += `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svg += `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   const headerUnit: string[] = []
@@ -88,7 +88,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     headerUnit.push(`<rect x="${colX}" y="${TITLE_H}" width="${COL_W}" height="${HEADER_H}" fill="${theme.primary}28" stroke="${theme.border}" stroke-width="0.5"/>`)
     const w = colHeaderWraps[c]
     headerUnit.push(lbl(colX + COL_W / 2, centredY(TITLE_H, HEADER_H, w.lines.length),
-      `text-anchor="middle" font-size="11" fill="${theme.primary}" font-family="system-ui,sans-serif" font-weight="700"`,
+      `text-anchor="middle" font-size="11" fill="${theme.primary}" ${FONT_SANS_ATTR} font-weight="700"`,
       colHeaders[c], w))
   }
   svg += wrapItem(headerUnit.join(''), 0, animate, instrument)
@@ -105,7 +105,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     rowUnit.push(`<rect x="0" y="${ry}" width="${LABEL_W}" height="${rH}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`)
     const rlW = rowLabelWraps[r]
     rowUnit.push(lbl(8, centredY(ry, rH, rlW.lines.length),
-      `font-size="10.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
+      `font-size="10.5" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600"`,
       row.label, rlW))
 
     // Data cells
@@ -117,7 +117,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       if (cell) {
         const cw = cellWraps[r][c]
         rowUnit.push(lbl(colX + COL_W / 2, centredY(ry, rH, cw.lines.length),
-          `text-anchor="middle" font-size="10.5" fill="${theme.text}" font-family="system-ui,sans-serif"`,
+          `text-anchor="middle" font-size="10.5" fill="${theme.text}" ${FONT_SANS_ATTR}`,
           cell.label, cw))
       }
     }

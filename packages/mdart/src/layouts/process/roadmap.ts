@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const items = spec.items
@@ -67,7 +67,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let lblContent = truncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
     lines.forEach((line, li) => {
       const ly = labelY + li * lineH
-      lblContent += `<text x="${x}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(line)}</text>`
+      lblContent += `<text x="${x}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(line)}</text>`
     })
 
     let nodeStr = ''
@@ -78,7 +78,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (valueFitFull) {
       const valueFit = valueFitFull.results[0]
       const valueTip = valueFit.truncated ? `<title>${escapeXml(item.value!)}</title>` : ''
-      nodeStr += `${valueTip}<text x="${x}" y="${(labelY + lines.length * lineH).toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(valueFit.lines[0])}</text>`
+      nodeStr += `${valueTip}<text x="${x}" y="${(labelY + lines.length * lineH).toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${escapeXml(valueFit.lines[0])}</text>`
     }
     svgContent += wrapItem(nodeStr, i, animate, instrument)
   }
@@ -86,7 +86,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
     ${animate ? seqSpotlightCSS(n, spec) : ''}
-    ${spec.title ? `<text x="${W / 2}" y="16" text-anchor="middle" font-size="12" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(spec.title)}</text>` : ''}
+    ${spec.title ? `<text x="${W / 2}" y="16" text-anchor="middle" font-size="12" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${escapeXml(spec.title)}</text>` : ''}
     ${svgContent}
   </svg>`
 }

@@ -47,7 +47,7 @@ import remarkParse from 'remark-parse'
 import remarkRehype from 'remark-rehype'
 import rehypeStringify from 'rehype-stringify'
 
-import { renderMdArt, parseMdArt } from 'mdart'
+import { renderMdArt, parseMdArt, type TextBoundsDebugMode } from 'mdart'
 import { adapters, defaultCliName, getAdapter, normalizeCliName, type CliName } from './cli/index.js'
 import { generateMdart, GENERATOR_FAMILIES } from './generators.js'
 
@@ -218,13 +218,15 @@ async function renderFresh(
   mdartSource: string,
   mode?: 'dark' | 'light',
   theme?: string,
+  debugTextBounds: TextBoundsDebugMode = 'none',
+  animate?: boolean,
   hintType?: string,
 ): Promise<string> {
   const tmp = path.join(tmpdir(), `mdart-lab-${Date.now()}-${Math.random().toString(36).slice(2)}.mjs`)
   await copyFile(DIST_INDEX, tmp)
   try {
     const mod = await import(`file://${tmp}`) as { renderMdArt: typeof renderMdArt }
-    const cfg = (mode || theme) ? { mode, theme } : undefined
+    const cfg = buildCfg(mode, theme, debugTextBounds, animate)
     return mod.renderMdArt(mdartSource, hintType, cfg)
   } finally {
     await unlink(tmp).catch(() => {})
@@ -243,6 +245,8 @@ async function replaceMdartFencesWithPlaceholders(
   markdown: string,
   mode?: 'dark' | 'light',
   theme?: string,
+  debugTextBounds: TextBoundsDebugMode = 'none',
+  animate?: boolean,
 ): Promise<{ markdown: string; replacements: Array<{ token: string; svg: string }> }> {
   const fenceRe = /(^|\n)```mdart(?:[ \t]+([^\n]+))?[ \t]*\n([\s\S]*?)```[ \t]*(?=\n|$)/g
   let out = ''
@@ -257,7 +261,7 @@ async function replaceMdartFencesWithPlaceholders(
     let svg: string
     out += markdown.slice(lastIndex, index) + leadingNewline
     try {
-      svg = await renderFresh(source, mode, theme, hintType)
+      svg = await renderFresh(source, mode, theme, debugTextBounds, animate, hintType)
     } catch (err) {
       svg = `<pre class="mdart-error">${String(err)}</pre>`
     }
@@ -289,8 +293,10 @@ async function renderMarkdownFresh(
   adapter: EcosystemAdapter,
   mode?: 'dark' | 'light',
   theme?: string,
+  debugTextBounds: TextBoundsDebugMode = 'none',
+  animate?: boolean,
 ): Promise<string> {
-  const prepared = await replaceMdartFencesWithPlaceholders(markdown, mode, theme)
+  const prepared = await replaceMdartFencesWithPlaceholders(markdown, mode, theme, debugTextBounds, animate)
   let html: string
   if (adapter === 'marked') {
     html = await new Marked().parse(prepared.markdown)
@@ -324,10 +330,29 @@ function parseTheme(v: unknown): string | undefined {
   return s.length > 0 && s.length <= 32 ? s : undefined
 }
 
+function parseTextBoundsMode(v: unknown): TextBoundsDebugMode {
+  if (v === true || v === 'true' || v === 1 || v === '1') return 'both'
+  if (v === 'red' || v === 'layout') return 'red'
+  if (v === 'blue' || v === 'svg') return 'blue'
+  if (v === 'both') return v
+  return 'none'
+}
+
+function parseOptionalBool(v: unknown): boolean | undefined {
+  if (v === true || v === 'true' || v === 1 || v === '1') return true
+  if (v === false || v === 'false' || v === 0 || v === '0') return false
+  return undefined
+}
+
 /** Build the optional plugin-config object for renderMdArt. */
-function buildCfg(mode?: 'dark' | 'light', theme?: string) {
-  if (!mode && !theme) return undefined
-  return { mode, theme } as const
+function buildCfg(
+  mode?: 'dark' | 'light',
+  theme?: string,
+  debugTextBounds: TextBoundsDebugMode = 'none',
+  animate?: boolean,
+) {
+  if (!mode && !theme && debugTextBounds === 'none' && animate === undefined) return undefined
+  return { mode, theme, debugTextBounds, animate } as const
 }
 
 // ── Express ───────────────────────────────────────────────────────────────────
@@ -585,12 +610,14 @@ app.post('/render', (req, res) => {
   const { source, hintType } = req.body as { source?: string; hintType?: string }
   const mode  = parseMode((req.body as { mode?: unknown }).mode)
   const theme = parseTheme((req.body as { theme?: unknown }).theme)
+  const debugTextBounds = parseTextBoundsMode((req.body as { debugTextBounds?: unknown }).debugTextBounds)
+  const animate = parseOptionalBool((req.body as { animate?: unknown }).animate)
   if (!source?.trim()) {
     res.status(400).json({ error: 'source is required' }); return
   }
   try {
     const spec = parseMdArt(source, hintType)
-    const svg  = renderMdArt(source, hintType, buildCfg(mode, theme))
+    const svg  = renderMdArt(source, hintType, buildCfg(mode, theme, debugTextBounds, animate))
     res.json({
       svg,
       type:     spec.type,
@@ -611,12 +638,14 @@ app.post('/render/states', (req, res) => {
   const { source, hintType } = req.body as { source?: string; hintType?: string }
   const mode  = parseMode((req.body as { mode?: unknown }).mode)
   const theme = parseTheme((req.body as { theme?: unknown }).theme)
+  const debugTextBounds = parseTextBoundsMode((req.body as { debugTextBounds?: unknown }).debugTextBounds)
+  const animate = parseOptionalBool((req.body as { animate?: unknown }).animate)
   if (!source?.trim()) {
     res.status(400).json({ error: 'source is required' }); return
   }
   try {
     const spec   = parseMdArt(source, hintType)
-    const svg    = renderMdArt(source, hintType, buildCfg(mode, theme))
+    const svg    = renderMdArt(source, hintType, buildCfg(mode, theme, debugTextBounds, animate))
     const states = spec.type === 'tab-list'
       ? spec.items.map(() => svg)
       : [svg]
@@ -634,6 +663,8 @@ app.post('/render/ecosystem', async (req, res) => {
   const { source, adapter } = req.body as { source?: string; adapter?: EcosystemAdapter }
   const mode  = parseMode((req.body as { mode?: unknown }).mode)
   const theme = parseTheme((req.body as { theme?: unknown }).theme)
+  const debugTextBounds = parseTextBoundsMode((req.body as { debugTextBounds?: unknown }).debugTextBounds)
+  const animate = parseOptionalBool((req.body as { animate?: unknown }).animate)
   if (!source?.trim()) {
     res.status(400).json({ error: 'source is required' }); return
   }
@@ -642,7 +673,7 @@ app.post('/render/ecosystem', async (req, res) => {
     if (name !== 'marked' && name !== 'markdown-it' && name !== 'unified') {
       res.status(400).json({ error: `unknown adapter: ${String(adapter)}` }); return
     }
-    const html = await renderMarkdownFresh(source, name, mode, theme)
+    const html = await renderMarkdownFresh(source, name, mode, theme, debugTextBounds, animate)
     res.json({ html, adapter: name })
   } catch (err) {
     res.status(400).json({ error: String(err) })
@@ -657,9 +688,11 @@ app.post('/generate', async (req, res) => {
   const { type, strategy } = req.body as { type?: string; strategy?: string }
   const mode  = parseMode((req.body as { mode?: unknown }).mode)
   const theme = parseTheme((req.body as { theme?: unknown }).theme)
+  const debugTextBounds = parseTextBoundsMode((req.body as { debugTextBounds?: unknown }).debugTextBounds)
+  const animate = parseOptionalBool((req.body as { animate?: unknown }).animate)
   try {
     const generated = generateMdart(type || 'any', strategy === 'property' ? 'property' : 'curated')
-    const svg = await renderFresh(generated.source, mode, theme, generated.type)
+    const svg = await renderFresh(generated.source, mode, theme, debugTextBounds, animate, generated.type)
     res.json({ ...generated, svg, families: GENERATOR_FAMILIES })
   } catch (err) {
     res.status(400).json({ error: String(err) })
@@ -698,6 +731,8 @@ app.post('/lab/apply', async (req, res) => {
   }
   const mode  = parseMode((req.body as { mode?: unknown }).mode)
   const theme = parseTheme((req.body as { theme?: unknown }).theme)
+  const debugTextBounds = parseTextBoundsMode((req.body as { debugTextBounds?: unknown }).debugTextBounds)
+  const animate = parseOptionalBool((req.body as { animate?: unknown }).animate)
   if (!file || !ALLOWED_LAB_FILES.has(file)) {
     res.status(400).json({ error: `invalid file: ${String(file)}` }); return
   }
@@ -718,7 +753,7 @@ app.post('/lab/apply', async (req, res) => {
     const buildMs = Date.now() - t0
 
     // 3. Render with fresh build (isolated via temp-file import)
-    const svg = await renderFresh(mdartSource, mode, theme)
+    const svg = await renderFresh(mdartSource, mode, theme, debugTextBounds, animate)
     res.json({ svg, buildMs })
   } catch (err) {
     res.status(422).json({ error: String(err) })
@@ -735,11 +770,13 @@ app.post('/lab/render', async (req, res) => {
   const { mdartSource } = req.body as { mdartSource?: string }
   const mode  = parseMode((req.body as { mode?: unknown }).mode)
   const theme = parseTheme((req.body as { theme?: unknown }).theme)
+  const debugTextBounds = parseTextBoundsMode((req.body as { debugTextBounds?: unknown }).debugTextBounds)
+  const animate = parseOptionalBool((req.body as { animate?: unknown }).animate)
   if (!mdartSource?.trim()) {
     res.status(400).json({ error: 'mdartSource required' }); return
   }
   try {
-    const svg = await renderFresh(mdartSource, mode, theme)
+    const svg = await renderFresh(mdartSource, mode, theme, debugTextBounds, animate)
     res.json({ svg })
   } catch (err) {
     res.status(422).json({ error: String(err) })

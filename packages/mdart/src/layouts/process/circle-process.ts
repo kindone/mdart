@@ -60,6 +60,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       labelFill: theme.text,
       valueFill: theme.textMuted,
       labelWeight: '700',
+      shapeBounds: { x: cx - R, y: cy - R, w: R * 2, h: R * 2, label: 'circle-node' },
     })
     parts.push(wrapItem(nodeStr, i, animate, instrument))
     // Arrow fades in with the destination node it points to.

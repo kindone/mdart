@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const centerLabel = spec.title ?? spec.items[0]?.label ?? 'Hub'
@@ -24,7 +24,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     if (item) {
       const { display: itmDisplay, url: itmUrl } = displayLabel(item)
       unit.push(`<rect x="${(sx - 52).toFixed(1)}" y="${(sy - 18).toFixed(1)}" width="104" height="36" rx="5" fill="${theme.surface}" stroke="${theme.primary}66" stroke-width="1.2">${itemTitleTag(item)}</rect>`)
-      unit.push(aWrap(`<text x="${sx.toFixed(1)}" y="${(sy + 5).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${tt(itmDisplay, 12, item)}</text>`, itmUrl))
+      unit.push(aWrap(`<text x="${sx.toFixed(1)}" y="${(sy + 5).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${tt(itmDisplay, 12, item)}</text>`, itmUrl))
       // Render children on the OUTER side of the box (away from the hub) so
       // they never sit on top of the connector line. For upper-half boxes the
       // outer side is above; for lower-half (or pure horizontal) it stays below.
@@ -34,7 +34,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const above = Math.sin(angle) < -0.1
       item.children.slice(0, 2).forEach((ch, j) => {
         const offY = above ? sy - 26 - j * 13 : sy + 30 + j * 13
-        unit.push(`<text x="${sx.toFixed(1)}" y="${offY.toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(ch.label, 12)}</text>`)
+        unit.push(`<text x="${sx.toFixed(1)}" y="${offY.toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${tt(ch.label, 12)}</text>`)
       })
     }
     parts.push(wrapItem(unit.join(''), i + 1, animate, instrument))
@@ -44,11 +44,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   centerUnit.push(`<circle cx="${cx}" cy="${cy}" r="${CR}" fill="${theme.accent}22" stroke="none"/>`)
   const cw = centerLabel.split(' ')
   if (cw.length === 1) {
-    centerUnit.push(`<text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(centerLabel, 12)}</text>`)
+    centerUnit.push(`<text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="11" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${tt(centerLabel, 12)}</text>`)
   } else {
     const m = Math.ceil(cw.length / 2)
-    centerUnit.push(`<text x="${cx}" y="${cy - 3}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(cw.slice(0, m).join(' '), 12)}</text>`)
-    centerUnit.push(`<text x="${cx}" y="${cy + 11}" text-anchor="middle" font-size="10" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${tt(cw.slice(m).join(' '), 12)}</text>`)
+    centerUnit.push(`<text x="${cx}" y="${cy - 3}" text-anchor="middle" font-size="10" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${tt(cw.slice(0, m).join(' '), 12)}</text>`)
+    centerUnit.push(`<text x="${cx}" y="${cy + 11}" text-anchor="middle" font-size="10" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${tt(cw.slice(m).join(' '), 12)}</text>`)
   }
   parts.push(wrapItem(centerUnit.join(''), 0, animate, instrument))
   if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))

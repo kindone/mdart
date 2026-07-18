@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -68,15 +68,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const lblSpans = lblLines
         .map((line, li) => `<tspan x="${ccx.toFixed(1)}" dy="${li === 0 ? 0 : lblLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
         .join('')
-      unit.push(aWrap(`${lblTip}<text x="${ccx.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${lblFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblSpans}</text>`, itmUrl))
-      unit.push(`<text x="${ccx.toFixed(1)}" y="${valStartY.toFixed(1)}" text-anchor="middle" font-size="${valFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(item.value!)}</text>`)
+      unit.push(aWrap(`${lblTip}<text x="${ccx.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${lblFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblSpans}</text>`, itmUrl))
+      unit.push(`<text x="${ccx.toFixed(1)}" y="${valStartY.toFixed(1)}" text-anchor="middle" font-size="${valFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${escapeXml(item.value!)}</text>`)
     } else {
       // Label centred in full cell
       const lblStartY = ccy - ((lblLines.length - 1) * lblLH) / 2 + lblFS * 0.35
       const lblSpans = lblLines
         .map((line, li) => `<tspan x="${ccx.toFixed(1)}" dy="${li === 0 ? 0 : lblLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
         .join('')
-      unit.push(aWrap(`${lblTip}<text x="${ccx.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${lblFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblSpans}</text>`, itmUrl))
+      unit.push(aWrap(`${lblTip}<text x="${ccx.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${lblFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblSpans}</text>`, itmUrl))
     }
 
     cells.push(wrapItem(unit.join(''), i, animate, instrument))

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -47,7 +47,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const headerSpans = headerLines
       .map((line, li) => `<tspan x="${(x + COL_W / 2).toFixed(1)}" dy="${li === 0 ? 0 : headerLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
       .join('')
-    nodeStr += aWrap(`${headerTip}<text x="${(x + COL_W / 2).toFixed(1)}" y="${headerTextY.toFixed(1)}" text-anchor="middle" font-size="${headerFS}" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${headerSpans}</text>`, itmUrl)
+    nodeStr += aWrap(`${headerTip}<text x="${(x + COL_W / 2).toFixed(1)}" y="${headerTextY.toFixed(1)}" text-anchor="middle" font-size="${headerFS}" fill="#fff" ${FONT_SANS_ATTR} font-weight="700">${headerSpans}</text>`, itmUrl)
     item.children.slice(0, maxChildren).forEach((child, ci) => {
       const ry = y + HEADER_H + ci * ROW_H + 6
       const { fontSize: childFS, results: [{ lines: childLines, truncated: childTruncated }] } =
@@ -58,7 +58,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const childSpans = childLines
         .map((line, li) => `<tspan x="${(x + COL_W / 2).toFixed(1)}" dy="${li === 0 ? 0 : (childFS * 1.3).toFixed(1)}">${escapeXml(line)}</tspan>`)
         .join('')
-      nodeStr += `${childTip}<text x="${(x + COL_W / 2).toFixed(1)}" y="${childY.toFixed(1)}" text-anchor="middle" font-size="${childFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${childSpans}</text>`
+      nodeStr += `${childTip}<text x="${(x + COL_W / 2).toFixed(1)}" y="${childY.toFixed(1)}" text-anchor="middle" font-size="${childFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${childSpans}</text>`
     })
     parts.push(wrapItem(nodeStr, i, animate, instrument))
   })

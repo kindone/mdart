@@ -709,6 +709,8 @@ pre.int-code {
 
   <!-- Shared: auto-render toggle (hidden in renderer mode) -->
   <button class="btn-auto on" id="btn-auto-render" title="Toggle auto-render on content change">Auto</button>
+  <button class="btn-auto on" id="btn-animate" title="Toggle diagram animation">Animate</button>
+  <button class="btn-auto" id="btn-text-bounds" title="Draw fitted text bounding boxes">Text boxes</button>
 
   <!-- Shared: examples dropdown -->
   <select id="example-select" class="toolbar" style="height:28px;border-radius:4px;font-size:12px;cursor:pointer;background:#3c3c3c;color:#d4d4d4;border:1px solid #555;padding:0 8px;max-width:140px;" title="Load an example">
@@ -1018,6 +1020,19 @@ const SVG_THEMES = new Set([
 ])
 let svgTheme = localStorage.getItem('mdart-svg-theme') ?? ''
 if (!SVG_THEMES.has(svgTheme)) svgTheme = ''
+const TEXT_BOUNDS_MODES = ['none', 'red', 'blue', 'both']
+const TEXT_BOUNDS_LABELS = {
+  none: 'Text boxes',
+  red: 'Red boxes',
+  blue: 'Blue boxes',
+  both: 'All boxes',
+}
+let debugTextBounds = localStorage.getItem('mdart-debug-text-bounds') || 'none'
+if (debugTextBounds === 'true') debugTextBounds = 'both'
+if (debugTextBounds === 'layout') debugTextBounds = 'red'
+if (debugTextBounds === 'svg') debugTextBounds = 'blue'
+if (debugTextBounds === 'false' || !TEXT_BOUNDS_MODES.includes(debugTextBounds)) debugTextBounds = 'none'
+let animateDiagrams = localStorage.getItem('mdart-animate') !== 'false'
 let monacoEditor = null
 let lastSVG = ''
 let isDirty = false
@@ -1361,7 +1376,7 @@ async function renderMdArt(explicit = false) {
     const res = await fetch('/render', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source, mode: svgMode, theme: svgTheme || undefined }),
+      body: JSON.stringify({ source, ...renderRequestBase() }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -1387,7 +1402,7 @@ async function renderMarkdown(explicit = false) {
     const res = await fetch('/render/ecosystem', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source, adapter, mode: svgMode, theme: svgTheme || undefined }),
+      body: JSON.stringify({ source, adapter, ...renderRequestBase() }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -1408,7 +1423,7 @@ async function generateFresh() {
     const res = await fetch('/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, strategy, mode: svgMode, theme: svgTheme || undefined }),
+      body: JSON.stringify({ type, strategy, ...renderRequestBase() }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -1439,7 +1454,7 @@ async function saveRenderer() {
     const res = await fetch('/lab/apply', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ file: currentFile, content, mdartSource, mode: svgMode, theme: svgTheme || undefined }),
+      body: JSON.stringify({ file: currentFile, content, mdartSource, ...renderRequestBase() }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -1468,7 +1483,7 @@ async function renderOnly() {
     const res = await fetch('/lab/render', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mdartSource, mode: svgMode, theme: svgTheme || undefined }),
+      body: JSON.stringify({ mdartSource, ...renderRequestBase() }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -1485,6 +1500,10 @@ function dispatchRender(explicit = false) {
   if (mode === 'mdart' || mode === 'generator') renderMdArt(explicit)
   else if (mode === 'markdown') renderMarkdown(explicit)
   // renderer mode: manual save only (don't auto-render TypeScript changes)
+}
+
+function renderRequestBase() {
+  return { mode: svgMode, theme: svgTheme || undefined, debugTextBounds, animate: animateDiagrams }
 }
 
 // ── DOM helpers ───────────────────────────────────────────────────────────────
@@ -1637,6 +1656,42 @@ document.getElementById('btn-auto-render').addEventListener('click', () => {
   // If just turned on, render immediately so preview is up to date
   if (autoRender && mode !== 'renderer') dispatchRender(false)
 })
+
+function syncAnimateBtn() {
+  const btn = document.getElementById('btn-animate')
+  btn.classList.toggle('on', animateDiagrams)
+  btn.textContent = animateDiagrams ? 'Animate' : 'Static'
+  btn.title = animateDiagrams ? 'Animation enabled (click for static SVG)' : 'Animation disabled (click to enable)'
+}
+document.getElementById('btn-animate').addEventListener('click', () => {
+  animateDiagrams = !animateDiagrams
+  localStorage.setItem('mdart-animate', String(animateDiagrams))
+  syncAnimateBtn()
+  if (mode === 'renderer') renderOnly()
+  else dispatchRender(true)
+})
+
+function syncTextBoundsBtn() {
+  const btn = document.getElementById('btn-text-bounds')
+  btn.classList.toggle('on', debugTextBounds !== 'none')
+  btn.textContent = TEXT_BOUNDS_LABELS[debugTextBounds]
+  btn.title = {
+    none: 'Text bounding boxes off (click for red boxes)',
+    red: 'Red text boxes only (click for blue boxes)',
+    blue: 'Blue text boxes only (click for both)',
+    both: 'Red and blue text boxes (click to hide)',
+  }[debugTextBounds]
+}
+document.getElementById('btn-text-bounds').addEventListener('click', () => {
+  const idx = TEXT_BOUNDS_MODES.indexOf(debugTextBounds)
+  debugTextBounds = TEXT_BOUNDS_MODES[(idx + 1) % TEXT_BOUNDS_MODES.length]
+  localStorage.setItem('mdart-debug-text-bounds', debugTextBounds)
+  syncTextBoundsBtn()
+  if (mode === 'renderer') renderOnly()
+  else dispatchRender(true)
+})
+syncTextBoundsBtn()
+syncAnimateBtn()
 syncAutoBtn()
 
 document.getElementById('btn-save-example').addEventListener('click', async () => {

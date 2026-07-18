@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 import { countLeaves, maxDepth, layoutNodes, flatNodes } from './shared'
 import type { RenderedNode } from './shared'
 
@@ -88,7 +88,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         const ly = (y1 + y2) / 2
         const lbl = isFirst ? 'Yes' : 'No'
         const lcolor = isFirst ? theme.primary : theme.secondary
-        unit.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9" fill="${lcolor}" font-family="system-ui,sans-serif" font-weight="700">${lbl}</text>`)
+        unit.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9" fill="${lcolor}" ${FONT_SANS_ATTR} font-weight="700">${lbl}</text>`)
       }
     }
     const { x, y } = n
@@ -102,7 +102,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const decSpans = decLines
         .map((l, li) => `<tspan x="${x}" dy="${li === 0 ? 0 : decisionLH.toFixed(1)}">${escapeXml(l)}</tspan>`)
         .join('')
-      unit.push(aWrap(`<text x="${x}" y="${decStartY.toFixed(1)}" text-anchor="middle" font-size="${decisionFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${itemTip}${decTip}${decSpans}</text>`, ndUrl))
+      unit.push(aWrap(`<text x="${x}" y="${decStartY.toFixed(1)}" text-anchor="middle" font-size="${decisionFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${itemTip}${decTip}${decSpans}</text>`, ndUrl))
     } else {
       const { url: ndUrl, fontSize: leafFS, lineHeight: leafLH, lines, truncated } = leafFitByNode.get(n)!
       const bx = x - LW / 2, by = y - LH / 2
@@ -114,20 +114,20 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const spans = lines
         .map((l, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : leafLH.toFixed(1)}">${escapeXml(l)}</tspan>`)
         .join('')
-      unit.push(aWrap(`<text x="${x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${leafFS}" fill="${theme.text}" font-family="system-ui,sans-serif">${itemTip}${fullTip}${spans}</text>`, ndUrl))
+      unit.push(aWrap(`<text x="${x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${leafFS}" fill="${theme.text}" ${FONT_SANS_ATTR}>${itemTip}${fullTip}${spans}</text>`, ndUrl))
     }
     parts.push(wrapItem(unit.join(''), i, animate, instrument))
   }
   if (animate) parts.unshift(seqSpotlightCSS(flat.length, spec, { scale: false }))
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${spec.title ? `<text x="${W/2}" y="18" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>` : ''}
+  ${spec.title ? `<text x="${W/2}" y="18" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>` : ''}
   ${parts.join('\n  ')}
 </svg>`
 }
 
 function renderEmpty(theme: MdArtTheme): string {
   return `<svg viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  <text x="150" y="42" text-anchor="middle" font-size="12" fill="${theme.textMuted}" font-family="system-ui,sans-serif">No items</text>
+  <text x="150" y="42" text-anchor="middle" font-size="12" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>No items</text>
 </svg>`
 }

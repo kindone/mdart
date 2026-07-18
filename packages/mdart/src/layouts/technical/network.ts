@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, renderEmpty, parseLink, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -27,7 +27,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const W = 580, H = 420
   const TITLE_H_net = spec.title ? 30 : 8
   const cx = W / 2, cy = (H + TITLE_H_net) / 2
-  const NODE_W = 104, NODE_H = 30
+  const NODE_W = 130, NODE_H = 44
   const maxRH = cy - TITLE_H_net - NODE_H / 2 - 12
   const maxRW = cx - NODE_W / 2 - 8
   const R = Math.min(maxRH, maxRW, Math.max(100, 80 + n * 18))
@@ -75,12 +75,30 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const stroke = isTop ? `${theme.accent}bb` : `${theme.muted}aa`
     const fill = isTop ? theme.surface : `${theme.surface}cc`
     const sourceItem = itemByLabel.get(label)
-    const { display: rawDisplay, url: lblUrl } = parseLink(label)
-    const lblDisplay = sourceItem ? ellipsisIfDropped(rawDisplay, sourceItem) : rawDisplay
+    const { display: lblDisplay, url: lblUrl } = sourceItem
+      ? displayLabel(sourceItem, { value: true })
+      : parseLink(label)
     const tip = sourceItem ? itemTitleTag(sourceItem) : ''
+    const fit = fitLabelValueBlock(lblDisplay, sourceItem?.value, NODE_W - 14, NODE_H - 8, {
+      labelUrl: lblUrl,
+      labelMaxSize: 11,
+      labelMinSize: 7,
+      labelMaxLines: 1,
+      labelMaxLinesNoValue: 2,
+      valueMaxSize: 9,
+      valueMinSize: 7,
+      valueMaxLines: 1,
+      valueShare: 0.34,
+    })
     const unit = [
       `<rect x="${(x - NODE_W / 2).toFixed(1)}" y="${(y - NODE_H / 2).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="1.2">${tip}</rect>`,
-      aWrap(`<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(lblDisplay, 13)}</text>`, lblUrl),
+      renderFitBlock(x, y, fit, {
+        labelFullText: lblDisplay,
+        valueFullText: sourceItem?.value,
+        labelFill: theme.text,
+        valueFill: theme.textMuted,
+        labelWeight: '600',
+      }),
     ].join('')
     nodes.push(wrapItem(unit, i, animate, instrument))
   })

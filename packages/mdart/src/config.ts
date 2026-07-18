@@ -1,6 +1,8 @@
 import type { MdArtTheme, ThemeMode } from './theme'
 import type { ValidationIssue } from './validator'
 
+export type TextBoundsDebugMode = 'none' | 'red' | 'blue' | 'both' | 'layout' | 'svg'
+
 /**
  * Global configuration for MdArt.
  *
@@ -84,11 +86,28 @@ export interface MdArtConfig {
    * configureMdArt({ instrument: true, animate: false })
    */
   instrument?: boolean
+
+  /**
+   * Emit debug overlay rectangles for text regions.
+   *
+   * Intended for renderer development and visual test authoring. The overlays
+   * are nonsemantic SVG elements marked with `data-mdart-debug="text-bounds"`.
+   *
+   * - `red`  — fitted/wrapped layout boxes where available; red fallback boxes otherwise
+   * - `blue` — fallback boxes estimated from final SVG `<text>` nodes
+   * - `both` — both layout and fallback overlay types
+   * - `none` — no boxes
+   *
+   * Boolean values are kept for compatibility: `true` means `both`, `false`
+   * means `none`. `layout` and `svg` are accepted aliases for `red` and `blue`.
+   */
+  debugTextBounds?: boolean | TextBoundsDebugMode
 }
 
 // ── Module-level singleton ────────────────────────────────────────────────────
 
 let _config: MdArtConfig = {}
+let _renderConfig: MdArtConfig | null = null
 
 /**
  * Set global MdArt defaults.
@@ -113,4 +132,30 @@ export function resetMdArtConfig(): void {
 /** @internal — used by renderer.ts */
 export function getGlobalConfig(): Readonly<MdArtConfig> {
   return _config
+}
+
+/** @internal — effective config for the currently active render call. */
+export function getActiveConfig(): Readonly<MdArtConfig> {
+  return _renderConfig ?? _config
+}
+
+/** @internal — provide per-render plugin config to shared layout helpers. */
+export function withMdArtRenderConfig<T>(config: MdArtConfig, fn: () => T): T {
+  const prev = _renderConfig
+  _renderConfig = { ...config }
+  try {
+    return fn()
+  } finally {
+    _renderConfig = prev
+  }
+}
+
+/** @internal — normalize legacy boolean and current string debug modes. */
+export function getTextBoundsDebugMode(config: Pick<MdArtConfig, 'debugTextBounds'>): TextBoundsDebugMode {
+  const mode = config.debugTextBounds
+  if (mode === true) return 'both'
+  if (mode === false || mode === undefined) return 'none'
+  if (mode === 'layout') return 'red'
+  if (mode === 'svg') return 'blue'
+  return mode
 }

@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -47,7 +47,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const ctrSpans = ctrLines
       .map((line, li) => `<tspan x="${cx.toFixed(1)}" dy="${li === 0 ? 0 : ctrLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
       .join('')
-    centerUnit.push(aWrap(`${ctrTip}<text x="${cx.toFixed(1)}" y="${ctrStartY.toFixed(1)}" text-anchor="middle" font-size="${ctrFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${itemTitleTag(centerItem)}${ctrSpans}</text>`, ctrUrl))
+    centerUnit.push(aWrap(`${ctrTip}<text x="${cx.toFixed(1)}" y="${ctrStartY.toFixed(1)}" text-anchor="middle" font-size="${ctrFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${itemTitleTag(centerItem)}${ctrSpans}</text>`, ctrUrl))
   }
   parts.push(wrapItem(centerUnit.join(''), 0, animate, instrument))
 
@@ -91,7 +91,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblSpans = lblLines
       .map((line, li) => `<tspan x="${px.toFixed(1)}" dy="${li === 0 ? 0 : lblLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
       .join('')
-    unit.push(aWrap(`${lblTip}<text x="${px.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${lblFS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${lblSpans}</text>`, itmUrl))
+    unit.push(aWrap(`${lblTip}<text x="${px.toFixed(1)}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${lblFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${lblSpans}</text>`, itmUrl))
 
     const firstChildBaseY = py - totalH / 2 + lblVisualH + gap + chFS * 0.75
     // chLineOffset tracks the cumulative lines emitted so far — necessary when
@@ -104,7 +104,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const chSpans = chLines
         .map((line, li) => `<tspan x="${px.toFixed(1)}" dy="${li === 0 ? 0 : chLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
         .join('')
-      unit.push(`${chTip}<text x="${px.toFixed(1)}" y="${chBaseY}" text-anchor="middle" font-size="${chFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${chSpans}</text>`)
+      unit.push(`${chTip}<text x="${px.toFixed(1)}" y="${chBaseY}" text-anchor="middle" font-size="${chFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${chSpans}</text>`)
       chLineOffset += chLines.length
     })
     parts.push(wrapItem(unit.join(''), i + 1, animate, instrument))

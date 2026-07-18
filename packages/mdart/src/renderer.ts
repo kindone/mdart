@@ -1,8 +1,8 @@
 import { parseMdArt } from './parser'
 import { getTheme } from './theme'
-import { getGlobalConfig } from './config'
+import { getGlobalConfig, getTextBoundsDebugMode, withMdArtRenderConfig } from './config'
 import { validateMdArt } from './validator'
-import { renderInlineMarkdown } from './layouts/shared'
+import { escapeXml, estimateTextWidth, renderInlineMarkdown, FONT_SANS_ATTR } from './layouts/shared'
 import type { MdArtConfig } from './config'
 import type { MdArtSpec } from './parser'
 import type { MdArtTheme } from './theme'
@@ -338,9 +338,22 @@ export function renderMdArtDetailed(
     }
 
     const renderer = LAYOUT_RENDERERS[spec.type]
-    const svg = renderer ? renderer(spec, theme) : renderFallback(spec, theme)
+    const effectiveCfg = { ...globalCfg, ...pluginConfig }
+    const svg = withMdArtRenderConfig(effectiveCfg, () =>
+      renderer ? renderer(spec, theme) : renderFallback(spec, theme)
+    )
     const styledSvg = applyInlineMarkdownToSvgText(svg)
-    return { svg: scopeSvgAnimation(styledSvg, raw, hintType, spec.type), issues }
+    const boundsMode = getTextBoundsDebugMode(effectiveCfg)
+    let debugSvg = boundsMode === 'blue' || boundsMode === 'both'
+      ? addTextBoundsOverlay(styledSvg, 'blue')
+      : styledSvg
+    if (boundsMode === 'red' || boundsMode === 'both') {
+      const lifted = liftLayoutTextBoundsOverlay(debugSvg)
+      debugSvg = lifted.count === 0
+        ? addTextBoundsOverlay(debugSvg, 'red')
+        : lifted.svg
+    }
+    return { svg: scopeSvgAnimation(debugSvg, raw, hintType, spec.type), issues }
   } catch (e) {
     return { svg: renderError(String(e)), issues }
   }
@@ -378,6 +391,121 @@ function decodeXmlText(s: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&')
+}
+
+function addTextBoundsOverlay(svg: string, color: 'red' | 'blue'): string {
+  if (!svg.startsWith('<svg') || !svg.includes('</svg>')) return svg
+
+  const style = color === 'red'
+    ? {
+        fill: 'rgba(236,72,153,0.08)',
+        stroke: '#ec4899',
+        dash: '3 2',
+      }
+    : {
+        fill: 'rgba(14,165,233,0.06)',
+        stroke: '#0ea5e9',
+        dash: '2 2',
+      }
+  const rects: string[] = []
+  for (const match of svg.matchAll(/<text\b([^>]*)>([\s\S]*?)<\/text>/g)) {
+    const box = estimateSvgTextBox(match[1], match[2])
+    if (!box) continue
+    rects.push(
+      `<rect data-mdart-debug="text-bounds" data-mdart-debug-label="text-element" ` +
+      `x="${box.x.toFixed(1)}" y="${box.y.toFixed(1)}" ` +
+      `width="${box.w.toFixed(1)}" height="${box.h.toFixed(1)}" ` +
+      `fill="${style.fill}" stroke="${style.stroke}" stroke-width="1" ` +
+      `stroke-dasharray="${style.dash}" pointer-events="none"><title>${escapeXml(box.label)}</title></rect>`,
+    )
+  }
+
+  if (rects.length === 0) return svg
+  const layer = `<g data-mdart-debug-layer="${color}-text-bounds" pointer-events="none">${rects.join('')}</g>`
+  return svg.replace('</svg>', `${layer}</svg>`)
+}
+
+function liftLayoutTextBoundsOverlay(svg: string): { svg: string; count: number } {
+  if (!svg.includes('data-mdart-debug="text-bounds"') || !svg.includes('</svg>')) return { svg, count: 0 }
+
+  const rects: string[] = []
+  const withoutLayoutRects = svg.replace(
+    /<rect\b(?=[^>]*\bdata-mdart-debug="text-bounds")[^>]*\/>/g,
+    (rect) => {
+      if (rect.includes('data-mdart-debug-label="text-element"')) return rect
+      rects.push(rect)
+      return ''
+    },
+  )
+
+  if (rects.length === 0) return { svg, count: 0 }
+  const layer = `<g data-mdart-debug-layer="layout-text-bounds" pointer-events="none">${rects.join('')}</g>`
+  return { svg: withoutLayoutRects.replace('</svg>', `${layer}</svg>`), count: rects.length }
+}
+
+function estimateSvgTextBox(attrs: string, content: string): { x: number; y: number; w: number; h: number; label: string } | null {
+  const x = numberAttr(attrs, 'x') ?? firstNumberAttr(content, 'x')
+  const y = numberAttr(attrs, 'y') ?? firstNumberAttr(content, 'y')
+  if (x === null || y === null) return null
+
+  const fontSize = numberAttr(attrs, 'font-size') ?? firstNumberAttr(content, 'font-size') ?? 12
+  const lineHeight = Math.max(1, fontSize * 1.25)
+  const lines = svgTextLines(content)
+  if (lines.length === 0) return null
+
+  const w = Math.max(1, ...lines.map(line => estimateTextWidth(line, fontSize)))
+  const h = Math.max(fontSize, lines.length * lineHeight)
+  const anchor = stringAttr(attrs, 'text-anchor') ?? 'start'
+  const left = anchor === 'middle' ? x - w / 2 : anchor === 'end' ? x - w : x
+  const top = y - fontSize * 0.9
+
+  return { x: left, y: top, w, h, label: lines.join(' ') }
+}
+
+function svgTextLines(content: string): string[] {
+  const body = content.replace(/<title\b[^>]*>[\s\S]*?<\/title>/g, '')
+  const tspans = Array.from(body.matchAll(/<tspan\b([^>]*)>([\s\S]*?)<\/tspan>/g))
+  if (tspans.length === 0) {
+    const text = decodeXmlText(body.replace(/<[^>]+>/g, '').trim())
+    return text ? [text] : []
+  }
+
+  const lines: string[] = []
+  let current = ''
+  for (const [, attrs, tspanBody] of tspans) {
+    const text = decodeXmlText(tspanBody.replace(/<[^>]+>/g, ''))
+    const dy = numberAttr(attrs, 'dy') ?? 0
+    if (current && Math.abs(dy) > 0.01) {
+      lines.push(current.trim())
+      current = ''
+    }
+    current += text
+  }
+  if (current.trim()) lines.push(current.trim())
+  return lines.filter(Boolean)
+}
+
+function numberAttr(attrs: string, name: string): number | null {
+  const raw = stringAttr(attrs, name)
+  if (raw === null) return null
+  const n = Number.parseFloat(raw)
+  return Number.isFinite(n) ? n : null
+}
+
+function firstNumberAttr(svg: string, name: string): number | null {
+  for (const match of svg.matchAll(new RegExp(`\\b${escapeRegExp(name)}=(["'])(.*?)\\1`, 'g'))) {
+    const n = Number.parseFloat(match[2])
+    if (Number.isFinite(n)) return n
+  }
+  return null
+}
+
+function stringAttr(attrs: string, name: string): string | null {
+  const escaped = escapeRegExp(name)
+  const quoted = attrs.match(new RegExp(`\\b${escaped}=(["'])(.*?)\\1`))
+  if (quoted) return quoted[2]
+  const unquoted = attrs.match(new RegExp(`\\b${escaped}=([^\\s>]+)`))
+  return unquoted?.[1] ?? null
 }
 
 function scopeSvgAnimation(svg: string, raw: string, hintType: string | undefined, type: string): string {
@@ -492,15 +620,15 @@ function renderFallback(spec: MdArtSpec, theme: MdArtTheme): string {
   const label = spec.type ? `${spec.type} (${spec.items.length} items)` : `MdArt (${spec.items.length} items)`
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8" stroke="${theme.border}" stroke-width="1"/>
-    <text x="${W / 2}" y="34" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${label}</text>
-    <text x="${W / 2}" y="52" text-anchor="middle" font-size="10" fill="${theme.muted}" font-family="system-ui,sans-serif">layout not yet implemented</text>
+    <text x="${W / 2}" y="34" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${label}</text>
+    <text x="${W / 2}" y="52" text-anchor="middle" font-size="10" fill="${theme.muted}" ${FONT_SANS_ATTR}>layout not yet implemented</text>
   </svg>`
 }
 
 function renderError(msg: string): string {
   return `<svg viewBox="0 0 300 60" xmlns="http://www.w3.org/2000/svg">
     <rect width="300" height="60" fill="#1a0a0a" rx="4"/>
-    <text x="150" y="28" text-anchor="middle" font-size="11" fill="#f87171" font-family="system-ui,sans-serif">MdArt error</text>
-    <text x="150" y="44" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="system-ui,sans-serif">${msg.slice(0, 60).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</text>
+    <text x="150" y="28" text-anchor="middle" font-size="11" fill="#f87171" ${FONT_SANS_ATTR}>MdArt error</text>
+    <text x="150" y="44" text-anchor="middle" font-size="9" fill="#7f1d1d" ${FONT_SANS_ATTR}>${msg.slice(0, 60).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</text>
   </svg>`
 }

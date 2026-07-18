@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { tt, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
@@ -36,16 +36,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const { display: subDisplay, url: subUrl } = displayLabel(sub)
       unit.push(`<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" stroke="${theme.border}88" stroke-width="1.5"/>`)
       unit.push(`<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="14" fill="${theme.muted}" stroke="${theme.accent}88" stroke-width="1.2">${itemTitleTag(sub)}</circle>`)
-      unit.push(aWrap(`<text x="${sx.toFixed(1)}" y="${(sy + 3.5).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.text}" font-family="system-ui,sans-serif">${tt(subDisplay, 9, sub)}</text>`, subUrl))
+      unit.push(aWrap(`<text x="${sx.toFixed(1)}" y="${(sy + 3.5).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.text}" ${FONT_SANS_ATTR}>${tt(subDisplay, 9, sub)}</text>`, subUrl))
     }
     const { display: brDisplay, url: brUrl } = displayLabel(branch)
     unit.push(`<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="22" fill="${theme.primary}" stroke="${theme.bg}" stroke-width="2">${itemTitleTag(branch)}</circle>`)
     const ws = brDisplay.split(' ')
     if (ws.length === 1) {
-      unit.push(aWrap(`<text x="${bx.toFixed(1)}" y="${(by + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.bg}" font-weight="700" font-family="system-ui,sans-serif">${tt(brDisplay, 9, branch)}</text>`, brUrl))
+      unit.push(aWrap(`<text x="${bx.toFixed(1)}" y="${(by + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.bg}" font-weight="700" ${FONT_SANS_ATTR}>${tt(brDisplay, 9, branch)}</text>`, brUrl))
     } else {
       const m = Math.ceil(ws.length / 2)
-      unit.push(aWrap(`<text x="${bx.toFixed(1)}" y="${(by - 1).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.bg}" font-weight="700" font-family="system-ui,sans-serif">${tt(ws.slice(0,m).join(' '), 9)}</text><text x="${bx.toFixed(1)}" y="${(by + 9).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.bg}" font-weight="700" font-family="system-ui,sans-serif">${tt(ws.slice(m).join(' '), 9)}</text>`, brUrl))
+      unit.push(aWrap(`<text x="${bx.toFixed(1)}" y="${(by - 1).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.bg}" font-weight="700" ${FONT_SANS_ATTR}>${tt(ws.slice(0,m).join(' '), 9)}</text><text x="${bx.toFixed(1)}" y="${(by + 9).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.bg}" font-weight="700" ${FONT_SANS_ATTR}>${tt(ws.slice(m).join(' '), 9)}</text>`, brUrl))
     }
     parts.push(wrapItem(unit.join(''), i + 1, animate, instrument))
   }
@@ -53,11 +53,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   centerUnit.push(`<circle cx="${cx}" cy="${cy}" r="32" fill="${theme.accent}" stroke="${theme.bg}" stroke-width="2"/>`)
   const cw = centerLabel.split(' ')
   if (cw.length === 1) {
-    centerUnit.push(`<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="11" fill="${theme.bg}" font-weight="700" font-family="system-ui,sans-serif">${tt(centerLabel, 12)}</text>`)
+    centerUnit.push(`<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="11" fill="${theme.bg}" font-weight="700" ${FONT_SANS_ATTR}>${tt(centerLabel, 12)}</text>`)
   } else {
     const m = Math.ceil(cw.length / 2)
-    centerUnit.push(`<text x="${cx}" y="${cy - 2}" text-anchor="middle" font-size="10" fill="${theme.bg}" font-weight="700" font-family="system-ui,sans-serif">${tt(cw.slice(0,m).join(' '), 12)}</text>`)
-    centerUnit.push(`<text x="${cx}" y="${cy + 11}" text-anchor="middle" font-size="10" fill="${theme.bg}" font-weight="700" font-family="system-ui,sans-serif">${tt(cw.slice(m).join(' '), 12)}</text>`)
+    centerUnit.push(`<text x="${cx}" y="${cy - 2}" text-anchor="middle" font-size="10" fill="${theme.bg}" font-weight="700" ${FONT_SANS_ATTR}>${tt(cw.slice(0,m).join(' '), 12)}</text>`)
+    centerUnit.push(`<text x="${cx}" y="${cy + 11}" text-anchor="middle" font-size="10" fill="${theme.bg}" font-weight="700" ${FONT_SANS_ATTR}>${tt(cw.slice(m).join(' '), 12)}</text>`)
   }
   parts.unshift(wrapItem(centerUnit.join(''), 0, animate, instrument))
   if (animate) parts.unshift(seqSpotlightCSS(n + 1, spec, { scale: false }))

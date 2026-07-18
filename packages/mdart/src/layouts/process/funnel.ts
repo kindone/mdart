@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 /** Parse a strictly-numeric string (allowing commas, underscores, whitespace). */
 function parseNum(s: string): number | null {
@@ -75,7 +75,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const instrument = shouldInstrument()
   let svg = ''
   if (spec.title) {
-    svg += `<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svg += `<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   for (let i = 0; i < n; i++) {
@@ -116,11 +116,11 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       let capContent = capTip
       capLines.forEach((line, li) => {
         const ty = bandCy - totalH / 2 + li * captionFit.lineHeight + captionFit.lineHeight * 0.8
-        capContent += `<text x="${bandCx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${captionFit.fontSize}" fill="#fff" fill-opacity="0.85" font-family="system-ui,sans-serif" font-weight="700" letter-spacing="0.08em">${escapeXml(line)}</text>`
+        capContent += `<text x="${bandCx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${captionFit.fontSize}" fill="#fff" fill-opacity="0.85" ${FONT_SANS_ATTR} font-weight="700" letter-spacing="0.08em">${escapeXml(line)}</text>`
       })
       nodeStr += aWrap(capContent, itmUrl)
       const metTy = bandCy - totalH / 2 + capLines.length * captionFit.lineHeight + metricFit.lineHeight * 0.8
-      nodeStr += `${metTip}<text x="${bandCx}" y="${metTy.toFixed(1)}" text-anchor="middle" font-size="${metricFit.fontSize}" fill="#fff" font-family="system-ui,sans-serif" font-weight="800" letter-spacing="0.02em">${escapeXml(metLines[0])}</text>`
+      nodeStr += `${metTip}<text x="${bandCx}" y="${metTy.toFixed(1)}" text-anchor="middle" font-size="${metricFit.fontSize}" fill="#fff" ${FONT_SANS_ATTR} font-weight="800" letter-spacing="0.02em">${escapeXml(metLines[0])}</text>`
     } else {
       const labelFit = fitTextToWidthShared([itmDisplay], bandW, { maxSize: 13, minSize: 6.5, maxLines: 2, boxH: bandBoxH })
       const { lines, truncated } = labelFit.results[0]
@@ -129,7 +129,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       let lblContent = tip
       lines.forEach((line, li) => {
         const ty = bandCy - totalH / 2 + li * labelFit.lineHeight + labelFit.lineHeight * 0.8
-        lblContent += `<text x="${bandCx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFit.fontSize}" fill="#fff" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(line)}</text>`
+        lblContent += `<text x="${bandCx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFit.fontSize}" fill="#fff" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(line)}</text>`
       })
       nodeStr += aWrap(lblContent, itmUrl)
     }
@@ -138,7 +138,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       if (prev.num !== null && m.num !== null && prev.num > 0) {
         const pct      = (m.num / prev.num) * 100
         const pctText  = pct >= 10 ? `${Math.round(pct)}%` : `${pct.toFixed(1)}%`
-        nodeStr += `<text x="${W - 8}" y="${(y + STEP_H / 2 + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="700">↓ ${pctText}</text>`
+        nodeStr += `<text x="${W - 8}" y="${(y + STEP_H / 2 + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="${theme.accent}" ${FONT_SANS_ATTR} font-weight="700">↓ ${pctText}</text>`
       }
     }
     svg += wrapItem(nodeStr, i, animate, instrument)

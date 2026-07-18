@@ -37,6 +37,10 @@ export type SvgIssueCode =
   | 'SVG_ITEM_NO_TITLE'
   /** An element coordinate falls meaningfully outside the declared `viewBox`. */
   | 'SVG_OVERFLOW'
+  /** A debug text box extends beyond its paired debug shape container. */
+  | 'SVG_TEXT_BOX_ESCAPES_SHAPE'
+  /** A layout text budget is suspiciously small compared to its shape container. */
+  | 'SVG_TEXT_BOX_UNDERFILLS_SHAPE'
 
 export type SvgIssueLevel = 'error' | 'warning'
 
@@ -90,6 +94,9 @@ export function checkSvg(svg: string, options?: CheckOptions): SvgIssue[] {
   if (!skip.has('SVG_UNDEFINED_ATTR')) all.push(..._checkUndefinedAttr(svg))
   if (!skip.has('SVG_ITEM_NO_TITLE'))  all.push(..._checkItemTitles(svg))
   if (!skip.has('SVG_OVERFLOW'))       all.push(..._checkOverflow(svg))
+  if (!skip.has('SVG_TEXT_BOX_ESCAPES_SHAPE') || !skip.has('SVG_TEXT_BOX_UNDERFILLS_SHAPE')) {
+    all.push(..._checkTextShapeBounds(svg, skip))
+  }
 
   const filtered = minLevel === 'error'
     ? all.filter(i => i.level === 'error')
@@ -269,4 +276,133 @@ function _checkOverflow(svg: string): SvgIssue[] {
   }
 
   return []
+}
+
+// ── Text/shape debug bounds ──────────────────────────────────────────────────
+
+interface DebugRect {
+  x: number
+  y: number
+  w: number
+  h: number
+  label: string
+  pairId?: string
+}
+
+const TEXT_ESCAPE_TOLERANCE = 2
+const TEXT_UNDERFILL_AREA_RATIO = 0.34
+const TEXT_UNDERFILL_WIDTH_RATIO = 0.62
+const TEXT_UNDERFILL_HEIGHT_RATIO = 0.62
+
+function _checkTextShapeBounds(svg: string, skip: Set<SvgIssueCode>): SvgIssue[] {
+  const shapes = parseDebugRects(svg, 'shape-bounds')
+  if (shapes.length === 0) return []
+
+  const textRects = parseDebugRects(svg, 'text-bounds')
+  if (textRects.length === 0) return []
+
+  const issues: SvgIssue[] = []
+  for (const text of textRects) {
+    const shape = findEnclosingShape(text, shapes)
+    if (!shape) continue
+
+    if (!skip.has('SVG_TEXT_BOX_ESCAPES_SHAPE') && escapesShape(text, shape, TEXT_ESCAPE_TOLERANCE)) {
+      issues.push({
+        code: 'SVG_TEXT_BOX_ESCAPES_SHAPE',
+        level: 'error',
+        message: `Text box "${text.label}" extends outside shape "${shape.label}"`,
+      })
+    }
+
+    if (!skip.has('SVG_TEXT_BOX_UNDERFILLS_SHAPE') && text.label !== 'text-element' && underfillsShape(text, shape)) {
+      const areaRatio = (text.w * text.h) / (shape.w * shape.h)
+      issues.push({
+        code: 'SVG_TEXT_BOX_UNDERFILLS_SHAPE',
+        level: 'warning',
+        message: `Text budget "${text.label}" uses only ${(areaRatio * 100).toFixed(0)}% of shape "${shape.label}"`,
+      })
+    }
+  }
+
+  return issues
+}
+
+function parseDebugRects(svg: string, debugKind: 'text-bounds' | 'shape-bounds'): DebugRect[] {
+  const rects: DebugRect[] = []
+  const rectRe = /<rect\b[^>]*(?:\/>|>[\s\S]*?<\/rect>)/g
+  for (const match of svg.matchAll(rectRe)) {
+    const rect = match[0]
+    if (!rect.includes(`data-mdart-debug="${debugKind}"`)) continue
+    const x = numberAttr(rect, 'x')
+    const y = numberAttr(rect, 'y')
+    const w = numberAttr(rect, 'width')
+    const h = numberAttr(rect, 'height')
+    if (x === null || y === null || w === null || h === null || w <= 0 || h <= 0) continue
+    rects.push({
+      x,
+      y,
+      w,
+      h,
+      label: stringAttr(rect, 'data-mdart-debug-label') ?? debugKind,
+      pairId: stringAttr(rect, 'data-mdart-debug-pair') ?? undefined,
+    })
+  }
+  return rects
+}
+
+function findEnclosingShape(text: DebugRect, shapes: DebugRect[]): DebugRect | null {
+  if (text.pairId) {
+    return shapes.find(shape => shape.pairId === text.pairId) ?? null
+  }
+  if (text.label === 'text-element') return null
+
+  const cx = text.x + text.w / 2
+  const cy = text.y + text.h / 2
+  let best: DebugRect | null = null
+  let bestArea = Number.POSITIVE_INFINITY
+
+  for (const shape of shapes) {
+    if (cx < shape.x || cx > shape.x + shape.w || cy < shape.y || cy > shape.y + shape.h) continue
+    const area = shape.w * shape.h
+    if (area < bestArea) {
+      best = shape
+      bestArea = area
+    }
+  }
+  return best
+}
+
+function escapesShape(text: DebugRect, shape: DebugRect, tol: number): boolean {
+  return text.x < shape.x - tol ||
+    text.y < shape.y - tol ||
+    text.x + text.w > shape.x + shape.w + tol ||
+    text.y + text.h > shape.y + shape.h + tol
+}
+
+function underfillsShape(text: DebugRect, shape: DebugRect): boolean {
+  const widthRatio = text.w / shape.w
+  const heightRatio = text.h / shape.h
+  const areaRatio = (text.w * text.h) / (shape.w * shape.h)
+  return areaRatio < TEXT_UNDERFILL_AREA_RATIO &&
+    widthRatio < TEXT_UNDERFILL_WIDTH_RATIO &&
+    heightRatio < TEXT_UNDERFILL_HEIGHT_RATIO
+}
+
+function numberAttr(attrs: string, name: string): number | null {
+  const raw = stringAttr(attrs, name)
+  if (raw === null) return null
+  const n = Number.parseFloat(raw)
+  return Number.isFinite(n) ? n : null
+}
+
+function stringAttr(attrs: string, name: string): string | null {
+  const escaped = escapeRegExp(name)
+  const quoted = attrs.match(new RegExp(`\\b${escaped}=(["'])(.*?)\\1`))
+  if (quoted) return quoted[2]
+  const unquoted = attrs.match(new RegExp(`\\b${escaped}=([^\\s>]+)`))
+  return unquoted?.[1] ?? null
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

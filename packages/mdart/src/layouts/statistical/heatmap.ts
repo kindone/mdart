@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, centeredTextY, renderWrappedText, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, centeredTextY, renderWrappedText, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -88,7 +88,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const colX = LABEL_W + c * CELL_W
     headerUnit.push(`<rect x="${colX}" y="${TITLE_H}" width="${CELL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
     headerUnit.push(textBlock(colX + CELL_W / 2, TITLE_H, HEADER_H, colHeaderFits[c],
-      `text-anchor="middle" font-size="${colHeaderFits[c].fontSize}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
+      `text-anchor="middle" font-size="${colHeaderFits[c].fontSize}" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600"`,
       colHeaders[c]))
   }
   parts.push(wrapItem(headerUnit.join(''), 0, animate, instrument))
@@ -100,7 +100,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const { display: rowDisplay, url: rowUrl } = rowDisplays[r]
     unit.push(`<rect x="0" y="${y}" width="${LABEL_W}" height="${rowH}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`)
     unit.push(aWrap(textBlock(8, y, rowH, rowLabelFits[r],
-      `font-size="${rowLabelFits[r].fontSize}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600"`,
+      `font-size="${rowLabelFits[r].fontSize}" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600"`,
       rowDisplay), rowUrl))
     row.children.slice(0, numCols).forEach((cell, c) => {
       const colX = LABEL_W + c * CELL_W
@@ -114,7 +114,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const fit = cellFits[r][c]
       if (fit) {
         unit.push(textBlock(colX + CELL_W / 2, y, rowH, fit,
-          `text-anchor="middle" font-size="${fit.fontSize}" fill="${textFill}" font-family="system-ui,sans-serif"`,
+          `text-anchor="middle" font-size="${fit.fontSize}" fill="${textFill}" ${FONT_SANS_ATTR}`,
           cellText))
       }
     })

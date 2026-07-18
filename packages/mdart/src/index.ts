@@ -12,7 +12,7 @@ export { configureMdArt, resetMdArtConfig }      from './config'
 export { validateMdArt }                         from './validator'
 export type { MdArtSpec, MdArtItem }             from './parser'
 export type { MdArtTheme }                       from './theme'
-export type { MdArtConfig }                      from './config'
+export type { MdArtConfig, TextBoundsDebugMode } from './config'
 export type {
   ValidationIssue,
   ValidationCode,

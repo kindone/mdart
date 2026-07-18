@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, svgWrap, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument } from '../shared'
+import { lerpColor, svgWrap, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 /** Radial clearance from centre of a box to its silhouette edge at angle `a`. */
 function boxRadius(hw: number, hh: number, a: number): number {
@@ -111,7 +111,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     // Box + label text wrapped in aWrap for clickable node
     let nodeContent = `<rect x="${rx}" y="${ry}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${fill}28" stroke="${fill}" stroke-width="1.8">${itemTitleTag(item)}</rect>`
-    nodeContent += `<text x="${badgeX}" y="${badgeY}" font-size="8" fill="${fill}" font-family="system-ui,sans-serif" font-weight="800" opacity="0.85">${i + 1}</text>`
+    nodeContent += `<text x="${badgeX}" y="${badgeY}" font-size="8" fill="${fill}" ${FONT_SANS_ATTR} font-weight="800" opacity="0.85">${i + 1}</text>`
     nodeContent += renderFitBlock(bx, by, fit, {
       labelFullText: itemLabel,
       valueFullText: item.value,
@@ -119,6 +119,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       valueFill: theme.text,
       labelWeight: '600',
       valueExtraAttrs: 'opacity="0.7"',
+      shapeBounds: { x: bx - hw, y: by - hh, w: BOX_W, h: BOX_H, label: 'circular-node' },
     })
     const nodeEl = aWrap(nodeContent, url)
     parts.push(wrapItem(nodeEl, i, animate, instrument))

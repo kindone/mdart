@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
@@ -87,7 +87,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const arrEl = `<path d="M${x1.toFixed(1)},${sy} C${x1.toFixed(1)},${dip.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}" fill="none" stroke="${theme.accent}" stroke-width="${returnStroke}" stroke-dasharray="5,4" opacity="0.7" marker-end="url(#lp-ret)"/>`
     // "↺ loop" label at the arc's lowest point
     const labelY = dip + 13
-    const labelEl = `<text x="${(W / 2).toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-style="italic" opacity="0.85">&#x21BA; loop</text>`
+    const labelEl = `<text x="${(W / 2).toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-style="italic" opacity="0.85">&#x21BA; loop</text>`
     const returnEl = arrEl + labelEl
     parts.push(animate ? `<g class="mdart-arr-n${n}">${returnEl}</g>` : returnEl)
   }
@@ -127,7 +127,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     let lblContent = tip
     lines.forEach((line, li) => {
       const ty = rowY - totalH / 2 + li * labelLH + labelLH * 0.8
-      lblContent += `<text x="${x.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" font-weight="700" font-family="system-ui,sans-serif" fill="#ffffff" ${halo}>${escapeXml(line)}</text>`
+      lblContent += `<text x="${x.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" font-weight="700" ${FONT_SANS_ATTR} fill="#ffffff" ${halo}>${escapeXml(line)}</text>`
     })
 
     // Step-number badge (top-right of node) — visually part of the node
@@ -138,7 +138,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     nodeStr += `<circle cx="${x.toFixed(1)}" cy="${rowY}" r="${nodeR}" fill="${fill}" stroke="${theme.bg}" stroke-width="2.5">${itemTitleTag(item)}</circle>`
     nodeStr += aWrap(lblContent, lblUrl)
     nodeStr += `<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="7" fill="${theme.bg}" stroke="${fill}" stroke-width="1.5"/>`
-    nodeStr += `<text x="${bx.toFixed(1)}" y="${(by + 3.5).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui,sans-serif" fill="${fill}">${i + 1}</text>`
+    nodeStr += `<text x="${bx.toFixed(1)}" y="${(by + 3.5).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" ${FONT_SANS_ATTR} fill="${fill}">${i + 1}</text>`
 
     // Value caption below the circle — rendered in the space between the node
     // and the return arc (dipAmt gives ample vertical clearance).
@@ -150,7 +150,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const valSpans = valLines
         .map((line, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : valLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
         .join('')
-      nodeStr += `${valTip}<text x="${x.toFixed(1)}" y="${valStartY.toFixed(1)}" text-anchor="middle" font-size="${valFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${valSpans}</text>`
+      nodeStr += `${valTip}<text x="${x.toFixed(1)}" y="${valStartY.toFixed(1)}" text-anchor="middle" font-size="${valFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${valSpans}</text>`
     }
 
     parts.push(wrapItem(nodeStr, i, animate, instrument))

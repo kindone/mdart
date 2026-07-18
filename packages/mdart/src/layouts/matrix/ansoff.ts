@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, parseLink, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, renderWrappedText, centeredTextY, type ItemLike, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, parseLink, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, renderWrappedText, centeredTextY, type ItemLike, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 const ANSOFF_QUADS = [
   { key: 'penetration',     keywords: ['penetrat'],                                label: 'Market Penetration',  sub: 'Existing product · Existing market', fill: '#047857', text: '#ffffff' },  // emerald-700
@@ -39,7 +39,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const AX = 20, H = TITLE_H + CELL_H * 2 + AX
   let svgContent = ''
   if (spec.title) {
-    svgContent += `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`
+    svgContent += `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`
   }
 
   const positions = [[0, 0], [1, 0], [0, 1], [1, 1]]
@@ -54,7 +54,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     unit.push(renderWrappedText(
       x + CELL_W / 2,
       centeredTextY(y + 8, 24, headerFit.results[0].lines.length, headerFit.lineHeight),
-      `text-anchor="middle" font-size="${headerFit.fontSize}" fill="${text}" font-family="system-ui,sans-serif" font-weight="700"`,
+      `text-anchor="middle" font-size="${headerFit.fontSize}" fill="${text}" ${FONT_SANS_ATTR} font-weight="700"`,
       q.label,
       headerFit.results[0],
       headerFit.lineHeight,
@@ -63,7 +63,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     unit.push(renderWrappedText(
       x + CELL_W / 2,
       centeredTextY(y + 34, 18, subFit.results[0].lines.length, subFit.lineHeight),
-      `text-anchor="middle" font-size="${subFit.fontSize}" fill="${text}" font-family="system-ui,sans-serif" opacity="0.65"`,
+      `text-anchor="middle" font-size="${subFit.fontSize}" fill="${text}" ${FONT_SANS_ATTR} opacity="0.65"`,
       q.sub,
       subFit.results[0],
       subFit.lineHeight,
@@ -74,7 +74,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       unit.push(renderWrappedText(
         x + 10,
         y + 62 + j * 25,
-        `font-size="${bulletFit.fontSize}" fill="${text}" font-family="system-ui,sans-serif" opacity="0.9"`,
+        `font-size="${bulletFit.fontSize}" fill="${text}" ${FONT_SANS_ATTR} opacity="0.9"`,
         bulletText,
         { ...bulletFit.results[0], url: lblUrl },
         bulletFit.lineHeight,
@@ -88,8 +88,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   svgContent += `<line x1="0" y1="${TITLE_H + CELL_H}" x2="${W}" y2="${TITLE_H + CELL_H}" stroke="${theme.bg}" stroke-width="2"/>`
   // Axis labels
   const axY = TITLE_H + CELL_H * 2 + 14
-  svgContent += `<text x="${CELL_W / 2}" y="${axY}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">Existing Products</text>`
-  svgContent += `<text x="${CELL_W + CELL_W / 2}" y="${axY}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" font-family="system-ui,sans-serif">New Products →</text>`
+  svgContent += `<text x="${CELL_W / 2}" y="${axY}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>Existing Products</text>`
+  svgContent += `<text x="${CELL_W + CELL_W / 2}" y="${axY}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>New Products →</text>`
   if (animate) svgContent = seqSpotlightCSS(ANSOFF_QUADS.length, spec, { scale: false }) + svgContent
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">

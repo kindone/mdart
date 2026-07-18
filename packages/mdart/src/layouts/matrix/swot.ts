@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, parseLink, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, renderWrappedText, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, parseLink, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, renderWrappedText, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const animate = shouldAnimate(spec)
@@ -108,7 +108,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   let svgContent = ''
 
   if (spec.title) {
-    svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   const quadrants = [
@@ -125,7 +125,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const y = contentTop + row * CELL_H
 
     unit.push(`<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${q.fill}" />`)
-    unit.push(`<text x="${x + CELL_W / 2}" y="${y + 22}" text-anchor="middle" font-size="12" fill="${q.textColor}" font-family="system-ui,sans-serif" font-weight="700">${q.label}</text>`)
+    unit.push(`<text x="${x + CELL_W / 2}" y="${y + 22}" text-anchor="middle" font-size="12" fill="${q.textColor}" ${FONT_SANS_ATTR} font-weight="700">${q.label}</text>`)
 
     const maxItems = Math.min(q.items.length, 5)
     for (let i = 0; i < maxItems; i++) {
@@ -138,7 +138,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       unit.push(renderWrappedText(
         x + 10,
         itemY,
-        `font-size="${bulletFit.fontSize}" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.85"`,
+        `font-size="${bulletFit.fontSize}" fill="${q.textColor}" ${FONT_SANS_ATTR} opacity="0.85"`,
         bulletText,
         { ...bulletFit.results[0], url: itUrl },
         bulletFit.lineHeight,
@@ -147,7 +147,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     }
 
     if (q.items.length > 5) {
-      unit.push(`<text x="${x + 10}" y="${y + 44 + 5 * 25}" font-size="9" fill="${q.textColor}" font-family="system-ui,sans-serif" opacity="0.6">+${q.items.length - 5} more</text>`)
+      unit.push(`<text x="${x + 10}" y="${y + 44 + 5 * 25}" font-size="9" fill="${q.textColor}" ${FONT_SANS_ATTR} opacity="0.6">+${q.items.length - 5} more</text>`)
     }
     svgContent += wrapItem(unit.join(''), quadrants.findIndex(qd => qd.key === key), animate, instrument)
   }

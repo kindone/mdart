@@ -1,6 +1,6 @@
 // Feature:     checkSvg heuristic checker
-// Arch/Design: All checks operate on the raw SVG string. Six codes; four are
-//              errors, two are warnings. Results are sorted errors-first.
+// Arch/Design: All checks operate on the raw SVG string. Results are sorted
+//              errors-first.
 //              Per-item checks require instrumentation (data-item-index) to fire;
 //              without it SVG_ITEM_NO_TITLE is silently skipped.
 // Spec:        ∀ svg with viewBox: SVG_NO_VIEWBOX not flagged
@@ -13,6 +13,8 @@
 //              ∀ visual attr with valid value: SVG_UNDEFINED_ATTR not flagged
 //              ∀ coord within viewBox ±20px: SVG_OVERFLOW not flagged
 //              ∀ coord > viewBox + 20px: SVG_OVERFLOW flagged
+//              ∀ debug shape/text pairs: escaping text and underfilled layout
+//                budgets are flagged
 //              ∀ skip=[codes]: none of those codes appear in results
 //              ∀ spec: |warning| ≥ |error| (minLevel monotonicity)
 //              ∀ results: all errors appear before all warnings
@@ -20,7 +22,7 @@
 // @type:       property
 // @mode:       verification
 
-import { describe, it, afterEach } from 'vitest'
+import { describe, it, afterEach, expect } from 'vitest'
 import { forAll, Gen } from 'jsproptest'
 import { checkSvg } from '../heuristics'
 import type { SvgIssueCode } from '../heuristics'
@@ -271,6 +273,44 @@ describe('SVG_OVERFLOW', () => {
 
 })
 
+// ── SVG_TEXT_BOX_* ───────────────────────────────────────────────────────────
+
+describe('SVG_TEXT_BOX debug bounds', () => {
+
+  it('flags text boxes that escape their debug shape container', () => {
+    const svg = svgWith('0 0 200 120', `
+      <rect data-mdart-debug="shape-bounds" data-mdart-debug-label="node" x="40" y="20" width="100" height="60"/>
+      <rect data-mdart-debug="text-bounds" data-mdart-debug-label="fit-block" x="30" y="30" width="80" height="30"/>
+      <rect x="40" y="20" width="100" height="60"/>
+    `)
+
+    expect(checkSvg(svg).some(i => i.code === 'SVG_TEXT_BOX_ESCAPES_SHAPE' && i.level === 'error')).toBe(true)
+  })
+
+  it('warns when layout text budget is much smaller than the shape container', () => {
+    const svg = svgWith('0 0 200 120', `
+      <rect data-mdart-debug="shape-bounds" data-mdart-debug-label="node" x="40" y="20" width="100" height="60"/>
+      <rect data-mdart-debug="text-bounds" data-mdart-debug-label="fit-block" x="75" y="42" width="20" height="10"/>
+      <rect x="40" y="20" width="100" height="60"/>
+    `)
+
+    expect(checkSvg(svg).some(i => i.code === 'SVG_TEXT_BOX_UNDERFILLS_SHAPE' && i.level === 'warning')).toBe(true)
+  })
+
+  it('does not warn for a reasonable text budget inside the shape container', () => {
+    const svg = svgWith('0 0 200 120', `
+      <rect data-mdart-debug="shape-bounds" data-mdart-debug-label="node" x="40" y="20" width="100" height="60"/>
+      <rect data-mdart-debug="text-bounds" data-mdart-debug-label="fit-block" x="52" y="28" width="76" height="44"/>
+      <rect x="40" y="20" width="100" height="60"/>
+    `)
+
+    const issues = checkSvg(svg)
+    expect(issues.some(i => i.code === 'SVG_TEXT_BOX_ESCAPES_SHAPE')).toBe(false)
+    expect(issues.some(i => i.code === 'SVG_TEXT_BOX_UNDERFILLS_SHAPE')).toBe(false)
+  })
+
+})
+
 // ── CheckOptions: skip and minLevel ───────────────────────────────────────────
 
 describe('CheckOptions', () => {
@@ -279,6 +319,7 @@ describe('CheckOptions', () => {
     const ALL_CODES: SvgIssueCode[] = [
       'SVG_NO_VIEWBOX', 'SVG_EMPTY_CONTENT', 'SVG_NAN_COORD',
       'SVG_UNDEFINED_ATTR', 'SVG_ITEM_NO_TITLE', 'SVG_OVERFLOW',
+      'SVG_TEXT_BOX_ESCAPES_SHAPE', 'SVG_TEXT_BOX_UNDERFILLS_SHAPE',
     ]
     // SVG that could trigger many checks
     const svg = '<svg><rect x="NaN" fill="undefined"/></svg>'

@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, tt, lerpColor, renderEmpty, parseLink, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 /**
  * segmented-pyramid — classic pyramid shape but each layer is a visually
@@ -27,7 +27,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   if (spec.title) {
     parts.push(
-      `<text x="${cx}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`
+      `<text x="${cx}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`
     )
   }
 
@@ -74,13 +74,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const labelWithValue = ellipsisIfDropped(baseWithValue, item, { value: true })
 
     unit.push(
-      aWrap(`<text x="${cx.toFixed(1)}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tt(labelWithValue, maxChars)}</text>`, lblUrl)
+      aWrap(`<text x="${cx.toFixed(1)}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="${theme.bg}" ${FONT_SANS_ATTR}>${tt(labelWithValue, maxChars)}</text>`, lblUrl)
     )
 
     if (midW < 70) {
       const sideX = cx + Math.max(topW, botW) / 2 + 8
       unit.push(
-        aWrap(`<text x="${sideX.toFixed(1)}" y="${textY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(labelWithValue, 24)}</text>`, lblUrl)
+        aWrap(`<text x="${sideX.toFixed(1)}" y="${textY.toFixed(1)}" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${tt(labelWithValue, 24)}</text>`, lblUrl)
       )
     }
     parts.push(wrapItem(unit.join(''), i, animate, instrument))

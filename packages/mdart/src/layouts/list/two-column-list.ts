@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   let svgContent = ''
 
   if (spec.title) {
-    svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svgContent += `<text x="${W / 2}" y="${PAD + 16}" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   svgContent += `<line x1="${HALF}" y1="${PAD + titleH}" x2="${HALF}" y2="${H - PAD}" stroke="${theme.border}" stroke-width="1" />`
@@ -113,7 +113,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${colStartX + COL_TEXTX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    str += aWrap(`<text x="${colStartX + COL_TEXTX}" y="${lblY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
+    str += aWrap(`<text x="${colStartX + COL_TEXTX}" y="${lblY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
 
     if (capLines.length > 0) {
       const capY   = lblY + lblLines.length * LBL_LH + SEC_G
@@ -121,7 +121,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const capSpans = capLines
         .map((l, li) => `<tspan x="${colStartX + COL_TEXTX}" dy="${li === 0 ? 0 : CAP_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      str += `<text x="${colStartX + COL_TEXTX}" y="${capY.toFixed(1)}" font-size="${CAP_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${capTip}${capSpans}</text>`
+      str += `<text x="${colStartX + COL_TEXTX}" y="${capY.toFixed(1)}" font-size="${CAP_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${capTip}${capSpans}</text>`
     }
     return str
   }

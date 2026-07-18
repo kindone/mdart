@@ -69,6 +69,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     nodeStr += renderFitBlock(x, y, fit, {
       labelFullText: lblDisplay, labelFill: '#ffffff', valueFill: '#ffffff',
       labelWeight: '600', extraAttrs: halo,
+      shapeBounds: { x: x - nodeR, y: y - nodeR, w: nodeR * 2, h: nodeR * 2, label: 'cycle-node' },
     })
     parts.push(wrapItem(nodeStr, i, animate, instrument))
   }

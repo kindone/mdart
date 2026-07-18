@@ -1,6 +1,6 @@
 import type { MdArtSpec, MdArtItem } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, truncate, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS } from '../shared'
+import { escapeXml, truncate, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, FONT_SANS_ATTR } from '../shared'
 
 /**
  * Unified Venn renderer.
@@ -21,7 +21,7 @@ const SEP_RE = /\s*∩\s*|\s*&&\s*/
 
 function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -138,7 +138,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   if (n === 0) {
     return `<svg viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  <text x="150" y="42" text-anchor="middle" font-size="12" fill="${theme.textMuted}" font-family="system-ui,sans-serif">No items</text>
+  <text x="150" y="42" text-anchor="middle" font-size="12" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>No items</text>
 </svg>`
   }
 
@@ -173,7 +173,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblSpans = lblLines
       .map((l, li) => `<tspan x="${lx.toFixed(1)}" dy="${li === 0 ? 0 : lblLineH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(aWrap(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl))
+    parts.push(aWrap(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl))
     const maxChildren  = n === 2 ? 4 : 2
     const childGap     = n === 2 ? 12 : 14
     const childSpacing = n === 2 ? 16 : 13
@@ -185,7 +185,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const max = n === 2 ? 18 : 10
       const trunc = truncate(ch.label, max)
       const chTip = trunc !== ch.label ? `<title>${escapeXml(ch.label)}</title>` : ''
-      parts.push(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${(childBaseY + j * childSpacing).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${chTip}${escapeXml(trunc)}</text>`)
+      parts.push(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${(childBaseY + j * childSpacing).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${chTip}${escapeXml(trunc)}</text>`)
     })
   })
 
@@ -222,7 +222,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const tspans  = lines
       .map((line, li) => `<tspan x="${pos.x.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(line)}</tspan>`)
       .join('')
-    parts.push(`<text class="${animate ? `mdart-n${n + i}` : ''}" x="${pos.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.accent}" font-family="system-ui,sans-serif" font-weight="${fw}">${tip}${tspans}</text>`)
+    parts.push(`<text class="${animate ? `mdart-n${n + i}` : ''}" x="${pos.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.accent}" ${FONT_SANS_ATTR} font-weight="${fw}">${tip}${tspans}</text>`)
 
     // Remaining intersection children rendered in the overlap zone below the
     // primary label. Cap at 3 for n=2 (tall lens), 1 for n≥3 (tiny centre).
@@ -233,7 +233,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     childrenToShow.slice(0, ixChMax).forEach((ch, j) => {
       const trunc = truncate(ch.label, ixChW)
       const chTip = trunc !== ch.label ? `<title>${escapeXml(ch.label)}</title>` : ''
-      parts.push(`<text class="${animate ? `mdart-n${n + i}` : ''}" x="${pos.x.toFixed(1)}" y="${(ixChBaseY + j * ixChLH).toFixed(1)}" text-anchor="middle" font-size="${ixChFS}" fill="${theme.accent}" opacity="0.75" font-family="system-ui,sans-serif">${chTip}${escapeXml(trunc)}</text>`)
+      parts.push(`<text class="${animate ? `mdart-n${n + i}` : ''}" x="${pos.x.toFixed(1)}" y="${(ixChBaseY + j * ixChLH).toFixed(1)}" text-anchor="middle" font-size="${ixChFS}" fill="${theme.accent}" opacity="0.75" ${FONT_SANS_ATTR}>${chTip}${escapeXml(trunc)}</text>`)
     })
   })
 

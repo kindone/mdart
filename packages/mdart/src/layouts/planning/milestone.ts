@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -53,7 +53,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
     const titleEl = title
-      ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+      ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
       : ''
     return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -85,7 +85,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     unit.push(`<rect x="${(LINE_X - s).toFixed(1)}" y="${(cy - s).toFixed(1)}" width="${(s * 2).toFixed(1)}" height="${(s * 2).toFixed(1)}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" transform="rotate(45 ${LINE_X} ${cy})">${itemTitleTag(item)}</rect>`)
     if (done) {
-      unit.push(`<text x="${LINE_X}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.bg}" font-family="system-ui,sans-serif" font-weight="700">✓</text>`)
+      unit.push(`<text x="${LINE_X}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.bg}" ${FONT_SANS_ATTR} font-weight="700">✓</text>`)
     }
 
     const labelColor = upcoming ? theme.textMuted : theme.text
@@ -97,13 +97,13 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const lblSpans  = lblLines
       .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    unit.push(aWrap(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${labelColor}" font-family="system-ui,sans-serif" font-weight="${fw}">${lblTip}${lblSpans}</text>`, lblUrl))
+    unit.push(aWrap(`<text x="${textX}" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${labelColor}" ${FONT_SANS_ATTR} font-weight="${fw}">${lblTip}${lblSpans}</text>`, lblUrl))
 
     // Status tag on the right
     const tag    = done ? 'Done' : active ? 'In Progress' : (item.value ?? 'Upcoming')
     const tagCol = done ? theme.accent : active ? '#fbbf24' : theme.textMuted
     const tagTip = tag.length > 16 ? `<title>${escapeXml(tag)}</title>` : ''
-    unit.push(`<text x="${W - 10}" y="${(cy + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${tagCol}" font-family="system-ui,sans-serif">${tagTip}${escapeXml(tag.slice(0, 16))}</text>`)
+    unit.push(`<text x="${W - 10}" y="${(cy + 4).toFixed(1)}" text-anchor="end" font-size="9" fill="${tagCol}" ${FONT_SANS_ATTR}>${tagTip}${escapeXml(tag.slice(0, 16))}</text>`)
     parts.push(wrapItem(unit.join(''), i + 1, animate, instrument))
   })
 

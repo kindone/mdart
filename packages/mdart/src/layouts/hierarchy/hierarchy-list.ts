@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 // hierarchy-list renders a compact tree outline; rows are intentionally tight.
@@ -46,7 +46,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const parts: string[] = []
   if (spec.title) {
-    parts.push(`<text x="${PAD}" y="20" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`)
+    parts.push(`<text x="${PAD}" y="20" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`)
   }
 
   let curY = TITLE_H
@@ -81,7 +81,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const fw    = row.depth === 0 ? '700' : '400'
     const tf    = row.depth === 0 ? theme.text : row.depth === 1 ? theme.text : theme.textMuted
     const tip   = row.truncated ? `<title>${escapeXml(row.label)}</title>` : ''
-    unit.push(aWrap(`<text x="${textX.toFixed(1)}" y="${(y + 4).toFixed(1)}" font-size="${fs}" fill="${tf}" font-family="system-ui,sans-serif" font-weight="${fw}">${tip}${escapeXml(row.label)}</text>`, row.url))
+    unit.push(aWrap(`<text x="${textX.toFixed(1)}" y="${(y + 4).toFixed(1)}" font-size="${fs}" fill="${tf}" ${FONT_SANS_ATTR} font-weight="${fw}">${tip}${escapeXml(row.label)}</text>`, row.url))
     parts.push(wrapItem(unit.join(''), i, animate, instrument))
 
     curY += rowH

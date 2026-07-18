@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, lerpColor, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, lerpColor, renderEmpty, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 
@@ -150,7 +150,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const instrument = shouldInstrument()
 
   if (spec.title) {
-    parts.push(`<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`)
+    parts.push(`<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`)
   }
   parts.push(`<defs><marker id="la-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${theme.textMuted}"/></marker></defs>`)
 
@@ -171,7 +171,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       .map((line, li) => `<tspan x="24" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(line)}</tspan>`)
       .join('')
     unit.push(aWrap(
-      `<text x="24" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${lblTip}${lblSpans}</text>`,
+      `<text x="24" y="${lblStartY.toFixed(1)}" font-size="${LBL_FS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblTip}${lblSpans}</text>`,
       labelUrl,
     ))
 
@@ -207,7 +207,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
       unit.push(`<rect x="${chipX.toFixed(1)}" y="${chipTop.toFixed(1)}" width="${chipW.toFixed(1)}" height="${chipH.toFixed(1)}" rx="5" fill="${theme.surface}" stroke="${fill}66" stroke-width="1"/>`)
       unit.push(aWrap(
-        `<text x="${textCX}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${chipFS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${chipTip}${chipSpans}</text>`,
+        `<text x="${textCX}" y="${textY.toFixed(1)}" text-anchor="middle" font-size="${chipFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${chipTip}${chipSpans}</text>`,
         chip.url,
       ))
     })

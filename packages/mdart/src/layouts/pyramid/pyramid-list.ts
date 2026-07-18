@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 /**
  * pyramid-list — numbered horizontal bars, widening toward the bottom.
@@ -56,7 +56,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   if (spec.title) {
     parts.push(
-      `<text x="${cx}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(spec.title)}</text>`
+      `<text x="${cx}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`
     )
   }
 
@@ -79,7 +79,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     const badgeCy = y + ROW_H / 2
     unit.push(
       `<circle cx="${badgeCx.toFixed(1)}" cy="${badgeCy.toFixed(1)}" r="${BADGE_R}" fill="${fill}"/>`,
-      `<text x="${badgeCx.toFixed(1)}" y="${(badgeCy + 4).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="${theme.bg}" font-family="system-ui,sans-serif">${i + 1}</text>`
+      `<text x="${badgeCx.toFixed(1)}" y="${(badgeCy + 4).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="${theme.bg}" ${FONT_SANS_ATTR}>${i + 1}</text>`
     )
 
     // Label — uses the full bar width now that the value is external.
@@ -93,7 +93,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       .map((l, li) => `<tspan x="${cx.toFixed(1)}" dy="${li === 0 ? 0 : LINE_H}">${escapeXml(l)}</tspan>`)
       .join('')
     unit.push(
-      aWrap(`<text x="${cx.toFixed(1)}" y="${firstY.toFixed(1)}" text-anchor="middle" font-size="12" font-weight="600" fill="${theme.bg}" font-family="system-ui,sans-serif">${tip}${tspans}</text>`, lblUrl)
+      aWrap(`<text x="${cx.toFixed(1)}" y="${firstY.toFixed(1)}" text-anchor="middle" font-size="12" font-weight="600" fill="${theme.bg}" ${FONT_SANS_ATTR}>${tip}${tspans}</text>`, lblUrl)
     )
 
     // Value — rendered outside (right of) the bar so narrow top-tier bars
@@ -108,7 +108,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const valStartY = y + ROW_H / 2 - ((valLines.length - 1) * VAL_LH) / 2 + VAL_FS * 0.3
       valLines.forEach((vl, vli) => {
         unit.push(
-          `<text x="${valX.toFixed(1)}" y="${(valStartY + vli * VAL_LH).toFixed(1)}" text-anchor="start" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${escapeXml(vl)}</text>`
+          `<text x="${valX.toFixed(1)}" y="${(valStartY + vli * VAL_LH).toFixed(1)}" text-anchor="start" font-size="${VAL_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${escapeXml(vl)}</text>`
         )
       })
     }
@@ -122,7 +122,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         .map((l, li) => `<tspan x="${cx.toFixed(1)}" dy="${li === 0 ? 0 : DESC_LH}">${escapeXml(l)}</tspan>`)
         .join('')
       unit.push(
-        `<text x="${cx.toFixed(1)}" y="${descY.toFixed(1)}" text-anchor="middle" font-size="${DESC_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${dTip}${dSpans}</text>`
+        `<text x="${cx.toFixed(1)}" y="${descY.toFixed(1)}" text-anchor="middle" font-size="${DESC_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${dTip}${dSpans}</text>`
       )
     }
     parts.push(wrapItem(unit.join(''), i, animate, instrument))

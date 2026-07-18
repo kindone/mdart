@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 const DONE_ATTRS = ['done', '✓', 'complete']
 const isDone = (it: { attrs: string[] }) => it.attrs.some(a => DONE_ATTRS.includes(a))
@@ -106,7 +106,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const instrument = shouldInstrument()
   let svgContent = ''
   if (spec.title) {
-    svgContent += `<text x="${PAD}" y="${PAD + 16}" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`
+    svgContent += `<text x="${PAD}" y="${PAD + 16}" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
   }
 
   let yCur = PAD + titleH
@@ -139,7 +139,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const valSpans = valLines
         .map((l, li) => `<tspan x="${PAD + 26}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      valStr = aWrap(`<text x="${PAD + 26}" y="${valY}" font-size="${VAL_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${valTip}${valSpans}</text>`, valUrl)
+      valStr = aWrap(`<text x="${PAD + 26}" y="${valY}" font-size="${VAL_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${valTip}${valSpans}</text>`, valUrl)
     }
 
     // ── Subtasks ───────────────────────────────────────────────────────────────
@@ -167,7 +167,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const chSpans = chLines
         .map((l, li) => `<tspan x="${cTextX}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
         .join('')
-      subStr += `<text x="${cTextX}" y="${cLabelY}" font-size="${CHD_FS}" font-family="system-ui,sans-serif" ${cStyle}>${chTip}${chSpans}</text>`
+      subStr += `<text x="${cTextX}" y="${cLabelY}" font-size="${CHD_FS}" ${FONT_SANS_ATTR} ${cStyle}>${chTip}${chSpans}</text>`
 
       subTop += Math.max(SUB_BOX, chLines.length * VAL_LH) + SUB_GAP
     }
@@ -179,9 +179,9 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const cy = boxY + 9
       nodeStr += `<polyline points="${PAD + 4},${cy} ${PAD + 8},${cy + 4} ${PAD + 14},${cy - 4}" fill="none" stroke="${theme.accent}" stroke-width="2" stroke-linecap="round" />`
     }
-    nodeStr += aWrap(`<text x="${PAD + 26}" y="${labelY}" font-size="${LBL_FS}" font-family="system-ui,sans-serif" ${labelStyle}>${lblTip}${lblSpans}</text>`, lblUrl)
+    nodeStr += aWrap(`<text x="${PAD + 26}" y="${labelY}" font-size="${LBL_FS}" ${FONT_SANS_ATTR} ${labelStyle}>${lblTip}${lblSpans}</text>`, lblUrl)
     if (extraAttrs.length > 0) {
-      nodeStr += `<text x="${W - PAD}" y="${labelY}" text-anchor="end" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">[${extraAttrs.join(', ')}]</text>`
+      nodeStr += `<text x="${W - PAD}" y="${labelY}" text-anchor="end" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>[${extraAttrs.join(', ')}]</text>`
     }
     nodeStr += valStr + subStr
     svgContent += wrapItem(nodeStr, i, animate, instrument)

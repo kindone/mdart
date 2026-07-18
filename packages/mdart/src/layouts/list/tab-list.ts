@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag } from '../shared'
+import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, itemTitleTag, FONT_SANS_ATTR } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -75,7 +75,7 @@ function tabPanelParts(
   const titleSpans = titleLines
     .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : TITLE_LH}">${escapeXml(l)}</tspan>`)
     .join('')
-  parts.push(aWrap(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="${TITLE_FS}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${titleSpans}</text>`, titleUrl))
+  parts.push(aWrap(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="${TITLE_FS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${titleSpans}</text>`, titleUrl))
   y += titleLines.length * TITLE_LH
 
   if (valLines.length > 0) {
@@ -83,7 +83,7 @@ function tabPanelParts(
     const valSpans = valLines
       .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : VALUE_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="${VALUE_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${valSpans}</text>`)
+    parts.push(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="${VALUE_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${valSpans}</text>`)
     y += valLines.length * VALUE_LH
   }
 
@@ -92,7 +92,7 @@ function tabPanelParts(
     const childSpans = childLines
       .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : CHILD_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="${CHILD_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${childSpans}</text>`)
+    parts.push(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="${CHILD_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${childSpans}</text>`)
     y += childLines.length * CHILD_LH
   }
 
@@ -101,7 +101,7 @@ function tabPanelParts(
     const subSpans = subLines
       .map((l, li) => `<tspan x="${cx}" dy="${li === 0 ? 0 : SUB_LH}">${escapeXml(l)}</tspan>`)
       .join('')
-    parts.push(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="${SUB_FS}" fill="${theme.textMuted}" font-family="system-ui,sans-serif" opacity="0.7">${subSpans}</text>`)
+    parts.push(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="${SUB_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR} opacity="0.7">${subSpans}</text>`)
   }
 
   return parts
@@ -127,7 +127,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const parts: string[] = []
 
   if (spec.title) {
-    parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="700">${escapeXml(spec.title)}</text>`)
+    parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`)
   }
 
   parts.push(`<g class="mdart-tab-root" data-text-muted="${escapeXml(theme.textMuted)}">`)
@@ -148,7 +148,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         `fill="${isActive ? fill : `${fill}22`}" ` +
         `${isActive ? '' : `stroke="${fill}55" stroke-width="1"`}/>` +
         `<text class="mdart-tab-label" x="${(tx + TAB_W / 2).toFixed(1)}" y="${(ty + TAB_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="10" ` +
-        `fill="${isActive ? '#ffffff' : theme.textMuted}" font-family="system-ui,sans-serif" font-weight="${isActive ? '700' : '400'}">${escapeXml(tabLines[0] ?? item.label)}</text>` +
+        `fill="${isActive ? '#ffffff' : theme.textMuted}" ${FONT_SANS_ATTR} font-weight="${isActive ? '700' : '400'}">${escapeXml(tabLines[0] ?? item.label)}</text>` +
       `</g>`,
     )
   })

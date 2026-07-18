@@ -1,10 +1,10 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" font-family="system-ui,sans-serif" font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
@@ -50,7 +50,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     unit.push(`<line x1="${x.toFixed(1)}" y1="${stemY1.toFixed(1)}" x2="${x.toFixed(1)}" y2="${stemY2.toFixed(1)}" stroke="${theme.border}" stroke-width="1"/>`)
     unit.push(`<circle cx="${x.toFixed(1)}" cy="${LINE_Y}" r="${r}" fill="${dotFill}" stroke="${dotStroke}" stroke-width="${active ? 2 : 1.5}">${itemTitleTag(item)}</circle>`)
     if (done && !active) {
-      unit.push(`<text x="${x.toFixed(1)}" y="${(LINE_Y+4).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.accent}" font-family="system-ui,sans-serif">✓</text>`)
+      unit.push(`<text x="${x.toFixed(1)}" y="${(LINE_Y+4).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.accent}" ${FONT_SANS_ATTR}>✓</text>`)
     }
 
     // value rendered as the date/sublabel; active/done shown via dot styling.
@@ -63,15 +63,15 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
     if (above) {
       if (subLabel) {
-        unit.push(`<text x="${x.toFixed(1)}" y="${(LINE_Y - r - stemH - 18).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(mainLabel, MAX_CHARS)}</text>`)
-        unit.push(aWrap(`<text x="${x.toFixed(1)}" y="${(LINE_Y - r - stemH - 5).toFixed(1)}" text-anchor="${anchor}" font-size="11" fill="${col}" font-family="system-ui,sans-serif" font-weight="${active ? '600' : '400'}">${tt(subLabel, MAX_CHARS)}</text>`, itmUrl))
+        unit.push(`<text x="${x.toFixed(1)}" y="${(LINE_Y - r - stemH - 18).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${tt(mainLabel, MAX_CHARS)}</text>`)
+        unit.push(aWrap(`<text x="${x.toFixed(1)}" y="${(LINE_Y - r - stemH - 5).toFixed(1)}" text-anchor="${anchor}" font-size="11" fill="${col}" ${FONT_SANS_ATTR} font-weight="${active ? '600' : '400'}">${tt(subLabel, MAX_CHARS)}</text>`, itmUrl))
       } else {
-        unit.push(aWrap(`<text x="${x.toFixed(1)}" y="${(LINE_Y - r - stemH - 5).toFixed(1)}" text-anchor="${anchor}" font-size="11" fill="${col}" font-family="system-ui,sans-serif" font-weight="${active ? '600' : '400'}">${tt(mainLabel, MAX_CHARS)}</text>`, itmUrl))
+        unit.push(aWrap(`<text x="${x.toFixed(1)}" y="${(LINE_Y - r - stemH - 5).toFixed(1)}" text-anchor="${anchor}" font-size="11" fill="${col}" ${FONT_SANS_ATTR} font-weight="${active ? '600' : '400'}">${tt(mainLabel, MAX_CHARS)}</text>`, itmUrl))
       }
     } else {
-      unit.push(aWrap(`<text x="${x.toFixed(1)}" y="${(LINE_Y + r + stemH + 14).toFixed(1)}" text-anchor="${anchor}" font-size="11" fill="${col}" font-family="system-ui,sans-serif" font-weight="${active ? '600' : '400'}">${tt(item.value ? subLabel : mainLabel, MAX_CHARS)}</text>`, itmUrl))
+      unit.push(aWrap(`<text x="${x.toFixed(1)}" y="${(LINE_Y + r + stemH + 14).toFixed(1)}" text-anchor="${anchor}" font-size="11" fill="${col}" ${FONT_SANS_ATTR} font-weight="${active ? '600' : '400'}">${tt(item.value ? subLabel : mainLabel, MAX_CHARS)}</text>`, itmUrl))
       if (item.value) {
-        unit.push(`<text x="${x.toFixed(1)}" y="${(LINE_Y + r + stemH + 27).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${tt(mainLabel, MAX_CHARS)}</text>`)
+        unit.push(`<text x="${x.toFixed(1)}" y="${(LINE_Y + r + stemH + 27).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${tt(mainLabel, MAX_CHARS)}</text>`)
       }
     }
     parts.push(wrapItem(unit.join(''), i + 1, animate, instrument))

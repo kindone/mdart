@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, aWrap, lerpColor, titleEl, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, type FitTextResult } from '../shared'
+import { escapeXml, aWrap, lerpColor, titleEl, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, type FitTextResult, FONT_SANS_ATTR } from '../shared'
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 
@@ -153,7 +153,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
         .map((l, li) => `<tspan x="${TAG_X}" dy="${li === 0 ? 0 : tagLH}">${escapeXml(l)}</tspan>`)
         .join('')
       unit.push(aWrap(
-        `<text x="${TAG_X}" y="${tagStartY.toFixed(1)}" text-anchor="end" font-size="${tagFit.fontSize}" fill="${fill}" font-family="system-ui,sans-serif" font-weight="700">${tip}${spans}</text>`,
+        `<text x="${TAG_X}" y="${tagStartY.toFixed(1)}" text-anchor="end" font-size="${tagFit.fontSize}" fill="${fill}" ${FONT_SANS_ATTR} font-weight="700">${tip}${spans}</text>`,
         tagUrl,
       ))
     }
@@ -166,7 +166,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : mainLH}">${escapeXml(l)}</tspan>`)
       .join('')
     unit.push(aWrap(
-      `<text x="${textX}" y="${mainStartY.toFixed(1)}" font-size="${mainFit.fontSize}" fill="${theme.text}" font-family="system-ui,sans-serif" font-weight="600">${mainTip}${mainSpans}</text>`,
+      `<text x="${textX}" y="${mainStartY.toFixed(1)}" font-size="${mainFit.fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${mainTip}${mainSpans}</text>`,
       mainUrl,
     ))
 
@@ -177,7 +177,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       const detSpans  = detLines
         .map((l, li) => `<tspan x="${textX}" dy="${li === 0 ? 0 : detLH}">${escapeXml(l)}</tspan>`)
         .join('')
-      unit.push(`<text x="${textX}" y="${detStartY.toFixed(1)}" font-size="${detFit.fontSize}" fill="${theme.textMuted}" font-family="system-ui,sans-serif">${detTip}${detSpans}</text>`)
+      unit.push(`<text x="${textX}" y="${detStartY.toFixed(1)}" font-size="${detFit.fontSize}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${detTip}${detSpans}</text>`)
     }
 
     parts.push(`<g class="mdart-n${i + 1}">${unit.join('\n      ')}</g>`)
