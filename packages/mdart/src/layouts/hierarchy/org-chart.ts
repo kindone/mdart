@@ -1,90 +1,114 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
-import { countLeaves, maxDepth, layoutNodes, flatNodes } from './shared'
+import { countLeaves, maxDepth, layoutNodes, flatNodes, type RenderedNode } from './shared'
 
 const BOX_W = 124
 const BOX_H = 38
+const BOX_RX = 6
+const BOX_TEXT_W = BOX_W - 16
+const BOX_TEXT_H = BOX_H - 6
 const NODE_FS_MAX = 11
 const NODE_FS_MIN = 8
+const MIN_W = 640
+const MIN_H = 160
+const LEAF_GAP = 8
+const SIDE_PAD = 80
+const LEVEL_H = 86
+const TITLE_H_WITH_TITLE = 28
+const TITLE_H_NO_TITLE = 10
+const BOTTOM_PAD = 30
+const HPAD_EXTRA = 4
+
+interface OrgDiagramLayout {
+  W: number
+  H: number
+  titleH: number
+  nodes: RenderedNode[]
+}
+
+function measureDiagram(spec: MdArtSpec): OrgDiagramLayout {
+  const depth = maxDepth(spec.items)
+  const totalLeaves = spec.items.reduce((s, i) => s + countLeaves(i), 0) || 1
+  const W = Math.max(MIN_W, totalLeaves * (BOX_W + LEAF_GAP) + SIDE_PAD)
+  const titleH = spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
+  const H = Math.max(MIN_H, depth * LEVEL_H + titleH + BOTTOM_PAD)
+  const startY = titleH + BOX_H / 2
+  const hPad = BOX_W / 2 + HPAD_EXTRA
+  return {
+    W,
+    H,
+    titleH,
+    nodes: flatNodes(layoutNodes(spec.items, hPad, startY, W - hPad * 2, LEVEL_H)),
+  }
+}
+
+function renderConnector(node: RenderedNode, theme: MdArtTheme): string {
+  if (node.parentX === undefined || node.parentY === undefined) return ''
+  const x1 = node.parentX, y1 = node.parentY + BOX_H / 2
+  const x2 = node.x,       y2 = node.y - BOX_H / 2
+  const mid = (y1 + y2) / 2
+  return `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} C${x1.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.textMuted}cc" stroke-width="1.5"/>`
+}
+
+function renderNodeBox(node: RenderedNode, theme: MdArtTheme): string {
+  const bx = node.x - BOX_W / 2
+  const by = node.y - BOX_H / 2
+  return `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="${BOX_RX}" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${itemTitleTag(node)}</rect>`
+}
+
+function renderNodeText(node: RenderedNode, theme: MdArtTheme): string {
+  const { url, display } = displayLabel(node, { value: true })
+  const fit = fitLabelValueBlock(display, node.value, BOX_TEXT_W, BOX_TEXT_H, {
+    labelUrl: url,
+    labelMaxSize: NODE_FS_MAX,
+    labelMinSize: NODE_FS_MIN,
+    labelMaxLines: 1,
+    labelMaxLinesNoValue: 2,
+    valueMaxSize: 9,
+    valueMinSize: 7,
+    valueMaxLines: 1,
+    valueShare: 0.34,
+  })
+  return renderFitBlock(node.x, node.y, fit, {
+    labelFullText: display,
+    valueFullText: node.value,
+    labelFill: theme.text,
+    valueFill: theme.textMuted,
+    labelWeight: '600',
+  })
+}
+
+function renderNode(node: RenderedNode, index: number, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const unit = [
+    renderConnector(node, theme),
+    renderNodeBox(node, theme),
+    renderNodeText(node, theme),
+  ].join('')
+  return wrapItem(unit, index, animate, instrument)
+}
+
+function renderTitle(spec: MdArtSpec, W: number, theme: MdArtTheme): string {
+  return spec.title
+    ? `<text x="${(W / 2).toFixed(1)}" y="18" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`
+    : ''
+}
+
+function renderSvg(layout: OrgDiagramLayout, spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {
+  return `<svg viewBox="0 0 ${layout.W} ${layout.H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
+  ${renderTitle(spec, layout.W, theme)}
+  ${parts.join('\n  ')}
+</svg>`
+}
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.items.length === 0) return renderEmpty(theme)
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
-
-  const depth = maxDepth(spec.items)
-  const totalLeaves = spec.items.reduce((s, i) => s + countLeaves(i), 0) || 1
-  const W = Math.max(640, totalLeaves * (BOX_W + 8) + 80)
-  const levelH = spec.type === 'tree' ? 68 : 86
-  const TITLE_H = spec.title ? 28 : 10
-  const H = Math.max(160, depth * levelH + TITLE_H + 30)
-  const startY = TITLE_H + BOX_H / 2
-
-  const HPAD = BOX_W / 2 + 4
-  const nodes = layoutNodes(spec.items, HPAD, startY, W - HPAD * 2, levelH)
-  const flat = flatNodes(nodes)
-
-  // Per-node fitting: every box shares BOX_W, but each label is sized
-  // independently rather than to the diagram's worst-case label — a short
-  // label ("CEO") stays large instead of being dragged down to match a
-  // long neighbor several levels away, same approach as process.ts/
-  // circular-process.ts.
-  //
-  // The fit was also capped at a flat maxLines: 1 with no boxH — so a
-  // smaller font never unlocked a second line, it just kept shrinking a
-  // single line down to the floor before truncating. orgBoxH below gives
-  // fitTextToWidthShared the real vertical budget (BOX_H is fixed — used
-  // by the connector math above — so text can't grow the box, only use
-  // more of the room already in it).
-  const displays = flat.map(n => displayLabel(n, { value: true }))
-  const orgBoxH = BOX_H - 6
-
-  const parts: string[] = []
-
-  for (const [i, n] of flat.entries()) {
-    const unit: string[] = []
-    if (n.parentX !== undefined && n.parentY !== undefined) {
-      const x1 = n.parentX, y1 = n.parentY + BOX_H / 2
-      const x2 = n.x,       y2 = n.y - BOX_H / 2
-      const mid = (y1 + y2) / 2
-      unit.push(
-        `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} C${x1.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.textMuted}cc" stroke-width="1.5"/>`
-      )
-    }
-    const bx = n.x - BOX_W / 2
-    const by = n.y - BOX_H / 2
-    const { url: nUrl, display: nDisplay } = displays[i]
-    const tip = itemTitleTag(n)
-    unit.push(
-      `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="6" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${tip}</rect>`,
-    )
-    const fit = fitLabelValueBlock(nDisplay, n.value, BOX_W - 16, orgBoxH, {
-      labelUrl: nUrl,
-      labelMaxSize: NODE_FS_MAX,
-      labelMinSize: NODE_FS_MIN,
-      labelMaxLines: 1,
-      labelMaxLinesNoValue: 2,
-      valueMaxSize: 9,
-      valueMinSize: 7,
-      valueMaxLines: 1,
-      valueShare: 0.34,
-    })
-    unit.push(renderFitBlock(n.x, n.y, fit, {
-      labelFullText: nDisplay,
-      valueFullText: n.value,
-      labelFill: theme.text,
-      valueFill: theme.textMuted,
-      labelWeight: '600',
-    }))
-    parts.push(wrapItem(unit.join(''), i, animate, instrument))
-  }
-  if (animate) parts.unshift(seqSpotlightCSS(flat.length, spec, { scale: false }))
-
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${spec.title ? `<text x="${(W / 2).toFixed(1)}" y="18" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>` : ''}
-  ${parts.join('\n  ')}
-</svg>`
+  const layout = measureDiagram(spec)
+  const parts = layout.nodes.map((node, index) => renderNode(node, index, theme, animate, instrument))
+  if (animate) parts.unshift(seqSpotlightCSS(layout.nodes.length, spec, { scale: false }))
+  return renderSvg(layout, spec, theme, parts)
 }
 
 function renderEmpty(theme: MdArtTheme): string {

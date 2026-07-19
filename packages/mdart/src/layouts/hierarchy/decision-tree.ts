@@ -4,59 +4,55 @@ import { escapeXml, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlig
 import { countLeaves, maxDepth, layoutNodes, flatNodes } from './shared'
 import type { RenderedNode } from './shared'
 
-export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  if (spec.items.length === 0) return renderEmpty(theme)
-  const animate = shouldAnimate(spec)
-  const instrument = shouldInstrument()
-  const depth = maxDepth(spec.items)
-  // Width now scales with leaf count (matching tree.ts/org-chart.ts) instead
-  // of a flat 640 regardless of content — a small 2-3-leaf decision tree was
-  // otherwise stuck with the same full-width canvas as a 10-leaf one, making
-  // it look disproportionately flat/wide for what little it actually draws.
-  const totalLeaves = spec.items.reduce((s, i) => s + countLeaves(i), 0) || 1
-  const LW = 90, LH = 60
-  const W = Math.max(640, totalLeaves * 130 + 80)
-  const levelH = 120
-  const TITLE_H = spec.title ? 28 : 10
-  const H = Math.max(240, depth * levelH + TITLE_H + 40)
-  const DW = 60, DH = 36
-  const startY = TITLE_H + DH
-  // HPAD must clear both leaf half-width (LW/2) and diamond half-width (DW)
-  // — whichever is larger — so neither clips the SVG edge.
-  const HPAD = Math.max(LW / 2 + 4, DW + 8)
+const LEAF_W = 90
+const LEAF_H = 60
+const DECISION_W = 60
+const DECISION_H = 36
+const MIN_W = 640
+const MIN_H = 240
+const LEAF_CANVAS_W = 130
+const SIDE_PAD = 80
+const LEVEL_H = 120
+const TITLE_H_WITH_TITLE = 28
+const TITLE_H_NO_TITLE = 10
+const BOTTOM_PAD = 40
+const DECISION_TEXT_W = DECISION_W * 2 - 42
+const LEAF_TEXT_W = LEAF_W - 16
 
-  const nodes = layoutNodes(spec.items, HPAD, startY, W - HPAD * 2, levelH)
-  const flat = flatNodes(nodes)
+interface NodeFit {
+  url: string | null
+  fontSize: number
+  lineHeight: number
+  lines: string[]
+  truncated: boolean
+}
 
-  // Per-node fitting: decision diamonds all share one width (DW), leaf
-  // rects all share another (LW), so — same as process.ts/circular-
-  // process.ts — each node's label is sized to ITS OWN worst-fitting need
-  // rather than the whole group's, replacing the old flat "10 chars" /
-  // "13 chars" truncation that had no relationship to the actual box width
-  // at all.
-  //
-  // Diamonds allow 2 lines: the shape tapers toward its top/bottom tips, so
-  // the text budget is derived from the available width at the extreme line
-  // positions of a 2-line block (see comment below), not the full DW×2. Leaf
-  // rects are a plain box and get 3 lines; the old code capped at 1 line with
-  // no boxH, so a smaller font never unlocked a 2nd line — it just shrank
-  // to the floor and truncated.
-  const decisionNodes = flat.filter(n => n.children.length > 0)
-  const leafNodes = flat.filter(n => n.children.length === 0)
-  const decisionDisplays = decisionNodes.map(n => displayLabel(n))
-  const leafDisplays = leafNodes.map(n => displayLabel(n))
+interface DecisionTreeLayout {
+  W: number
+  H: number
+  titleH: number
+  flat: RenderedNode[]
+  decisionFitByNode: Map<RenderedNode, NodeFit>
+  leafFitByNode: Map<RenderedNode, NodeFit>
+}
+
+function fitNodes(flat: RenderedNode[]): Pick<DecisionTreeLayout, 'decisionFitByNode' | 'leafFitByNode'> {
+  const decisionNodes = flat.filter(node => node.children.length > 0)
+  const leafNodes = flat.filter(node => node.children.length === 0)
+  const decisionDisplays = decisionNodes.map(node => displayLabel(node))
+  const leafDisplays = leafNodes.map(node => displayLabel(node))
   // Diamond text budget (DW*2 - 42 = 78px) is derived from the available
   // width at the extreme line positions of a 2-line block at maxSize=10:
   //   half_width = DW × (1 − v/DH) where v = half_visual_height ≈ 11.5px
   //   = 60 × (1 − 11.5/36) ≈ 40.8px → full ≈ 81.6px → budget 78px (3.6px margin)
   // With LH=60, leafBoxH=52 fits 3 lines even at maxSize=11:
   //   linesAtSize = ⌊52 / (11×1.3)⌋ = ⌊52/14.3⌋ = 3 → long labels wrap at full size.
-  const leafBoxH = Math.max(LH - 8, 8 * 1.3 * 3)
+  const leafBoxH = Math.max(LEAF_H - 8, 8 * 1.3 * 3)
   const decisionFits = decisionDisplays.map(d =>
-    fitTextToWidthShared([d.display], DW * 2 - 42, { maxSize: 10, minSize: 7, maxLines: 2, boxH: DH * 1.7 }),
+    fitTextToWidthShared([d.display], DECISION_TEXT_W, { maxSize: 10, minSize: 7, maxLines: 2, boxH: DECISION_H * 1.7 }),
   )
   const leafFits = leafDisplays.map(d =>
-    fitTextToWidthShared([d.display], LW - 16, { maxSize: 11, minSize: 8, maxLines: 3, boxH: leafBoxH }),
+    fitTextToWidthShared([d.display], LEAF_TEXT_W, { maxSize: 11, minSize: 8, maxLines: 3, boxH: leafBoxH }),
   )
   const decisionFitByNode = new Map<RenderedNode, { url: string | null; fontSize: number; lineHeight: number; lines: string[]; truncated: boolean }>(
     decisionNodes.map((n, idx) => {
@@ -70,60 +66,102 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
       return [n, { url: leafDisplays[idx].url, fontSize, lineHeight, lines, truncated }]
     }),
   )
+  return { decisionFitByNode, leafFitByNode }
+}
+
+function measureTree(spec: MdArtSpec): DecisionTreeLayout {
+  const depth = maxDepth(spec.items)
+  const totalLeaves = spec.items.reduce((s, i) => s + countLeaves(i), 0) || 1
+  const W = Math.max(MIN_W, totalLeaves * LEAF_CANVAS_W + SIDE_PAD)
+  const titleH = spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
+  const H = Math.max(MIN_H, depth * LEVEL_H + titleH + BOTTOM_PAD)
+  const startY = titleH + DECISION_H
+  // HPAD must clear both leaf half-width and diamond half-width.
+  const hPad = Math.max(LEAF_W / 2 + 4, DECISION_W + 8)
+  const flat = flatNodes(layoutNodes(spec.items, hPad, startY, W - hPad * 2, LEVEL_H))
+  return { W, H, titleH, flat, ...fitNodes(flat) }
+}
+
+function renderConnector(node: RenderedNode, flat: RenderedNode[], theme: MdArtTheme): string {
+  if (node.parentX === undefined || node.parentY === undefined) return ''
+  const isLeaf = node.children.length === 0
+  const x1 = node.parentX, y1 = node.parentY + DECISION_H
+  const x2 = node.x,       y2 = isLeaf ? node.y - LEAF_H / 2 : node.y - DECISION_H
+  const mid = (y1 + y2) / 2
+  let out = `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} C${x1.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.textMuted}cc" stroke-width="1.5"/>`
+  const siblings = flat.filter(s => s.parentX === node.parentX && s.parentY === node.parentY)
+  if (siblings.length === 2) {
+    const isFirst = siblings[0] === node
+    const lx = (x1 + x2) / 2 + (isFirst ? -18 : 12)
+    const ly = (y1 + y2) / 2
+    const lbl = isFirst ? 'Yes' : 'No'
+    const lcolor = isFirst ? theme.primary : theme.secondary
+    out += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9" fill="${lcolor}" ${FONT_SANS_ATTR} font-weight="700">${lbl}</text>`
+  }
+  return out
+}
+
+function renderDecisionNode(node: RenderedNode, fit: NodeFit, theme: MdArtTheme): string {
+  const { x, y } = node
+  const itemTip = itemTitleTag(node)
+  const startY = y - ((fit.lines.length - 1) * fit.lineHeight) / 2 + fit.fontSize * 0.35
+  const truncTip = fit.truncated ? `<title>${escapeXml(node.label)}</title>` : ''
+  const spans = fit.lines
+    .map((line, li) => `<tspan x="${x}" dy="${li === 0 ? 0 : fit.lineHeight.toFixed(1)}">${escapeXml(line)}</tspan>`)
+    .join('')
+  return `<polygon points="${x},${(y - DECISION_H).toFixed(1)} ${(x + DECISION_W).toFixed(1)},${y} ${x},${(y + DECISION_H).toFixed(1)} ${(x - DECISION_W).toFixed(1)},${y}" fill="${theme.surface}" stroke="${theme.primary}aa" stroke-width="1.5">${itemTip}</polygon>` +
+    aWrap(`<text x="${x}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fit.fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${itemTip}${truncTip}${spans}</text>`, fit.url)
+}
+
+function renderLeafNode(node: RenderedNode, fit: NodeFit, theme: MdArtTheme): string {
+  const { x, y } = node
+  const bx = x - LEAF_W / 2, by = y - LEAF_H / 2
+  const itemTip = itemTitleTag(node)
+  const startY = y - ((fit.lines.length - 1) * fit.lineHeight) / 2 + fit.fontSize * 0.35
+  const truncTip = fit.truncated ? `<title>${escapeXml(node.label)}</title>` : ''
+  const spans = fit.lines
+    .map((line, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : fit.lineHeight.toFixed(1)}">${escapeXml(line)}</tspan>`)
+    .join('')
+  return `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${LEAF_W}" height="${LEAF_H}" rx="5" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${itemTip}</rect>` +
+    aWrap(`<text x="${x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fit.fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR}>${itemTip}${truncTip}${spans}</text>`, fit.url)
+}
+
+function renderNode(node: RenderedNode, index: number, layout: DecisionTreeLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const unit = [
+    renderConnector(node, layout.flat, theme),
+    node.children.length > 0
+      ? renderDecisionNode(node, layout.decisionFitByNode.get(node)!, theme)
+      : renderLeafNode(node, layout.leafFitByNode.get(node)!, theme),
+  ].join('')
+  return wrapItem(unit, index, animate, instrument)
+}
+
+function renderTitle(spec: MdArtSpec, W: number, theme: MdArtTheme): string {
+  return spec.title
+    ? `<text x="${W / 2}" y="18" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`
+    : ''
+}
+
+function renderSvg(layout: DecisionTreeLayout, spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {
+  return `<svg viewBox="0 0 ${layout.W} ${layout.H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
+  ${renderTitle(spec, layout.W, theme)}
+  ${parts.join('\n  ')}
+</svg>`
+}
+
+export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (spec.items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
+  const layout = measureTree(spec)
 
   const parts: string[] = []
 
-  for (const [i, n] of flat.entries()) {
-    const unit: string[] = []
-    if (n.parentX !== undefined && n.parentY !== undefined) {
-      const isLeaf = n.children.length === 0
-      const x1 = n.parentX, y1 = n.parentY + DH
-      const x2 = n.x,       y2 = isLeaf ? n.y - LH / 2 : n.y - DH
-      const mid = (y1 + y2) / 2
-      unit.push(`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} C${x1.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${mid.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${theme.textMuted}cc" stroke-width="1.5"/>`)
-      const siblings = n.parentX !== undefined ? flat.filter(s => s.parentX === n.parentX && s.parentY === n.parentY) : []
-      if (siblings.length === 2) {
-        const isFirst = siblings[0] === n
-        const lx = (x1 + x2) / 2 + (isFirst ? -18 : 12)
-        const ly = (y1 + y2) / 2
-        const lbl = isFirst ? 'Yes' : 'No'
-        const lcolor = isFirst ? theme.primary : theme.secondary
-        unit.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9" fill="${lcolor}" ${FONT_SANS_ATTR} font-weight="700">${lbl}</text>`)
-      }
-    }
-    const { x, y } = n
-    const itemTip = itemTitleTag(n)
-    if (n.children.length > 0) {
-      const { url: ndUrl, fontSize: decisionFS, lineHeight: decisionLH, lines: decLines, truncated: decTruncated } = decisionFitByNode.get(n)!
-      unit.push(`<polygon points="${x},${(y-DH).toFixed(1)} ${(x+DW).toFixed(1)},${y} ${x},${(y+DH).toFixed(1)} ${(x-DW).toFixed(1)},${y}" fill="${theme.surface}" stroke="${theme.primary}aa" stroke-width="1.5">${itemTip}</polygon>`)
-      // Multi-line block vertically centred on the diamond's midpoint (y).
-      const decStartY = y - ((decLines.length - 1) * decisionLH) / 2 + decisionFS * 0.35
-      const decTip = decTruncated ? `<title>${escapeXml(n.label)}</title>` : ''
-      const decSpans = decLines
-        .map((l, li) => `<tspan x="${x}" dy="${li === 0 ? 0 : decisionLH.toFixed(1)}">${escapeXml(l)}</tspan>`)
-        .join('')
-      unit.push(aWrap(`<text x="${x}" y="${decStartY.toFixed(1)}" text-anchor="middle" font-size="${decisionFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${itemTip}${decTip}${decSpans}</text>`, ndUrl))
-    } else {
-      const { url: ndUrl, fontSize: leafFS, lineHeight: leafLH, lines, truncated } = leafFitByNode.get(n)!
-      const bx = x - LW / 2, by = y - LH / 2
-      unit.push(`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${LW}" height="${LH}" rx="5" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${itemTip}</rect>`)
-      // Use (n-1)×lh + fs for visual block height (cap-top to descender-bottom)
-      // instead of n×lh which adds a trailing line-gap and shifts text upward.
-      const startY = y - ((lines.length - 1) * leafLH) / 2 + leafFS * 0.35
-      const fullTip = truncated ? `<title>${escapeXml(n.label)}</title>` : ''
-      const spans = lines
-        .map((l, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : leafLH.toFixed(1)}">${escapeXml(l)}</tspan>`)
-        .join('')
-      unit.push(aWrap(`<text x="${x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${leafFS}" fill="${theme.text}" ${FONT_SANS_ATTR}>${itemTip}${fullTip}${spans}</text>`, ndUrl))
-    }
-    parts.push(wrapItem(unit.join(''), i, animate, instrument))
+  for (const [i, node] of layout.flat.entries()) {
+    parts.push(renderNode(node, i, layout, theme, animate, instrument))
   }
-  if (animate) parts.unshift(seqSpotlightCSS(flat.length, spec, { scale: false }))
-
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${spec.title ? `<text x="${W/2}" y="18" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>` : ''}
-  ${parts.join('\n  ')}
-</svg>`
+  if (animate) parts.unshift(seqSpotlightCSS(layout.flat.length, spec, { scale: false }))
+  return renderSvg(layout, spec, theme, parts)
 }
 
 function renderEmpty(theme: MdArtTheme): string {
