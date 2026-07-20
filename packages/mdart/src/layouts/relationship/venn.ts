@@ -128,6 +128,108 @@ function layout4(theme: MdArtTheme, titleH: number): Layout {
   }
 }
 
+function renderNoItems(theme: MdArtTheme): string {
+  return `<svg viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
+  <text x="150" y="42" text-anchor="middle" font-size="12" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>No items</text>
+</svg>`
+}
+
+function resolveLayout(n: number, theme: MdArtTheme, titleH: number): Layout {
+  return n >= 4 ? layout4(theme, titleH)
+    : n === 3 ? layout3(theme, titleH)
+    : layout2(theme, titleH)
+}
+
+function renderCircleShapes(circles: MdArtItem[], layout: Layout, animate: boolean): string[] {
+  return layout.centres.map((c, i) => {
+    const item = circles[i]
+    return `<circle class="${animate ? `mdart-n${i}` : ''}" cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${layout.R}" fill="${layout.colors[i % layout.colors.length]}28" stroke="${layout.colors[i % layout.colors.length]}88" stroke-width="1.5">${item ? itemTitleTag(item) : ''}</circle>`
+  })
+}
+
+function renderCircleLabels(circles: MdArtItem[], layout: Layout, n: number, animate: boolean, theme: MdArtTheme): string[] {
+  const parts: string[] = []
+  circles.forEach((item, i) => {
+    const c = layout.centres[i]
+    const lx = c.x + layout.labelOff[i][0]
+    const ly = c.y + layout.labelOff[i][1]
+    const labelFontSize = n === 2 ? 13 : (n === 3 ? 12 : 11)
+    const labelMax = n === 2 ? 14 : (n === 3 ? 13 : 12)
+    const labelStr = ellipsisIfDropped(item.label, item)
+    const { lines, truncated, url } = wrapLabel(labelStr, labelMax)
+    const lineH = labelFontSize + 2
+    const tip = truncated ? `<title>${escapeXml(item.label)}</title>` : ''
+    const tspans = lines
+      .map((line, lineIndex) => `<tspan x="${lx.toFixed(1)}" dy="${lineIndex === 0 ? 0 : lineH}">${escapeXml(line)}</tspan>`)
+      .join('')
+    parts.push(aWrap(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${tip}${tspans}</text>`, url))
+
+    const maxChildren = n === 2 ? 4 : 2
+    const childGap = n === 2 ? 12 : 14
+    const childSpacing = n === 2 ? 16 : 13
+    const childBaseY = ly + (lines.length - 1) * lineH + childGap
+    item.children.slice(0, maxChildren).forEach((ch, j) => {
+      const fs = n === 2 ? 10 : 8.5
+      const max = n === 2 ? 18 : 10
+      const trunc = truncate(ch.label, max)
+      const childTip = trunc !== ch.label ? `<title>${escapeXml(ch.label)}</title>` : ''
+      parts.push(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${(childBaseY + j * childSpacing).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${childTip}${escapeXml(trunc)}</text>`)
+    })
+  })
+  return parts
+}
+
+function allCircleCentre(centres: { x: number; y: number }[]): { x: number; y: number } {
+  return {
+    x: centres.reduce((s, c) => s + c.x, 0) / centres.length,
+    y: centres.reduce((s, c) => s + c.y, 0) / centres.length,
+  }
+}
+
+function intersectionPrimary(ix: MdArtItem, names: string[]): { primary: string, children: MdArtItem[] } {
+  const primary = ix.value ?? (ix.children.length > 0 ? ix.children[0].label : names.join(' ∩ '))
+  const children = (ix.value || ix.children.length === 0) ? ix.children : ix.children.slice(1)
+  return { primary, children }
+}
+
+function renderIntersectionChildren(children: MdArtItem[], x: number, y: number, lineCount: number, lineH: number, n: number, animate: boolean, classIndex: number, theme: MdArtTheme): string[] {
+  const maxChildren = n === 2 ? 3 : 1
+  const fs = 8
+  const childLineH = 11
+  const charLimit = n === 2 ? 14 : 8
+  const baseY = y + (lineCount - 1) * lineH + (n === 2 ? 10 : 7) + fs
+  return children.slice(0, maxChildren).map((ch, index) => {
+    const trunc = truncate(ch.label, charLimit)
+    const tip = trunc !== ch.label ? `<title>${escapeXml(ch.label)}</title>` : ''
+    return `<text class="${animate ? `mdart-n${classIndex}` : ''}" x="${x.toFixed(1)}" y="${(baseY + index * childLineH).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.accent}" opacity="0.75" ${FONT_SANS_ATTR}>${tip}${escapeXml(trunc)}</text>`
+  })
+}
+
+function renderIntersectionLabels(intersects: MdArtItem[], circles: MdArtItem[], layout: Layout, n: number, animate: boolean, theme: MdArtTheme): string[] {
+  const parts: string[] = []
+  const centre = allCircleCentre(layout.centres)
+  const spread = n === 2 ? 1 : (n === 3 ? 2.0 : 1.6)
+  intersects.forEach((ix, i) => {
+    const names = intersectionNames(ix.label)
+    const pos = intersectionPos(names, circles, layout.centres, centre, spread)
+    const lineH = n === 2 ? 13 : 11
+    const fs = n === 2 ? 11 : 9
+    const fw = n === 2 ? '500' : '600'
+    const classIndex = n + i
+    const { primary, children } = intersectionPrimary(ix, names)
+    const charLimit = n === 2 ? 14 : 10
+    const { lines, truncated } = wrapLabel(primary, charLimit)
+    const startY = pos.y - (lines.length - 1) * lineH / 2 + (n === 2 ? -4 : 3)
+    const tip = truncated ? `<title>${escapeXml(primary)}</title>` : ''
+    const tspans = lines
+      .map((line, lineIndex) => `<tspan x="${pos.x.toFixed(1)}" dy="${lineIndex === 0 ? 0 : lineH}">${escapeXml(line)}</tspan>`)
+      .join('')
+    parts.push(`<text class="${animate ? `mdart-n${classIndex}` : ''}" x="${pos.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.accent}" ${FONT_SANS_ATTR} font-weight="${fw}">${tip}${tspans}</text>`)
+    parts.push(...renderIntersectionChildren(children, pos.x, startY, lines.length, lineH, n, animate, classIndex, theme))
+  })
+  return parts
+}
+
 // ── Main entry ──────────────────────────────────────────────────────────────
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
@@ -137,105 +239,19 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const n          = circles.length
 
   if (n === 0) {
-    return `<svg viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  <text x="150" y="42" text-anchor="middle" font-size="12" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>No items</text>
-</svg>`
+    return renderNoItems(theme)
   }
 
   const titleH = spec.title ? 28 : 8
-  const layout = n >= 4 ? layout4(theme, titleH)
-               : n === 3 ? layout3(theme, titleH)
-               :           layout2(theme, titleH)
-  const { W, H, R, centres, labelOff, colors } = layout
+  const layout = resolveLayout(n, theme, titleH)
+  const { W, H } = layout
 
   const parts: string[] = []
   const animate = shouldAnimate(spec)
 
-  // Circles — tooltip carries the full circle item (label + value + attrs)
-  centres.forEach((c, i) => {
-    const item = circles[i]
-    parts.push(`<circle class="${animate ? `mdart-n${i}` : ''}" cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${R}" fill="${colors[i % colors.length]}28" stroke="${colors[i % colors.length]}88" stroke-width="1.5">${item ? itemTitleTag(item) : ''}</circle>`)
-  })
-
-  // Circle labels (+ first 2 children inline)
-  circles.forEach((item, i) => {
-    const c = centres[i]
-    const lx = c.x + labelOff[i][0]
-    const ly = c.y + labelOff[i][1]
-    const labelFontSize = n === 2 ? 13 : (n === 3 ? 12 : 11)
-    const labelMax      = n === 2 ? 14 : (n === 3 ? 13 : 12)
-    // Children rendered inline as small text (the first 2-4); value/attrs are
-    // hover-only, so ellipsis fires when those exist.
-    const labelStr = ellipsisIfDropped(item.label, item)
-    const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(labelStr, labelMax)
-    const lblLineH = labelFontSize + 2
-    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
-    const lblSpans = lblLines
-      .map((l, li) => `<tspan x="${lx.toFixed(1)}" dy="${li === 0 ? 0 : lblLineH}">${escapeXml(l)}</tspan>`)
-      .join('')
-    parts.push(aWrap(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl))
-    const maxChildren  = n === 2 ? 4 : 2
-    const childGap     = n === 2 ? 12 : 14
-    const childSpacing = n === 2 ? 16 : 13
-    const childBaseY   = ly + (lblLines.length - 1) * lblLineH + childGap
-    item.children.slice(0, maxChildren).forEach((ch, j) => {
-      const fs = n === 2 ? 10 : 8.5
-      // n=2: non-overlap zone is ~158 px wide; 18 chars at 10 pt ≈ 94 px — fits.
-      // n≥3: smaller zones, keep the tighter cap.
-      const max = n === 2 ? 18 : 10
-      const trunc = truncate(ch.label, max)
-      const chTip = trunc !== ch.label ? `<title>${escapeXml(ch.label)}</title>` : ''
-      parts.push(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${(childBaseY + j * childSpacing).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${chTip}${escapeXml(trunc)}</text>`)
-    })
-  })
-
-  // Intersections — partial ones get spread outward so they don't pile up
-  // on the central all-circles label. 2-circle layout has no centre conflict
-  // (only one possible intersection), so spread=1.
-  const allCentre = {
-    x: centres.reduce((s, c) => s + c.x, 0) / centres.length,
-    y: centres.reduce((s, c) => s + c.y, 0) / centres.length,
-  }
-  const spread = n === 2 ? 1 : (n === 3 ? 2.0 : 1.6)
-  intersects.forEach((ix, i) => {
-    const names = intersectionNames(ix.label)
-    const pos   = intersectionPos(names, circles, centres, allCentre, spread)
-    const lineH   = n === 2 ? 13 : 11
-    const fs      = n === 2 ? 11 : 9
-    const fw      = n === 2 ? '500' : '600'
-
-    // Primary overlap label: prefer explicit value; if absent, use the first
-    // child (short concept) rather than the full "A ∩ B" separator string,
-    // which wraps to many lines and crowds out the children below it.
-    const primaryText = ix.value
-      ?? (ix.children.length > 0 ? ix.children[0].label : names.join(' ∩ '))
-    // Children to display below the primary label. When the first child was
-    // promoted to primary, skip it so it isn't repeated.
-    const childrenToShow = (ix.value || ix.children.length === 0)
-      ? ix.children
-      : ix.children.slice(1)
-
-    const charLimit = n === 2 ? 14 : 10  // ~60 px @ fs=8 inside the lens
-    const { lines, truncated } = wrapLabel(primaryText, charLimit)
-    const startY  = pos.y - (lines.length - 1) * lineH / 2 + (n === 2 ? -4 : 3)
-    const tip     = truncated ? `<title>${escapeXml(primaryText)}</title>` : ''
-    const tspans  = lines
-      .map((line, li) => `<tspan x="${pos.x.toFixed(1)}" dy="${li === 0 ? 0 : lineH}">${escapeXml(line)}</tspan>`)
-      .join('')
-    parts.push(`<text class="${animate ? `mdart-n${n + i}` : ''}" x="${pos.x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.accent}" ${FONT_SANS_ATTR} font-weight="${fw}">${tip}${tspans}</text>`)
-
-    // Remaining intersection children rendered in the overlap zone below the
-    // primary label. Cap at 3 for n=2 (tall lens), 1 for n≥3 (tiny centre).
-    const ixChMax  = n === 2 ? 3 : 1
-    const ixChFS   = 8, ixChLH = 11
-    const ixChW    = n === 2 ? 14 : 8  // chars that fit inside the lens
-    const ixChBaseY = startY + (lines.length - 1) * lineH + (n === 2 ? 10 : 7) + ixChFS
-    childrenToShow.slice(0, ixChMax).forEach((ch, j) => {
-      const trunc = truncate(ch.label, ixChW)
-      const chTip = trunc !== ch.label ? `<title>${escapeXml(ch.label)}</title>` : ''
-      parts.push(`<text class="${animate ? `mdart-n${n + i}` : ''}" x="${pos.x.toFixed(1)}" y="${(ixChBaseY + j * ixChLH).toFixed(1)}" text-anchor="middle" font-size="${ixChFS}" fill="${theme.accent}" opacity="0.75" ${FONT_SANS_ATTR}>${chTip}${escapeXml(trunc)}</text>`)
-    })
-  })
+  parts.push(...renderCircleShapes(circles, layout, animate))
+  parts.push(...renderCircleLabels(circles, layout, n, animate, theme))
+  parts.push(...renderIntersectionLabels(intersects, circles, layout, n, animate, theme))
 
   if (animate) parts.unshift(seqSpotlightCSS(n + intersects.length, spec, { scale: false }))
   return svg(W, H, theme, spec.title, parts)

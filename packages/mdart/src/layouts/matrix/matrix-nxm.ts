@@ -1,132 +1,159 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, wrapLabel, renderEmpty, ellipsisIfDropped, itemTitleTag, shouldAnimate, seqSpotlightCSS, renderWrappedText, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
-export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+const LABEL_W = 110
+const LINE_H = 12
+const PAD_V = 8
+const MIN_CELL_H = 32
+const TITLE_H = 28
+const BOTTOM_PAD = 8
+
+interface MatrixLayout {
+  rows: MdArtItem[]
+  numCols: number
+  colW: number
+  width: number
+  titleH: number
+  headerH: number
+  height: number
+  colHeaders: string[]
+  colHeaderWraps: Wrap[]
+  rowLabelWraps: Wrap[]
+  cellWraps: Wrap[][]
+  rowHeights: number[]
+  rowY: number[]
+}
+
+type Wrap = { lines: string[], truncated: boolean, url?: string | null }
+
+function centeredY(baseY: number, cellH: number, lineCount: number): number {
+  return baseY + Math.round(cellH / 2) - Math.round((lineCount - 1) * LINE_H / 2) + 5
+}
+
+function cellHeight(lineCount: number): number {
+  return Math.max(MIN_CELL_H, PAD_V + lineCount * LINE_H + PAD_V)
+}
+
+function renderText(cx: number | string, y: number, attrs: string, label: string, wrap: Wrap): string {
+  return renderWrappedText(cx, y, attrs, label, wrap, LINE_H)
+}
+
+function resolveLayout(spec: MdArtSpec): MatrixLayout | null {
   const rows = spec.items
-  if (rows.length === 0) return renderEmpty(theme)
-  const animate = shouldAnimate(spec)
-  const instrument = shouldInstrument()
+  if (rows.length === 0) return null
 
-  const numCols    = Math.max(...rows.map(r => r.children.length), 1)
-  const COL_W      = Math.min(160, Math.max(90, 520 / numCols))
-  const LABEL_W    = 110
-  const LINE_H     = 12
-  const PAD_V      = 8      // top + bottom inside each cell
-  const MIN_CELL_H = 32
-  const TITLE_H    = spec.title ? 28 : 0
-  const W          = LABEL_W + numCols * COL_W
-
-  const colHeaders   = Array.from({ length: numCols }, (_, c) =>
-    spec.columns?.[c] ?? String.fromCharCode(65 + c)
-  )
-  const colLabelMax  = Math.floor(COL_W / 7)
-  const rowLabelMax  = Math.floor(LABEL_W / 7)
-  const cellMax      = Math.floor(COL_W / 6.5)
-
-  // ── Pre-compute all wraps ─────────────────────────────────────────────────
-
-  const colHeaderWraps = colHeaders.map(h => wrapLabel(h, colLabelMax, 5))
-  // Row labels: append " …" when the row's value/attrs would be invisible.
-  // Cells: same treatment per cell, since children are rendered as just the
-  // label string (no visible value/attrs slot).
-  const rowLabelWraps  = rows.map(r => wrapLabel(ellipsisIfDropped(r.label, r), rowLabelMax, 5))
-  const cellWraps      = rows.map(r =>
-    Array.from({ length: numCols }, (_, c) => {
-      const cell = r.children[c]
+  const numCols = Math.max(...rows.map(row => row.children.length), 1)
+  const colW = Math.min(160, Math.max(90, 520 / numCols))
+  const width = LABEL_W + numCols * colW
+  const titleH = spec.title ? TITLE_H : 0
+  const colHeaders = Array.from({ length: numCols }, (_, index) => spec.columns?.[index] ?? String.fromCharCode(65 + index))
+  const colLabelMax = Math.floor(colW / 7)
+  const rowLabelMax = Math.floor(LABEL_W / 7)
+  const cellMax = Math.floor(colW / 6.5)
+  const colHeaderWraps = colHeaders.map(header => wrapLabel(header, colLabelMax, 5))
+  const rowLabelWraps = rows.map(row => wrapLabel(ellipsisIfDropped(row.label, row), rowLabelMax, 5))
+  const cellWraps = rows.map(row =>
+    Array.from({ length: numCols }, (_, colIndex) => {
+      const cell = row.children[colIndex]
       return cell ? wrapLabel(ellipsisIfDropped(cell.label, cell), cellMax, 5) : { lines: [] as string[], truncated: false }
-    })
+    }),
   )
-
-  // ── Dynamic heights ───────────────────────────────────────────────────────
-
-  const maxHeaderLines = Math.max(...colHeaderWraps.map(w => w.lines.length), 1)
-  const HEADER_H       = Math.max(MIN_CELL_H, PAD_V + maxHeaderLines * LINE_H + PAD_V)
-
-  const rowHeights = rows.map((_, r) => {
-    const rlN    = rowLabelWraps[r].lines.length
-    const cellNs = cellWraps[r].map(w => w.lines.length)
-    return Math.max(MIN_CELL_H, PAD_V + Math.max(rlN, ...cellNs, 1) * LINE_H + PAD_V)
+  const maxHeaderLines = Math.max(...colHeaderWraps.map(wrap => wrap.lines.length), 1)
+  const headerH = Math.max(MIN_CELL_H, PAD_V + maxHeaderLines * LINE_H + PAD_V)
+  const rowHeights = rows.map((_, rowIndex) => {
+    const rowLabelLines = rowLabelWraps[rowIndex].lines.length
+    const cellLines = cellWraps[rowIndex].map(wrap => wrap.lines.length)
+    return cellHeight(Math.max(rowLabelLines, ...cellLines, 1))
+  })
+  const rowY: number[] = []
+  let y = titleH + headerH
+  rowHeights.forEach(height => {
+    rowY.push(y)
+    y += height
   })
 
-  const rowY: number[] = []
-  let cumY = TITLE_H + HEADER_H
-  for (const rh of rowHeights) { rowY.push(cumY); cumY += rh }
-  const H = cumY + 8
+  return { rows, numCols, colW, width, titleH, headerH, height: y + BOTTOM_PAD, colHeaders, colHeaderWraps, rowLabelWraps, cellWraps, rowHeights, rowY }
+}
 
-  // ── Render helpers ────────────────────────────────────────────────────────
+function renderTitle(spec: MdArtSpec, layout: MatrixLayout, theme: MdArtTheme): string {
+  if (!spec.title) return ''
+  return `<text x="${layout.width / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
+}
 
-  /** Emit a pre-computed <text> block with tspans, optionally wrapped in <a>. */
-  function lbl(
-    cx: number | string,
-    y1: number,
-    attrs: string,
-    label: string,
-    wrap: { lines: string[]; truncated: boolean; url?: string | null },
-  ): string {
-    return renderWrappedText(cx, y1, attrs, label, wrap, LINE_H)
-  }
-
-  /** First-line baseline that centres n lines vertically in cellH. */
-  function centredY(baseY: number, cellH: number, n: number): number {
-    return baseY + Math.round(cellH / 2) - Math.round((n - 1) * LINE_H / 2) + 5
-  }
-
-  // ── SVG output ────────────────────────────────────────────────────────────
-
-  let svg = ''
-  if (spec.title) {
-    svg += `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
-  }
-
-  const headerUnit: string[] = []
-
-  // Column headers
-  headerUnit.push(`<rect x="0" y="${TITLE_H}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
-  for (let c = 0; c < numCols; c++) {
-    const colX = LABEL_W + c * COL_W
-    headerUnit.push(`<rect x="${colX}" y="${TITLE_H}" width="${COL_W}" height="${HEADER_H}" fill="${theme.primary}28" stroke="${theme.border}" stroke-width="0.5"/>`)
-    const w = colHeaderWraps[c]
-    headerUnit.push(lbl(colX + COL_W / 2, centredY(TITLE_H, HEADER_H, w.lines.length),
+function renderHeader(layout: MatrixLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const unit = [
+    `<rect x="0" y="${layout.titleH}" width="${LABEL_W}" height="${layout.headerH}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`,
+  ]
+  for (let colIndex = 0; colIndex < layout.numCols; colIndex++) {
+    const colX = LABEL_W + colIndex * layout.colW
+    const wrap = layout.colHeaderWraps[colIndex]
+    unit.push(`<rect x="${colX}" y="${layout.titleH}" width="${layout.colW}" height="${layout.headerH}" fill="${theme.primary}28" stroke="${theme.border}" stroke-width="0.5"/>`)
+    unit.push(renderText(
+      colX + layout.colW / 2,
+      centeredY(layout.titleH, layout.headerH, wrap.lines.length),
       `text-anchor="middle" font-size="11" fill="${theme.primary}" ${FONT_SANS_ATTR} font-weight="700"`,
-      colHeaders[c], w))
+      layout.colHeaders[colIndex],
+      wrap,
+    ))
   }
-  svg += wrapItem(headerUnit.join(''), 0, animate, instrument)
+  return wrapItem(unit.join(''), 0, animate, instrument)
+}
 
-  // Rows
-  for (let r = 0; r < rows.length; r++) {
-    const rowUnit: string[] = []
-    const row  = rows[r]
-    const ry   = rowY[r]
-    const rH   = rowHeights[r]
-    const rowBg = r % 2 === 0 ? theme.surface : theme.bg
-
-    // Row label cell — tooltip carries full label + value + attrs
-    rowUnit.push(`<rect x="0" y="${ry}" width="${LABEL_W}" height="${rH}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`)
-    const rlW = rowLabelWraps[r]
-    rowUnit.push(lbl(8, centredY(ry, rH, rlW.lines.length),
-      `font-size="10.5" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600"`,
-      row.label, rlW))
-
-    // Data cells
-    for (let c = 0; c < numCols; c++) {
-      const colX = LABEL_W + c * COL_W
-      const cell = row.children[c]
-      const cellTip = cell ? itemTitleTag(cell) : ''
-      rowUnit.push(`<rect x="${colX}" y="${ry}" width="${COL_W}" height="${rH}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5">${cellTip}</rect>`)
-      if (cell) {
-        const cw = cellWraps[r][c]
-        rowUnit.push(lbl(colX + COL_W / 2, centredY(ry, rH, cw.lines.length),
-          `text-anchor="middle" font-size="10.5" fill="${theme.text}" ${FONT_SANS_ATTR}`,
-          cell.label, cw))
-      }
+function renderRow(row: MdArtItem, rowIndex: number, layout: MatrixLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const y = layout.rowY[rowIndex]
+  const height = layout.rowHeights[rowIndex]
+  const rowBg = rowIndex % 2 === 0 ? theme.surface : theme.bg
+  const unit = [
+    `<rect x="0" y="${y}" width="${LABEL_W}" height="${height}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`,
+  ]
+  const rowWrap = layout.rowLabelWraps[rowIndex]
+  unit.push(renderText(
+    8,
+    centeredY(y, height, rowWrap.lines.length),
+    `font-size="10.5" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600"`,
+    row.label,
+    rowWrap,
+  ))
+  for (let colIndex = 0; colIndex < layout.numCols; colIndex++) {
+    const colX = LABEL_W + colIndex * layout.colW
+    const cell = row.children[colIndex]
+    const cellTip = cell ? itemTitleTag(cell) : ''
+    unit.push(`<rect x="${colX}" y="${y}" width="${layout.colW}" height="${height}" fill="${rowBg}" stroke="${theme.border}" stroke-width="0.5">${cellTip}</rect>`)
+    if (cell) {
+      const wrap = layout.cellWraps[rowIndex][colIndex]
+      unit.push(renderText(
+        colX + layout.colW / 2,
+        centeredY(y, height, wrap.lines.length),
+        `text-anchor="middle" font-size="10.5" fill="${theme.text}" ${FONT_SANS_ATTR}`,
+        cell.label,
+        wrap,
+      ))
     }
-    svg += wrapItem(rowUnit.join(''), r + 1, animate, instrument)
   }
-  if (animate) svg = seqSpotlightCSS(rows.length + 1, spec, { scale: false, loopStartIndex: 1 }) + svg
+  return wrapItem(unit.join(''), rowIndex + 1, animate, instrument)
+}
 
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
-    ${svg}
+function renderSvg(layout: MatrixLayout, spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {
+  const animate = shouldAnimate(spec)
+  return `<svg viewBox="0 0 ${layout.width} ${layout.height}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="${layout.width}" height="${layout.height}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(layout.rows.length + 1, spec, { scale: false, loopStartIndex: 1 }) : ''}
+    ${parts.join('\n    ')}
   </svg>`
+}
+
+export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  const layout = resolveLayout(spec)
+  if (!layout) return renderEmpty(theme)
+
+  const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
+  const parts = [
+    renderTitle(spec, layout, theme),
+    renderHeader(layout, theme, animate, instrument),
+    ...layout.rows.map((row, rowIndex) => renderRow(row, rowIndex, layout, theme, animate, instrument)),
+  ].filter(Boolean)
+
+  return renderSvg(layout, spec, theme, parts)
 }

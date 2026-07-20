@@ -51,7 +51,29 @@ layout/measurement helpers, and smaller SVG emission helpers.
 | Matrix | `bcg` | Done | Delegates to shared quadrant-grid renderer with BCG metadata |
 | Matrix | `ansoff` | Done | Delegates to shared quadrant-grid renderer with Ansoff metadata |
 | Matrix | `pros-cons` | Done | Header parsing, row measurement, column text/header/divider renderers, SVG wrapper split |
+| Matrix | `swot` | Done | Section routing, quadrant buckets, entry/quadrant/grid renderers, SVG wrapper split |
+| Matrix | `matrix-nxm` | Done | Header/cell wrapping, row height calculation, header/row/SVG renderers split |
+| Matrix | `comparison` | Done | Already split into validation/error, LR/TB renderers, shared text/row helpers |
 | Hierarchy | `org-chart` | Done | Diagram measurement, connector, node box/text, SVG wrapper split |
+| Pyramid | `pyramid` | Done | Layer geometry, shape/main/side text renderers, SVG wrapper split |
+| Pyramid | `inverted-pyramid` | Done | Delegates to modular pyramid renderer |
+| Pyramid | `pyramid-list` | Done | Bar/description measurement, row placement, bar/badge/label/value/description renderers split |
+| Pyramid | `segmented-pyramid` | Done | Segmented band layout, shared band shape/label rendering, highlight hook, SVG wrapper split |
+| Pyramid | `diamond-pyramid` | Done | Diamond width function, shared band placement/rendering, SVG wrapper split |
+| Relationship | `balance` | Done | Scale layout constants, support/plate renderers, side config split, SVG wrapper split |
+| Relationship | `counterbalance` | Done | Delegates to modular balance renderer |
+| Relationship | `opposing-arrows` | Done | Arrow geometry constants, side config placement, arrow body/text renderers, SVG wrapper split |
+| Relationship | `radial` | Done | Hub/spoke content resolution, polar placement, connector/node/center renderers, SVG wrapper split |
+| Relationship | `web` | Done | Circular node placement, edge topology builder, edge/node renderers, SVG wrapper split |
+| Relationship | `plus` | Done | Center/arm layout constants, arm node placement, center/arm text renderers, SVG wrapper split |
+| Relationship | `cluster` | Done | Group grid placement, orphan centering, member packing metrics, group/member renderers split |
+| Relationship | `concentric` | Done | Ring layout, outside-in ring placement, label/value-callout renderers, SVG wrapper split |
+| Relationship | `target` | Done | Center-out ring placement, crosshair renderer, label/value-callout renderers, SVG wrapper split |
+| Relationship | `converging` | Done | Delegates to shared relationship flow renderer |
+| Relationship | `diverging` | Done | Delegates to shared relationship flow renderer |
+| Relationship | `venn` | Done | Circle/intersection layout helpers, circle/label/intersection renderers, SVG wrapper split |
+| Relationship | `venn-3` | Done | Delegates to modular venn renderer |
+| Relationship | `venn-4` | Done | Delegates to modular venn renderer |
 | Hierarchy | `h-org-chart` | Done | Horizontal tree traversal, node fit/layout, node renderer split |
 | Hierarchy | `decision-tree` | Done | Tree measurement, fit maps, connector/branch labels, leaf/decision renderers split |
 | Hierarchy | `tree` | Done | Dynamic box measurement, connector, node box/text, SVG wrapper split |
