@@ -1,141 +1,173 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, wrapLabel, aWrap, lerpColor, renderEmpty, getCaption, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+const W = 500
+const GAP = 3
+const MAX_INSET_RATIO = 0.18
+const TITLE_H_WITH_TITLE = 30
+const TITLE_H_NO_TITLE = 8
+const BOTTOM_PAD = 8
 
-const LBL_FS = 11, LBL_LH = 14
-const VAL_FS = 10, VAL_LH = 13
-const PAD_V  = 8     // top + bottom padding inside each band
-const SEC_G  = 5     // gap between label block and caption block
-const MIN_H  = 26    // minimum band height
-
-// ── Per-item layout ───────────────────────────────────────────────────────────
+const LBL_FS = 11
+const LBL_LH = 14
+const VAL_FS = 10
+const VAL_LH = 13
+const PAD_V = 8
+const SEC_G = 5
+const MIN_H = 26
 
 interface BandLayout {
   lblLines: string[]
   lblTrunc: boolean
-  lblUrl:   string | null
+  lblUrl: string | null
   capLines: string[]
   capTrunc: boolean
-  caption:  string | null
-  blockH:   number   // content height (label lines + gap + caption lines)
-  bandH:    number   // total band height (content + padding, ≥ MIN_H)
+  caption: string | null
+  blockH: number
+  bandH: number
 }
 
-function computeBand(
-  item: MdArtSpec['items'][number],
-  topInset: number,
-  W: number,
-): BandLayout {
-  // Use the narrowest (top) inset so text never overflows the shape horizontally
-  const innerW   = Math.max(120, W - topInset * 2 - 12)
+interface TrapezoidLayout {
+  titleH: number
+  height: number
+  topInsets: number[]
+  rowY: number[]
+  bands: BandLayout[]
+}
+
+interface BandPlacement {
+  item: MdArtItem
+  layout: BandLayout
+  index: number
+  y: number
+  topInset: number
+  bottomInset: number
+  fill: string
+}
+
+function titleHeight(spec: MdArtSpec): number {
+  return spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
+}
+
+function topInset(index: number, count: number): number {
+  const t = count > 1 ? index / (count - 1) : 0
+  return W * MAX_INSET_RATIO * (1 - t)
+}
+
+function computeBand(item: MdArtItem, inset: number): BandLayout {
+  const innerW = Math.max(120, W - inset * 2 - 12)
   const labelMax = Math.max(12, Math.floor(innerW / 6.0))
-  const captMax  = Math.max(12, Math.floor(innerW / 5.2))
-  const caption  = getCaption(item)
+  const captionMax = Math.max(12, Math.floor(innerW / 5.2))
+  const caption = getCaption(item)
 
   const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(item.label, labelMax, 5)
   const { lines: capLines, truncated: capTrunc } = caption
-    ? wrapLabel(caption, captMax, 5)
+    ? wrapLabel(caption, captionMax, 5)
     : { lines: [], truncated: false }
-
-  const blockH = lblLines.length * LBL_LH
-    + (capLines.length > 0 ? SEC_G + capLines.length * VAL_LH : 0)
+  const blockH = lblLines.length * LBL_LH + (capLines.length > 0 ? SEC_G + capLines.length * VAL_LH : 0)
 
   return {
-    lblLines, lblTrunc, lblUrl,
-    capLines, capTrunc,
+    lblLines,
+    lblTrunc,
+    lblUrl,
+    capLines,
+    capTrunc,
     caption,
     blockH,
     bandH: Math.max(MIN_H, PAD_V + blockH + PAD_V),
   }
 }
 
-// ── Renderer ──────────────────────────────────────────────────────────────────
-
-export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items
-  if (items.length === 0) return renderEmpty(theme)
-
-  const W        = 500
-  const GAP      = 3
-  const n        = items.length
-  const maxInset = W * 0.18   // narrowest band insets this much on each side
-
-  // Index-based top insets (i=0 → narrowest/top, i=n-1 → widest/bottom)
-  const topInsets = items.map((_, i) => {
-    const t = n > 1 ? i / (n - 1) : 0
-    return maxInset * (1 - t)
-  })
-
-  // Pre-compute per-band layout (wrap text, derive heights)
-  const bands = items.map((item, i) => computeBand(item, topInsets[i], W))
-
-  // Cumulative Y positions
-  const titleH = spec.title ? 30 : 8
+function resolveLayout(spec: MdArtSpec): TrapezoidLayout {
+  const topInsets = spec.items.map((_, index) => topInset(index, spec.items.length))
+  const bands = spec.items.map((item, index) => computeBand(item, topInsets[index]))
   const rowY: number[] = []
-  let cumY = titleH
-  for (const { bandH } of bands) {
-    rowY.push(cumY)
-    cumY += bandH + GAP
+  let y = titleHeight(spec)
+  for (const band of bands) {
+    rowY.push(y)
+    y += band.bandH + GAP
   }
-  const H = cumY - GAP + 8
+  return { titleH: titleHeight(spec), height: y - GAP + BOTTOM_PAD, topInsets, rowY, bands }
+}
 
-  const animate = shouldAnimate(spec)
-  const instrument = shouldInstrument()
-  const parts: string[] = []
-
-  if (spec.title) {
-    parts.push(`<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`)
-  }
-
-  items.forEach((item, i) => {
-    const y      = rowY[i]
-    const { lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, blockH, bandH } = bands[i]
-    const t      = n > 1 ? i / (n - 1) : 0
-    const fill   = lerpColor(theme.primary, theme.secondary, t)
-
-    // Bottom inset equals the top inset of the next item (connects trapezoids)
-    const topInset = topInsets[i]
-    const botInset = i < n - 1 ? topInsets[i + 1] : 0
-
-    // Trapezoidal band path
-    const d = [
-      `M${topInset.toFixed(1)},${y}`,
-      `L${(W - topInset).toFixed(1)},${y}`,
-      `L${(W - botInset).toFixed(1)},${(y + bandH)}`,
-      `L${botInset.toFixed(1)},${(y + bandH)}`,
-      'Z',
-    ].join(' ')
-
-    // Baseline of first label line, text block vertically centred in bandH
-    const lblStartY = y + (bandH - blockH) / 2 + LBL_FS * 0.75
-
-    // ── Label (bold, up to 3 lines) ───────────────────────────────────────────
-    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
-    const lblSpans = lblLines
-      .map((l, li) => `<tspan x="${W / 2}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
-      .join('')
-
-    let nodeStr = ''
-    nodeStr += `<path d="${d}" fill="${fill}33" stroke="${fill}" stroke-width="1">${itemTitleTag(item)}</path>`
-    nodeStr += aWrap(`<text x="${W / 2}" y="${lblStartY.toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${lblTip}${lblSpans}</text>`, lblUrl)
-
-    // ── Caption (muted, below label block, up to 3 lines) ────────────────────
-    if (capLines.length > 0) {
-      const capStartY = lblStartY + lblLines.length * LBL_LH + SEC_G
-      const capTip    = capTrunc ? `<title>${escapeXml(caption!)}</title>` : ''
-      const capSpans  = capLines
-        .map((l, li) => `<tspan x="${W / 2}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
-        .join('')
-      nodeStr += `<text x="${W / 2}" y="${capStartY.toFixed(1)}" text-anchor="middle" font-size="${VAL_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${capTip}${capSpans}</text>`
+function placeBands(spec: MdArtSpec, layout: TrapezoidLayout, theme: MdArtTheme): BandPlacement[] {
+  return spec.items.map((item, index) => {
+    const t = spec.items.length > 1 ? index / (spec.items.length - 1) : 0
+    return {
+      item,
+      layout: layout.bands[index],
+      index,
+      y: layout.rowY[index],
+      topInset: layout.topInsets[index],
+      bottomInset: index < spec.items.length - 1 ? layout.topInsets[index + 1] : 0,
+      fill: lerpColor(theme.primary, theme.secondary, t),
     }
-    parts.push(wrapItem(nodeStr, i, animate, instrument))
   })
+}
 
-  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+function renderTitle(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (!spec.title) return ''
+  return `<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
+}
+
+function bandPath(band: BandPlacement): string {
+  return [
+    `M${band.topInset.toFixed(1)},${band.y}`,
+    `L${(W - band.topInset).toFixed(1)},${band.y}`,
+    `L${(W - band.bottomInset).toFixed(1)},${band.y + band.layout.bandH}`,
+    `L${band.bottomInset.toFixed(1)},${band.y + band.layout.bandH}`,
+    'Z',
+  ].join(' ')
+}
+
+function tspans(lines: string[], lineH: number): string {
+  return lines.map((line, lineIndex) => `<tspan x="${W / 2}" dy="${lineIndex === 0 ? 0 : lineH}">${escapeXml(line)}</tspan>`).join('')
+}
+
+function renderBandShape(band: BandPlacement): string {
+  return `<path d="${bandPath(band)}" fill="${band.fill}33" stroke="${band.fill}" stroke-width="1">${itemTitleTag(band.item)}</path>`
+}
+
+function labelStartY(band: BandPlacement): number {
+  return band.y + (band.layout.bandH - band.layout.blockH) / 2 + LBL_FS * 0.75
+}
+
+function renderBandLabel(band: BandPlacement, theme: MdArtTheme): string {
+  const tip = band.layout.lblTrunc ? `<title>${escapeXml(band.item.label)}</title>` : ''
+  return aWrap(`<text x="${W / 2}" y="${labelStartY(band).toFixed(1)}" text-anchor="middle" font-size="${LBL_FS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${tip}${tspans(band.layout.lblLines, LBL_LH)}</text>`, band.layout.lblUrl)
+}
+
+function renderBandCaption(band: BandPlacement, theme: MdArtTheme): string {
+  if (band.layout.capLines.length === 0) return ''
+  const y = labelStartY(band) + band.layout.lblLines.length * LBL_LH + SEC_G
+  const tip = band.layout.capTrunc ? `<title>${escapeXml(band.layout.caption!)}</title>` : ''
+  return `<text x="${W / 2}" y="${y.toFixed(1)}" text-anchor="middle" font-size="${VAL_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${tip}${tspans(band.layout.capLines, VAL_LH)}</text>`
+}
+
+function renderBand(band: BandPlacement, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  return wrapItem(renderBandShape(band) + renderBandLabel(band, theme) + renderBandCaption(band, theme), band.index, animate, instrument)
+}
+
+function renderSvg(layout: TrapezoidLayout, theme: MdArtTheme, parts: string[]): string {
+  return `<svg viewBox="0 0 ${W} ${layout.height}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="${W}" height="${layout.height}" fill="${theme.bg}" rx="8"/>
     ${parts.join('\n    ')}
   </svg>`
+}
+
+export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (spec.items.length === 0) return renderEmpty(theme)
+
+  const layout = resolveLayout(spec)
+  const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
+  const bands = placeBands(spec, layout, theme)
+  const parts = [
+    ...(animate ? [seqSpotlightCSS(spec.items.length, spec)] : []),
+    renderTitle(spec, theme),
+    ...bands.map(band => renderBand(band, theme, animate, instrument)),
+  ].filter(Boolean)
+
+  return renderSvg(layout, theme, parts)
 }

@@ -1036,6 +1036,15 @@ export function displayLabel(
   return { display: ellipsisIfDropped(raw, item, shows), url }
 }
 
+/** Parse a label link and append the item's explicit `value` visibly as
+ *  `Label: value`. Use this for compact renderers that have one text slot
+ *  but should still expose key:value content directly instead of showing only
+ *  the dropped-value ellipsis cue. */
+export function displayLabelValue(item: ItemLike): { display: string; url: string | null } {
+  const { display: raw, url } = parseLink(item.label)
+  return { display: item.value ? `${raw}: ${item.value}` : raw, url }
+}
+
 /**
  * Resolve a single-line description for an item, preferring `value` (explicit
  * inline `: desc` form) and falling back to a summary of `children` labels

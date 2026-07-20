@@ -1,62 +1,158 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, roundedRectPath, FONT_SANS_ATTR } from '../shared'
+import {
+  escapeXml,
+  lerpColor,
+  titleEl,
+  renderEmpty,
+  aWrap,
+  itemTitleTag,
+  displayLabel,
+  shouldAnimate,
+  seqSpotlightCSS,
+  fitTextToWidthShared,
+  wrapItem,
+  shouldInstrument,
+  roundedRectPath,
+  FONT_SANS_ATTR,
+} from '../shared'
 
-function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+const W = 560
+const BAR_H = 32
+const LABEL_H = 22
+const TITLE_H_WITH_TITLE = 28
+const TITLE_H_NO_TITLE = 8
+const BAR_TOP_GAP = 12
+const PAD = 8
+const BOTTOM_PAD = 20
+const OUTER_R = 5
+const LABEL_FIT_PAD = 6
+
+interface SegmentedBarLayout {
+  titleH: number
+  height: number
+  barY: number
+  barW: number
+  weights: number[]
+  totalWeight: number
+  segmentWidths: number[]
+}
+
+interface SegmentPlacement {
+  item: MdArtItem
+  index: number
+  x: number
+  w: number
+  fill: string
+  label: ReturnType<typeof displayLabel>
+  pctLabel: string
+}
+
+function titleHeight(spec: MdArtSpec): number {
+  return spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
+}
+
+function resolveLayout(spec: MdArtSpec): SegmentedBarLayout {
+  const weights = spec.items.map(item => parseFloat(item.value ?? '') || 1)
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0)
+  const barW = W - PAD * 2
+  const titleH = titleHeight(spec)
+  return {
+    titleH,
+    height: titleH + BAR_H + LABEL_H + BOTTOM_PAD,
+    barY: titleH + BAR_TOP_GAP,
+    barW,
+    weights,
+    totalWeight,
+    segmentWidths: weights.map(weight => (weight / totalWeight) * barW),
+  }
+}
+
+function placeSegments(spec: MdArtSpec, layout: SegmentedBarLayout, theme: MdArtTheme): SegmentPlacement[] {
+  let x = PAD
+  return spec.items.map((item, index) => {
+    const w = layout.segmentWidths[index]
+    const t = spec.items.length > 1 ? index / (spec.items.length - 1) : 0
+    const placement = {
+      item,
+      index,
+      x,
+      w,
+      fill: lerpColor(theme.primary, theme.secondary, t),
+      label: displayLabel(item, { value: true }),
+      pctLabel: item.value ?? `${Math.round(layout.weights[index] / layout.totalWeight * 100)}%`,
+    }
+    x += w
+    return placement
+  })
+}
+
+function renderTitle(spec: MdArtSpec, theme: MdArtTheme): string {
+  return spec.title ? titleEl(W, spec.title, theme) : ''
+}
+
+function segmentRadius(index: number, count: number): { left: number; right: number } {
+  return {
+    left: index === 0 ? OUTER_R : 0,
+    right: index === count - 1 ? OUTER_R : 0,
+  }
+}
+
+function renderSegmentShape(segment: SegmentPlacement, layout: SegmentedBarLayout, count: number): string {
+  const radius = segmentRadius(segment.index, count)
+  return `<path class="mdart-glow-stroke" d="${roundedRectPath(segment.x, layout.barY, segment.w, BAR_H, { tl: radius.left, bl: radius.left, tr: radius.right, br: radius.right })}" fill="${segment.fill}">${itemTitleTag(segment.item)}</path>`
+}
+
+function renderSegmentLabel(segment: SegmentPlacement, layout: SegmentedBarLayout): string {
+  const fitW = Math.max(20, segment.w - LABEL_FIT_PAD)
+  const { fontSize, results: [{ lines, truncated }] } = fitTextToWidthShared([segment.label.display], fitW, {
+    maxSize: 10,
+    minSize: 6.5,
+    maxLines: 1,
+  })
+  const tip = truncated ? `<title>${escapeXml(segment.label.display)}</title>` : ''
+  const x = segment.x + segment.w / 2
+  return aWrap(`${tip}<text x="${x.toFixed(1)}" y="${(layout.barY + BAR_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="#fff" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(lines[0])}</text>`, segment.label.url)
+}
+
+function renderSegmentPercent(segment: SegmentPlacement, layout: SegmentedBarLayout): string {
+  const fitW = Math.max(20, segment.w - LABEL_FIT_PAD)
+  const { fontSize, results: [{ lines, truncated }] } = fitTextToWidthShared([segment.pctLabel], fitW, {
+    maxSize: 9,
+    minSize: 6,
+    maxLines: 1,
+  })
+  const tip = truncated ? `<title>${escapeXml(segment.pctLabel)}</title>` : ''
+  const x = segment.x + segment.w / 2
+  return `${tip}<text x="${x.toFixed(1)}" y="${(layout.barY + BAR_H + 14).toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${segment.fill}" ${FONT_SANS_ATTR}>${escapeXml(lines[0])}</text>`
+}
+
+function renderSegment(segment: SegmentPlacement, layout: SegmentedBarLayout, count: number, animate: boolean, instrument: boolean): string {
+  const node = renderSegmentShape(segment, layout, count) +
+    renderSegmentLabel(segment, layout) +
+    renderSegmentPercent(segment, layout)
+  return wrapItem(node, segment.index, animate, instrument)
+}
+
+function renderSvg(layout: SegmentedBarLayout, theme: MdArtTheme, parts: string[]): string {
+  return `<svg viewBox="0 0 ${W} ${layout.height}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="${W}" height="${layout.height}" fill="${theme.bg}" rx="8"/>
     ${parts.join('\n    ')}
   </svg>`
 }
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items
-  if (items.length === 0) return renderEmpty(theme)
-  const W = 560, BAR_H = 32, LABEL_H = 22
-  const titleH = spec.title ? 28 : 8
-  const H = titleH + BAR_H + LABEL_H + 20
-  const BAR_Y = titleH + 12, PAD = 8
-  const BAR_W = W - PAD * 2
+  if (spec.items.length === 0) return renderEmpty(theme)
+
+  const layout = resolveLayout(spec)
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
-  const parts: string[] = []
-  if (spec.title) parts.push(titleEl(W, spec.title, theme))
+  const segments = placeSegments(spec, layout, theme)
+  const parts = [
+    ...(animate ? [seqSpotlightCSS(spec.items.length, spec, { scale: false })] : []),
+    renderTitle(spec, theme),
+    ...segments.map(segment => renderSegment(segment, layout, segments.length, animate, instrument)),
+  ].filter(Boolean)
 
-  const weights = items.map(it => parseFloat(it.value ?? '') || 1)
-  const total = weights.reduce((s, w) => s + w, 0)
-
-  // Per-node fitting: segment widths vary per item (proportional to
-  // weight) — a genuinely varying, per-item width. Sizing every label to
-  // the single narrowest segment across the bar would crush the wider
-  // segments' text down to whatever the tightest one needs; instead each
-  // segment's label is sized to its OWN width.
-  const segWidths = weights.map(w => (w / total) * BAR_W)
-  const displays = items.map(item => displayLabel(item, { value: true }))
-  const pctLabels = items.map((item, i) => item.value ?? Math.round(weights[i] / total * 100) + '%')
-
-  let curX = PAD
-  items.forEach((item, i) => {
-    const segW = segWidths[i]
-    const fitW = Math.max(20, segW - 6)
-    const t = items.length > 1 ? i / (items.length - 1) : 0
-    const fill = lerpColor(theme.primary, theme.secondary, t)
-    const isFirst = i === 0, isLast = i === items.length - 1
-    const rl = isFirst ? 5 : 0, rr = isLast ? 5 : 0
-    const { url: itmUrl, display: itmDisplay } = displays[i]
-    const { fontSize: labelFS, results: [{ lines: labelLines, truncated: labelTruncated }] } =
-      fitTextToWidthShared([itmDisplay], fitW, { maxSize: 10, minSize: 6.5, maxLines: 1 })
-    const { fontSize: pctFS, results: [{ lines: pctLines, truncated: pctTruncated }] } =
-      fitTextToWidthShared([pctLabels[i]], fitW, { maxSize: 9, minSize: 6, maxLines: 1 })
-    const labelTip = labelTruncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
-    const pctTip = pctTruncated ? `<title>${escapeXml(pctLabels[i])}</title>` : ''
-    // Per-corner rounding keeps only the bar's outer edges rounded; inner segment joins remain flat.
-    let segStr = `<path class="mdart-glow-stroke" d="${roundedRectPath(curX, BAR_Y, segW, BAR_H, { tl: rl, bl: rl, tr: rr, br: rr })}" fill="${fill}">${itemTitleTag(item)}</path>`
-    const lx = curX + segW / 2
-    segStr += aWrap(`${labelTip}<text x="${lx.toFixed(1)}" y="${(BAR_Y + BAR_H / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="#fff" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(labelLines[0])}</text>`, itmUrl)
-    segStr += `${pctTip}<text x="${lx.toFixed(1)}" y="${(BAR_Y + BAR_H + 14).toFixed(1)}" text-anchor="middle" font-size="${pctFS}" fill="${fill}" ${FONT_SANS_ATTR}>${escapeXml(pctLines[0])}</text>`
-    parts.push(wrapItem(segStr, i, animate, instrument))
-    curX += segW
-  })
-  if (animate) parts.unshift(seqSpotlightCSS(items.length, spec, { scale: false }))
-  return svgWrapProcess(W, H, theme, parts)
+  return renderSvg(layout, theme, parts)
 }

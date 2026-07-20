@@ -1,55 +1,75 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, wrapLabel, aWrap, renderEmpty, itemTitleTag, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 const DONE_ATTRS = ['done', '✓', 'complete']
-const isDone = (it: { attrs: string[] }) => it.attrs.some(a => DONE_ATTRS.includes(a))
-
-// ── Layout constants ─────────────────────────────────────────────────────────
-
-const W   = 480
+const W = 480
 const PAD = 16
+const TITLE_H = 28
 
-const LBL_FS = 12, LBL_LH = 15
-const VAL_FS = 10, VAL_LH = 13
+const LBL_FS = 12
+const LBL_LH = 15
+const VAL_FS = 10
+const VAL_LH = 13
 const CHD_FS = 10.5
 
-const TOP_PAD         = 8    // yCur → checkbox top
-const FIRST_LBL_BL    = 22   // yCur → first label baseline (centres x-height on checkbox)
-const SEC_G           = 14   // label baseline → value baseline (full LBL_LH gap, prevents overlap)
-const GAP_BEFORE_SUBS = 10   // last text zone bottom → first sub-checkbox top
-const SUB_BOX         = 12
-const SUB_GAP         = 4
-const BOTTOM_PAD      = 8
-const ITEM_GAP        = 6
+const TOP_PAD = 8
+const FIRST_LBL_BL = 22
+const SEC_G = 14
+const GAP_BEFORE_SUBS = 10
+const SUB_BOX = 12
+const SUB_GAP = 4
+const BOTTOM_PAD = 8
+const ITEM_GAP = 6
+const MAIN_BOX = 18
+const MAIN_TEXT_X = PAD + 26
+const SUB_X = PAD + 32
+const CHILD_TEXT_X = SUB_X + SUB_BOX + 6
 
-// Character limits
-const LBL_MAX = Math.max(12, Math.floor((W - PAD - 26 - PAD) / 4.8))  // ~88
-const VAL_MAX = Math.max(12, Math.floor((W - PAD - 26 - PAD) / 4.0))  // ~106
-const CHD_MAX = Math.max(12, Math.floor((W - PAD - 50 - PAD) / 4.2))  // ~83
-
-// ── Per-item layout ───────────────────────────────────────────────────────────
+const LBL_MAX = Math.max(12, Math.floor((W - PAD - 26 - PAD) / 4.8))
+const VAL_MAX = Math.max(12, Math.floor((W - PAD - 26 - PAD) / 4.0))
+const CHD_MAX = Math.max(12, Math.floor((W - PAD - 50 - PAD) / 4.2))
 
 interface ItemLayout {
-  lblLines:    string[]
-  lblTrunc:    boolean
-  lblUrl:      string | null
-  valLines:    string[]
-  valTrunc:    boolean
-  valUrl:      string | null
-  chdLayouts:  Array<{ lines: string[]; truncated: boolean }>
-  itemH:       number
-  firstValBL:  number  // relative to yCur; 0 if no value
-  firstSubTop: number  // relative to yCur; 0 if no children
+  lblLines: string[]
+  lblTrunc: boolean
+  lblUrl: string | null
+  valLines: string[]
+  valTrunc: boolean
+  valUrl: string | null
+  chdLayouts: Array<{ lines: string[]; truncated: boolean }>
+  itemH: number
+  firstValBL: number
+  firstSubTop: number
+  extraAttrs: string[]
 }
 
-function computeItemLayout(
-  item: MdArtSpec['items'][number],
-  extraAttrChars: number,
-): ItemLayout {
-  // Account for [tag] label on the right reducing available width
-  const lblMaxAdj = extraAttrChars > 0
-    ? Math.max(12, Math.floor((W - PAD - 26 - PAD - extraAttrChars * 5.5 - 30) / 4.8))
+interface ChecklistLayout {
+  titleH: number
+  height: number
+  items: ItemLayout[]
+}
+
+interface ChecklistItem {
+  item: MdArtItem
+  layout: ItemLayout
+  index: number
+  y: number
+  done: boolean
+}
+
+function isDone(item: { attrs: string[] }): boolean {
+  return item.attrs.some(attr => DONE_ATTRS.includes(attr))
+}
+
+function titleHeight(spec: MdArtSpec): number {
+  return spec.title ? TITLE_H : 0
+}
+
+function computeItemLayout(item: MdArtItem): ItemLayout {
+  const extraAttrs = item.attrs.filter(attr => !DONE_ATTRS.includes(attr))
+  const lblMaxAdj = extraAttrs.length > 0
+    ? Math.max(12, Math.floor((W - PAD - 26 - PAD - extraAttrs.join(', ').length * 5.5 - 30) / 4.8))
     : LBL_MAX
 
   const { lines: lblLines, truncated: lblTrunc, url: lblUrl } = wrapLabel(item.label, lblMaxAdj, 5)
@@ -58,146 +78,152 @@ function computeItemLayout(
     : { lines: [], truncated: false, url: null }
   const chdLayouts = item.children.map(ch => wrapLabel(ch.label, CHD_MAX, 5))
 
-  const lastLblBL  = FIRST_LBL_BL + (lblLines.length - 1) * LBL_LH
-  let zoneBottom   = lastLblBL + 4   // approx descent below baseline
-  let firstValBL   = 0
+  const lastLblBL = FIRST_LBL_BL + (lblLines.length - 1) * LBL_LH
+  let zoneBottom = lastLblBL + 4
+  let firstValBL = 0
   if (valLines.length > 0) {
     firstValBL = lastLblBL + SEC_G
     zoneBottom = firstValBL + (valLines.length - 1) * VAL_LH + 4
   }
 
-  let firstSubTop  = 0
-  let lastBottom   = zoneBottom
+  let firstSubTop = 0
+  let lastBottom = zoneBottom
   if (item.children.length > 0) {
     firstSubTop = zoneBottom + GAP_BEFORE_SUBS
-    let subH    = 0
-    for (const { lines } of chdLayouts) {
-      subH += Math.max(SUB_BOX, lines.length * VAL_LH) + SUB_GAP
-    }
-    subH    -= SUB_GAP  // no trailing gap
+    const subH = chdLayouts.reduce((sum, { lines }) => sum + Math.max(SUB_BOX, lines.length * VAL_LH) + SUB_GAP, 0) - SUB_GAP
     lastBottom = firstSubTop + subH
   }
 
   return {
-    lblLines, lblTrunc, lblUrl, valLines, valTrunc, valUrl, chdLayouts,
+    lblLines,
+    lblTrunc,
+    lblUrl,
+    valLines,
+    valTrunc,
+    valUrl,
+    chdLayouts,
     itemH: lastBottom + BOTTOM_PAD,
-    firstValBL, firstSubTop,
+    firstValBL,
+    firstSubTop,
+    extraAttrs,
   }
 }
 
-// ── Renderer ─────────────────────────────────────────────────────────────────
+function resolveLayout(spec: MdArtSpec): ChecklistLayout {
+  const items = spec.items.map(computeItemLayout)
+  const titleH = titleHeight(spec)
+  const totalContent = items.reduce((sum, layout) => sum + layout.itemH, 0) + ITEM_GAP * Math.max(0, items.length - 1)
+  return { titleH, height: PAD + titleH + totalContent + PAD, items }
+}
+
+function placeItems(spec: MdArtSpec, layout: ChecklistLayout): ChecklistItem[] {
+  let y = PAD + layout.titleH
+  return spec.items.map((item, index) => {
+    const placement = { item, layout: layout.items[index], index, y, done: isDone(item) }
+    y += placement.layout.itemH + ITEM_GAP
+    return placement
+  })
+}
+
+function renderTitle(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (!spec.title) return ''
+  return `<text x="${PAD}" y="${PAD + 16}" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
+}
+
+function spans(lines: string[], x: number, lineH: number): string {
+  return lines.map((line, lineIndex) => `<tspan x="${x}" dy="${lineIndex === 0 ? 0 : lineH}">${escapeXml(line)}</tspan>`).join('')
+}
+
+function renderCheck(x: number, y: number, stroke: string, large = false): string {
+  if (large) {
+    const cy = y + 9
+    return `<polyline points="${x + 4},${cy} ${x + 8},${cy + 4} ${x + 14},${cy - 4}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" />`
+  }
+  const cy = y + SUB_BOX / 2
+  return `<polyline points="${x + 3},${cy} ${x + 6},${cy + 2.5} ${x + 10},${cy - 3}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linecap="round" />`
+}
+
+function renderMainBox(placement: ChecklistItem, theme: MdArtTheme): string {
+  const boxY = placement.y + TOP_PAD
+  return `<rect x="${PAD}" y="${boxY}" width="${MAIN_BOX}" height="${MAIN_BOX}" rx="3" fill="none" stroke="${theme.primary}" stroke-width="1.5" >${itemTitleTag(placement.item)}</rect>` +
+    (placement.done ? renderCheck(PAD, boxY, theme.accent, true) : '')
+}
+
+function renderLabel(placement: ChecklistItem, theme: MdArtTheme): string {
+  const style = placement.done
+    ? `fill="${theme.text}" fill-opacity="0.62" font-style="italic"`
+    : `fill="${theme.text}"`
+  const tip = placement.layout.lblTrunc ? `<title>${escapeXml(placement.item.label)}</title>` : ''
+  return aWrap(`<text x="${MAIN_TEXT_X}" y="${placement.y + FIRST_LBL_BL}" font-size="${LBL_FS}" ${FONT_SANS_ATTR} ${style}>${tip}${spans(placement.layout.lblLines, MAIN_TEXT_X, LBL_LH)}</text>`, placement.layout.lblUrl)
+}
+
+function renderAttrs(placement: ChecklistItem, theme: MdArtTheme): string {
+  if (placement.layout.extraAttrs.length === 0) return ''
+  return `<text x="${W - PAD}" y="${placement.y + FIRST_LBL_BL}" text-anchor="end" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>[${escapeXml(placement.layout.extraAttrs.join(', '))}]</text>`
+}
+
+function renderValue(placement: ChecklistItem, theme: MdArtTheme): string {
+  if (placement.layout.valLines.length === 0) return ''
+  const tip = placement.layout.valTrunc ? `<title>${escapeXml(placement.item.value ?? '')}</title>` : ''
+  return aWrap(`<text x="${MAIN_TEXT_X}" y="${placement.y + placement.layout.firstValBL}" font-size="${VAL_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${tip}${spans(placement.layout.valLines, MAIN_TEXT_X, VAL_LH)}</text>`, placement.layout.valUrl)
+}
+
+function renderSubtask(placement: ChecklistItem, child: MdArtItem, childIndex: number, subTop: number, theme: MdArtTheme): string {
+  const { lines, truncated } = placement.layout.chdLayouts[childIndex]
+  const childDone = placement.done || isDone(child)
+  const style = childDone
+    ? `fill="${theme.text}" fill-opacity="0.55" font-style="italic"`
+    : `fill="${theme.text}" fill-opacity="0.85"`
+  const tip = truncated ? `<title>${escapeXml(child.label)}</title>` : ''
+  return `<rect x="${SUB_X}" y="${subTop}" width="${SUB_BOX}" height="${SUB_BOX}" rx="2" fill="none" stroke="${theme.primary}" stroke-width="1.2" opacity="0.85" />` +
+    (childDone ? renderCheck(SUB_X, subTop, theme.accent) : '') +
+    `<text x="${CHILD_TEXT_X}" y="${subTop + 10}" font-size="${CHD_FS}" ${FONT_SANS_ATTR} ${style}>${tip}${spans(lines, CHILD_TEXT_X, VAL_LH)}</text>`
+}
+
+function renderSubtasks(placement: ChecklistItem, theme: MdArtTheme): string {
+  let subTop = placement.y + placement.layout.firstSubTop
+  return placement.item.children.map((child, childIndex) => {
+    const svg = renderSubtask(placement, child, childIndex, subTop, theme)
+    subTop += Math.max(SUB_BOX, placement.layout.chdLayouts[childIndex].lines.length * VAL_LH) + SUB_GAP
+    return svg
+  }).join('')
+}
+
+function renderSeparator(placement: ChecklistItem, rowCount: number, theme: MdArtTheme): string {
+  if (placement.index >= rowCount - 1) return ''
+  const sepY = placement.y + placement.layout.itemH + ITEM_GAP / 2
+  return `<line x1="${PAD}" y1="${sepY.toFixed(1)}" x2="${W - PAD}" y2="${sepY.toFixed(1)}" stroke="${theme.border}" stroke-width="0.5" />`
+}
+
+function renderItem(placement: ChecklistItem, rowCount: number, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const node = renderMainBox(placement, theme) +
+    renderLabel(placement, theme) +
+    renderAttrs(placement, theme) +
+    renderValue(placement, theme) +
+    renderSubtasks(placement, theme)
+  return wrapItem(node, placement.index, animate, instrument) + renderSeparator(placement, rowCount, theme)
+}
+
+function renderSvg(layout: ChecklistLayout, spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {
+  const animate = shouldAnimate(spec)
+  return `<svg viewBox="0 0 ${W} ${layout.height}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="${W}" height="${layout.height}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(spec.items.length, spec) : ''}
+    ${parts.join('\n    ')}
+  </svg>`
+}
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items
-  if (items.length === 0) return renderEmpty(theme)
+  if (spec.items.length === 0) return renderEmpty(theme)
 
-  const titleH = spec.title ? 28 : 0
-  const layouts = items.map(item => {
-    const extraAttrs = item.attrs.filter(a => !DONE_ATTRS.includes(a))
-    return computeItemLayout(item, extraAttrs.join(', ').length)
-  })
-
-  const totalContent = layouts.reduce((a, l) => a + l.itemH, 0)
-    + ITEM_GAP * Math.max(0, items.length - 1)
-  const H = PAD + titleH + totalContent + PAD
-
-  const n = items.length
+  const layout = resolveLayout(spec)
+  const placements = placeItems(spec, layout)
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
-  let svgContent = ''
-  if (spec.title) {
-    svgContent += `<text x="${PAD}" y="${PAD + 16}" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
-  }
+  const parts = [
+    renderTitle(spec, theme),
+    ...placements.map(placement => renderItem(placement, placements.length, theme, animate, instrument)),
+  ].filter(Boolean)
 
-  let yCur = PAD + titleH
-
-  for (let i = 0; i < items.length; i++) {
-    const item   = items[i]
-    const layout = layouts[i]
-    const done   = isDone(item)
-    const extraAttrs = item.attrs.filter(a => !DONE_ATTRS.includes(a))
-    const { lblLines, lblTrunc, lblUrl, valLines, valTrunc, valUrl, chdLayouts, itemH, firstValBL, firstSubTop } = layout
-
-    // ── Main checkbox ──────────────────────────────────────────────────────────
-    const boxY = yCur + TOP_PAD
-
-    // ── Main label (up to 3 lines) ─────────────────────────────────────────────
-    const labelY     = yCur + FIRST_LBL_BL
-    const labelStyle = done
-      ? `fill="${theme.text}" fill-opacity="0.62" font-style="italic"`
-      : `fill="${theme.text}"`
-    const lblTip   = lblTrunc ? `<title>${escapeXml(item.label)}</title>` : ''
-    const lblSpans = lblLines
-      .map((l, li) => `<tspan x="${PAD + 26}" dy="${li === 0 ? 0 : LBL_LH}">${escapeXml(l)}</tspan>`)
-      .join('')
-
-    // ── Value / description (up to 2 lines) ────────────────────────────────────
-    let valStr = ''
-    if (valLines.length > 0) {
-      const valY   = yCur + firstValBL
-      const valTip = valTrunc ? `<title>${escapeXml(item.value ?? '')}</title>` : ''
-      const valSpans = valLines
-        .map((l, li) => `<tspan x="${PAD + 26}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
-        .join('')
-      valStr = aWrap(`<text x="${PAD + 26}" y="${valY}" font-size="${VAL_FS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${valTip}${valSpans}</text>`, valUrl)
-    }
-
-    // ── Subtasks ───────────────────────────────────────────────────────────────
-    const subX   = PAD + 32
-    const cTextX = subX + SUB_BOX + 6
-    let subTop   = yCur + firstSubTop
-    let subStr   = ''
-
-    for (let ci = 0; ci < item.children.length; ci++) {
-      const child     = item.children[ci]
-      const { lines: chLines, truncated: chTrunc } = chdLayouts[ci]
-      const childDone = done || isDone(child)
-      const subCy     = subTop + SUB_BOX / 2
-      const cLabelY   = subTop + 10
-
-      subStr += `<rect x="${subX}" y="${subTop}" width="${SUB_BOX}" height="${SUB_BOX}" rx="2" fill="none" stroke="${theme.primary}" stroke-width="1.2" opacity="0.85" />`
-      if (childDone) {
-        subStr += `<polyline points="${subX + 3},${subCy} ${subX + 6},${subCy + 2.5} ${subX + 10},${subCy - 3}" fill="none" stroke="${theme.accent}" stroke-width="1.5" stroke-linecap="round" />`
-      }
-
-      const cStyle = childDone
-        ? `fill="${theme.text}" fill-opacity="0.55" font-style="italic"`
-        : `fill="${theme.text}" fill-opacity="0.85"`
-      const chTip   = chTrunc ? `<title>${escapeXml(child.label)}</title>` : ''
-      const chSpans = chLines
-        .map((l, li) => `<tspan x="${cTextX}" dy="${li === 0 ? 0 : VAL_LH}">${escapeXml(l)}</tspan>`)
-        .join('')
-      subStr += `<text x="${cTextX}" y="${cLabelY}" font-size="${CHD_FS}" ${FONT_SANS_ATTR} ${cStyle}>${chTip}${chSpans}</text>`
-
-      subTop += Math.max(SUB_BOX, chLines.length * VAL_LH) + SUB_GAP
-    }
-
-    // ── Assemble node (checkbox + label + tags + value + subtasks) ────────────
-    let nodeStr = ''
-    nodeStr += `<rect x="${PAD}" y="${boxY}" width="18" height="18" rx="3" fill="none" stroke="${theme.primary}" stroke-width="1.5" >${itemTitleTag(item)}</rect>`
-    if (done) {
-      const cy = boxY + 9
-      nodeStr += `<polyline points="${PAD + 4},${cy} ${PAD + 8},${cy + 4} ${PAD + 14},${cy - 4}" fill="none" stroke="${theme.accent}" stroke-width="2" stroke-linecap="round" />`
-    }
-    nodeStr += aWrap(`<text x="${PAD + 26}" y="${labelY}" font-size="${LBL_FS}" ${FONT_SANS_ATTR} ${labelStyle}>${lblTip}${lblSpans}</text>`, lblUrl)
-    if (extraAttrs.length > 0) {
-      nodeStr += `<text x="${W - PAD}" y="${labelY}" text-anchor="end" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>[${extraAttrs.join(', ')}]</text>`
-    }
-    nodeStr += valStr + subStr
-    svgContent += wrapItem(nodeStr, i, animate, instrument)
-
-    // ── Separator — not part of the item ──────────────────────────────────────
-    if (i < items.length - 1) {
-      const sepY = yCur + itemH + ITEM_GAP / 2
-      svgContent += `<line x1="${PAD}" y1="${sepY.toFixed(1)}" x2="${W - PAD}" y2="${sepY.toFixed(1)}" stroke="${theme.border}" stroke-width="0.5" />`
-    }
-
-    yCur += itemH + ITEM_GAP
-  }
-
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
-    ${animate ? seqSpotlightCSS(n, spec) : ''}
-    ${svgContent}
-  </svg>`
+  return renderSvg(layout, spec, theme, parts)
 }

@@ -1,123 +1,157 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { lerpColor, contrastColor, titleEl, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument } from '../shared'
 import { render as renderProcess } from './process'
 
-function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+const W = 600
+const MAX_ITEMS = 8
+const TITLE_H_WITH_TITLE = 28
+const TITLE_H_NO_TITLE = 8
+const CHEV_H = 54
+const H_PAD = 20
+const GAP = 4
+const POINT_W = 20
+const TOP_GAP = 10
+const BOTTOM_PAD = 28
+const INNER_TEXT_PAD = 6
+
+interface ChevronGeometry {
+  item: MdArtItem
+  index: number
+  x: number
+  y: number
+  isFirst: boolean
+  isLast: boolean
+  bodyW: number
+  tx: number
+  fill: string
+  display: ReturnType<typeof displayLabel>
+}
+
+interface ChevronLayout {
+  n: number
+  titleH: number
+  height: number
+  chevW: number
+  startX: number
+  y: number
+  cy: number
+  textH: number
+}
+
+function titleHeight(spec: MdArtSpec): number {
+  return spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
+}
+
+function resolveLayout(spec: MdArtSpec): ChevronLayout {
+  const n = spec.items.length
+  const titleH = titleHeight(spec)
+  const chevW = Math.floor((W - H_PAD - (n - 1) * GAP) / n)
+  const startX = Math.floor((W - (n * chevW + (n - 1) * GAP)) / 2)
+  const y = titleH + TOP_GAP
+  return {
+    n,
+    titleH,
+    height: CHEV_H + titleH + BOTTOM_PAD,
+    chevW,
+    startX,
+    y,
+    cy: y + CHEV_H / 2,
+    textH: CHEV_H - 12,
+  }
+}
+
+function placeChevrons(spec: MdArtSpec, layout: ChevronLayout, theme: MdArtTheme): ChevronGeometry[] {
+  return spec.items.map((item, index) => {
+    const x = layout.startX + index * (layout.chevW + GAP)
+    const isFirst = index === 0
+    const isLast = index === layout.n - 1
+    const bodyX = x + (isFirst ? 0 : POINT_W / 2)
+    const rawBodyW = isLast ? layout.chevW - Math.round(POINT_W / 2) : layout.chevW - POINT_W
+    const t = layout.n > 1 ? index / (layout.n - 1) : 0
+    return {
+      item,
+      index,
+      x,
+      y: layout.y,
+      isFirst,
+      isLast,
+      bodyW: Math.max(4, rawBodyW - INNER_TEXT_PAD),
+      tx: bodyX + rawBodyW / 2,
+      fill: lerpColor(theme.primary, theme.secondary, t),
+      display: displayLabel(item, { value: !!item.value }),
+    }
+  })
+}
+
+function renderTitle(spec: MdArtSpec, theme: MdArtTheme): string {
+  return spec.title ? titleEl(W, spec.title, theme) : ''
+}
+
+function chevronPoints(chev: ChevronGeometry, layout: ChevronLayout): string {
+  const x = chev.x
+  const y = layout.y
+  const w = layout.chevW
+  const cy = layout.cy
+  if (layout.n === 1) return `${x},${y} ${x + w},${y} ${x + w},${y + CHEV_H} ${x},${y + CHEV_H}`
+  if (chev.isFirst) return `${x},${y} ${x + w - POINT_W},${y} ${x + w},${cy} ${x + w - POINT_W},${y + CHEV_H} ${x},${y + CHEV_H}`
+  if (chev.isLast) return `${x},${y} ${x + w},${y} ${x + w},${y + CHEV_H} ${x},${y + CHEV_H} ${x + POINT_W},${cy}`
+  return `${x},${y} ${x + w - POINT_W},${y} ${x + w},${cy} ${x + w - POINT_W},${y + CHEV_H} ${x},${y + CHEV_H} ${x + POINT_W},${cy}`
+}
+
+function renderShape(chev: ChevronGeometry, layout: ChevronLayout, theme: MdArtTheme): string {
+  return `<polygon points="${chevronPoints(chev, layout)}" fill="${chev.fill}ee" stroke="${theme.bg}" stroke-width="2.5">${itemTitleTag(chev.item)}</polygon>`
+}
+
+function renderText(chev: ChevronGeometry, layout: ChevronLayout): string {
+  const textColor = contrastColor(chev.fill)
+  const fit = fitLabelValueBlock(chev.display.display, chev.item.value, chev.bodyW, layout.textH, {
+    labelUrl: chev.display.url,
+    labelMaxSize: 10.5,
+    labelMinSize: 6.5,
+    labelMaxLines: 3,
+    labelMaxLinesNoValue: 4,
+    valueMaxSize: 9,
+    valueMinSize: 6,
+    valueMaxLines: 2,
+    valueShare: 0.4,
+    gap: 3,
+  })
+  return renderFitBlock(chev.tx, layout.cy, fit, {
+    labelFullText: chev.display.display,
+    valueFullText: chev.item.value,
+    labelFill: textColor,
+    valueFill: textColor,
+    labelWeight: '600',
+    valueExtraAttrs: 'opacity="0.85"',
+    shapeBounds: { x: chev.x, y: layout.y, w: layout.chevW, h: CHEV_H, label: 'chevron-node' },
+  })
+}
+
+function renderChevron(chev: ChevronGeometry, layout: ChevronLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  return wrapItem(renderShape(chev, layout, theme) + renderText(chev, layout), chev.index, animate, instrument)
+}
+
+function renderSvg(layout: ChevronLayout, theme: MdArtTheme, parts: string[]): string {
+  return `<svg viewBox="0 0 ${W} ${layout.height}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="${W}" height="${layout.height}" fill="${theme.bg}" rx="8"/>
     ${parts.join('\n    ')}
   </svg>`
 }
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items
-  if (items.length === 0) return renderEmpty(theme)
-  const n = items.length
-  if (n > 8) return renderProcess(spec, theme)
+  if (spec.items.length === 0) return renderEmpty(theme)
+  if (spec.items.length > MAX_ITEMS) return renderProcess(spec, theme)
 
-  const W = 600
-  const titleH = spec.title ? 28 : 8
-  const chevH = 54
-  const H = chevH + titleH + 28
-  const P = 20
-  const GAP = 4
-  const chevW = Math.floor((W - 20 - (n - 1) * GAP) / n)
-  const startX = Math.floor((W - (n * chevW + (n - 1) * GAP)) / 2)
-  const y = titleH + 10
-  const cy = y + chevH / 2
-
+  const layout = resolveLayout(spec)
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
-  const parts: string[] = []
-  if (spec.title) parts.push(titleEl(W, spec.title, theme))
+  const chevrons = placeChevrons(spec, layout, theme)
+  const parts = [
+    ...(animate ? [seqSpotlightCSS(layout.n, spec)] : []),
+    renderTitle(spec, theme),
+    ...chevrons.map(chev => renderChevron(chev, layout, theme, animate, instrument)),
+  ].filter(Boolean)
 
-  // Per-node fitting: first/last chevrons have a different body width than
-  // the middle ones (one angled edge instead of two) — a genuinely varying,
-  // per-item width just like funnel's tapering bands. Sizing every label to
-  // the single narrowest body across the row would crush the wider bodies'
-  // text down to whatever the tightest chevron needs; instead each
-  // chevron's label is sized to its OWN body width.
-  //
-  // The label fit was also capped at a flat maxLines (1 with a value, 2
-  // without), with no boxH — so a smaller font never unlocked an extra
-  // line, it just kept shrinking a single line down to the floor before
-  // truncating. chevBoxH below gives fitTextToWidthShared the vertical
-  // budget to grow the line count as the font shrinks, same mechanism as
-  // circle-process/waterfall.
-  const chevBoxH = chevH - 12
-  const geoms = items.map((_, i) => {
-    const x = startX + i * (chevW + GAP)
-    const isFirst = i === 0
-    const isLast = i === n - 1
-    const bodyX = x + (isFirst ? 0 : P / 2)
-    // Correct text-zone width per shape:
-    //   first:  flat left, arrow right  → exclude right arrow P
-    //   middle: notch left, arrow right → bodyX already offset P/2; exclude right arrow P
-    //   last:   notch left, flat right  → bodyX already offset P/2; exclude left notch P/2
-    // Old formula: chevW-(isFirst?P:0)-(isLast?0:P) subtracted an extra P
-    // for the first chevron (which has no left notch), giving only 47 px
-    // instead of the correct 73 px for n=6. tx was also off-centre as a result.
-    const rawBodyW = isLast ? chevW - Math.round(P / 2) : chevW - P
-    const bodyW    = Math.max(4, rawBodyW - 6)   // -6 inner padding for fitting
-    const tx       = bodyX + rawBodyW / 2         // true centre of the text zone
-    return { x, isFirst, isLast, bodyW, tx }
-  })
-
-  const displays = items.map(it => displayLabel(it, { value: !!it.value }))
-
-  items.forEach((item, i) => {
-    const { x, isFirst, isLast, bodyW, tx } = geoms[i]
-    const t = n > 1 ? i / (n - 1) : 0
-    const fill = lerpColor(theme.primary, theme.secondary, t)
-
-    let pts: string
-    if (n === 1) {
-      pts = `${x},${y} ${x + chevW},${y} ${x + chevW},${y + chevH} ${x},${y + chevH}`
-    } else if (isFirst) {
-      pts = `${x},${y} ${x + chevW - P},${y} ${x + chevW},${cy} ${x + chevW - P},${y + chevH} ${x},${y + chevH}`
-    } else if (isLast) {
-      pts = `${x},${y} ${x + chevW},${y} ${x + chevW},${y + chevH} ${x},${y + chevH} ${x + P},${cy}`
-    } else {
-      pts = `${x},${y} ${x + chevW - P},${y} ${x + chevW},${cy} ${x + chevW - P},${y + chevH} ${x},${y + chevH} ${x + P},${cy}`
-    }
-
-    const { url: itmUrl, display: itmDisplay } = displays[i]
-    // Value used to be capped at a flat maxLines: 1 with no boxH — so a
-    // long value just kept shrinking down to the font floor and then
-    // truncated with an ellipsis, never wrapping, even though chevBoxH has
-    // room for it. Give the value its own boxH share (a minority share,
-    // since the label is the primary text and should keep first claim on
-    // vertical room) so it can wrap to a 2nd line too when it's long enough
-    // to need it — short values still land on 1 line at max size exactly
-    // as before, since the search only wraps when width actually demands it.
-    const fit = fitLabelValueBlock(itmDisplay, item.value, bodyW, chevBoxH, {
-      labelUrl: itmUrl,
-      labelMaxSize: 10.5,
-      labelMinSize: 6.5,
-      labelMaxLines: 3,
-      labelMaxLinesNoValue: 4,
-      valueMaxSize: 9,
-      valueMinSize: 6,
-      valueMaxLines: 2,
-      valueShare: 0.4,
-      gap: 3,
-    })
-
-    let nodeStr = `<polygon points="${pts}" fill="${fill}ee" stroke="${theme.bg}" stroke-width="2.5">${itemTitleTag(item)}</polygon>`
-    const textColor = contrastColor(fill)
-    nodeStr += renderFitBlock(tx, cy, fit, {
-      labelFullText: itmDisplay,
-      valueFullText: item.value,
-      labelFill: textColor,
-      valueFill: textColor,
-      labelWeight: '600',
-      valueExtraAttrs: 'opacity="0.85"',
-      shapeBounds: { x, y, w: chevW, h: chevH, label: 'chevron-node' },
-    })
-    parts.push(wrapItem(nodeStr, i, animate, instrument))
-  })
-
-  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
-  return svgWrapProcess(W, H, theme, parts)
+  return renderSvg(layout, theme, parts)
 }

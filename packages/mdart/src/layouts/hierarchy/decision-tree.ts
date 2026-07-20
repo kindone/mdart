@@ -1,6 +1,6 @@
 import type { MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
+import { escapeXml, aWrap, itemTitleTag, displayLabelValue, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 import { countLeaves, maxDepth, layoutNodes, flatNodes } from './shared'
 import type { RenderedNode } from './shared'
 
@@ -39,8 +39,8 @@ interface DecisionTreeLayout {
 function fitNodes(flat: RenderedNode[]): Pick<DecisionTreeLayout, 'decisionFitByNode' | 'leafFitByNode'> {
   const decisionNodes = flat.filter(node => node.children.length > 0)
   const leafNodes = flat.filter(node => node.children.length === 0)
-  const decisionDisplays = decisionNodes.map(node => displayLabel(node))
-  const leafDisplays = leafNodes.map(node => displayLabel(node))
+  const decisionDisplays = decisionNodes.map(node => displayLabelValue(node))
+  const leafDisplays = leafNodes.map(node => displayLabelValue(node))
   // Diamond text budget (DW*2 - 42 = 78px) is derived from the available
   // width at the extreme line positions of a 2-line block at maxSize=10:
   //   half_width = DW × (1 − v/DH) where v = half_visual_height ≈ 11.5px

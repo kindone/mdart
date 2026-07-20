@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, aWrap, itemTitleTag, ellipsisIfDropped, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, centeredTextY, FONT_SANS_ATTR } from '../shared'
+import { escapeXml, aWrap, itemTitleTag, displayLabelValue, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, centeredTextY, FONT_SANS_ATTR } from '../shared'
 import { countLeaves, maxDepth } from './shared'
 
 // ── Node geometry ─────────────────────────────────────────────────────────────
@@ -46,24 +46,29 @@ interface HDiagramLayout {
 
 // ── Renderer ─────────────────────────────────────────────────────────────────
 
-/** Collect every item's ellipsis-adjusted label in the same pre-order
+interface LabelSource {
+  display: string
+  url: string | null
+}
+
+/** Collect every item's visible label in the same pre-order
  *  traversal layoutH() below walks, so results line up index-for-index. */
-function collectLabelsH(items: MdArtItem[]): string[] {
-  const out: string[] = []
+function collectLabelsH(items: MdArtItem[]): LabelSource[] {
+  const out: LabelSource[] = []
   for (const item of items) {
-    out.push(ellipsisIfDropped(item.label, item))
+    out.push(displayLabelValue(item))
     if (item.children.length) out.push(...collectLabelsH(item.children))
   }
   return out
 }
 
-function fitLabels(items: MdArtItem[]) {
+function fitLabels(labelSources: LabelSource[]) {
   // 4 lines at the font floor (8) need ~4×(8×1.3)=41.6px — a plain NODE_H
   // minus fixed padding lands just under that, so guarantee the minimum
   // line-count height explicitly.
   const hBoxH = Math.max(NODE_H - 6, FS_MIN * TEXT_LINE_HEIGHT_RATIO * TEXT_MAX_LINES)
-  return collectLabelsH(items).map(label =>
-    fitTextToWidthShared([label], TEXT_W, {
+  return labelSources.map(label =>
+    fitTextToWidthShared([label.display], TEXT_W, {
       maxSize: FS_MAX,
       minSize: FS_MIN,
       maxLines: TEXT_MAX_LINES,
@@ -73,7 +78,8 @@ function fitLabels(items: MdArtItem[]) {
 }
 
 function layoutHNodes(items: MdArtItem[], titleH: number, H: number): HNode[] {
-  const nodeFits = fitLabels(items)
+  const labelSources = collectLabelsH(items)
+  const nodeFits = fitLabels(labelSources)
   const hnodes: HNode[] = []
   let fitIdx = 0
 
@@ -85,6 +91,7 @@ function layoutHNodes(items: MdArtItem[], titleH: number, H: number): HNode[] {
       const span = (leaves / tot) * totalH
       const ny = leafY + span / 2
       const nx = LEFT_PAD + level * COL_W + NODE_W / 2
+      const labelSource = labelSources[fitIdx]
       const { fontSize, lineHeight, results: [{ lines, truncated, url }] } = nodeFits[fitIdx++]
       hnodes.push({
         label: item.label,
@@ -92,7 +99,7 @@ function layoutHNodes(items: MdArtItem[], titleH: number, H: number): HNode[] {
         attrs: item.attrs,
         lines,
         truncated,
-        url,
+        url: labelSource.url ?? url,
         fontSize,
         lineHeight,
         x: nx,

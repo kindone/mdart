@@ -1,74 +1,152 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR, FONT_MONO_ATTR } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabelValue, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR, FONT_MONO_ATTR } from '../shared'
 
-function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
-  const titleEl = title
+const W = 600
+const TITLE_H_WITH_TITLE = 30
+const TITLE_H_NO_TITLE = 8
+const GAP = 14
+const HEADER_H = 30
+const FIELD_H = 22
+const ENTITY_BOTTOM_PAD = 8
+const OUTER_BOTTOM_PAD = 32
+const ENTITY_TOP_PAD = 12
+const ENTITY_RX = 6
+const MAX_ENTITY_W = 170
+const HEADER_CORNER_R = 6
+const HEADER_TEXT_MAX = 14
+const FIELD_TEXT_MAX = 16
+const BADGE_W = 24
+const BADGE_H = 13
+const BADGE_RIGHT_PAD = 28
+
+interface EntityLayout {
+  titleH: number
+  entityW: number
+  entityH: number
+  startX: number
+  h: number
+}
+
+interface EntityPlacement {
+  entity: MdArtItem
+  index: number
+  x: number
+  y: number
+}
+
+function resolveLayout(spec: MdArtSpec): EntityLayout {
+  const entities = spec.items
+  const titleH = spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
+  const n = entities.length
+  const entityW = Math.min(MAX_ENTITY_W, (W - (n + 1) * GAP) / n)
+  const entityH = HEADER_H + Math.max(...entities.map(e => e.children.length), 1) * FIELD_H + ENTITY_BOTTOM_PAD
+  const totalW = n * entityW + (n - 1) * GAP
+  return {
+    titleH,
+    entityW,
+    entityH,
+    startX: (W - totalW) / 2,
+    h: titleH + entityH + OUTER_BOTTOM_PAD,
+  }
+}
+
+function placeEntities(spec: MdArtSpec, layout: EntityLayout): EntityPlacement[] {
+  return spec.items.map((entity, index) => ({
+    entity,
+    index,
+    x: layout.startX + index * (layout.entityW + GAP),
+    y: layout.titleH + ENTITY_TOP_PAD,
+  }))
+}
+
+function renderTitle(theme: MdArtTheme, title: string | undefined): string {
+  return title
     ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${titleEl}
+}
+
+function renderEntityBox(placement: EntityPlacement, layout: EntityLayout, theme: MdArtTheme): string {
+  const { entity, x, y } = placement
+  return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${layout.entityW}" height="${layout.entityH}" rx="${ENTITY_RX}" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.5">${itemTitleTag(entity)}</rect>`
+}
+
+function renderHeaderShape(placement: EntityPlacement, layout: EntityLayout, theme: MdArtTheme): string {
+  const { x, y } = placement
+  const w = layout.entityW
+  return `<path d="M${(x + HEADER_CORNER_R).toFixed(1)},${y.toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${x.toFixed(1)},${(y + HEADER_CORNER_R).toFixed(1)} L${x.toFixed(1)},${(y + HEADER_H).toFixed(1)} L${(x + w).toFixed(1)},${(y + HEADER_H).toFixed(1)} L${(x + w).toFixed(1)},${(y + HEADER_CORNER_R).toFixed(1)} Q${(x + w).toFixed(1)},${y.toFixed(1)} ${(x + w - HEADER_CORNER_R).toFixed(1)},${y.toFixed(1)} Z" fill="${theme.accent}33"/>`
+}
+
+function renderHeaderText(placement: EntityPlacement, layout: EntityLayout, theme: MdArtTheme): string {
+  const { entity, x, y } = placement
+  const { display, url } = displayLabelValue(entity)
+  return aWrap(`<text x="${(x + layout.entityW / 2).toFixed(1)}" y="${(y + 19).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${tt(display, HEADER_TEXT_MAX, entity)}</text>`, url)
+}
+
+function renderHeaderDivider(placement: EntityPlacement, layout: EntityLayout, theme: MdArtTheme): string {
+  const { x, y } = placement
+  return `<line x1="${x.toFixed(1)}" y1="${(y + HEADER_H).toFixed(1)}" x2="${(x + layout.entityW).toFixed(1)}" y2="${(y + HEADER_H).toFixed(1)}" stroke="${theme.accent}44" stroke-width="1"/>`
+}
+
+function fieldColor(field: MdArtItem, theme: MdArtTheme): string {
+  if (field.attrs.includes('PK')) return theme.accent
+  if (field.attrs.includes('FK')) return `${theme.secondary}ee`
+  return theme.textMuted
+}
+
+function renderFieldText(placement: EntityPlacement, field: MdArtItem, fieldIndex: number, theme: MdArtTheme): string {
+  const { x, y } = placement
+  const fy = y + HEADER_H + fieldIndex * FIELD_H + 14
+  const { display, url } = displayLabelValue(field)
+  return aWrap(`<text x="${(x + 10).toFixed(1)}" y="${fy.toFixed(1)}" font-size="10" fill="${fieldColor(field, theme)}" ${FONT_MONO_ATTR}>${itemTitleTag(field)}${tt(display, FIELD_TEXT_MAX, field)}</text>`, url)
+}
+
+function renderFieldBadge(placement: EntityPlacement, layout: EntityLayout, field: MdArtItem, fieldIndex: number, theme: MdArtTheme): string {
+  const isPK = field.attrs.includes('PK')
+  const isFK = field.attrs.includes('FK')
+  if (!isPK && !isFK) return ''
+
+  const badge = isPK ? 'PK' : 'FK'
+  const badgeColor = isPK ? theme.accent : theme.secondary
+  const bx = placement.x + layout.entityW - BADGE_RIGHT_PAD
+  const fy = placement.y + HEADER_H + fieldIndex * FIELD_H + 14
+  return [
+    `<rect x="${bx.toFixed(1)}" y="${(fy - 11).toFixed(1)}" width="${BADGE_W}" height="${BADGE_H}" rx="3" fill="${badgeColor}22" stroke="${badgeColor}66" stroke-width="0.5"/>`,
+    `<text x="${(bx + BADGE_W / 2).toFixed(1)}" y="${(fy - 1).toFixed(1)}" text-anchor="middle" font-size="8" fill="${badgeColor}" ${FONT_SANS_ATTR} font-weight="600">${badge}</text>`,
+  ].join('')
+}
+
+function renderEntity(placement: EntityPlacement, layout: EntityLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const unit = [
+    renderEntityBox(placement, layout, theme),
+    renderHeaderShape(placement, layout, theme),
+    renderHeaderText(placement, layout, theme),
+    renderHeaderDivider(placement, layout, theme),
+    ...placement.entity.children.flatMap((field, fieldIndex) => [
+      renderFieldText(placement, field, fieldIndex, theme),
+      renderFieldBadge(placement, layout, field, fieldIndex, theme),
+    ]),
+  ].join('')
+  return wrapItem(unit, placement.index, animate, instrument)
+}
+
+function svgWrap(layout: EntityLayout, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
+  return `<svg viewBox="0 0 ${W} ${layout.h}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
+  ${renderTitle(theme, title)}
   ${parts.join('\n  ')}
 </svg>`
 }
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const entities = spec.items
-  if (entities.length === 0) return renderEmpty(theme)
+  if (spec.items.length === 0) return renderEmpty(theme)
 
-  const W = 600
-  const TITLE_H = spec.title ? 30 : 8
-  const n = entities.length
-  const GAP = 14
-  const ENT_W = Math.min(170, (W - (n + 1) * GAP) / n)
-  const HEADER_H = 30
-  const FIELD_H = 22
-  const ENT_H = HEADER_H + Math.max(...entities.map(e => e.children.length), 1) * FIELD_H + 8
-  const totalW = n * ENT_W + (n - 1) * GAP
-  const startX = (W - totalW) / 2
-  const H = TITLE_H + ENT_H + 32
-
-  const parts: string[] = []
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
+  const layout = resolveLayout(spec)
+  const parts = placeEntities(spec, layout).map(placement =>
+    renderEntity(placement, layout, theme, animate, instrument),
+  )
 
-  entities.forEach((entity, i) => {
-    const x = startX + i * (ENT_W + GAP)
-    const y = TITLE_H + 12
-
-    const { display: entDisplay, url: entUrl } = displayLabel(entity)
-    const unit: string[] = []
-    unit.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${ENT_W}" height="${ENT_H}" rx="6" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.5">${itemTitleTag(entity)}</rect>`)
-    unit.push(
-      `<path d="M${(x + 6).toFixed(1)},${y.toFixed(1)} Q${x.toFixed(1)},${y.toFixed(1)} ${x.toFixed(1)},${(y + 6).toFixed(1)} L${x.toFixed(1)},${(y + HEADER_H).toFixed(1)} L${(x + ENT_W).toFixed(1)},${(y + HEADER_H).toFixed(1)} L${(x + ENT_W).toFixed(1)},${(y + 6).toFixed(1)} Q${(x + ENT_W).toFixed(1)},${y.toFixed(1)} ${(x + ENT_W - 6).toFixed(1)},${y.toFixed(1)} Z" fill="${theme.accent}33"/>`,
-    )
-    unit.push(aWrap(`<text x="${(x + ENT_W / 2).toFixed(1)}" y="${(y + 19).toFixed(1)}" text-anchor="middle" font-size="12" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${tt(entDisplay, 14, entity)}</text>`, entUrl))
-    unit.push(`<line x1="${x.toFixed(1)}" y1="${(y + HEADER_H).toFixed(1)}" x2="${(x + ENT_W).toFixed(1)}" y2="${(y + HEADER_H).toFixed(1)}" stroke="${theme.accent}44" stroke-width="1"/>`)
-
-    entity.children.forEach((field, fi) => {
-      const fy = y + HEADER_H + fi * FIELD_H + 14
-      const isPK = field.attrs.includes('PK')
-      const isFK = field.attrs.includes('FK')
-      const textColor = isPK ? theme.accent : isFK ? `${theme.secondary}ee` : theme.textMuted
-
-      // Field already shows attrs as PK/FK badges where applicable, so
-      // shows.attrs=true; value (e.g. type after `name: text`) is dropped.
-      const { display: fldDisplay, url: fldUrl } = displayLabel(field, { attrs: true })
-      unit.push(aWrap(`<text x="${(x + 10).toFixed(1)}" y="${fy.toFixed(1)}" font-size="10" fill="${textColor}" ${FONT_MONO_ATTR}>${itemTitleTag(field)}${tt(fldDisplay, 16, field)}</text>`, fldUrl))
-
-      if (isPK || isFK) {
-        const badge = isPK ? 'PK' : 'FK'
-        const badgeColor = isPK ? theme.accent : theme.secondary
-        const bx = x + ENT_W - 28
-        unit.push(
-          `<rect x="${bx.toFixed(1)}" y="${(fy - 11).toFixed(1)}" width="24" height="13" rx="3" fill="${badgeColor}22" stroke="${badgeColor}66" stroke-width="0.5"/>`,
-          `<text x="${(bx + 12).toFixed(1)}" y="${(fy - 1).toFixed(1)}" text-anchor="middle" font-size="8" fill="${badgeColor}" ${FONT_SANS_ATTR} font-weight="600">${badge}</text>`,
-        )
-      }
-    })
-    parts.push(wrapItem(unit.join(''), i, animate, instrument))
-  })
-
-  if (animate) parts.unshift(seqSpotlightCSS(n, spec, { scale: false }))
-  return svgWrap(W, H, theme, spec.title, parts)
+  if (animate) parts.unshift(seqSpotlightCSS(spec.items.length, spec, { scale: false }))
+  return svgWrap(layout, theme, spec.title, parts)
 }

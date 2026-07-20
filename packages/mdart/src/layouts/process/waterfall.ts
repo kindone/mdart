@@ -1,137 +1,240 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, type FitTextResult, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
+import {
+  escapeXml,
+  lerpColor,
+  titleEl,
+  renderEmpty,
+  aWrap,
+  itemTitleTag,
+  displayLabel,
+  shouldAnimate,
+  seqSpotlightCSS,
+  fitTextToWidthShared,
+  type FitTextResult,
+  wrapItem,
+  shouldInstrument,
+  FONT_SANS_ATTR,
+} from '../shared'
 
-function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+const BOX_H = 40
+const STEP_Y = 24
+const BOX_GAP = 8
+const TITLE_H_WITH_TITLE = 28
+const TITLE_H_NO_TITLE = 8
+const BASE_W = 560
+const H_PAD = 40
+const TOP_GAP = 14
+const BOTTOM_PAD = 36
+const BOX_W_MAX = 110
+const BOX_W_AVAILABLE = 520
+const CONNECTOR_KNEE = 4
+const PAD_V = 3
+const VALUE_FS_MAX = 9
+const VALUE_FS_MIN = 6
+const LABEL_FS_MAX = 10.5
+const LABEL_FS_MIN = 6.5
+
+interface WaterfallLayout {
+  n: number
+  titleH: number
+  width: number
+  height: number
+  boxW: number
+  stepX: number
+  startX: number
+  startY: number
+  usableTextH: number
+}
+
+interface WaterfallNode {
+  item: MdArtItem
+  index: number
+  x: number
+  y: number
+  fill: string
+  label: ReturnType<typeof displayLabel>
+}
+
+interface StepTextFit {
+  labelFS: number
+  labelLH: number
+  labelLines: string[]
+  labelTruncated: boolean
+  valueFS: number
+  valueLH: number
+  valueFit: FitTextResult | null
+}
+
+function titleHeight(spec: MdArtSpec): number {
+  return spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
+}
+
+function resolveLayout(spec: MdArtSpec): WaterfallLayout {
+  const n = spec.items.length
+  const boxW = Math.min(BOX_W_MAX, Math.floor((BOX_W_AVAILABLE - (n - 1) * BOX_GAP) / Math.max(n, 1)))
+  const stepX = boxW + BOX_GAP
+  const totalH = STEP_Y * (n - 1) + BOX_H
+  const diagW = (n - 1) * stepX + boxW + H_PAD
+  const width = Math.max(BASE_W, diagW)
+  const titleH = titleHeight(spec)
+  return {
+    n,
+    titleH,
+    width,
+    height: totalH + titleH + BOTTOM_PAD,
+    boxW,
+    stepX,
+    startX: (width - (stepX * (n - 1) + boxW)) / 2,
+    startY: titleH + TOP_GAP,
+    usableTextH: BOX_H - PAD_V * 2,
+  }
+}
+
+function placeNodes(spec: MdArtSpec, layout: WaterfallLayout, theme: MdArtTheme): WaterfallNode[] {
+  return spec.items.map((item, index) => {
+    const t = spec.items.length > 1 ? index / (spec.items.length - 1) : 0
+    return {
+      item,
+      index,
+      x: layout.startX + index * layout.stepX,
+      y: layout.startY + index * STEP_Y,
+      fill: lerpColor(theme.primary, theme.secondary, t),
+      label: displayLabel(item, { value: !!item.value }),
+    }
+  })
+}
+
+function renderTitle(spec: MdArtSpec, layout: WaterfallLayout, theme: MdArtTheme): string {
+  return spec.title ? titleEl(layout.width, spec.title, theme) : ''
+}
+
+function fitStepText(node: WaterfallNode, layout: WaterfallLayout): StepTextFit {
+  const textW = layout.boxW - 10
+  if (!node.item.value) {
+    const labelFit = fitTextToWidthShared([node.label.display], textW, {
+      maxSize: LABEL_FS_MAX,
+      minSize: LABEL_FS_MIN,
+      maxLines: 3,
+      boxH: layout.usableTextH,
+    })
+    return {
+      labelFS: labelFit.fontSize,
+      labelLH: labelFit.lineHeight,
+      labelLines: labelFit.results[0].lines,
+      labelTruncated: labelFit.results[0].truncated,
+      valueFS: VALUE_FS_MAX,
+      valueLH: VALUE_FS_MAX * 1.3,
+      valueFit: null,
+    }
+  }
+
+  const natural = fitTextToWidthShared([node.item.value], textW, {
+    maxSize: VALUE_FS_MAX,
+    minSize: VALUE_FS_MIN,
+    maxLines: 1,
+  })
+  let bestValue = natural
+  let bestLabel = fitTextToWidthShared([node.label.display], textW, {
+    maxSize: LABEL_FS_MAX,
+    minSize: LABEL_FS_MIN,
+    maxLines: 2,
+    boxH: Math.max(10, layout.usableTextH - natural.lineHeight - 4),
+  })
+
+  for (let valueFS = natural.fontSize; valueFS >= VALUE_FS_MIN; valueFS--) {
+    const candidateValue = fitTextToWidthShared([node.item.value], textW, {
+      maxSize: valueFS,
+      minSize: valueFS,
+      maxLines: 1,
+    })
+    const candidateLabel = fitTextToWidthShared([node.label.display], textW, {
+      maxSize: LABEL_FS_MAX,
+      minSize: LABEL_FS_MIN,
+      maxLines: 2,
+      boxH: Math.max(10, layout.usableTextH - candidateValue.lineHeight - 4),
+    })
+    bestValue = candidateValue
+    bestLabel = candidateLabel
+    if (!candidateLabel.results[0].truncated) break
+  }
+
+  return {
+    labelFS: bestLabel.fontSize,
+    labelLH: bestLabel.lineHeight,
+    labelLines: bestLabel.results[0].lines,
+    labelTruncated: bestLabel.results[0].truncated,
+    valueFS: bestValue.fontSize,
+    valueLH: bestValue.lineHeight,
+    valueFit: bestValue.results[0],
+  }
+}
+
+function renderConnector(node: WaterfallNode, next: WaterfallNode, layout: WaterfallLayout, animate: boolean): string {
+  const x1 = node.x + layout.boxW
+  const y1 = node.y + BOX_H / 2
+  const x2 = next.x
+  const y2 = next.y + BOX_H / 2
+  const connector =
+    `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${(x1 + CONNECTOR_KNEE).toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${node.fill}99" stroke-width="1.5"/>` +
+    `<line x1="${(x1 + CONNECTOR_KNEE).toFixed(1)}" y1="${y1.toFixed(1)}" x2="${(x1 + CONNECTOR_KNEE).toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${node.fill}55" stroke-width="1.5" stroke-dasharray="3,3"/>` +
+    `<line x1="${(x1 + CONNECTOR_KNEE).toFixed(1)}" y1="${y2.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${node.fill}99" stroke-width="1.5"/>`
+  return animate ? `<g class="mdart-arr-n${node.index + 1}">${connector}</g>` : connector
+}
+
+function renderConnectors(nodes: WaterfallNode[], layout: WaterfallLayout, animate: boolean): string[] {
+  return nodes.slice(0, -1).map((node, index) => renderConnector(node, nodes[index + 1], layout, animate))
+}
+
+function renderNodeShape(node: WaterfallNode, layout: WaterfallLayout): string {
+  return `<rect x="${node.x.toFixed(1)}" y="${node.y.toFixed(1)}" width="${layout.boxW}" height="${BOX_H}" rx="5" fill="${node.fill}33" stroke="${node.fill}" stroke-width="1.5">${itemTitleTag(node.item)}</rect>`
+}
+
+function renderNodeText(node: WaterfallNode, layout: WaterfallLayout, fit: StepTextFit, theme: MdArtTheme): string {
+  const cx = node.x + layout.boxW / 2
+  const cy = node.y + BOX_H / 2
+  const blockH = fit.labelLines.length * fit.labelLH + (fit.valueFit ? fit.valueLH + 3 : 0)
+  const labelTip = fit.labelTruncated ? `<title>${escapeXml(node.label.display)}</title>` : ''
+  let content = labelTip
+
+  fit.labelLines.forEach((line, lineIndex) => {
+    const y = cy - blockH / 2 + lineIndex * fit.labelLH + fit.labelLH * 0.8
+    content += `<text x="${cx.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="${fit.labelFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(line)}</text>`
+  })
+
+  if (fit.valueFit) {
+    const y = cy - blockH / 2 + fit.labelLines.length * fit.labelLH + fit.valueLH * 0.8
+    const valueTip = fit.valueFit.truncated ? `<title>${escapeXml(node.item.value!)}</title>` : ''
+    content += `${valueTip}<text x="${cx.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="${fit.valueFS}" fill="${theme.text}" opacity="0.7" ${FONT_SANS_ATTR}>${escapeXml(fit.valueFit.lines[0])}</text>`
+  }
+
+  return aWrap(content, node.label.url)
+}
+
+function renderNode(node: WaterfallNode, layout: WaterfallLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  return wrapItem(renderNodeShape(node, layout) + renderNodeText(node, layout, fitStepText(node, layout), theme), node.index, animate, instrument)
+}
+
+function renderSvg(layout: WaterfallLayout, theme: MdArtTheme, parts: string[]): string {
+  return `<svg viewBox="0 0 ${layout.width} ${layout.height}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="${layout.width}" height="${layout.height}" fill="${theme.bg}" rx="8"/>
     ${parts.join('\n    ')}
   </svg>`
 }
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items
-  if (items.length === 0) return renderEmpty(theme)
-  const n = items.length
+  if (spec.items.length === 0) return renderEmpty(theme)
 
-  const BOX_H = 40
-  const STEP_Y = 24
-  const titleH = spec.title ? 28 : 8
-  const BOX_W = Math.min(110, Math.floor((520 - (n - 1) * 8) / Math.max(n, 1)))
-  const STEP_X = BOX_W + 8
-  const totalH = STEP_Y * (n - 1) + BOX_H
-  const diagW = (n - 1) * STEP_X + BOX_W + 40
-  const W = Math.max(560, diagW)
-  const H = totalH + titleH + 36
-  const startX = (W - (STEP_X * (n - 1) + BOX_W)) / 2
-  const startY = titleH + 14
-
+  const layout = resolveLayout(spec)
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
-  const parts: string[] = []
-  if (spec.title) parts.push(titleEl(W, spec.title, theme))
+  const nodes = placeNodes(spec, layout, theme)
+  const parts = [
+    ...(animate ? [seqSpotlightCSS(layout.n, spec)] : []),
+    renderTitle(spec, layout, theme),
+    ...renderConnectors(nodes, layout, animate),
+    ...nodes.map(node => renderNode(node, layout, theme, animate, instrument)),
+  ].filter(Boolean)
 
-  // Connectors fade in with the destination node they point to.
-  for (let i = 0; i < n - 1; i++) {
-    const x1 = startX + i * STEP_X + BOX_W
-    const y1 = startY + i * STEP_Y + BOX_H / 2
-    const x2 = startX + (i + 1) * STEP_X
-    const y2 = startY + (i + 1) * STEP_Y + BOX_H / 2
-    const t = n > 1 ? i / (n - 1) : 0
-    const fill = lerpColor(theme.primary, theme.secondary, t)
-    const connLines =
-      `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${(x1 + 4).toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${fill}99" stroke-width="1.5"/>` +
-      `<line x1="${(x1 + 4).toFixed(1)}" y1="${y1.toFixed(1)}" x2="${(x1 + 4).toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${fill}55" stroke-width="1.5" stroke-dasharray="3,3"/>` +
-      `<line x1="${(x1 + 4).toFixed(1)}" y1="${y2.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${fill}99" stroke-width="1.5"/>`
-    parts.push(animate ? `<g class="mdart-arr-n${i + 1}">${connLines}</g>` : connLines)
-  }
-
-  // Floors pushed lower than the usual 8/7 — the SVG scales via viewBox, so
-  // a smaller source font size still reads fine once the diagram renders at
-  // a normal display width; better to shrink further than to drop content.
-  const VALUE_FS_MAX = 9, VALUE_FS_MIN = 6
-  const LABEL_FS_MAX = 10.5, LABEL_FS_MIN = 6.5
-  const PAD_V = 3
-  const usableH = BOX_H - PAD_V * 2
-
-  const displays = items.map(it => displayLabel(it, { value: !!it.value }))
-
-  // Per-node fitting: every box shares BOX_W, but each label/value pair is
-  // sized independently rather than to the diagram's worst-case label — a
-  // short label stays large instead of being dragged down to match a long
-  // neighbor. The value's own best-fit size isn't necessarily the best
-  // choice for the box overall: a short value ("4wk") that already fits
-  // fine at its max size stays at a taller line height than it needs to,
-  // which reserves LESS room for the label than a longer value that was
-  // forced to shrink would have — so a short value can paradoxically starve
-  // the label of room a long one wouldn't have. Try shrinking the value
-  // (down to its own floor) and re-check the label at each step, preferring
-  // the LARGEST value size that still lets the label avoid truncation —
-  // only give up value size for label room when the label actually needs it.
-  items.forEach((item, i) => {
-    const x = startX + i * STEP_X
-    const y = startY + i * STEP_Y
-    const t = n > 1 ? i / (n - 1) : 0
-    const fill = lerpColor(theme.primary, theme.secondary, t)
-    const { url: itmUrl, display: itmDisplay } = displays[i]
-
-    let labelFS: number, labelLH: number, lines: string[], labelTruncated: boolean
-    let valueFS: number, valueLH: number, valueFit: FitTextResult | null
-    if (item.value) {
-      const natural = fitTextToWidthShared([item.value], BOX_W - 10, { maxSize: VALUE_FS_MAX, minSize: VALUE_FS_MIN, maxLines: 1 })
-      let bestValue = natural
-      let bestLabel = fitTextToWidthShared([itmDisplay], BOX_W - 10, {
-        maxSize: LABEL_FS_MAX, minSize: LABEL_FS_MIN, maxLines: 2,
-        boxH: Math.max(10, usableH - natural.lineHeight - 4),
-      })
-      // Keep updating on EVERY iteration (not just on full success): if some
-      // value size fully clears the label's truncation, `break` locks that
-      // in (preferring the largest such size); if none do, the loop still
-      // runs to its last (smallest) value size, which is the most room the
-      // label can possibly get — a genuine best effort, unlike reverting to
-      // the value's natural (least-helpful) size.
-      for (let vfs = natural.fontSize; vfs >= VALUE_FS_MIN; vfs--) {
-        const candidateValue = fitTextToWidthShared([item.value], BOX_W - 10, { maxSize: vfs, minSize: vfs, maxLines: 1 })
-        const reservedBoxH = Math.max(10, usableH - candidateValue.lineHeight - 4)
-        const candidateLabel = fitTextToWidthShared([itmDisplay], BOX_W - 10, {
-          maxSize: LABEL_FS_MAX, minSize: LABEL_FS_MIN, maxLines: 2, boxH: reservedBoxH,
-        })
-        bestValue = candidateValue
-        bestLabel = candidateLabel
-        if (!candidateLabel.results[0].truncated) break
-      }
-      valueFS = bestValue.fontSize; valueLH = bestValue.lineHeight; valueFit = bestValue.results[0]
-      labelFS = bestLabel.fontSize; labelLH = bestLabel.lineHeight
-      ;({ lines, truncated: labelTruncated } = bestLabel.results[0])
-    } else {
-      const labelFit = fitTextToWidthShared([itmDisplay], BOX_W - 10, {
-        maxSize: LABEL_FS_MAX, minSize: LABEL_FS_MIN, maxLines: 3, boxH: usableH,
-      })
-      labelFS = labelFit.fontSize; labelLH = labelFit.lineHeight
-      ;({ lines, truncated: labelTruncated } = labelFit.results[0])
-      valueFS = VALUE_FS_MAX; valueLH = VALUE_FS_MAX * 1.3; valueFit = null
-    }
-    const cy = y + BOX_H / 2
-    // Centre the whole block (label lines + optional value line) around cy —
-    // generalized so it works whatever combination of line counts the fit
-    // above landed on, instead of assuming exactly 1 or 2 label lines.
-    const totalH = lines.length * labelLH + (valueFit ? valueLH + 3 : 0)
-    const labelTip = labelTruncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
-    let lblContent = labelTip
-    lines.forEach((line, li) => {
-      const ty = cy - totalH / 2 + li * labelLH + labelLH * 0.8
-      lblContent += `<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(line)}</text>`
-    })
-    if (valueFit) {
-      const ty = cy - totalH / 2 + lines.length * labelLH + valueLH * 0.8
-      const valueTip = valueFit.truncated ? `<title>${escapeXml(item.value!)}</title>` : ''
-      lblContent += `${valueTip}<text x="${(x + BOX_W / 2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.text}" opacity="0.7" ${FONT_SANS_ATTR}>${escapeXml(valueFit.lines[0])}</text>`
-    }
-    let nodeStr = `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="5" fill="${fill}33" stroke="${fill}" stroke-width="1.5">${itemTitleTag(item)}</rect>`
-    nodeStr += aWrap(lblContent, itmUrl)
-    parts.push(wrapItem(nodeStr, i, animate, instrument))
-  })
-
-  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
-  return svgWrapProcess(W, H, theme, parts)
+  return renderSvg(layout, theme, parts)
 }
