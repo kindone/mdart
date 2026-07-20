@@ -1,100 +1,133 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, lerpColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
-function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
+const W = 440
+const H = 380
+const CX = W / 2
+const CY = H / 2
+const OUTER_R = 120
+const INNER_R = 60
+const LABEL_R = OUTER_R + 20
+const CONNECTOR_R = OUTER_R + 5
+const GAP_ANGLE = 0.03
+const LABEL_BOX_W = 92
+const LABEL_BOX_H = 40
+
+interface SegmentedLayout {
+  n: number
+}
+
+interface SegmentedNode {
+  item: MdArtItem
+  index: number
+  startAngle: number
+  endAngle: number
+  midAngle: number
+  labelX: number
+  labelY: number
+  connectorX: number
+  connectorY: number
+  anchor: 'start' | 'middle' | 'end'
+  fill: string
+  display: ReturnType<typeof displayLabel>
+}
+
+function resolveLayout(spec: MdArtSpec): SegmentedLayout {
+  return { n: spec.items.length }
+}
+
+function placeNodes(spec: MdArtSpec, layout: SegmentedLayout, theme: MdArtTheme): SegmentedNode[] {
+  return spec.items.map((item, index) => {
+    const startAngle = (2 * Math.PI * index) / layout.n - Math.PI / 2 + GAP_ANGLE / 2
+    const endAngle = (2 * Math.PI * (index + 1)) / layout.n - Math.PI / 2 - GAP_ANGLE / 2
+    const midAngle = (startAngle + endAngle) / 2
+    const cosA = Math.cos(midAngle)
+    const t = index / (layout.n - 1 || 1)
+    return {
+      item,
+      index,
+      startAngle,
+      endAngle,
+      midAngle,
+      labelX: CX + LABEL_R * Math.cos(midAngle),
+      labelY: CY + LABEL_R * Math.sin(midAngle),
+      connectorX: CX + CONNECTOR_R * Math.cos(midAngle),
+      connectorY: CY + CONNECTOR_R * Math.sin(midAngle),
+      anchor: cosA > 0.3 ? 'start' : cosA < -0.3 ? 'end' : 'middle',
+      fill: lerpColor(theme.secondary, theme.primary, t),
+      display: displayLabel(item, { value: true }),
+    }
+  })
+}
+
+function segmentPath(node: SegmentedNode): string {
+  const x1 = CX + INNER_R * Math.cos(node.startAngle)
+  const y1 = CY + INNER_R * Math.sin(node.startAngle)
+  const x2 = CX + OUTER_R * Math.cos(node.startAngle)
+  const y2 = CY + OUTER_R * Math.sin(node.startAngle)
+  const x3 = CX + OUTER_R * Math.cos(node.endAngle)
+  const y3 = CY + OUTER_R * Math.sin(node.endAngle)
+  const x4 = CX + INNER_R * Math.cos(node.endAngle)
+  const y4 = CY + INNER_R * Math.sin(node.endAngle)
+  const largeArc = node.endAngle - node.startAngle > Math.PI ? 1 : 0
+  return `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)} A ${OUTER_R} ${OUTER_R} 0 ${largeArc} 1 ${x3.toFixed(1)} ${y3.toFixed(1)} L ${x4.toFixed(1)} ${y4.toFixed(1)} A ${INNER_R} ${INNER_R} 0 ${largeArc} 0 ${x1.toFixed(1)} ${y1.toFixed(1)} Z`
+}
+
+function renderText(node: SegmentedNode, theme: MdArtTheme): string {
+  const fit = fitLabelValueBlock(node.display.display, node.item.value, LABEL_BOX_W, LABEL_BOX_H, {
+    labelUrl: node.display.url,
+    labelMaxSize: 10,
+    labelMinSize: 6.5,
+    labelMaxLines: 2,
+    labelMaxLinesNoValue: 3,
+    valueMaxSize: 9,
+    valueMinSize: 6.5,
+    valueMaxLines: 1,
+    gap: 2,
+  })
+  return renderFitBlock(node.labelX, node.labelY, fit, {
+    labelFullText: node.display.display,
+    valueFullText: node.item.value,
+    labelFill: theme.text,
+    valueFill: theme.textMuted,
+    labelWeight: '600',
+    anchor: node.anchor,
+  })
+}
+
+function renderNode(node: SegmentedNode, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const content = `<path d="${segmentPath(node)}" fill="${node.fill}">${itemTitleTag(node.item)}</path>` +
+    `<line x1="${node.connectorX.toFixed(1)}" y1="${node.connectorY.toFixed(1)}" x2="${node.labelX.toFixed(1)}" y2="${node.labelY.toFixed(1)}" stroke="${node.fill}" stroke-width="1" opacity="0.7"/>` +
+    renderText(node, theme)
+  return wrapItem(content, node.index, animate, instrument)
+}
+
+function renderTitle(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (!spec.title) return ''
+  return `<text x="${CX}" y="${CY + 5}" text-anchor="middle" font-size="12" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`
+}
+
+function renderSvg(layout: SegmentedLayout, spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {
+  const animate = shouldAnimate(spec)
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(layout.n, spec) : ''}
     ${parts.join('\n    ')}
   </svg>`
 }
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items
-  if (items.length === 0) return renderEmpty(theme)
+  if (spec.items.length === 0) return renderEmpty(theme)
 
-  const n = items.length
-  const W = 440
-  const H = 380
-  const cx = W / 2
-  const cy = H / 2
-  const outerR = 120
-  const innerR = 60
-  const labelR = outerR + 20
-  const connectorR = outerR + 5
-  const GAP_ANGLE = 0.03
-
+  const layout = resolveLayout(spec)
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
-  const parts: string[] = []
-  if (spec.title) {
-    parts.push(`<text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="12" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`)
-  }
+  const nodes = placeNodes(spec, layout, theme)
+  const parts = [
+    renderTitle(spec, theme),
+    ...nodes.map(node => renderNode(node, theme, animate, instrument)),
+  ].filter(Boolean)
 
-  for (let i = 0; i < n; i++) {
-    const item = items[i]
-    const startAngle = (2 * Math.PI * i) / n - Math.PI / 2 + GAP_ANGLE / 2
-    const endAngle = (2 * Math.PI * (i + 1)) / n - Math.PI / 2 - GAP_ANGLE / 2
-    const t = i / (n - 1 || 1)
-    const fill = lerpColor(theme.secondary, theme.primary, t)
-
-    const x1 = cx + innerR * Math.cos(startAngle)
-    const y1 = cy + innerR * Math.sin(startAngle)
-    const x2 = cx + outerR * Math.cos(startAngle)
-    const y2 = cy + outerR * Math.sin(startAngle)
-    const x3 = cx + outerR * Math.cos(endAngle)
-    const y3 = cy + outerR * Math.sin(endAngle)
-    const x4 = cx + innerR * Math.cos(endAngle)
-    const y4 = cy + innerR * Math.sin(endAngle)
-
-    const largeArc = endAngle - startAngle > Math.PI ? 1 : 0
-
-    const path = `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x3.toFixed(1)} ${y3.toFixed(1)} L ${x4.toFixed(1)} ${y4.toFixed(1)} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x1.toFixed(1)} ${y1.toFixed(1)} Z`
-
-    // Label OUTSIDE the wedge
-    const midAngle = (startAngle + endAngle) / 2
-    const lx = cx + labelR * Math.cos(midAngle)
-    const ly = cy + labelR * Math.sin(midAngle)
-    const cosA = Math.cos(midAngle)
-    const anchor = cosA > 0.3 ? 'start' : cosA < -0.3 ? 'end' : 'middle'
-    const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
-    // Labels float outside the ring with plenty of open room (not tightly
-    // bounded by a shape like the other cycle types), so segBoxW/H below
-    // are generous fixed budgets rather than geometry-derived — still a
-    // big improvement over the old flat 14/16-char truncation (fixed
-    // font-size 10/9, single line only).
-    const segBoxW = 92
-    const segBoxH = 40
-    const fit = fitLabelValueBlock(lblDisplay, item.value, segBoxW, segBoxH, {
-      labelUrl: lblUrl,
-      labelMaxSize: 10,
-      labelMinSize: 6.5,
-      labelMaxLines: 2,
-      labelMaxLinesNoValue: 3,
-      valueMaxSize: 9,
-      valueMinSize: 6.5,
-      valueMaxLines: 1,
-      gap: 2,
-    })
-
-    // Connector line from outer edge to label — included in group as it is part of this wedge
-    const cx1 = cx + connectorR * Math.cos(midAngle)
-    const cy1 = cy + connectorR * Math.sin(midAngle)
-
-    let nodeStr = ''
-    nodeStr += `<path d="${path}" fill="${fill}">${itemTitleTag(item)}</path>`
-    nodeStr += `<line x1="${cx1.toFixed(1)}" y1="${cy1.toFixed(1)}" x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="${fill}" stroke-width="1" opacity="0.7"/>`
-    nodeStr += renderFitBlock(lx, ly, fit, {
-      labelFullText: lblDisplay,
-      valueFullText: item.value,
-      labelFill: theme.text,
-      valueFill: theme.textMuted,
-      labelWeight: '600',
-      anchor,
-    })
-    parts.push(wrapItem(nodeStr, i, animate, instrument))
-  }
-
-  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
-  return svgWrap(W, H, theme, parts)
+  return renderSvg(layout, spec, theme, parts)
 }

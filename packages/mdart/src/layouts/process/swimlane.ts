@@ -1,183 +1,157 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, escapeXml, parseLink, shouldAnimate, seqSpotlightCSS, seqSpotlightTiming, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
-function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+const W = 560
+const LABEL_W = 56
+const LANE_H = 52
+const STEP_H = 34
+const GAP = 1
+const TITLE_H_WITH_TITLE = 28
+const TITLE_H_NO_TITLE = 8
+const ARROW_ID = 'sl-arr'
+
+interface SharedTimeline {
+  rankCount: number
+  rankFor: (count: number, stepIndex: number) => number
+  fracFor: (count: number, stepIndex: number) => number
+}
+
+interface SwimlaneTiming {
+  totalEntranceMs: number
+  enterDur: number
+  stepMs: number
+  loopCount: number
+  totalLoopMs: number
+  loopStartMs: number
+}
+
+interface StepLayout {
+  item: MdArtItem
+  index: number
+  x: number
+  y: number
+  width: number
+  fill: string
+  isDone: boolean
+  display: string
+  url: string | null
+  fit: ReturnType<typeof fitTextToWidthShared>
+}
+
+interface LaneLayout {
+  item: MdArtItem
+  index: number
+  y: number
+  fill: string
+  display: ReturnType<typeof displayLabel>
+  labelFit: ReturnType<typeof fitTextToWidthShared>
+  steps: StepLayout[]
+  stepGap: number
+}
+
+interface SwimlaneLayout {
+  titleH: number
+  height: number
+  timeline: SharedTimeline
+  timing: SwimlaneTiming
+  lanes: LaneLayout[]
+}
+
+function svgWrapProcess(height: number, theme: MdArtTheme, parts: string[]): string {
+  return `<svg viewBox="0 0 ${W} ${height}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="${W}" height="${height}" fill="${theme.bg}" rx="8"/>
     ${parts.join('\n    ')}
   </svg>`
 }
 
-export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items
-  if (items.length === 0) return renderEmpty(theme)
-  const W = 560
-  const LABEL_W = 56, LANE_H = 52, STEP_H = 34, GAP = 1
-  const titleH = spec.title ? 28 : 8
-  const H = titleH + items.length * (LANE_H + GAP) + 8
-  // Merge every lane's own step positions onto one shared, evenly-spaced
-  // timeline. Linearly scaling each lane's own fraction (si/(count-1)) onto
-  // the same window keeps lanes in sync at the start/end, but leaves uneven
-  // real-world gaps between *different* lanes' events whenever their counts
-  // don't share a denominator (e.g. a 3-step and a 4-step lane land events
-  // 1800/900/900/1800ms apart) — and the shared brightness/enter keyframes
-  // assume uniform spacing, so tightly-packed neighbours visually bleed
-  // into looking simultaneous. Instead: put every lane's exact fractions on
-  // a common integer grid (LCM of each count-1), collect the DISTINCT
-  // values that actually occur across all lanes, and rank them — so
-  // whatever events actually happen are always uniformly spaced, while
-  // every lane's first/last step still ties with every other lane's.
-  const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b)
-  const lcm = (a: number, b: number): number => a / gcd(a, b) * b
-  const counts = items.map(it => it.children.length).filter(c => c > 0)
-  const denom = counts.filter(c => c > 1).reduce((acc, c) => lcm(acc, c - 1), 1)
-  const numeratorFor = (c: number, si: number) => c > 1 ? si * (denom / (c - 1)) : denom
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b)
+}
+
+function lcm(a: number, b: number): number {
+  return a / gcd(a, b) * b
+}
+
+function numeratorFor(count: number, stepIndex: number, denom: number): number {
+  return count > 1 ? stepIndex * (denom / (count - 1)) : denom
+}
+
+function resolveSharedTimeline(items: MdArtItem[]): SharedTimeline {
+  const counts = items.map(item => item.children.length).filter(count => count > 0)
+  const denom = counts.filter(count => count > 1).reduce((acc, count) => lcm(acc, count - 1), 1)
   const allNumerators = new Set<number>()
-  counts.forEach(c => { for (let si = 0; si < c; si++) allNumerators.add(numeratorFor(c, si)) })
-  const ranks = Array.from(allNumerators).sort((a, b) => a - b)
-  const rankOf = new Map(ranks.map((v, idx) => [v, idx]))
-  const R = ranks.length
-  const rankFor = (c: number, si: number) => rankOf.get(numeratorFor(c, si)) ?? R - 1
-  const globalPosFor = (c: number, si: number) => R > 1 ? rankFor(c, si) / (R - 1) : 1
-
-  const animate = shouldAnimate(spec) && R > 0
-  const instrument = shouldInstrument()
-  // Pull the exact numeric timing seqSpotlightCSS(R, spec, {scale:false})
-  // will emit as CSS, so the delays below (entrance AND loop) stay in sync
-  // with it — R (not the raw max step count) is the true number of
-  // distinct events on the merged timeline above.
-  const {
-    totalEntranceMs, enterDur, stepMs, loopCount, totalLoopMs, loopStartMs,
-  } = seqSpotlightTiming(R || 1, spec, { scale: false })
-  const parts: string[] = []
-  if (spec.title) parts.push(titleEl(W, spec.title, theme))
-  parts.push(`<defs><marker id="sl-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0,0 6,3 0,6" fill="${theme.primary}"/></marker></defs>`)
-
-  // Per-node fitting: every lane label shares LABEL_W, but each is sized
-  // independently rather than to the diagram's worst-case label — a short
-  // lane name ("Design") stays large instead of being dragged down to
-  // match a long neighbor lane, same approach as process.ts/org-chart.ts.
-  const laneDisplays = items.map(item => displayLabel(item, { attrs: true }))
-  const laneFits = laneDisplays.map(d =>
-    fitTextToWidthShared([d.display], LABEL_W - 8, { maxSize: 9, minSize: 6.5, maxLines: 2 }),
-  )
-
-  // Per-node fitting: step box width varies per LANE (depends on that
-  // lane's own step count — steps within a lane necessarily share a width
-  // since they're laid out in a row), but each STEP's label is sized
-  // independently within that shared width rather than to its lane's
-  // worst-fitting step. A lane with one short step ("Accept") and one long
-  // one ("Write spec...") no longer forces the short step down to the long
-  // one's font size — same per-node principle as every other process/
-  // hierarchy file, just applied one level down (per box, not per lane).
-  //
-  // maxLines raised 2 → 3, now backed by boxH (STEP_H's real vertical
-  // budget) so a smaller font can actually reach that 3rd line instead of
-  // just shrinking 2 lines down to the floor before truncating — and,
-  // conversely, so 3 lines can't be chosen at a font size large enough to
-  // overflow STEP_H.
-  const stepBoxH = STEP_H - 6
-  const stepWPerLane = items.map(item => {
-    const steps = item.children
-    return steps.length > 0 ? Math.min(90, (W - LABEL_W - 8) / steps.length - 6) : 0
+  counts.forEach(count => {
+    for (let stepIndex = 0; stepIndex < count; stepIndex++) allNumerators.add(numeratorFor(count, stepIndex, denom))
   })
-  const laneStepDisplays = items.map(item => item.children.map(step => {
-    const { display: stepLabelDisplay } = parseLink(step.label)
-    return step.value ? `${stepLabelDisplay}: ${step.value}` : stepLabelDisplay
-  }))
-  const laneStepFits = items.map((_, i) =>
-    laneStepDisplays[i].map(display =>
-      fitTextToWidthShared([display], Math.max(20, stepWPerLane[i] - 10), { maxSize: 9, minSize: 6, maxLines: 3, boxH: stepBoxH }),
-    ),
-  )
+  const ranks = Array.from(allNumerators).sort((a, b) => a - b)
+  const rankOf = new Map(ranks.map((value, index) => [value, index]))
+  const rankCount = ranks.length
+  const rankFor = (count: number, stepIndex: number) => rankOf.get(numeratorFor(count, stepIndex, denom)) ?? rankCount - 1
+  return {
+    rankCount,
+    rankFor,
+    fracFor: (count, stepIndex) => rankCount > 1 ? rankFor(count, stepIndex) / (rankCount - 1) : 1,
+  }
+}
 
-  items.forEach((item, i) => {
-    const y = titleH + i * (LANE_H + GAP)
-    const t = items.length > 1 ? i / (items.length - 1) : 0
+function resolveStepWidth(stepCount: number): number {
+  return stepCount > 0 ? Math.min(90, (W - LABEL_W - 8) / stepCount - 6) : 0
+}
+
+function resolveStepGap(stepCount: number, stepW: number): number {
+  return stepCount > 1 ? ((W - LABEL_W - 8) - stepCount * stepW) / (stepCount - 1) : 0
+}
+
+function stepDisplay(step: MdArtItem): string {
+  const { display } = parseLink(step.label)
+  return step.value ? `${display}: ${step.value}` : display
+}
+
+function resolveLanes(spec: MdArtSpec, theme: MdArtTheme): LaneLayout[] {
+  const titleH = spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
+  return spec.items.map((item, index) => {
+    const y = titleH + index * (LANE_H + GAP)
+    const t = spec.items.length > 1 ? index / (spec.items.length - 1) : 0
     const fill = lerpColor(theme.primary, theme.secondary, t)
-    // Lane chrome (band, divider, label) is static context — the flow that
-    // animates is the steps, moving left-to-right in sync across lanes.
-    parts.push(`<rect x="0" y="${y.toFixed(1)}" width="${W}" height="${LANE_H}" fill="${fill}0a"/>`)
-    if (i > 0) parts.push(`<line x1="0" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" stroke="${theme.border}" stroke-width="0.5"/>`)
-    const { url: itmUrl, display: itmDisplay } = laneDisplays[i]
-    parts.push(`<rect x="2" y="${(y + 2).toFixed(1)}" width="${LABEL_W - 4}" height="${LANE_H - 4}" rx="4" fill="${fill}33" stroke="${fill}66" stroke-width="1">${itemTitleTag(item)}</rect>`)
-    const { fontSize: laneFS, results: [laneLabel] } = laneFits[i]
-    parts.push(aWrap(renderCenteredLines({
-      x: LABEL_W / 2,
-      centerY: y + LANE_H / 2 + 3,
-      lines: laneLabel.lines,
-      truncated: laneLabel.truncated,
-      fullText: itmDisplay,
-      fontSize: laneFS,
-      lineGap: laneFS * (10 / 9),
-      fill: theme.text,
-      fontWeight: '700',
-    }), itmUrl))
-    const steps = item.children
-    const stepW = steps.length > 0 ? Math.min(90, (W - LABEL_W - 8) / steps.length - 6) : 0
-    const stepGap = steps.length > 1 ? ((W - LABEL_W - 8) - steps.length * stepW) / (steps.length - 1) : 0
-    // This lane's step si mapped onto the shared, uniformly-spaced rank
-    // timeline computed above (0..1). Every lane's first step sits at 0 and
-    // its last step at 1, so all lanes start together and finish together;
-    // steps that fall on a rank no other lane shares still land evenly
-    // between their neighbours instead of drifting to an uneven gap.
-    const fracFor = (si: number) => globalPosFor(steps.length, si)
-    // delayMs(frac) always lands so that delay + enterDur = totalEntranceMs
-    // at frac=1, i.e. every lane's last step finishes its fade at exactly
-    // the same moment regardless of how many steps it has.
-    const delayFor = (si: number) => Math.round(fracFor(si) * (totalEntranceMs - enterDur))
-    // Same idea for the idle loop: each step's peak sits at its shared rank
-    // position within the loop cycle, so every distinct event across every
-    // lane is evenly spaced, and ties (shared ranks) still fire together.
-    const loopDelayFor = (si: number) => Math.round(loopStartMs + fracFor(si) * (loopCount - 1) * stepMs - totalLoopMs)
-    // The exact rank — used as the CSS class name; entrance and loop timing
-    // are both overridden inline below with the values above, so this only
-    // needs to be *a* stable, unique-enough label per event.
-    const slotFor = (si: number) => rankFor(steps.length, si)
-    steps.forEach((step, si) => {
-      const sx = LABEL_W + 4 + si * (stepW + stepGap)
-      const sy = y + (LANE_H - STEP_H) / 2
+    const display = displayLabel(item, { attrs: true })
+    const labelFit = fitTextToWidthShared([display.display], LABEL_W - 8, { maxSize: 9, minSize: 6.5, maxLines: 2 })
+    const stepW = resolveStepWidth(item.children.length)
+    const stepGap = resolveStepGap(item.children.length, stepW)
+    const stepBoxH = STEP_H - 6
+    const steps = item.children.map((step, stepIndex) => {
+      const x = LABEL_W + 4 + stepIndex * (stepW + stepGap)
+      const yStep = y + (LANE_H - STEP_H) / 2
       const isDone = step.attrs.includes('done')
       const stepFill = isDone ? theme.accent : fill
-      const { url: stepUrl } = parseLink(step.label)
-      const stepDisplay = laneStepDisplays[i][si]
-      const { fontSize: stepFS, results: [stepText] } = laneStepFits[i][si]
-      // Inline style on the rect itself (not the wrapping <g>) so it beats
-      // the class-based shapeRule that seqSpotlightCSS also emits for
-      // .mdart-n{slot} rect — same mechanism as the entrance override above,
-      // just targeting the descendant element the filter actually lives on.
-      const rectLoopStyle = animate ? ` style="animation:mdart-bright-loop ${totalLoopMs}ms ease-in-out ${loopDelayFor(si)}ms infinite"` : ''
-      let stepStr = `<rect x="${sx.toFixed(1)}" y="${sy.toFixed(1)}" width="${stepW.toFixed(1)}" height="${STEP_H}" rx="4" fill="${stepFill}${isDone ? '44' : '22'}" stroke="${stepFill}${isDone ? '99' : '66'}" stroke-width="1"${rectLoopStyle}>${itemTitleTag(step)}</rect>`
-      stepStr += aWrap(renderCenteredLines({
-        x: sx + stepW / 2,
-        centerY: sy + STEP_H / 2 + 3,
-        lines: stepText.lines,
-        truncated: stepText.truncated,
-        fullText: stepDisplay,
-        fontSize: stepFS,
-        lineGap: stepFS * (10 / 9),
-        fill: isDone ? theme.text : theme.textMuted,
-        fontWeight: isDone ? '600' : '400',
-      }), stepUrl)
-      // class picks the idle-loop spotlight window (nearest shared slot);
-      // the inline style overrides just the entrance so it's continuous
-      // per-lane instead of snapped to that slot grid.
-      const slot = slotFor(si)
-      const stepEnterStyle = `animation:mdart-enter ${enterDur}ms ease-out ${delayFor(si)}ms 1 both`
-      const _sg = wrapItem(stepStr, slot, animate, instrument)
-      parts.push(animate ? _sg.replace('<g ', `<g style="${stepEnterStyle}" `) : _sg)
-      if (si < steps.length - 1) {
-        const ax1 = sx + stepW + 2, ax2 = sx + stepW + stepGap - 4
-        const connEl = `<line x1="${ax1.toFixed(1)}" y1="${(sy + STEP_H / 2).toFixed(1)}" x2="${ax2.toFixed(1)}" y2="${(sy + STEP_H / 2).toFixed(1)}" stroke="${theme.primary}99" stroke-width="1" marker-end="url(#sl-arr)"/>`
-        const connEnterStyle = `animation:mdart-enter ${enterDur}ms ease-out ${delayFor(si + 1)}ms 1 both`
-        parts.push(animate ? `<g class="mdart-arr-n${slotFor(si + 1)}" style="${connEnterStyle}">${connEl}</g>` : connEl)
-      }
+      const { url } = parseLink(step.label)
+      const displayText = stepDisplay(step)
+      const fit = fitTextToWidthShared([displayText], Math.max(20, stepW - 10), {
+        maxSize: 9,
+        minSize: 6,
+        maxLines: 3,
+        boxH: stepBoxH,
+      })
+      return { item: step, index: stepIndex, x, y: yStep, width: stepW, fill: stepFill, isDone, display: displayText, url, fit }
     })
+    return { item, index, y, fill, display, labelFit, steps, stepGap }
   })
+}
 
-  if (animate) parts.unshift(seqSpotlightCSS(R, spec, { scale: false }))
-  return svgWrapProcess(W, H, theme, parts)
+function resolveLayout(spec: MdArtSpec): SwimlaneLayout {
+  const titleH = spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
+  const timeline = resolveSharedTimeline(spec.items)
+  return {
+    titleH,
+    height: titleH + spec.items.length * (LANE_H + GAP) + 8,
+    timeline,
+    timing: seqSpotlightTiming(timeline.rankCount || 1, spec, { scale: false }),
+    lanes: [],
+  }
+}
+
+function renderDefs(theme: MdArtTheme): string {
+  return `<defs><marker id="${ARROW_ID}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><polygon points="0,0 6,3 0,6" fill="${theme.primary}"/></marker></defs>`
 }
 
 function renderCenteredLines(opts: {
@@ -192,9 +166,105 @@ function renderCenteredLines(opts: {
   fontWeight: string
 }): string {
   const { x, centerY, lines, truncated, fullText, fontSize, lineGap, fill, fontWeight } = opts
-  return lines.map((line, idx) => {
-    const y = centerY + (idx - (lines.length - 1) / 2) * lineGap
-    const tip = idx === 0 && truncated ? `<title>${escapeXml(fullText)}</title>` : ''
+  return lines.map((line, index) => {
+    const y = centerY + (index - (lines.length - 1) / 2) * lineGap
+    const tip = index === 0 && truncated ? `<title>${escapeXml(fullText)}</title>` : ''
     return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${fill}" ${FONT_SANS_ATTR} font-weight="${fontWeight}">${tip}${escapeXml(line)}</text>`
   }).join('')
+}
+
+function renderLaneChrome(lane: LaneLayout, theme: MdArtTheme): string[] {
+  const parts = [
+    `<rect x="0" y="${lane.y.toFixed(1)}" width="${W}" height="${LANE_H}" fill="${lane.fill}0a"/>`,
+  ]
+  if (lane.index > 0) parts.push(`<line x1="0" y1="${lane.y.toFixed(1)}" x2="${W}" y2="${lane.y.toFixed(1)}" stroke="${theme.border}" stroke-width="0.5"/>`)
+  parts.push(`<rect x="2" y="${(lane.y + 2).toFixed(1)}" width="${LABEL_W - 4}" height="${LANE_H - 4}" rx="4" fill="${lane.fill}33" stroke="${lane.fill}66" stroke-width="1">${itemTitleTag(lane.item)}</rect>`)
+  return parts
+}
+
+function renderLaneLabel(lane: LaneLayout, theme: MdArtTheme): string {
+  const { fontSize, results: [label] } = lane.labelFit
+  return aWrap(renderCenteredLines({
+    x: LABEL_W / 2,
+    centerY: lane.y + LANE_H / 2 + 3,
+    lines: label.lines,
+    truncated: label.truncated,
+    fullText: lane.display.display,
+    fontSize,
+    lineGap: fontSize * (10 / 9),
+    fill: theme.text,
+    fontWeight: '700',
+  }), lane.display.url)
+}
+
+function delayFor(step: StepLayout, lane: LaneLayout, layout: SwimlaneLayout): number {
+  const frac = layout.timeline.fracFor(lane.steps.length, step.index)
+  return Math.round(frac * (layout.timing.totalEntranceMs - layout.timing.enterDur))
+}
+
+function loopDelayFor(step: StepLayout, lane: LaneLayout, layout: SwimlaneLayout): number {
+  const frac = layout.timeline.fracFor(lane.steps.length, step.index)
+  return Math.round(layout.timing.loopStartMs + frac * (layout.timing.loopCount - 1) * layout.timing.stepMs - layout.timing.totalLoopMs)
+}
+
+function slotFor(step: StepLayout, lane: LaneLayout, layout: SwimlaneLayout): number {
+  return layout.timeline.rankFor(lane.steps.length, step.index)
+}
+
+function renderStep(step: StepLayout, lane: LaneLayout, layout: SwimlaneLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const { fontSize, results: [text] } = step.fit
+  const rectLoopStyle = animate ? ` style="animation:mdart-bright-loop ${layout.timing.totalLoopMs}ms ease-in-out ${loopDelayFor(step, lane, layout)}ms infinite"` : ''
+  let content = `<rect x="${step.x.toFixed(1)}" y="${step.y.toFixed(1)}" width="${step.width.toFixed(1)}" height="${STEP_H}" rx="4" fill="${step.fill}${step.isDone ? '44' : '22'}" stroke="${step.fill}${step.isDone ? '99' : '66'}" stroke-width="1"${rectLoopStyle}>${itemTitleTag(step.item)}</rect>`
+  content += aWrap(renderCenteredLines({
+    x: step.x + step.width / 2,
+    centerY: step.y + STEP_H / 2 + 3,
+    lines: text.lines,
+    truncated: text.truncated,
+    fullText: step.display,
+    fontSize,
+    lineGap: fontSize * (10 / 9),
+    fill: step.isDone ? theme.text : theme.textMuted,
+    fontWeight: step.isDone ? '600' : '400',
+  }), step.url)
+
+  const group = wrapItem(content, slotFor(step, lane, layout), animate, instrument)
+  if (!animate) return group
+  const enterStyle = `animation:mdart-enter ${layout.timing.enterDur}ms ease-out ${delayFor(step, lane, layout)}ms 1 both`
+  return group.replace('<g ', `<g style="${enterStyle}" `)
+}
+
+function renderStepConnector(step: StepLayout, next: StepLayout, lane: LaneLayout, layout: SwimlaneLayout, theme: MdArtTheme, animate: boolean): string {
+  const x1 = step.x + step.width + 2
+  const x2 = step.x + step.width + lane.stepGap - 4
+  const connector = `<line x1="${x1.toFixed(1)}" y1="${(step.y + STEP_H / 2).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${(step.y + STEP_H / 2).toFixed(1)}" stroke="${theme.primary}99" stroke-width="1" marker-end="url(#${ARROW_ID})"/>`
+  if (!animate) return connector
+  const enterStyle = `animation:mdart-enter ${layout.timing.enterDur}ms ease-out ${delayFor(next, lane, layout)}ms 1 both`
+  return `<g class="mdart-arr-n${slotFor(next, lane, layout)}" style="${enterStyle}">${connector}</g>`
+}
+
+function renderLane(lane: LaneLayout, layout: SwimlaneLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string[] {
+  const parts = [...renderLaneChrome(lane, theme), renderLaneLabel(lane, theme)]
+  lane.steps.forEach((step, index) => {
+    parts.push(renderStep(step, lane, layout, theme, animate, instrument))
+    const next = lane.steps[index + 1]
+    if (next) parts.push(renderStepConnector(step, next, lane, layout, theme, animate))
+  })
+  return parts
+}
+
+export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (spec.items.length === 0) return renderEmpty(theme)
+
+  const baseLayout = resolveLayout(spec)
+  const layout = { ...baseLayout, lanes: resolveLanes(spec, theme) }
+  const animate = shouldAnimate(spec) && layout.timeline.rankCount > 0
+  const instrument = shouldInstrument()
+  const parts = [
+    ...(animate ? [seqSpotlightCSS(layout.timeline.rankCount, spec, { scale: false })] : []),
+    spec.title ? titleEl(W, spec.title, theme) : '',
+    renderDefs(theme),
+    ...layout.lanes.flatMap(lane => renderLane(lane, layout, theme, animate, instrument)),
+  ].filter(Boolean)
+
+  return svgWrapProcess(layout.height, theme, parts)
 }

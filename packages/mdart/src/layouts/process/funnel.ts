@@ -1,6 +1,39 @@
-import type { MdArtSpec, MdArtItem } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
+
+const W = 500
+const STEP_H = 60
+const PAD = 20
+const TITLE_H = 30
+const MAX_W = 440
+const MIN_W = 130
+const BAND_TEXT_PAD = 16
+const BAND_BOX_H = STEP_H - 12
+const PERCENT_X = W - 8
+
+type Metric = { num: number | null; raw: string | null }
+
+interface FunnelLayout {
+  n: number
+  titleH: number
+  height: number
+}
+
+interface FunnelNode {
+  item: MdArtItem
+  index: number
+  t: number
+  x: number
+  y: number
+  w: number
+  nextX: number
+  nextW: number
+  bandW: number
+  fill: string
+  metric: Metric
+  display: ReturnType<typeof displayLabel>
+}
 
 /** Parse a strictly-numeric string (allowing commas, underscores, whitespace). */
 function parseNum(s: string): number | null {
@@ -8,17 +41,12 @@ function parseNum(s: string): number | null {
   return m ? parseFloat(m[0]) : null
 }
 
-type Metric = { num: number | null; raw: string | null }
-
-/**
- * Extract a funnel metric from an item: prefer `item.value` (e.g. `Visitors: 10000`),
- * then fall back to the first child's label (`- Visitors\n  - 10000`).
- */
-function deriveMetric(it: MdArtItem): Metric {
-  if (it.value) return { num: parseNum(it.value), raw: it.value }
-  if (it.children[0]) {
-    const n = parseNum(it.children[0].label)
-    if (n !== null) return { num: n, raw: it.children[0].label }
+/** Prefer `item.value` as the metric, falling back to the first numeric child. */
+function deriveMetric(item: MdArtItem): Metric {
+  if (item.value) return { num: parseNum(item.value), raw: item.value }
+  if (item.children[0]) {
+    const n = parseNum(item.children[0].label)
+    if (n !== null) return { num: n, raw: item.children[0].label }
   }
   return { num: null, raw: null }
 }
@@ -29,124 +57,130 @@ function fmtNum(n: number): string {
     : n.toLocaleString('en-US', { maximumFractionDigits: 1 })
 }
 
-export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items
-  if (items.length === 0) return renderEmpty(theme)
+function bandWidth(t: number): number {
+  return MAX_W - (MAX_W - MIN_W) * t
+}
 
-  const n       = items.length
-  const W       = 500
-  const STEP_H  = 60
-  const PAD     = 20
-  const titleH  = spec.title ? 30 : 0
-  const H       = titleH + PAD + n * STEP_H + PAD
-  const maxW    = 440   // widest band (top)
-  const minW    = 130   // narrowest band (bottom)
+function resolveLayout(spec: MdArtSpec): FunnelLayout {
+  const n = spec.items.length
+  const titleH = spec.title ? TITLE_H : 0
+  return { n, titleH, height: titleH + PAD + n * STEP_H + PAD }
+}
 
-  const metrics = items.map(deriveMetric)
-
-  // Per-node fitting: each row's band is a genuinely different width (the
-  // trapezoid narrows toward the bottom), so — unlike circle-process where
-  // every node shares one radius — there's no single "shared" width that
-  // makes sense here at all. Picking the narrowest band across the whole
-  // funnel and applying it everywhere would crush the wide top band's text
-  // down to whatever the skinny bottom band needs, wasting the extra room
-  // every wider band actually has. Instead, size each row's text to its
-  // OWN band width: the narrower of its top/bottom edge (the tightest
-  // point text has to clear, since the trapezoid only gets narrower toward
-  // the bottom edge). Previously there was no wrap/truncation at all here —
-  // a long label just rendered past the band edges unbounded.
-  // Each of the caption/metric/label fits below was also capped at a flat
-  // maxLines: 1, with no boxH — so a smaller font never unlocked an extra
-  // line, it just kept shrinking a single line down to the floor before
-  // truncating. bandBoxH gives fitTextToWidthShared the vertical budget to
-  // grow the caption/label's line count as the font shrinks, same
-  // mechanism as circle-process/waterfall/chevron-process.
-  const bandBoxH = STEP_H - 12
-  const displays = items.map((it, i) => displayLabel(it, { value: metrics[i].raw !== null }))
-  const rowBandW = items.map((_, i) => {
-    const t = i / (n - 1 || 1)
-    const w = maxW - (maxW - minW) * t
-    const nextT = i < n - 1 ? (i + 1) / (n - 1 || 1) : t
-    const nextW = maxW - (maxW - minW) * nextT
-    return Math.max(20, Math.min(w, nextW) - 16)
+function placeNodes(spec: MdArtSpec, layout: FunnelLayout, theme: MdArtTheme): FunnelNode[] {
+  const metrics = spec.items.map(deriveMetric)
+  return spec.items.map((item, index) => {
+    const t = index / (layout.n - 1 || 1)
+    const w = bandWidth(t)
+    const nextT = index < layout.n - 1 ? (index + 1) / (layout.n - 1 || 1) : t
+    const nextW = bandWidth(nextT)
+    return {
+      item,
+      index,
+      t,
+      x: (W - w) / 2,
+      y: layout.titleH + PAD + index * STEP_H,
+      w,
+      nextX: (W - nextW) / 2,
+      nextW,
+      bandW: Math.max(20, Math.min(w, nextW) - BAND_TEXT_PAD),
+      fill: lerpColor(theme.primary, theme.secondary, t),
+      metric: metrics[index],
+      display: displayLabel(item, { value: metrics[index].raw !== null }),
+    }
   })
+}
 
+function renderTitle(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (!spec.title) return ''
+  return `<text x="${W / 2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
+}
+
+function renderBand(node: FunnelNode): string {
+  const points = `${node.x},${node.y} ${node.x + node.w},${node.y} ${node.nextX + node.nextW},${node.y + STEP_H} ${node.nextX},${node.y + STEP_H}`
+  return `<polygon points="${points}" fill="${node.fill}">${itemTitleTag(node.item)}</polygon>`
+}
+
+function renderMetricBlock(node: FunnelNode): string {
+  const bandCx = W / 2
+  const bandCy = node.y + STEP_H / 2
+  const metricTextFull = node.metric.num !== null ? fmtNum(node.metric.num) : node.metric.raw!
+  const metricFit = fitTextToWidthShared([metricTextFull], node.bandW, { maxSize: 19, minSize: 10, maxLines: 1 })
+  const { lines: metricLines, truncated: metricTruncated } = metricFit.results[0]
+  const reservedBoxH = Math.max(10, BAND_BOX_H - metricFit.lineHeight - 4)
+  const captionText = node.display.display.toUpperCase()
+  const captionFit = fitTextToWidthShared([captionText], node.bandW, {
+    maxSize: 10,
+    minSize: 6.5,
+    maxLines: 2,
+    boxH: reservedBoxH,
+  })
+  const { lines: captionLines, truncated: captionTruncated } = captionFit.results[0]
+  const captionTip = captionTruncated ? `<title>${escapeXml(captionText)}</title>` : ''
+  const metricTip = metricTruncated ? `<title>${escapeXml(metricTextFull)}</title>` : ''
+  const totalH = captionLines.length * captionFit.lineHeight + metricFit.lineHeight + 4
+  let content = captionTip
+  captionLines.forEach((line, lineIndex) => {
+    const ty = bandCy - totalH / 2 + lineIndex * captionFit.lineHeight + captionFit.lineHeight * 0.8
+    content += `<text x="${bandCx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${captionFit.fontSize}" fill="#fff" fill-opacity="0.85" ${FONT_SANS_ATTR} font-weight="700" letter-spacing="0.08em">${escapeXml(line)}</text>`
+  })
+  const metricY = bandCy - totalH / 2 + captionLines.length * captionFit.lineHeight + metricFit.lineHeight * 0.8
+  content = aWrap(content, node.display.url)
+  return content + `${metricTip}<text x="${bandCx}" y="${metricY.toFixed(1)}" text-anchor="middle" font-size="${metricFit.fontSize}" fill="#fff" ${FONT_SANS_ATTR} font-weight="800" letter-spacing="0.02em">${escapeXml(metricLines[0])}</text>`
+}
+
+function renderLabelBlock(node: FunnelNode): string {
+  const bandCx = W / 2
+  const bandCy = node.y + STEP_H / 2
+  const labelFit = fitTextToWidthShared([node.display.display], node.bandW, {
+    maxSize: 13,
+    minSize: 6.5,
+    maxLines: 2,
+    boxH: BAND_BOX_H,
+  })
+  const { lines, truncated } = labelFit.results[0]
+  const tip = truncated ? `<title>${escapeXml(node.display.display)}</title>` : ''
+  const totalH = lines.length * labelFit.lineHeight
+  let content = tip
+  lines.forEach((line, lineIndex) => {
+    const ty = bandCy - totalH / 2 + lineIndex * labelFit.lineHeight + labelFit.lineHeight * 0.8
+    content += `<text x="${bandCx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFit.fontSize}" fill="#fff" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(line)}</text>`
+  })
+  return aWrap(content, node.display.url)
+}
+
+function renderConversion(node: FunnelNode, previous: FunnelNode | undefined, theme: MdArtTheme): string {
+  if (!previous || previous.metric.num === null || node.metric.num === null || previous.metric.num <= 0) return ''
+  const pct = (node.metric.num / previous.metric.num) * 100
+  const pctText = pct >= 10 ? `${Math.round(pct)}%` : `${pct.toFixed(1)}%`
+  return `<text x="${PERCENT_X}" y="${(node.y + STEP_H / 2 + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="${theme.accent}" ${FONT_SANS_ATTR} font-weight="700">↓ ${pctText}</text>`
+}
+
+function renderNode(node: FunnelNode, previous: FunnelNode | undefined, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const text = node.metric.raw !== null ? renderMetricBlock(node) : renderLabelBlock(node)
+  return wrapItem(renderBand(node) + text + renderConversion(node, previous, theme), node.index, animate, instrument)
+}
+
+function renderSvg(layout: FunnelLayout, spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {
+  const animate = shouldAnimate(spec)
+  return `<svg viewBox="0 0 ${W} ${layout.height}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="${W}" height="${layout.height}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(layout.n, spec) : ''}
+    ${parts.join('\n    ')}
+  </svg>`
+}
+
+export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (spec.items.length === 0) return renderEmpty(theme)
+
+  const layout = resolveLayout(spec)
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
-  let svg = ''
-  if (spec.title) {
-    svg += `<text x="${W/2}" y="22" text-anchor="middle" font-size="13" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(spec.title)}</text>`
-  }
+  const nodes = placeNodes(spec, layout, theme)
+  const parts = [
+    renderTitle(spec, theme),
+    ...nodes.map((node, index) => renderNode(node, nodes[index - 1], theme, animate, instrument)),
+  ].filter(Boolean)
 
-  for (let i = 0; i < n; i++) {
-    const item = items[i]
-    const t    = i / (n - 1 || 1)
-    const w    = maxW - (maxW - minW) * t
-    const x    = (W - w) / 2
-    const y    = titleH + PAD + i * STEP_H
-    const fill = lerpColor(theme.primary, theme.secondary, t)
-
-    const nextT = i < n - 1 ? (i + 1) / (n - 1 || 1) : t
-    const nextW = maxW - (maxW - minW) * nextT
-    const nextX = (W - nextW) / 2
-    const points = `${x},${y} ${x + w},${y} ${nextX + nextW},${y + STEP_H} ${nextX},${y + STEP_H}`
-
-    const m      = metrics[i]
-    const bandCx = W / 2
-    const { url: itmUrl, display: itmDisplay } = displays[i]
-
-    const bandW = rowBandW[i]
-    const bandCy = y + STEP_H / 2
-    let nodeStr = `<polygon points="${points}" fill="${fill}">${itemTitleTag(item)}</polygon>`
-    if (m.raw !== null) {
-      const metricTextFull = m.num !== null ? fmtNum(m.num) : m.raw
-      const metricFit = fitTextToWidthShared([metricTextFull], bandW, { maxSize: 19, minSize: 10, maxLines: 1 })
-      const { lines: metLines, truncated: metTrunc } = metricFit.results[0]
-      const reservedBoxH = Math.max(10, bandBoxH - metricFit.lineHeight - 4)
-      const captionFit = fitTextToWidthShared([itmDisplay.toUpperCase()], bandW, {
-        maxSize: 10, minSize: 6.5, maxLines: 2, boxH: reservedBoxH,
-      })
-      const { lines: capLines, truncated: capTrunc } = captionFit.results[0]
-      const capTip = capTrunc ? `<title>${escapeXml(itmDisplay.toUpperCase())}</title>` : ''
-      const metTip = metTrunc ? `<title>${escapeXml(metricTextFull)}</title>` : ''
-      // Centre the whole block (caption lines + metric line) on bandCy —
-      // generalized so it works whatever line count the caption fit above
-      // lands on, instead of assuming exactly 1 caption line.
-      const totalH = capLines.length * captionFit.lineHeight + metricFit.lineHeight + 4
-      let capContent = capTip
-      capLines.forEach((line, li) => {
-        const ty = bandCy - totalH / 2 + li * captionFit.lineHeight + captionFit.lineHeight * 0.8
-        capContent += `<text x="${bandCx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${captionFit.fontSize}" fill="#fff" fill-opacity="0.85" ${FONT_SANS_ATTR} font-weight="700" letter-spacing="0.08em">${escapeXml(line)}</text>`
-      })
-      nodeStr += aWrap(capContent, itmUrl)
-      const metTy = bandCy - totalH / 2 + capLines.length * captionFit.lineHeight + metricFit.lineHeight * 0.8
-      nodeStr += `${metTip}<text x="${bandCx}" y="${metTy.toFixed(1)}" text-anchor="middle" font-size="${metricFit.fontSize}" fill="#fff" ${FONT_SANS_ATTR} font-weight="800" letter-spacing="0.02em">${escapeXml(metLines[0])}</text>`
-    } else {
-      const labelFit = fitTextToWidthShared([itmDisplay], bandW, { maxSize: 13, minSize: 6.5, maxLines: 2, boxH: bandBoxH })
-      const { lines, truncated } = labelFit.results[0]
-      const tip = truncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
-      const totalH = lines.length * labelFit.lineHeight
-      let lblContent = tip
-      lines.forEach((line, li) => {
-        const ty = bandCy - totalH / 2 + li * labelFit.lineHeight + labelFit.lineHeight * 0.8
-        lblContent += `<text x="${bandCx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFit.fontSize}" fill="#fff" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(line)}</text>`
-      })
-      nodeStr += aWrap(lblContent, itmUrl)
-    }
-    if (i > 0) {
-      const prev = metrics[i - 1]
-      if (prev.num !== null && m.num !== null && prev.num > 0) {
-        const pct      = (m.num / prev.num) * 100
-        const pctText  = pct >= 10 ? `${Math.round(pct)}%` : `${pct.toFixed(1)}%`
-        nodeStr += `<text x="${W - 8}" y="${(y + STEP_H / 2 + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="${theme.accent}" ${FONT_SANS_ATTR} font-weight="700">↓ ${pctText}</text>`
-      }
-    }
-    svg += wrapItem(nodeStr, i, animate, instrument)
-  }
-
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
-    ${animate ? seqSpotlightCSS(n, spec) : ''}
-    ${svg}
-  </svg>`
+  return renderSvg(layout, spec, theme, parts)
 }

@@ -1,79 +1,97 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, lerpColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, roundTextBox, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
-function svgWrap(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
+const W = 440
+const H = 400
+const CX = W / 2
+const CY = H / 2
+const TRACK_R = 145
+const NODE_R = 22
+const TRACK_STROKE = 14
+const HALO = `stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill"`
+
+interface CycleNode {
+  item: MdArtItem
+  index: number
+  x: number
+  y: number
+  fill: string
+  display: ReturnType<typeof displayLabel>
+}
+
+function angleFor(index: number, n: number): number {
+  return (2 * Math.PI * index) / n - Math.PI / 2
+}
+
+function placeNodes(spec: MdArtSpec, theme: MdArtTheme): CycleNode[] {
+  return spec.items.map((item, index) => {
+    const angle = angleFor(index, spec.items.length)
+    const t = index / (spec.items.length - 1 || 1)
+    return {
+      item,
+      index,
+      x: CX + TRACK_R * Math.cos(angle),
+      y: CY + TRACK_R * Math.sin(angle),
+      fill: lerpColor(theme.primary, theme.secondary, t),
+      display: displayLabel(item, { value: true }),
+    }
+  })
+}
+
+function renderTrack(theme: MdArtTheme): string {
+  return `<circle cx="${CX}" cy="${CY}" r="${TRACK_R}" fill="none" stroke="${theme.textMuted}" stroke-width="${TRACK_STROKE}" opacity="0.45"/>`
+}
+
+function renderTitle(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (!spec.title) return ''
+  return `<text x="${CX}" y="${CY + 5}" text-anchor="middle" font-size="12" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${escapeXml(spec.title)}</text>`
+}
+
+function renderNode(node: CycleNode, animate: boolean, instrument: boolean): string {
+  const { w: nodeBoxW, h: nodeBoxH } = roundTextBox(NODE_R)
+  const fit = fitLabelValueBlock(node.display.display, node.item.value, nodeBoxW, nodeBoxH, {
+    labelUrl: node.display.url,
+    labelMaxSize: 9,
+    labelMinSize: 6.5,
+    labelMaxLines: 2,
+    valueMaxSize: 8,
+    valueMinSize: 6,
+  })
+  const content = `<circle cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${NODE_R}" fill="${node.fill}">${itemTitleTag(node.item)}</circle>` +
+    renderFitBlock(node.x, node.y, fit, {
+      labelFullText: node.display.display,
+      valueFullText: node.item.value ?? undefined,
+      labelFill: '#ffffff',
+      valueFill: '#ffffff',
+      labelWeight: '600',
+      valueWeight: '400',
+      extraAttrs: HALO,
+      shapeBounds: { x: node.x - NODE_R, y: node.y - NODE_R, w: NODE_R * 2, h: NODE_R * 2, label: 'cycle-node' },
+    })
+  return wrapItem(content, node.index, animate, instrument)
+}
+
+function renderSvg(spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {
+  const animate = shouldAnimate(spec)
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
     <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(spec.items.length, spec) : ''}
     ${parts.join('\n    ')}
   </svg>`
 }
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items
-  if (items.length === 0) return renderEmpty(theme)
-
-  const n = items.length
-  const W = 440
-  const H = 400
-  const cx = W / 2
-  const cy = H / 2
-  const R = 145
-  const nodeR = 22
-
-  const parts: string[] = []
-
-  // Track ring
-  parts.push(`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${theme.textMuted}" stroke-width="14" opacity="0.45"/>`)
-
-  // Center title
-  if (spec.title) {
-    parts.push(`<text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="12" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${escapeXml(spec.title)}</text>`)
-  }
+  if (spec.items.length === 0) return renderEmpty(theme)
 
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
+  const nodes = placeNodes(spec, theme)
+  const parts = [
+    renderTrack(theme),
+    renderTitle(spec, theme),
+    ...nodes.map(node => renderNode(node, animate, instrument)),
+  ].filter(Boolean)
 
-  // Per-node fitting: every node shares nodeR (like circle-process.ts's
-  // circles), so each label/value pair is sized independently — a short
-  // label stays large instead of being dragged down to match a long
-  // neighbor. Delegates to shared.ts's fitLabelValueBlock/renderFitBlock,
-  // which centralise this exact "value gets a minority boxH share, label
-  // reserves what's left, both centred as one block" pattern that used to
-  // be hand-rolled per file (circle-process.ts, cycle.ts, donut-cycle.ts,
-  // gear-cycle.ts, etc.) — replaces the old flat 10-char truncation (fixed
-  // font-size 9/8, single line only, no <title> tooltip).
-  const { w: nodeBoxW, h: nodeBoxH } = roundTextBox(nodeR)
-  const halo = `stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill"`
-
-  // Nodes on track
-  for (let i = 0; i < n; i++) {
-    const item = items[i]
-    const angle = (2 * Math.PI * i) / n - Math.PI / 2
-    const nx = cx + R * Math.cos(angle)
-    const ny = cy + R * Math.sin(angle)
-    const t = i / (n - 1 || 1)
-    const fill = lerpColor(theme.primary, theme.secondary, t)
-
-    const { display: lblDisplay, url: lblUrl } = displayLabel(item, { value: true })
-    const fit = fitLabelValueBlock(lblDisplay, item.value, nodeBoxW, nodeBoxH, {
-      labelUrl: lblUrl,
-      labelMaxSize: 9, labelMinSize: 6.5, labelMaxLines: 2,
-      valueMaxSize: 8, valueMinSize: 6,
-    })
-
-    let nodeStr = ''
-    nodeStr += `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${nodeR}" fill="${fill}">${itemTitleTag(item)}</circle>`
-    nodeStr += renderFitBlock(nx, ny, fit, {
-      labelFullText: lblDisplay, valueFullText: item.value ?? undefined,
-      labelFill: '#ffffff', valueFill: '#ffffff',
-      labelWeight: '600', valueWeight: '400',
-      extraAttrs: halo,
-      shapeBounds: { x: nx - nodeR, y: ny - nodeR, w: nodeR * 2, h: nodeR * 2, label: 'cycle-node' },
-    })
-    parts.push(wrapItem(nodeStr, i, animate, instrument))
-  }
-
-  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
-  return svgWrap(W, H, theme, parts)
+  return renderSvg(spec, theme, parts)
 }

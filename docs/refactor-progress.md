@@ -27,8 +27,30 @@ layout/measurement helpers, and smaller SVG emission helpers.
 | Process | `process` | Done | Horizontal/vertical layout resolution, node placement, arrow/node/SVG renderers split |
 | Process | `arrow-process` | Done | Arrow box measurement, node placement, box/text/arrow renderers, SVG wrapper split |
 | Process | `chevron-process` | Done | Chevron geometry, per-body text fitting, shape/text renderers, SVG wrapper split |
+| Process | `circle-process` | Done | Circle row measurement, node placement, defs/circle/text/arrow renderers, SVG wrapper split |
+| Process | `timeline-h` | Done | Spine/tick geometry, node placement, label/value fitting, node/SVG wrapper split |
+| Process | `bending-process` | Done | Serpentine grid metrics, node text fitting, straight/turn connector renderers, SVG wrapper split |
+| Process | `circular-process` | Done | Circular metrics, polar node placement, arrow clearance math, node/arrow renderers split |
+| Process | `snake-process` | Done | Delegates to modular bending-process renderer |
+| Process | `funnel` | Done | Metric parsing, band placement, metric/label/conversion renderers, SVG wrapper split |
+| Process | `roadmap` | Done | Delegates to modular timeline-h renderer |
+| Process | `timeline-v` | Done | Column batch fitting, row placement, spine/tag/main/detail renderers, SVG wrapper split |
+| Process | `swimlane` | Done | Shared timeline ranking, lane/step fitting, chrome/step/connector renderers, SVG wrapper split |
 | Process | `step-up` | Done | Delegates to shared modular staircase renderer |
 | Process | `step-down` | Done | Delegates to shared modular staircase renderer |
+| Cycle | `cycle` | Done | Orbit metrics, rectangle clearance, arc/node/title renderers, SVG wrapper split |
+| Cycle | `donut-cycle` | Done | Wedge metrics, segment path/text/title renderers, SVG wrapper split |
+| Cycle | `segmented-cycle` | Done | Wedge/connector label placement, segment/text/title renderers, SVG wrapper split |
+| Cycle | `nondirectional-cycle` | Done | Track/title/node placement, circular text fitting, SVG wrapper split |
+| Cycle | `multidirectional-cycle` | Done | Radial node placement, complete-graph connectors, node/SVG renderers split |
+| Cycle | `spiral` | Done | Spiral guide sampling, milestone placement, label/node renderers, SVG wrapper split |
+| Cycle | `loop` | Done | Row metrics, forward/return arrows, node label/value/badge renderers, SVG wrapper split |
+| Cycle | `block-cycle` | Done | Two-row placement, shell/header/body renderers, arrow routing, SVG wrapper split |
+| Cycle | `gear-cycle` | Done | Gear sizing variants, reusable gear-node renderer, orbit arrow renderer, SVG wrapper split |
+| Matrix | `matrix-2x2` | Done | Quadrant placement, header/children/axis renderers, SVG wrapper split |
+| Matrix | `bcg` | Done | Delegates to shared quadrant-grid renderer with BCG metadata |
+| Matrix | `ansoff` | Done | Delegates to shared quadrant-grid renderer with Ansoff metadata |
+| Matrix | `pros-cons` | Done | Header parsing, row measurement, column text/header/divider renderers, SVG wrapper split |
 | Hierarchy | `org-chart` | Done | Diagram measurement, connector, node box/text, SVG wrapper split |
 | Hierarchy | `h-org-chart` | Done | Horizontal tree traversal, node fit/layout, node renderer split |
 | Hierarchy | `decision-tree` | Done | Tree measurement, fit maps, connector/branch labels, leaf/decision renderers split |

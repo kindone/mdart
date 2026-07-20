@@ -1,68 +1,127 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, renderWrappedText, centeredTextY, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
+const W = 500
+const CELL_W = W / 2
+const CELL_H = 168
+const TITLE_H = 28
+const POSITIONS: Array<[number, number]> = [[0, 0], [1, 0], [0, 1], [1, 1]]
+
+interface MatrixLayout {
+  titleH: number
+  height: number
+}
+
+interface MatrixCell {
+  item: MdArtItem
+  index: number
+  x: number
+  y: number
+  fill: string
+  stroke: string
+  display: ReturnType<typeof displayLabel>
+}
+
+function resolveLayout(spec: MdArtSpec): MatrixLayout {
+  const titleH = spec.title ? TITLE_H : 0
+  return { titleH, height: titleH + CELL_H * 2 }
+}
+
+function placeCells(spec: MdArtSpec, layout: MatrixLayout, theme: MdArtTheme): MatrixCell[] {
+  const fills = [`${theme.primary}22`, `${theme.secondary}1a`, `${theme.accent}1a`, `${theme.secondary}22`]
+  const strokes = [theme.primary, theme.secondary, theme.accent, theme.secondary]
+  return spec.items.slice(0, 4).map((item, index) => {
+    const [col, row] = POSITIONS[index]
+    return {
+      item,
+      index,
+      x: col * CELL_W,
+      y: layout.titleH + row * CELL_H,
+      fill: fills[index],
+      stroke: strokes[index],
+      display: displayLabel(item),
+    }
+  })
+}
+
+function renderTitle(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (!spec.title) return ''
+  return `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`
+}
+
+function renderHeader(cell: MatrixCell): string {
+  const headerFit = fitTextToWidthShared([cell.display.display], CELL_W - 24, {
+    maxSize: 12,
+    minSize: 7,
+    maxLines: 2,
+    boxH: 34,
+  })
+  return renderWrappedText(
+    cell.x + CELL_W / 2,
+    centeredTextY(cell.y + 8, 28, headerFit.results[0].lines.length, headerFit.lineHeight),
+    `text-anchor="middle" font-size="${headerFit.fontSize}" fill="${cell.stroke}" ${FONT_SANS_ATTR} font-weight="700"`,
+    cell.display.display,
+    { ...headerFit.results[0], url: cell.display.url },
+    headerFit.lineHeight,
+    cell.item,
+  )
+}
+
+function renderChildren(cell: MatrixCell, theme: MdArtTheme): string {
+  return cell.item.children.slice(0, 5).map((child, index) => {
+    const childDisplay = displayLabel(child)
+    const bulletText = `• ${childDisplay.display}`
+    const bulletFit = fitTextToWidthShared([bulletText], CELL_W - 24, {
+      maxSize: 10,
+      minSize: 6.5,
+      maxLines: 2,
+      boxH: 22,
+    })
+    return renderWrappedText(
+      cell.x + 12,
+      cell.y + 50 + index * 22,
+      `font-size="${bulletFit.fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} opacity="0.85"`,
+      bulletText,
+      { ...bulletFit.results[0], url: childDisplay.url },
+      bulletFit.lineHeight,
+      child,
+    )
+  }).join('')
+}
+
+function renderCell(cell: MatrixCell, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const content = `<rect x="${cell.x}" y="${cell.y}" width="${CELL_W}" height="${CELL_H}" fill="${cell.fill}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(cell.item)}</rect>` +
+    renderHeader(cell) +
+    renderChildren(cell, theme)
+  return wrapItem(content, cell.index, animate, instrument)
+}
+
+function renderAxes(layout: MatrixLayout, theme: MdArtTheme): string {
+  return `<line x1="${W / 2}" y1="${layout.titleH}" x2="${W / 2}" y2="${layout.height}" stroke="${theme.border}" stroke-width="1.5"/>` +
+    `<line x1="0" y1="${layout.titleH + CELL_H}" x2="${W}" y2="${layout.titleH + CELL_H}" stroke="${theme.border}" stroke-width="1.5"/>`
+}
+
+function renderSvg(layout: MatrixLayout, spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {
+  const animate = shouldAnimate(spec)
+  const n = Math.min(spec.items.length, 4)
+  return `<svg viewBox="0 0 ${W} ${layout.height}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="${W}" height="${layout.height}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(n, spec, { scale: false }) : ''}
+    ${parts.join('\n    ')}
+  </svg>`
+}
+
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items.slice(0, 4)
+  const layout = resolveLayout(spec)
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
-  const W = 500
-  const TITLE_H = spec.title ? 28 : 0
-  const CELL_W = W / 2
-  const CELL_H = 168
-  const H = TITLE_H + CELL_H * 2
+  const cells = placeCells(spec, layout, theme)
+  const parts = [
+    renderTitle(spec, theme),
+    ...cells.map(cell => renderCell(cell, theme, animate, instrument)),
+    renderAxes(layout, theme),
+  ].filter(Boolean)
 
-  const fills   = [`${theme.primary}22`, `${theme.secondary}1a`, `${theme.accent}1a`, `${theme.secondary}22`]
-  const strokes = [theme.primary, theme.secondary, theme.accent, theme.secondary]
-
-  let svgContent = ''
-  if (spec.title) {
-    svgContent += `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`
-  }
-
-  const positions = [[0, 0], [1, 0], [0, 1], [1, 1]]
-  items.forEach((item, i) => {
-    const unit: string[] = []
-    const [col, row] = positions[i]
-    const x = col * CELL_W, y = TITLE_H + row * CELL_H
-    // Quadrant header carries label only — value/attrs go into the tooltip
-    // and " …" cue if present. Children render as bullet rows, so shows.value
-    // here means "value is not rendered visibly on the header" (it isn't).
-    const { display: itmDisplay, url: itmUrl } = displayLabel(item)
-    unit.push(`<rect x="${x}" y="${y}" width="${CELL_W}" height="${CELL_H}" fill="${fills[i]}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(item)}</rect>`)
-    const headerFit = fitTextToWidthShared([itmDisplay], CELL_W - 24, { maxSize: 12, minSize: 7, maxLines: 2, boxH: 34 })
-    unit.push(renderWrappedText(
-      x + CELL_W / 2,
-      centeredTextY(y + 8, 28, headerFit.results[0].lines.length, headerFit.lineHeight),
-      `text-anchor="middle" font-size="${headerFit.fontSize}" fill="${strokes[i]}" ${FONT_SANS_ATTR} font-weight="700"`,
-      itmDisplay,
-      { ...headerFit.results[0], url: itmUrl },
-      headerFit.lineHeight,
-      item,
-    ))
-    item.children.slice(0, 5).forEach((ch, j) => {
-      const { display: chDisplay, url: chUrl } = displayLabel(ch)
-      const bulletText = `• ${chDisplay}`
-      const bulletFit = fitTextToWidthShared([bulletText], CELL_W - 24, { maxSize: 10, minSize: 6.5, maxLines: 2, boxH: 22 })
-      unit.push(renderWrappedText(
-        x + 12,
-        y + 50 + j * 22,
-        `font-size="${bulletFit.fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} opacity="0.85"`,
-        bulletText,
-        { ...bulletFit.results[0], url: chUrl },
-        bulletFit.lineHeight,
-        ch,
-      ))
-    })
-    svgContent += wrapItem(unit.join(''), i, animate, instrument)
-  })
-  // Center axis lines
-  svgContent += `<line x1="${W / 2}" y1="${TITLE_H}" x2="${W / 2}" y2="${H}" stroke="${theme.border}" stroke-width="1.5"/>`
-  svgContent += `<line x1="0" y1="${TITLE_H + CELL_H}" x2="${W}" y2="${TITLE_H + CELL_H}" stroke="${theme.border}" stroke-width="1.5"/>`
-  if (animate) svgContent = seqSpotlightCSS(items.length, spec, { scale: false }) + svgContent
-
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
-    ${svgContent}
-  </svg>`
+  return renderSvg(layout, spec, theme, parts)
 }

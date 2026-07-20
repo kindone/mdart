@@ -1,93 +1,140 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, titleEl, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
-function svgWrapProcess(W: number, H: number, theme: MdArtTheme, parts: string[]): string {
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
-    <rect width="${W}" height="${H}" fill="${theme.bg}" rx="8"/>
+const MIN_W = 500
+const PER_ITEM_W = 100
+const W_PAD_EXTRA = 80
+const H = 160
+const LINE_Y = 90
+const DOT_R = 8
+const PAD = 50
+const TITLE_Y = 16
+const LABEL_GAP = 4
+const TICK_LEN = 18
+
+interface TimelineLayout {
+  n: number
+  width: number
+  spacing: number
+  labelBoxW: number
+}
+
+interface TimelineNode {
+  item: MdArtItem
+  index: number
+  x: number
+  fill: string
+  above: boolean
+  display: ReturnType<typeof displayLabel>
+}
+
+function resolveLayout(spec: MdArtSpec): TimelineLayout {
+  const n = spec.items.length
+  const width = Math.max(MIN_W, n * PER_ITEM_W + W_PAD_EXTRA)
+  const spacing = (width - PAD * 2) / (n - 1 || 1)
+  return { n, width, spacing, labelBoxW: Math.max(30, spacing - 10) }
+}
+
+function placeNodes(spec: MdArtSpec, layout: TimelineLayout, theme: MdArtTheme): TimelineNode[] {
+  return spec.items.map((item, index) => {
+    const t = layout.n > 1 ? index / (layout.n - 1) : 0.5
+    return {
+      item,
+      index,
+      x: layout.n === 1 ? layout.width / 2 : PAD + index * layout.spacing,
+      fill: lerpColor(theme.secondary, theme.primary, t),
+      above: index % 2 === 0,
+      display: displayLabel(item, { value: !!item.value }),
+    }
+  })
+}
+
+function renderTitle(spec: MdArtSpec, layout: TimelineLayout, theme: MdArtTheme): string {
+  if (!spec.title) return ''
+  return `<text x="${layout.width / 2}" y="${TITLE_Y}" text-anchor="middle" font-size="12" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${escapeXml(spec.title)}</text>`
+}
+
+function renderSpine(layout: TimelineLayout, theme: MdArtTheme): string {
+  return `<line x1="${PAD}" y1="${LINE_Y}" x2="${layout.width - PAD}" y2="${LINE_Y}" stroke="${theme.border}" stroke-width="3" />`
+}
+
+function fitNode(node: TimelineNode, layout: TimelineLayout) {
+  const labelFit = fitTextToWidthShared([node.display.display], layout.labelBoxW, {
+    maxSize: 10,
+    minSize: 6.5,
+    maxLines: 2,
+  })
+  const valueFit = node.item.value
+    ? fitTextToWidthShared([node.item.value], layout.labelBoxW, { maxSize: 9, minSize: 6, maxLines: 1 })
+    : null
+  return { labelFit, valueFit }
+}
+
+function labelStartY(node: TimelineNode, labelLines: string[], labelLH: number, labelFS: number, valueFS: number, valueLineCount: number, valueLH: number, lineEndY: number): number {
+  if (!node.above) return lineEndY + LABEL_GAP + labelFS * 0.8
+  const lastDescent = (valueLineCount > 0 ? valueFS : labelFS) * 0.2
+  const lastBaselineFromFirst = valueLineCount > 0
+    ? labelLines.length * labelLH + (valueLineCount - 1) * valueLH
+    : (labelLines.length - 1) * labelLH
+  return lineEndY - LABEL_GAP - lastBaselineFromFirst - lastDescent
+}
+
+function renderDotAndTick(node: TimelineNode, theme: MdArtTheme): string {
+  const tickEnd = node.above ? LINE_Y - TICK_LEN : LINE_Y + TICK_LEN
+  return `<circle cx="${node.x}" cy="${LINE_Y}" r="${DOT_R}" fill="${node.fill}" >${itemTitleTag(node.item)}</circle>` +
+    `<circle cx="${node.x}" cy="${LINE_Y}" r="${DOT_R - 3}" fill="${theme.bg}" />` +
+    `<line x1="${node.x}" y1="${LINE_Y}" x2="${node.x}" y2="${tickEnd}" stroke="${node.fill}" stroke-width="1.5" stroke-dasharray="3,2" />`
+}
+
+function renderLabelAndValue(node: TimelineNode, layout: TimelineLayout, theme: MdArtTheme): string {
+  const { labelFit, valueFit } = fitNode(node, layout)
+  const { lines, truncated } = labelFit.results[0]
+  const valueLines = valueFit?.results[0].lines ?? []
+  const valueTruncated = valueFit?.results[0].truncated ?? false
+  const valueFS = valueFit?.fontSize ?? 9
+  const valueLH = valueFS * 1.3
+  const lineEndY = node.above ? LINE_Y - TICK_LEN : LINE_Y + TICK_LEN
+  const labelY = labelStartY(node, lines, labelFit.lineHeight, labelFit.fontSize, valueFS, valueLines.length, valueLH, lineEndY)
+  const labelTip = truncated ? `<title>${escapeXml(node.display.display)}</title>` : ''
+  const valueTip = valueTruncated ? `<title>${escapeXml(node.item.value!)}</title>` : ''
+  let content = labelTip
+  lines.forEach((line, lineIndex) => {
+    const y = labelY + lineIndex * labelFit.lineHeight
+    content += `<text x="${node.x}" y="${y.toFixed(1)}" text-anchor="middle" font-size="${labelFit.fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(line)}</text>`
+  })
+  if (valueFit) {
+    content += `${valueTip}<text x="${node.x}" y="${(labelY + lines.length * labelFit.lineHeight).toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${escapeXml(valueFit.results[0].lines[0])}</text>`
+  }
+  return aWrap(content, node.display.url)
+}
+
+function renderNode(node: TimelineNode, layout: TimelineLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const nodeSvg = renderDotAndTick(node, theme) + renderLabelAndValue(node, layout, theme)
+  return wrapItem(nodeSvg, node.index, animate, instrument)
+}
+
+function renderSvg(layout: TimelineLayout, spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {
+  const animate = shouldAnimate(spec)
+  return `<svg viewBox="0 0 ${layout.width} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <rect width="${layout.width}" height="${H}" fill="${theme.bg}" rx="8"/>
+    ${animate ? seqSpotlightCSS(layout.n, spec) : ''}
     ${parts.join('\n    ')}
   </svg>`
 }
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items
-  if (items.length === 0) return renderEmpty(theme)
-  const n = items.length
+  if (spec.items.length === 0) return renderEmpty(theme)
 
-  const W    = 600
-  const PAD  = 34
-  const spacing = (W - PAD * 2) / Math.max(n - 1, 1)
-  const colW = Math.max(30, spacing - 8)
-
-  // Vertical budget per side of the spine:
-  //   tick (18) + label line (11) + up to 2 wrapped value lines (20) + padding
-  const titleH  = spec.title ? 30 : 8
-  const sideH   = 60
-  const SPINE_Y = titleH + sideH
-  const H       = titleH + sideH * 2
-
-  const parts: string[] = []
-  if (spec.title) parts.push(titleEl(W, spec.title, theme))
-
-  // Spine with end arrowhead
-  parts.push(`<line x1="${PAD}" y1="${SPINE_Y}" x2="${W - PAD}" y2="${SPINE_Y}" stroke="${theme.border}" stroke-width="2"/>`)
-  parts.push(`<polygon points="${(W - PAD - 2).toFixed(1)},${(SPINE_Y - 5).toFixed(1)} ${(W - PAD + 6).toFixed(1)},${SPINE_Y} ${(W - PAD - 2).toFixed(1)},${(SPINE_Y + 5).toFixed(1)}" fill="${theme.border}"/>`)
-
-  // Per-node fitting: every column shares colW, but each label/value pair
-  // is sized independently rather than to the diagram's worst-case label —
-  // a short label stays large instead of being dragged down to match a
-  // long neighbor. Replaces the old flat spacing/5.2 char budget.
-  const displays = items.map(it => displayLabel(it, { value: !!it.value }))
-
+  const layout = resolveLayout(spec)
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
-  items.forEach((item, i) => {
-    const x    = n === 1 ? W / 2 : PAD + i * spacing
-    const t    = n > 1 ? i / (n - 1) : 0
-    const fill = i === n - 1 ? theme.accent : lerpColor(theme.primary, theme.secondary, t)
-    const above = i % 2 === 0
-    const tickStart = above ? SPINE_Y - 6  : SPINE_Y + 6
-    const tickEnd   = above ? SPINE_Y - 18 : SPINE_Y + 18
-    const { url: itmUrl, display: itmDisplay } = displays[i]
-    const { fontSize: labelFS, lineHeight: labelLH, results: [{ lines: labelLines, truncated: labelTruncated }] } =
-      fitTextToWidthShared([itmDisplay], colW, { maxSize: 10, minSize: 6.5, maxLines: 2, boxH: 22 })
-    const valueFitFull = item.value
-      ? fitTextToWidthShared([item.value], colW, { maxSize: 9, minSize: 6, maxLines: 2 })
-      : null
-    const valueFS = valueFitFull?.fontSize ?? 9
-    const valueLines = valueFitFull?.results[0].lines ?? []
-    const valueTruncated = valueFitFull?.results[0].truncated ?? false
-    const labelTip = labelTruncated ? `<title>${escapeXml(itmDisplay)}</title>` : ''
-    const valueTip = valueTruncated ? `<title>${escapeXml(item.value!)}</title>` : ''
+  const nodes = placeNodes(spec, layout, theme)
+  const parts = [
+    renderSpine(layout, theme),
+    renderTitle(spec, layout, theme),
+    ...nodes.map(node => renderNode(node, layout, theme, animate, instrument)),
+  ].filter(Boolean)
 
-    let nodeStr = `<circle cx="${x.toFixed(1)}" cy="${SPINE_Y}" r="6" fill="${fill}">${itemTitleTag(item)}</circle>`
-    nodeStr += `<line x1="${x.toFixed(1)}" y1="${tickStart}" x2="${x.toFixed(1)}" y2="${tickEnd}" stroke="${fill}" stroke-width="1"/>`
-    if (above) {
-      const labelY = tickEnd - 4
-      const labelStartY = labelY - (labelLines.length - 1) * labelLH
-      const labelSpans = labelLines
-        .map((line, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : labelLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
-        .join('')
-      nodeStr += aWrap(`${labelTip}<text x="${x.toFixed(1)}" y="${labelStartY.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${fill}" ${FONT_SANS_ATTR} font-weight="700">${labelSpans}</text>`, itmUrl)
-      const L = valueLines.length
-      valueLines.forEach((line, j) => {
-        const vy = labelStartY - 11 - (L - 1 - j) * 10
-        nodeStr += `${j === 0 ? valueTip : ''}<text x="${x.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${escapeXml(line)}</text>`
-      })
-    } else {
-      const labelY = tickEnd + 12
-      const labelSpans = labelLines
-        .map((line, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : labelLH.toFixed(1)}">${escapeXml(line)}</tspan>`)
-        .join('')
-      nodeStr += aWrap(`${labelTip}<text x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="${labelFS}" fill="${fill}" ${FONT_SANS_ATTR} font-weight="700">${labelSpans}</text>`, itmUrl)
-      valueLines.forEach((line, j) => {
-        const vy = labelY + (labelLines.length - 1) * labelLH + 11 + j * 10
-        nodeStr += `${j === 0 ? valueTip : ''}<text x="${x.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle" font-size="${valueFS}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${escapeXml(line)}</text>`
-      })
-    }
-    parts.push(wrapItem(nodeStr, i, animate, instrument))
-  })
-
-  if (animate) parts.unshift(seqSpotlightCSS(n, spec))
-  return svgWrapProcess(W, H, theme, parts)
+  return renderSvg(layout, spec, theme, parts)
 }
