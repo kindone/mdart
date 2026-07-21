@@ -83,6 +83,12 @@ layout/measurement helpers, and smaller SVG emission helpers.
 | Statistical | `gauge` | Done | Gauge sizing, arc geometry, moving-tip animation, counter/label renderers split |
 | Statistical | `heatmap` | Done | Header/cell measurement, row/cell text blocks, header/row/cell renderers split |
 | Statistical | `sankey` | Done | Flow model building, node stacking, flow geometry, source/destination renderers split |
+| Planning | `gantt` | Done | Range parsing, row layout, grid rendering, milestone/task row renderers, SVG wrapper split |
+| Planning | `gantt-lite` | Done | Delegates to modular gantt renderer |
+| Planning | `timeline` | Done | Timeline metrics, event placement, marker/label renderers, SVG wrapper split |
+| Planning | `milestone` | Done | Row measurement, spine renderer, milestone row/status renderers, SVG wrapper split |
+| Planning | `wbs` | Done | Root/L1/L2 placement, connector/node renderers, SVG wrapper split |
+| Planning | `kanban` | Done | Board/column/card layout, column header/card renderers, SVG wrapper split |
 | Hierarchy | `h-org-chart` | Done | Horizontal tree traversal, node fit/layout, node renderer split |
 | Hierarchy | `decision-tree` | Done | Tree measurement, fit maps, connector/branch labels, leaf/decision renderers split |
 | Hierarchy | `tree` | Done | Dynamic box measurement, connector, node box/text, SVG wrapper split |

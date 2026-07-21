@@ -1,102 +1,159 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
+import { tt, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
-function svgWrap(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
-  const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
-    : ''
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${titleEl}
+const NODE_W = 118
+const NODE_H = 30
+const H_GAP = 40
+const V_GAP = 10
+const PAD_TOP = 8
+const TITLE_H = 8
+
+interface WbsLayout {
+  hasL2: boolean
+  cols: number
+  colX: number[]
+  totalLeaves: number
+  width: number
+  height: number
+  rootLabel: string
+  spineX: number
+}
+
+interface L1Node {
+  item: MdArtItem
+  index: number
+  animIndex: number
+  x: number
+  y: number
+  midY: number
+  leaves: number
+  spanTop: number
+  spanH: number
+}
+
+interface L2Node {
+  item: MdArtItem
+  animIndex: number
+  x: number
+  y: number
+  midY: number
+  parentMidY: number
+}
+
+function svg(layout: WbsLayout, theme: MdArtTheme, parts: string[]): string {
+  return `<svg viewBox="0 0 ${layout.width} ${layout.height}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${parts.join('\n  ')}
 </svg>`
 }
 
-export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items
-  if (items.length === 0) return renderEmpty(theme)
-
-  const hasL2 = items.some(it => it.children.length > 0)
-  const NW = 118, NH = 30, HGAP = 40, VGAP = 10, PAD_TOP = 8
+function resolveLayout(spec: MdArtSpec): WbsLayout {
+  const hasL2 = spec.items.some(item => item.children.length > 0)
   const cols = hasL2 ? 3 : 2
-  const colX = Array.from({ length: cols }, (_, c) => 16 + c * (NW + HGAP))
-
+  const colX = Array.from({ length: cols }, (_, col) => 16 + col * (NODE_W + H_GAP))
   const totalLeaves = hasL2
-    ? items.reduce((a, it) => a + Math.max(it.children.length, 1), 0)
-    : items.length
+    ? spec.items.reduce((sum, item) => sum + Math.max(item.children.length, 1), 0)
+    : spec.items.length
+  return {
+    hasL2,
+    cols,
+    colX,
+    totalLeaves,
+    width: colX[cols - 1] + NODE_W + 16,
+    height: TITLE_H + PAD_TOP + totalLeaves * (NODE_H + V_GAP) - V_GAP + PAD_TOP + 10,
+    rootLabel: spec.title ?? spec.items[0].label,
+    spineX: hasL2 ? colX[1] - H_GAP / 2 : 0,
+  }
+}
 
-  const TITLE_H = 8
-  const H = TITLE_H + PAD_TOP + totalLeaves * (NH + VGAP) - VGAP + PAD_TOP + 10
-  const W = colX[cols - 1] + NW + 16
-
-  const parts: string[] = []
-  const animate = shouldAnimate(spec)
-  const instrument = shouldInstrument()
-  const rootLabel = spec.title ?? items[0].label
-
+function placeNodes(spec: MdArtSpec, layout: WbsLayout): { l1: L1Node[], l2: L2Node[], nextAnimIndex: number } {
   let leafRow = 0
-  const l1Mids: number[] = []
-  let animIndex = hasL2 ? 1 : 0
-  const spineX = hasL2 ? colX[1] - HGAP / 2 : 0
+  let animIndex = layout.hasL2 ? 1 : 0
+  const l1Nodes: L1Node[] = []
+  const l2Nodes: L2Node[] = []
 
-  items.forEach((l1) => {
+  spec.items.forEach((item, index) => {
     const groupIndex = animIndex++
-    const unit: string[] = []
-    const leaves = hasL2 ? Math.max(l1.children.length, 1) : 1
-    const l1SpanTop = TITLE_H + PAD_TOP + leafRow * (NH + VGAP)
-    const l1SpanH = leaves * (NH + VGAP) - VGAP
-    const l1Mid = l1SpanTop + l1SpanH / 2
-    l1Mids.push(l1Mid)
+    const leaves = layout.hasL2 ? Math.max(item.children.length, 1) : 1
+    const spanTop = TITLE_H + PAD_TOP + leafRow * (NODE_H + V_GAP)
+    const spanH = leaves * (NODE_H + V_GAP) - V_GAP
+    const midY = spanTop + spanH / 2
+    const x = layout.colX[layout.hasL2 ? 1 : 0]
+    const y = midY - NODE_H / 2
+    l1Nodes.push({ item, index, animIndex: groupIndex, x, y, midY, leaves, spanTop, spanH })
 
-    const l1x = colX[hasL2 ? 1 : 0]
-    const l1y = l1Mid - NH / 2
-    const { display: l1Display, url: l1Url } = displayLabel(l1)
-    if (hasL2) {
-      unit.push(`<line x1="${spineX}" y1="${l1Mid.toFixed(1)}" x2="${colX[1]}" y2="${l1Mid.toFixed(1)}" stroke="${theme.border}" stroke-width="1.2"/>`)
-    }
-    unit.push(`<rect x="${l1x}" y="${l1y.toFixed(1)}" width="${NW}" height="${NH}" rx="5" fill="${theme.primary}2e" stroke="${theme.primary}88" stroke-width="1.5">${itemTitleTag(l1)}</rect>`)
-    unit.push(aWrap(`<text x="${(l1x+NW/2).toFixed(1)}" y="${(l1y+20).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${tt(l1Display, 15, l1)}</text>`, l1Url))
-
-    if (hasL2) {
-      const midX = colX[1] + NW
-      const childX = colX[2]
-      const elbowX = midX + HGAP / 2
-
-      l1.children.forEach((l2, j) => {
-        const childUnit: string[] = []
-        const l2y = TITLE_H + PAD_TOP + (leafRow + j) * (NH + VGAP)
-        const l2Mid = l2y + NH / 2
-        const done = l2.attrs.includes('done')
-        const active = l2.attrs.includes('active') || l2.attrs.includes('wip')
-
-        childUnit.push(`<path d="M${midX},${l1Mid.toFixed(1)} H${elbowX} V${l2Mid.toFixed(1)} H${childX}" fill="none" stroke="${theme.border}" stroke-width="1.2"/>`)
-
-        const { display: l2Display, url: l2Url } = displayLabel(l2, { attrs: true })
-        const l2Fill = done ? `${theme.accent}22` : theme.surface
-        const l2Stroke = done ? theme.accent : active ? `${theme.accent}88` : theme.border
-        childUnit.push(`<rect x="${childX}" y="${l2y.toFixed(1)}" width="${NW}" height="${NH}" rx="4" fill="${l2Fill}" stroke="${l2Stroke}" stroke-width="${active ? 1.5 : 1}">${itemTitleTag(l2)}</rect>`)
-        const l2Col = done ? theme.accent : active ? theme.text : theme.textMuted
-        childUnit.push(aWrap(`<text x="${(childX+NW/2).toFixed(1)}" y="${(l2y+20).toFixed(1)}" text-anchor="middle" font-size="10" fill="${l2Col}" ${FONT_SANS_ATTR} ${done ? 'text-decoration="line-through"' : ''}>${tt(l2Display, 15, l2)}</text>`, l2Url))
-        parts.push(wrapItem(childUnit.join(''), animIndex++, animate, instrument))
+    if (layout.hasL2) {
+      item.children.forEach((child, childIndex) => {
+        const childY = TITLE_H + PAD_TOP + (leafRow + childIndex) * (NODE_H + V_GAP)
+        l2Nodes.push({
+          item: child,
+          animIndex: animIndex++,
+          x: layout.colX[2],
+          y: childY,
+          midY: childY + NODE_H / 2,
+          parentMidY: midY,
+        })
       })
     }
-
-    parts.push(wrapItem(unit.join(''), groupIndex, animate, instrument))
     leafRow += leaves
   })
 
-  if (hasL2 && l1Mids.length > 0) {
-    const rootUnit: string[] = []
-    rootUnit.push(`<line x1="${spineX}" y1="${l1Mids[0].toFixed(1)}" x2="${spineX}" y2="${l1Mids[l1Mids.length-1].toFixed(1)}" stroke="${theme.border}" stroke-width="1.5"/>`)
+  return { l1: l1Nodes, l2: l2Nodes, nextAnimIndex: animIndex }
+}
 
-    const rootMid = (l1Mids[0] + l1Mids[l1Mids.length - 1]) / 2
-    const rootX = colX[0]
-    rootUnit.push(`<rect x="${rootX}" y="${(rootMid-NH/2).toFixed(1)}" width="${NW}" height="${NH}" rx="6" fill="${theme.accent}33" stroke="${theme.accent}99" stroke-width="2"/>`)
-    rootUnit.push(`<text x="${(rootX+NW/2).toFixed(1)}" y="${(rootMid+5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.accent}" ${FONT_SANS_ATTR} font-weight="700">${tt(rootLabel, 15)}</text>`)
-    rootUnit.push(`<line x1="${rootX+NW}" y1="${rootMid.toFixed(1)}" x2="${spineX}" y2="${rootMid.toFixed(1)}" stroke="${theme.border}" stroke-width="1.5"/>`)
-    parts.unshift(wrapItem(rootUnit.join(''), 0, animate, instrument))
-  }
+function renderRoot(layout: WbsLayout, l1Nodes: L1Node[], theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  if (!layout.hasL2 || l1Nodes.length === 0) return ''
+  const firstMid = l1Nodes[0].midY
+  const lastMid = l1Nodes[l1Nodes.length - 1].midY
+  const rootMid = (firstMid + lastMid) / 2
+  const rootX = layout.colX[0]
+  const unit = [
+    `<line x1="${layout.spineX}" y1="${firstMid.toFixed(1)}" x2="${layout.spineX}" y2="${lastMid.toFixed(1)}" stroke="${theme.border}" stroke-width="1.5"/>`,
+    `<rect x="${rootX}" y="${(rootMid - NODE_H / 2).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${theme.accent}33" stroke="${theme.accent}99" stroke-width="2"/>`,
+    `<text x="${(rootX + NODE_W / 2).toFixed(1)}" y="${(rootMid + 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="${theme.accent}" ${FONT_SANS_ATTR} font-weight="700">${tt(layout.rootLabel, 15)}</text>`,
+    `<line x1="${rootX + NODE_W}" y1="${rootMid.toFixed(1)}" x2="${layout.spineX}" y2="${rootMid.toFixed(1)}" stroke="${theme.border}" stroke-width="1.5"/>`,
+  ]
+  return wrapItem(unit.join(''), 0, animate, instrument)
+}
 
-  if (animate) parts.unshift(seqSpotlightCSS(hasL2 ? animIndex : items.length, spec, { scale: false }))
-  return svgWrap(W, H, theme, undefined, parts)
+function renderL1(node: L1Node, layout: WbsLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const { display, url } = displayLabel(node.item)
+  const unit = [
+    layout.hasL2 ? `<line x1="${layout.spineX}" y1="${node.midY.toFixed(1)}" x2="${layout.colX[1]}" y2="${node.midY.toFixed(1)}" stroke="${theme.border}" stroke-width="1.2"/>` : '',
+    `<rect x="${node.x}" y="${node.y.toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="5" fill="${theme.primary}2e" stroke="${theme.primary}88" stroke-width="1.5">${itemTitleTag(node.item)}</rect>`,
+    aWrap(`<text x="${(node.x + NODE_W / 2).toFixed(1)}" y="${(node.y + 20).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${tt(display, 15, node.item)}</text>`, url),
+  ]
+  return wrapItem(unit.join(''), node.animIndex, animate, instrument)
+}
+
+function renderL2(node: L2Node, layout: WbsLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const done = node.item.attrs.includes('done')
+  const active = node.item.attrs.includes('active') || node.item.attrs.includes('wip')
+  const midX = layout.colX[1] + NODE_W
+  const elbowX = midX + H_GAP / 2
+  const { display, url } = displayLabel(node.item, { attrs: true })
+  const fill = done ? `${theme.accent}22` : theme.surface
+  const stroke = done ? theme.accent : active ? `${theme.accent}88` : theme.border
+  const textColor = done ? theme.accent : active ? theme.text : theme.textMuted
+  const unit = [
+    `<path d="M${midX},${node.parentMidY.toFixed(1)} H${elbowX} V${node.midY.toFixed(1)} H${node.x}" fill="none" stroke="${theme.border}" stroke-width="1.2"/>`,
+    `<rect x="${node.x}" y="${node.y.toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="${active ? 1.5 : 1}">${itemTitleTag(node.item)}</rect>`,
+    aWrap(`<text x="${(node.x + NODE_W / 2).toFixed(1)}" y="${(node.y + 20).toFixed(1)}" text-anchor="middle" font-size="10" fill="${textColor}" ${FONT_SANS_ATTR} ${done ? 'text-decoration="line-through"' : ''}>${tt(display, 15, node.item)}</text>`, url),
+  ]
+  return wrapItem(unit.join(''), node.animIndex, animate, instrument)
+}
+
+export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (spec.items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
+  const layout = resolveLayout(spec)
+  const nodes = placeNodes(spec, layout)
+  const parts = [
+    ...(animate ? [seqSpotlightCSS(layout.hasL2 ? nodes.nextAnimIndex : spec.items.length, spec, { scale: false })] : []),
+    renderRoot(layout, nodes.l1, theme, animate, instrument),
+    ...nodes.l1.map(node => renderL1(node, layout, theme, animate, instrument)),
+    ...nodes.l2.map(node => renderL2(node, layout, theme, animate, instrument)),
+  ].filter(Boolean)
+  return svg(layout, theme, parts)
 }
