@@ -89,6 +89,7 @@ layout/measurement helpers, and smaller SVG emission helpers.
 | Planning | `milestone` | Done | Row measurement, spine renderer, milestone row/status renderers, SVG wrapper split |
 | Planning | `wbs` | Done | Root/L1/L2 placement, connector/node renderers, SVG wrapper split |
 | Planning | `kanban` | Done | Board/column/card layout, column header/card renderers, SVG wrapper split |
+| Planning | `sprint-board` | Done | Sprint card metrics, column/summary layout, header/card/summary renderers split |
 | Hierarchy | `h-org-chart` | Done | Horizontal tree traversal, node fit/layout, node renderer split |
 | Hierarchy | `decision-tree` | Done | Tree measurement, fit maps, connector/branch labels, leaf/decision renderers split |
 | Hierarchy | `tree` | Done | Dynamic box measurement, connector, node box/text, SVG wrapper split |
@@ -105,3 +106,7 @@ layout/measurement helpers, and smaller SVG emission helpers.
 | Technical | `sequence` | Done | Actor/message extraction, actor measurement, lifeline/message renderers, SVG wrapper split |
 | Technical | `state-machine` | Done | Circular state layout, transition geometry, self-loop/entry/state renderers, SVG wrapper split |
 | Technical | `class` | Done | Class/member splitting, grid metrics, shell/header/member/badge renderers, SVG wrapper split |
+| Plot | `line-chart` | Done | Delegates to modular plot shared renderer with line mode |
+| Plot | `area-chart` | Done | Delegates to modular plot shared renderer with area mode |
+| Plot | `scatter` | Done | Delegates to modular plot shared renderer with scatter mode |
+| Plot | `bar-chart` | Done | Delegates to modular plot shared renderer with bar mode |

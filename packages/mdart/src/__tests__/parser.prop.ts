@@ -42,6 +42,7 @@ function safe(s: string): string {
     .replace(/∩/g, 'x')    // no intersection marker (Unicode)
     .replace(/&&/g, 'xx')  // no intersection marker (typeable alias: `&&` ≡ `∩`)
     .replace(/\\/g, '')    // no escapes
+    .replace(/&&/g, 'xx')  // escaped ampersands can become the typeable alias
     .replace(/\n/g, ' ')
     .replace(/^\s*$/, 'x') // not blank
 }
