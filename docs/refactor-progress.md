@@ -74,6 +74,15 @@ layout/measurement helpers, and smaller SVG emission helpers.
 | Relationship | `venn` | Done | Circle/intersection layout helpers, circle/label/intersection renderers, SVG wrapper split |
 | Relationship | `venn-3` | Done | Delegates to modular venn renderer |
 | Relationship | `venn-4` | Done | Delegates to modular venn renderer |
+| Statistical | `progress-list` | Done | Label/row measurement, percent parsing, progress bar/label renderers, SVG wrapper split |
+| Statistical | `bullet-chart` | Done | Metric/target parsing, row measurement, range/actual/target/label renderers split |
+| Statistical | `scorecard` | Done | Card metrics, row height alignment, grid placement, card renderer split |
+| Statistical | `waffle` | Done | Percentage normalization, square ownership, legend measurement, category renderer split |
+| Statistical | `treemap` | Done | Equal-grid layout, cell placement, fitted cell text, cell renderer split |
+| Statistical | `radar` | Done | Value parsing, polar grid/value polygon helpers, axis/node label renderers, SVG wrapper split |
+| Statistical | `gauge` | Done | Gauge sizing, arc geometry, moving-tip animation, counter/label renderers split |
+| Statistical | `heatmap` | Done | Header/cell measurement, row/cell text blocks, header/row/cell renderers split |
+| Statistical | `sankey` | Done | Flow model building, node stacking, flow geometry, source/destination renderers split |
 | Hierarchy | `h-org-chart` | Done | Horizontal tree traversal, node fit/layout, node renderer split |
 | Hierarchy | `decision-tree` | Done | Tree measurement, fit maps, connector/branch labels, leaf/decision renderers split |
 | Hierarchy | `tree` | Done | Dynamic box measurement, connector, node box/text, SVG wrapper split |

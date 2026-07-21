@@ -1,126 +1,173 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, centeredTextY, renderWrappedText, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
-function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
+const LABEL_W = 116
+const PAD_V = 7
+const MIN_CELL_H = 40
+const MIN_HEADER_H = 30
+const TITLE_H_WITH_TITLE = 30
+const TITLE_H_NO_TITLE = 8
+
+type TextFit = ReturnType<typeof fitTextToWidthShared>
+
+interface HeatmapLayout {
+  rows: MdArtItem[]
+  numCols: number
+  cellW: number
+  labelW: number
+  titleH: number
+  headerH: number
+  rowHeights: number[]
+  rowY: number[]
+  width: number
+  height: number
+  maxVal: number
+  colHeaders: string[]
+  colHeaderFits: TextFit[]
+  rowDisplays: Array<ReturnType<typeof displayLabel>>
+  rowLabelFits: TextFit[]
+  cellFits: Array<Array<TextFit | null>>
+}
+
+function svg(layout: HeatmapLayout, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${layout.width / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
+  return `<svg viewBox="0 0 ${layout.width} ${layout.height}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
   ${parts.join('\n  ')}
 </svg>`
 }
 
-export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+function cellValue(cell: MdArtItem): number {
+  const raw = (cell.value ?? cell.attrs[0] ?? cell.label.match(/[\d.]+/)?.[0] ?? '0').replace('%', '')
+  return parseFloat(raw) || 0
+}
+
+function cellText(cell: MdArtItem): string {
+  return cell.value ?? cell.label
+}
+
+function blockHeight(fit: TextFit): number {
+  return fit.results[0].lines.length * fit.lineHeight
+}
+
+function resolveLayout(spec: MdArtSpec): HeatmapLayout {
   const rows = spec.items
-  if (rows.length === 0) return renderEmpty(theme)
-  const animate = shouldAnimate(spec)
-  const instrument = shouldInstrument()
-
-  const numCols = Math.max(...rows.map(r => r.children.length), 1)
-  const CELL_W = Math.min(96, Math.max(54, 560 / numCols))
-  const LABEL_W = 116
-  const PAD_V = 7
-  const MIN_CELL_H = 40
-  const MIN_HEADER_H = 30
-  const TITLE_H = spec.title ? 30 : 8
-  const W = LABEL_W + numCols * CELL_W
-
-  const allVals: number[] = []
-  rows.forEach(r => r.children.forEach(c => {
-    const raw = (c.value ?? c.attrs[0] ?? c.label.match(/[\d.]+/)?.[0] ?? '0').replace('%', '')
-    allVals.push(parseFloat(raw) || 0)
-  }))
-  const maxVal = Math.max(...allVals, 1)
-
-  const parts: string[] = []
-
-  // Column headers: explicit spec.columns wins; otherwise derive from the
-  // first row's child labels (intuitive when users write `Morning: 5` etc.).
+  const numCols = Math.max(...rows.map(row => row.children.length), 1)
+  const cellW = Math.min(96, Math.max(54, 560 / numCols))
+  const titleH = spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
+  const width = LABEL_W + numCols * cellW
+  const values = rows.flatMap(row => row.children.map(cellValue))
+  const maxVal = Math.max(...values, 1)
   const derivedCols = rows[0]?.children.map(ch => ch.label) ?? []
-  const colHeaders = Array.from({ length: numCols }, (_, c) =>
-    spec.columns?.[c] ?? derivedCols[c] ?? String.fromCharCode(65 + c)
+  const colHeaders = Array.from({ length: numCols }, (_, col) =>
+    spec.columns?.[col] ?? derivedCols[col] ?? String.fromCharCode(65 + col)
   )
-  const colHeaderFits = colHeaders.map(h =>
-    fitTextToWidthShared([h], CELL_W - 8, { maxSize: 10, minSize: 6.5, maxLines: 3, boxH: 48 }),
+  const colHeaderFits = colHeaders.map(header =>
+    fitTextToWidthShared([header], cellW - 8, { maxSize: 10, minSize: 6.5, maxLines: 3, boxH: 48 }),
   )
   const rowDisplays = rows.map(row => displayLabel(row))
   const rowLabelFits = rowDisplays.map(({ display }) =>
     fitTextToWidthShared([display], LABEL_W - 14, { maxSize: 10, minSize: 6.5, maxLines: 3, boxH: 54 }),
   )
   const cellFits = rows.map(row =>
-    Array.from({ length: numCols }, (_, c) => {
-      const cell = row.children[c]
-      if (!cell) return null
-      const cellText = cell.value ?? cell.label
-      return fitTextToWidthShared([cellText], CELL_W - 8, { maxSize: 10, minSize: 6, maxLines: 3, boxH: 54 })
+    Array.from({ length: numCols }, (_, col) => {
+      const cell = row.children[col]
+      return cell ? fitTextToWidthShared([cellText(cell)], cellW - 8, { maxSize: 10, minSize: 6, maxLines: 3, boxH: 54 }) : null
     }),
   )
-  const blockH = (fit: ReturnType<typeof fitTextToWidthShared>) =>
-    fit.results[0].lines.length * fit.lineHeight
-  const HEADER_H = Math.max(MIN_HEADER_H, PAD_V * 2, ...colHeaderFits.map(f => PAD_V * 2 + blockH(f)))
-  const rowHeights = rows.map((_, r) => {
-    const rowLabelH = blockH(rowLabelFits[r])
-    const cellHs = cellFits[r].map(f => f ? blockH(f) : 0)
+  const headerH = Math.max(MIN_HEADER_H, PAD_V * 2, ...colHeaderFits.map(fit => PAD_V * 2 + blockHeight(fit)))
+  const rowHeights = rows.map((_, row) => {
+    const rowLabelH = blockHeight(rowLabelFits[row])
+    const cellHs = cellFits[row].map(fit => fit ? blockHeight(fit) : 0)
     return Math.max(MIN_CELL_H, PAD_V * 2 + rowLabelH, PAD_V * 2 + Math.max(...cellHs, 0))
   })
   const rowY: number[] = []
-  let cursorY = TITLE_H + HEADER_H
-  for (const h of rowHeights) { rowY.push(cursorY); cursorY += h }
-  const H = cursorY + 8
-
-  const textBlock = (
-    x: number,
-    baseY: number,
-    boxH: number,
-    fit: ReturnType<typeof fitTextToWidthShared>,
-    attrs: string,
-    fullText: string,
-  ): string => {
-    const wrap = fit.results[0]
-    return renderWrappedText(x, centeredTextY(baseY, boxH, wrap.lines.length, fit.lineHeight), attrs, fullText, wrap, fit.lineHeight)
+  let cursorY = titleH + headerH
+  for (const height of rowHeights) {
+    rowY.push(cursorY)
+    cursorY += height
   }
-
-  const headerUnit: string[] = []
-  headerUnit.push(`<rect x="0" y="${TITLE_H}" width="${LABEL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
-  for (let c = 0; c < numCols; c++) {
-    const colX = LABEL_W + c * CELL_W
-    headerUnit.push(`<rect x="${colX}" y="${TITLE_H}" width="${CELL_W}" height="${HEADER_H}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
-    headerUnit.push(textBlock(colX + CELL_W / 2, TITLE_H, HEADER_H, colHeaderFits[c],
-      `text-anchor="middle" font-size="${colHeaderFits[c].fontSize}" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600"`,
-      colHeaders[c]))
+  return {
+    rows,
+    numCols,
+    cellW,
+    labelW: LABEL_W,
+    titleH,
+    headerH,
+    rowHeights,
+    rowY,
+    width,
+    height: cursorY + 8,
+    maxVal,
+    colHeaders,
+    colHeaderFits,
+    rowDisplays,
+    rowLabelFits,
+    cellFits,
   }
-  parts.push(wrapItem(headerUnit.join(''), 0, animate, instrument))
+}
 
-  rows.forEach((row, r) => {
-    const unit: string[] = []
-    const y = rowY[r]
-    const rowH = rowHeights[r]
-    const { display: rowDisplay, url: rowUrl } = rowDisplays[r]
-    unit.push(`<rect x="0" y="${y}" width="${LABEL_W}" height="${rowH}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`)
-    unit.push(aWrap(textBlock(8, y, rowH, rowLabelFits[r],
-      `font-size="${rowLabelFits[r].fontSize}" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600"`,
-      rowDisplay), rowUrl))
-    row.children.slice(0, numCols).forEach((cell, c) => {
-      const colX = LABEL_W + c * CELL_W
-      const raw = (cell.value ?? cell.attrs[0] ?? cell.label.match(/[\d.]+/)?.[0] ?? '0').replace('%', '')
-      const v = Math.min((parseFloat(raw) || 0) / maxVal, 1)
-      const alpha = Math.round(18 + v * 210).toString(16).padStart(2, '0')
-      unit.push(`<rect x="${colX}" y="${y}" width="${CELL_W}" height="${rowH}" fill="${theme.primary}${alpha}" stroke="${theme.border}55" stroke-width="0.5">${itemTitleTag(cell)}</rect>`)
-      const textFill = v > 0.55 ? theme.bg : theme.text
-      // Prefer the cell's value (e.g. "5"); fall back to label when absent.
-      const cellText = cell.value ?? cell.label
-      const fit = cellFits[r][c]
-      if (fit) {
-        unit.push(textBlock(colX + CELL_W / 2, y, rowH, fit,
-          `text-anchor="middle" font-size="${fit.fontSize}" fill="${textFill}" ${FONT_SANS_ATTR}`,
-          cellText))
-      }
-    })
-    parts.push(wrapItem(unit.join(''), r + 1, animate, instrument))
-  })
-  if (animate) parts.unshift(seqSpotlightCSS(rows.length + 1, spec, { scale: false, loopStartIndex: 1 }))
+function textBlock(x: number, baseY: number, boxH: number, fit: TextFit, attrs: string, fullText: string): string {
+  const wrap = fit.results[0]
+  return renderWrappedText(x, centeredTextY(baseY, boxH, wrap.lines.length, fit.lineHeight), attrs, fullText, wrap, fit.lineHeight)
+}
 
-  return svg(W, H, theme, spec.title, parts)
+function renderHeader(layout: HeatmapLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const unit: string[] = [
+    `<rect x="0" y="${layout.titleH}" width="${layout.labelW}" height="${layout.headerH}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`,
+  ]
+  for (let col = 0; col < layout.numCols; col++) {
+    const x = layout.labelW + col * layout.cellW
+    const fit = layout.colHeaderFits[col]
+    unit.push(`<rect x="${x}" y="${layout.titleH}" width="${layout.cellW}" height="${layout.headerH}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5"/>`)
+    unit.push(textBlock(x + layout.cellW / 2, layout.titleH, layout.headerH, fit,
+      `text-anchor="middle" font-size="${fit.fontSize}" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600"`,
+      layout.colHeaders[col]))
+  }
+  return wrapItem(unit.join(''), 0, animate, instrument)
+}
+
+function renderCell(cell: MdArtItem, rowIndex: number, col: number, layout: HeatmapLayout, theme: MdArtTheme): string {
+  const x = layout.labelW + col * layout.cellW
+  const y = layout.rowY[rowIndex]
+  const rowH = layout.rowHeights[rowIndex]
+  const value = Math.min(cellValue(cell) / layout.maxVal, 1)
+  const alpha = Math.round(18 + value * 210).toString(16).padStart(2, '0')
+  const fit = layout.cellFits[rowIndex][col]
+  const textFill = value > 0.55 ? theme.bg : theme.text
+  return `<rect x="${x}" y="${y}" width="${layout.cellW}" height="${rowH}" fill="${theme.primary}${alpha}" stroke="${theme.border}55" stroke-width="0.5">${itemTitleTag(cell)}</rect>`
+    + (fit ? textBlock(x + layout.cellW / 2, y, rowH, fit,
+      `text-anchor="middle" font-size="${fit.fontSize}" fill="${textFill}" ${FONT_SANS_ATTR}`,
+      cellText(cell)) : '')
+}
+
+function renderRow(row: MdArtItem, rowIndex: number, layout: HeatmapLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const y = layout.rowY[rowIndex]
+  const rowH = layout.rowHeights[rowIndex]
+  const { display, url } = layout.rowDisplays[rowIndex]
+  const rowFit = layout.rowLabelFits[rowIndex]
+  const unit = [
+    `<rect x="0" y="${y}" width="${layout.labelW}" height="${rowH}" fill="${theme.surface}" stroke="${theme.border}" stroke-width="0.5">${itemTitleTag(row)}</rect>`,
+    aWrap(textBlock(8, y, rowH, rowFit,
+      `font-size="${rowFit.fontSize}" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600"`,
+      display), url),
+    ...row.children.slice(0, layout.numCols).map((cell, col) => renderCell(cell, rowIndex, col, layout, theme)),
+  ]
+  return wrapItem(unit.join(''), rowIndex + 1, animate, instrument)
+}
+
+export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (spec.items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
+  const layout = resolveLayout(spec)
+  const parts = [
+    ...(animate ? [seqSpotlightCSS(layout.rows.length + 1, spec, { scale: false, loopStartIndex: 1 })] : []),
+    renderHeader(layout, theme, animate, instrument),
+    ...layout.rows.map((row, index) => renderRow(row, index, layout, theme, animate, instrument)),
+  ]
+  return svg(layout, theme, spec.title, parts)
 }

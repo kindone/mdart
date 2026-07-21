@@ -1,135 +1,187 @@
-import type { MdArtSpec } from '../../parser'
+import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, renderEmpty, aWrap, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
-function svg(W: number, H: number, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
+const W = 520
+const TITLE_H_WITH_TITLE = 30
+const TITLE_H_NO_TITLE = 10
+const BOX_W = 112
+const GAP = 8
+const CONTENT_H = 280
+const NODE_TEXT_W = BOX_W - 16
+
+interface FlowDef {
+  sourceIndex: number
+  dest: string
+  weight: number
+}
+
+interface NodeBox {
+  y: number
+  h: number
+}
+
+interface SankeyModel {
+  sourceWeights: number[]
+  totalSource: number
+  destWeights: Map<string, number>
+  destDisplays: Map<string, string>
+  destUrls: Map<string, string | null>
+  destNames: string[]
+  totalDest: number
+  flows: FlowDef[]
+}
+
+interface SankeyLayout {
+  titleH: number
+  height: number
+  sourceNodes: NodeBox[]
+  destNodes: Map<string, NodeBox>
+  x0: number
+  x1: number
+  midX: number
+  colors: string[]
+}
+
+function svg(layout: SankeyLayout, theme: MdArtTheme, title: string | undefined, parts: string[]): string {
   const titleEl = title
     ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
+  return `<svg viewBox="0 0 ${W} ${layout.height}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${titleEl}
   ${parts.join('\n  ')}
 </svg>`
 }
 
-export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const items = spec.items
-  if (items.length === 0) return renderEmpty(theme)
-  const animate = shouldAnimate(spec)
-  const instrument = shouldInstrument()
+function palette(theme: MdArtTheme): string[] {
+  return [theme.primary, theme.secondary, theme.accent, theme.muted, ...theme.palette]
+}
 
-  const colors = [theme.primary, theme.secondary, theme.accent, theme.muted, ...theme.palette]
+function parseWeight(item: MdArtItem, fallback = 1): number {
+  return Math.max(1, parseFloat((item.value ?? item.attrs[0] ?? String(fallback)).replace('%', '')) || fallback)
+}
 
-  const srcW = items.map(it => Math.max(1, parseFloat((it.value ?? it.attrs[0] ?? '1').replace('%', '')) || 1))
-  const totalSrc = srcW.reduce((a, b) => a + b, 0)
-
-  const dstMap = new Map<string, number>()
-  const dstDisplayMap = new Map<string, string>()
-  const dstUrlMap = new Map<string, string | null>()
-  type FlowDef = { si: number; dst: string; w: number }
+function buildModel(items: MdArtItem[]): SankeyModel {
+  const sourceWeights = items.map(item => parseWeight(item))
+  const totalSource = sourceWeights.reduce((a, b) => a + b, 0)
+  const destWeights = new Map<string, number>()
+  const destDisplays = new Map<string, string>()
+  const destUrls = new Map<string, string | null>()
   const flows: FlowDef[] = []
-  items.forEach((it, si) => {
-    const perChild = srcW[si] / Math.max(it.children.length, 1)
-    it.children.forEach(ch => {
-      const fw = Math.max(1, parseFloat((ch.value ?? ch.attrs[0] ?? '0').replace('%', '')) || perChild)
-      flows.push({ si, dst: ch.label, w: fw })
-      dstMap.set(ch.label, (dstMap.get(ch.label) ?? 0) + fw)
-      if (!dstDisplayMap.has(ch.label)) {
-        const { display, url } = displayLabel(ch, { value: !!ch.value })
-        dstDisplayMap.set(ch.label, display)
-        dstUrlMap.set(ch.label, url)
+
+  items.forEach((item, sourceIndex) => {
+    const perChild = sourceWeights[sourceIndex] / Math.max(item.children.length, 1)
+    item.children.forEach(child => {
+      const weight = parseWeight(child, perChild)
+      flows.push({ sourceIndex, dest: child.label, weight })
+      destWeights.set(child.label, (destWeights.get(child.label) ?? 0) + weight)
+      if (!destDisplays.has(child.label)) {
+        const { display, url } = displayLabel(child, { value: !!child.value })
+        destDisplays.set(child.label, display)
+        destUrls.set(child.label, url)
       }
     })
   })
 
-  const dstNames = [...dstMap.keys()]
-  const totalDst = [...dstMap.values()].reduce((a, b) => a + b, 0) || totalSrc
+  const destNames = [...destWeights.keys()]
+  const totalDest = [...destWeights.values()].reduce((a, b) => a + b, 0) || totalSource
+  return { sourceWeights, totalSource, destWeights, destDisplays, destUrls, destNames, totalDest, flows }
+}
 
-  const W = 520, TITLE_H = spec.title ? 30 : 10
-  const BOX_W = 112, GAP = 8, CONTENT_H = 280
-  const H = TITLE_H + CONTENT_H + GAP * 2
-  const NODE_TEXT_W = BOX_W - 16  // usable text width inside a node box
-
-  const srcScale = (CONTENT_H - (items.length - 1) * GAP) / totalSrc
-  type Node = { y: number; h: number }
-  const srcNodes: Node[] = []
-  let sy = TITLE_H + GAP
-  items.forEach((_, i) => {
-    const h = Math.max(18, srcW[i] * srcScale)
-    srcNodes.push({ y: sy, h })
-    sy += h + GAP
+function stackNodes(weights: number[], total: number, titleH: number): NodeBox[] {
+  const scale = (CONTENT_H - (weights.length - 1) * GAP) / total
+  let y = titleH + GAP
+  return weights.map(weight => {
+    const h = Math.max(18, weight * scale)
+    const node = { y, h }
+    y += h + GAP
+    return node
   })
+}
 
-  const dstScale = (CONTENT_H - (dstNames.length - 1) * GAP) / totalDst
-  const dstNodes = new Map<string, Node>()
-  let dy = TITLE_H + GAP
-  dstNames.forEach(name => {
-    const h = Math.max(18, (dstMap.get(name) ?? 1) * dstScale)
-    dstNodes.set(name, { y: dy, h })
-    dy += h + GAP
-  })
-
-  const flowParts = new Map<string, string[]>()
-  const sourceParts: string[] = []
-  const destParts: string[] = []
-  const srcYCur = srcNodes.map(n => n.y)
-  const dstYCur = new Map<string, number>(dstNames.map(n => [n, dstNodes.get(n)!.y]))
-
-  const x0 = BOX_W, x1 = W - BOX_W, mx = (x0 + x1) / 2
-
-  flows.forEach(f => {
-    const src = srcNodes[f.si]
-    const dst = dstNodes.get(f.dst)
-    if (!src || !dst) return
-    const fwSrc = (f.w / srcW[f.si]) * src.h
-    const fwDst = (f.w / (dstMap.get(f.dst) ?? 1)) * dst.h
-    const sy0 = srcYCur[f.si], sy1 = sy0 + fwSrc
-    srcYCur[f.si] += fwSrc
-    const dy0 = dstYCur.get(f.dst)!, dy1 = dy0 + fwDst
-    dstYCur.set(f.dst, dy1)
-    const col = colors[f.si % colors.length]
-    const path = `<path d="M${x0},${sy0.toFixed(1)} C${mx},${sy0.toFixed(1)} ${mx},${dy0.toFixed(1)} ${x1},${dy0.toFixed(1)} L${x1},${dy1.toFixed(1)} C${mx},${dy1.toFixed(1)} ${mx},${sy1.toFixed(1)} ${x0},${sy1.toFixed(1)} Z" fill="${col}3a" stroke="${col}77" stroke-width="0.5"/>`
-    const list = flowParts.get(f.dst) ?? []
-    list.push(path)
-    flowParts.set(f.dst, list)
-  })
-
-  // Helper: render node label fitted to the node's height.
-  // boxH drives fitTextToWidthShared so the line count adapts to tall vs short nodes.
-  const renderNodeLabel = (
-    nodeX: number, n: Node, text: string, url: string | null, anchor: 'middle',
-  ): string => {
-    if (n.h < 10) return ''
-    const { fontSize: fs, lineHeight: lh, results: [{ lines, truncated }] } =
-      fitTextToWidthShared([text], NODE_TEXT_W, { maxSize: 10, minSize: 6, maxLines: 4, boxH: n.h - 4 })
-    const tip = truncated ? `<title>${escapeXml(text)}</title>` : ''
-    const startY = n.y + n.h / 2 - ((lines.length - 1) * lh) / 2 + fs * 0.35
-    const spans = lines
-      .map((line, li) => `<tspan x="${nodeX.toFixed(1)}" dy="${li === 0 ? 0 : lh.toFixed(1)}">${escapeXml(line)}</tspan>`)
-      .join('')
-    return aWrap(`${tip}<text x="${nodeX.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="${anchor}" font-size="${fs}" fill="${theme.text}" ${FONT_SANS_ATTR}>${spans}</text>`, url)
+function resolveLayout(spec: MdArtSpec, model: SankeyModel, theme: MdArtTheme): SankeyLayout {
+  const titleH = spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
+  const destWeights = model.destNames.map(name => model.destWeights.get(name) ?? 1)
+  return {
+    titleH,
+    height: titleH + CONTENT_H + GAP * 2,
+    sourceNodes: stackNodes(model.sourceWeights, model.totalSource, titleH),
+    destNodes: new Map(model.destNames.map((name, index) => [name, stackNodes(destWeights, model.totalDest, titleH)[index]])),
+    x0: BOX_W,
+    x1: W - BOX_W,
+    midX: W / 2,
+    colors: palette(theme),
   }
+}
 
-  srcNodes.forEach((n, i) => {
-    const unit: string[] = []
-    const col = colors[i % colors.length]
-    const item = items[i]
-    const { display: srcDisplay, url: srcUrl } = displayLabel(item, { value: !!item.value, attrs: !!item.attrs?.length })
-    unit.push(`<rect x="0" y="${n.y.toFixed(1)}" width="${BOX_W - 8}" height="${n.h.toFixed(1)}" rx="4" fill="${col}44" stroke="${col}99" stroke-width="1">${itemTitleTag(item)}</rect>`)
-    unit.push(renderNodeLabel((BOX_W - 8) / 2, n, srcDisplay, srcUrl, 'middle'))
-    sourceParts.push(wrapItem(unit.join(''), i, animate, instrument))
+function renderNodeLabel(x: number, node: NodeBox, text: string, url: string | null, theme: MdArtTheme): string {
+  if (node.h < 10) return ''
+  const { fontSize, lineHeight, results: [{ lines, truncated }] } =
+    fitTextToWidthShared([text], NODE_TEXT_W, { maxSize: 10, minSize: 6, maxLines: 4, boxH: node.h - 4 })
+  const tip = truncated ? `<title>${escapeXml(text)}</title>` : ''
+  const startY = node.y + node.h / 2 - ((lines.length - 1) * lineHeight) / 2 + fontSize * 0.35
+  const tspans = lines
+    .map((line, lineIndex) => `<tspan x="${x.toFixed(1)}" dy="${lineIndex === 0 ? 0 : lineHeight.toFixed(1)}">${escapeXml(line)}</tspan>`)
+    .join('')
+  return aWrap(`${tip}<text x="${x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR}>${tspans}</text>`, url)
+}
+
+function renderFlowPaths(model: SankeyModel, layout: SankeyLayout): Map<string, string[]> {
+  const sourceCursor = layout.sourceNodes.map(node => node.y)
+  const destCursor = new Map<string, number>(model.destNames.map(name => [name, layout.destNodes.get(name)!.y]))
+  const flowParts = new Map<string, string[]>()
+
+  model.flows.forEach(flow => {
+    const source = layout.sourceNodes[flow.sourceIndex]
+    const dest = layout.destNodes.get(flow.dest)
+    if (!source || !dest) return
+    const sourceH = (flow.weight / model.sourceWeights[flow.sourceIndex]) * source.h
+    const destH = (flow.weight / (model.destWeights.get(flow.dest) ?? 1)) * dest.h
+    const sy0 = sourceCursor[flow.sourceIndex]
+    const sy1 = sy0 + sourceH
+    sourceCursor[flow.sourceIndex] += sourceH
+    const dy0 = destCursor.get(flow.dest)!
+    const dy1 = dy0 + destH
+    destCursor.set(flow.dest, dy1)
+    const color = layout.colors[flow.sourceIndex % layout.colors.length]
+    const path = `<path d="M${layout.x0},${sy0.toFixed(1)} C${layout.midX},${sy0.toFixed(1)} ${layout.midX},${dy0.toFixed(1)} ${layout.x1},${dy0.toFixed(1)} L${layout.x1},${dy1.toFixed(1)} C${layout.midX},${dy1.toFixed(1)} ${layout.midX},${sy1.toFixed(1)} ${layout.x0},${sy1.toFixed(1)} Z" fill="${color}3a" stroke="${color}77" stroke-width="0.5"/>`
+    const list = flowParts.get(flow.dest) ?? []
+    list.push(path)
+    flowParts.set(flow.dest, list)
   })
 
-  dstNames.forEach((name, i) => {
-    const unit: string[] = [...(flowParts.get(name) ?? [])]
-    const n = dstNodes.get(name)!
-    unit.push(`<rect x="${W - BOX_W + 8}" y="${n.y.toFixed(1)}" width="${BOX_W - 8}" height="${n.h.toFixed(1)}" rx="4" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>`)
-    unit.push(renderNodeLabel(W - (BOX_W - 8) / 2, n, dstDisplayMap.get(name) ?? name, dstUrlMap.get(name) ?? null, 'middle'))
-    destParts.push(wrapItem(unit.join(''), items.length + i, animate, instrument))
-  })
+  return flowParts
+}
 
-  const parts = [...destParts, ...sourceParts]
-  if (animate) parts.unshift(seqSpotlightCSS(items.length + dstNames.length, spec, { scale: false }))
+function renderSourceNode(item: MdArtItem, index: number, node: NodeBox, layout: SankeyLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
+  const color = layout.colors[index % layout.colors.length]
+  const { display, url } = displayLabel(item, { value: !!item.value, attrs: !!item.attrs?.length })
+  const unit = `<rect x="0" y="${node.y.toFixed(1)}" width="${BOX_W - 8}" height="${node.h.toFixed(1)}" rx="4" fill="${color}44" stroke="${color}99" stroke-width="1">${itemTitleTag(item)}</rect>`
+    + renderNodeLabel((BOX_W - 8) / 2, node, display, url, theme)
+  return wrapItem(unit, index, animate, instrument)
+}
 
-  return svg(W, H, theme, spec.title, parts)
+function renderDestNode(name: string, index: number, model: SankeyModel, layout: SankeyLayout, flows: Map<string, string[]>, theme: MdArtTheme, animate: boolean, instrument: boolean, sourceCount: number): string {
+  const node = layout.destNodes.get(name)!
+  const unit = [
+    ...(flows.get(name) ?? []),
+    `<rect x="${W - BOX_W + 8}" y="${node.y.toFixed(1)}" width="${BOX_W - 8}" height="${node.h.toFixed(1)}" rx="4" fill="${theme.surface}" stroke="${theme.border}" stroke-width="1"/>`,
+    renderNodeLabel(W - (BOX_W - 8) / 2, node, model.destDisplays.get(name) ?? name, model.destUrls.get(name) ?? null, theme),
+  ]
+  return wrapItem(unit.join(''), sourceCount + index, animate, instrument)
+}
+
+export function render(spec: MdArtSpec, theme: MdArtTheme): string {
+  if (spec.items.length === 0) return renderEmpty(theme)
+  const animate = shouldAnimate(spec)
+  const instrument = shouldInstrument()
+  const model = buildModel(spec.items)
+  const layout = resolveLayout(spec, model, theme)
+  const flows = renderFlowPaths(model, layout)
+  const parts = [
+    ...(animate ? [seqSpotlightCSS(spec.items.length + model.destNames.length, spec, { scale: false })] : []),
+    ...model.destNames.map((name, index) => renderDestNode(name, index, model, layout, flows, theme, animate, instrument, spec.items.length)),
+    ...spec.items.map((item, index) => renderSourceNode(item, index, layout.sourceNodes[index], layout, theme, animate, instrument)),
+  ]
+  return svg(layout, theme, spec.title, parts)
 }
