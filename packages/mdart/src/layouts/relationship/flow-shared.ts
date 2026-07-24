@@ -8,7 +8,7 @@ const TITLE_H_WITH_TITLE = 28
 const TITLE_H_NO_TITLE = 8
 const MIN_H = 200
 const ROW_SPACE_H = 340
-const ROW_PAD = 40
+const ROW_PAD = 60
 const HUB_W = 116
 const HUB_MIN_H = 44
 const HUB_MAX_H = 84
@@ -37,7 +37,7 @@ function fallbackItem(label: string): MdArtItem {
 
 function resolveLayout(spec: MdArtSpec, n: number): FlowLayout {
   const titleH = spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
-  const rowH = Math.max(54, Math.min(74, ROW_SPACE_H / n))
+  const rowH = Math.max(60, Math.min(84, ROW_SPACE_H / n))
   const height = Math.max(MIN_H, n * rowH + titleH + ROW_PAD)
   return { n, titleH, rowH, height, cy: titleH + (height - titleH) / 2 }
 }
@@ -45,7 +45,7 @@ function resolveLayout(spec: MdArtSpec, n: number): FlowLayout {
 function rowY(layout: FlowLayout, index: number): number {
   return layout.n === 1
     ? layout.cy
-    : layout.titleH + 20 + index * (layout.height - layout.titleH - 40) / (layout.n - 1)
+    : layout.titleH + 30 + index * (layout.height - layout.titleH - 60) / (layout.n - 1)
 }
 
 function markerDef(id: string, color: string): string {

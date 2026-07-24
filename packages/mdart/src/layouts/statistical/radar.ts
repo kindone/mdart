@@ -93,7 +93,8 @@ function labelMaxWidth(x: number, anchor: 'start' | 'end' | 'middle'): number {
 
 function renderAxisNode(node: AxisNode, layout: RadarLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
   const unit: string[] = []
-  unit.push(`<line x1="${layout.cx}" y1="${layout.cy}" x2="${point(layout, node.angle, layout.radius)}" stroke="${theme.border}99" stroke-width="1"/>`)
+  const [ex, ey] = point(layout, node.angle, layout.radius).split(',')
+  unit.push(`<line x1="${layout.cx}" y1="${layout.cy}" x2="${ex}" y2="${ey}" stroke="${theme.border}99" stroke-width="1"/>`)
   const valueRadius = layout.radius * node.value
   const [vx, vy] = point(layout, node.angle, valueRadius).split(',')
   unit.push(`<circle cx="${vx}" cy="${vy}" r="4" fill="${theme.accent}">${itemTitleTag(node.item)}</circle>`)
