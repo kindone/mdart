@@ -1,6 +1,6 @@
 # MdArt Layout Reference
 
-**101 layouts across 11 families.** Every layout type with its source and rendered output.
+**102 layouts across 11 families.** Every layout type with its source and rendered output.
 
 See the [interactive playground](https://github.com/mdart/mdart) for live editing, or open [gallery.html](./gallery.html) for a richer viewer.
 
@@ -10,7 +10,7 @@ See the [interactive playground](https://github.com/mdart/mdart) for live editin
 - [List (15)](#list)
 - [Cycle (9)](#cycle)
 - [Hierarchy (9)](#hierarchy)
-- [Matrix (7)](#matrix)
+- [Matrix (8)](#matrix)
 - [Pyramid (5)](#pyramid)
 - [Relationship (13)](#relationship)
 - [Statistical (9)](#statistical)

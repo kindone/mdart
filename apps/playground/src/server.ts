@@ -139,6 +139,7 @@ const ALLOWED_LAB_FILES = new Set([
   'layouts/matrix/bcg.ts',
   'layouts/matrix/ansoff.ts',
   'layouts/matrix/matrix-nxm.ts',
+  'layouts/matrix/table.ts',
   // hierarchy family
   'layouts/hierarchy/org-chart.ts',
   'layouts/hierarchy/tree.ts',
@@ -1165,7 +1166,7 @@ authoring mdart diagrams and editing TypeScript layout renderers.
 
 ## Architecture
 
-Each of the 97 diagram types lives in its own file:
+Each diagram type lives in its own file:
   packages/mdart/src/layouts/{family}/{type}.ts
 Each exports a single function:
   export function render(spec: MdArtSpec, theme: MdArtTheme): string

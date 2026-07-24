@@ -8,7 +8,7 @@ const FAMILIES: Record<string, string[]> = {
   process: ['process', 'chevron-process', 'arrow-process', 'circular-process', 'funnel', 'roadmap', 'waterfall', 'snake-process', 'step-up', 'step-down', 'circle-process', 'equation', 'bending-process', 'segmented-bar', 'phase-process', 'timeline-h', 'timeline-v', 'swimlane'],
   list: ['bullet-list', 'numbered-list', 'checklist', 'two-column-list', 'timeline-list', 'block-list', 'chevron-list', 'card-list', 'zigzag-list', 'ribbon-list', 'hexagon-list', 'trapezoid-list', 'tab-list', 'circle-list', 'icon-list'],
   cycle: ['cycle', 'donut-cycle', 'gear-cycle', 'spiral', 'block-cycle', 'segmented-cycle', 'nondirectional-cycle', 'multidirectional-cycle', 'loop'],
-  matrix: ['swot', 'pros-cons', 'comparison', 'matrix-2x2', 'bcg', 'ansoff', 'matrix-nxm'],
+  matrix: ['swot', 'pros-cons', 'comparison', 'matrix-2x2', 'bcg', 'ansoff', 'matrix-nxm', 'table'],
   hierarchy: ['org-chart', 'tree', 'h-org-chart', 'hierarchy-list', 'radial-tree', 'decision-tree', 'sitemap', 'bracket', 'bracket-tree', 'mind-map'],
   pyramid: ['pyramid', 'inverted-pyramid', 'pyramid-list', 'segmented-pyramid', 'diamond-pyramid'],
   relationship: ['venn', 'venn-3', 'venn-4', 'concentric', 'balance', 'counterbalance', 'opposing-arrows', 'web', 'cluster', 'target', 'radial', 'converging', 'diverging', 'plus'],
@@ -137,7 +137,7 @@ export function generateMdart(
   if (['kanban', 'sprint-board', 'swimlane', 'wbs', 'org-chart', 'tree', 'h-org-chart', 'hierarchy-list', 'radial-tree', 'decision-tree', 'sitemap', 'bracket', 'bracket-tree', 'mind-map', 'layered-arch', 'pipeline'].includes(type)) {
     return { type, source: nested(type) }
   }
-  if (['comparison', 'matrix-nxm', 'heatmap'].includes(type)) return { type, source: keyed(type) }
+  if (['comparison', 'matrix-nxm', 'heatmap', 'table'].includes(type)) return { type, source: keyed(type) }
   if (['line-chart', 'scatter', 'area-chart', 'bar-chart'].includes(type)) return { type, source: plot(type) }
   if (type === 'swot') {
     return { type, source: [`type: swot`, 'title: Generated swot', '', `+ ${label(0)}: ${value()}`, `- ${label(1)}: ${value()}`, `? ${label(2)}: ${value()}`, `! ${label(3)}: ${value()}`].join('\n') }

@@ -85,7 +85,7 @@ overlong labels or the wrong layout.
 
 ## Syntax patterns
 
-Most of the 101 layout types share one of six input patterns. Visual rendering varies; syntax does not.
+Most layout types share one of six input patterns. Visual rendering varies; syntax does not.
 
 ---
 
@@ -355,6 +355,39 @@ columns: Frontend, Backend, DevOps
   <source media="(prefers-color-scheme: dark)" srcset="./examples/syntax/matrix-nxm-0b247ded9d.svg">
   <img alt="matrix-nxm" src="./examples/syntax/matrix-nxm-0b247ded9d-light.svg">
 </picture>
+
+
+#### `table`
+Generic fallback table. Use it for ordinary tabular data when a specialized
+matrix type would over-communicate, or when the source is already in markdown
+pipe-table form. It accepts two input styles:
+
+MdArt list style — top-level items are rows; children become columns. Keyed
+children (`Column: value`) derive column headers automatically.
+```mdart table
+title: Vendor Fit
+- Vendor A
+  - Cost: Low
+  - Risk: Medium
+  - Fit: Strong
+- Vendor B
+  - Cost: Medium
+  - Risk: Low
+  - Fit: Moderate
+```
+
+Markdown table style — header row, separator row, data rows.
+Alignment markers follow standard markdown table syntax: `:---` left,
+`---:` right, `:---:` center.
+```mdart table
+title: Release Checklist
+
+| Item | Owner | Status |
+|:---|---:|:---:|
+| API contract | Platform | Ready |
+| Load test | SRE | Running |
+| Docs | DX | Draft |
+```
 
 
 #### `heatmap`

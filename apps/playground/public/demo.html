@@ -624,6 +624,7 @@ pre.int-code {
         <option value="layouts/matrix/bcg.ts">bcg</option>
         <option value="layouts/matrix/ansoff.ts">ansoff</option>
         <option value="layouts/matrix/matrix-nxm.ts">matrix-nxm</option>
+        <option value="layouts/matrix/table.ts">table</option>
       </optgroup>
       <optgroup label="— hierarchy —">
         <option value="layouts/hierarchy/org-chart.ts">org-chart</option>
@@ -851,7 +852,7 @@ const LAYOUT_TYPES = [
   'tab-list','circle-list','icon-list',
   'cycle','donut-cycle','gear-cycle','spiral','block-cycle','segmented-cycle',
   'nondirectional-cycle','multidirectional-cycle','loop',
-  'swot','pros-cons','comparison','matrix-2x2','bcg','ansoff','matrix-nxm',
+  'swot','pros-cons','comparison','matrix-2x2','bcg','ansoff','matrix-nxm','table',
   'org-chart','tree','h-org-chart','hierarchy-list','radial-tree','decision-tree',
   'sitemap','bracket','mind-map',
   'pyramid','inverted-pyramid','pyramid-list','segmented-pyramid','diamond-pyramid',
@@ -874,7 +875,7 @@ const families = {
     'tab-list','circle-list','icon-list'],
   cycle: ['cycle','donut-cycle','gear-cycle','spiral','block-cycle','segmented-cycle',
     'nondirectional-cycle','multidirectional-cycle','loop'],
-  matrix: ['swot','pros-cons','comparison','matrix-2x2','bcg','ansoff','matrix-nxm'],
+  matrix: ['swot','pros-cons','comparison','matrix-2x2','bcg','ansoff','matrix-nxm','table'],
   hierarchy: ['org-chart','tree','h-org-chart','hierarchy-list','radial-tree','decision-tree',
     'sitemap','bracket','mind-map'],
   pyramid: ['pyramid','inverted-pyramid','pyramid-list','segmented-pyramid','diamond-pyramid'],
@@ -1264,7 +1265,7 @@ function updateSourceDirty() {
   document.getElementById('btn-source-reset').classList.toggle('hidden', !dirty)
 }
 
-// Populate type example select in source pane — 101 types grouped by family.
+// Populate type example select in source pane — 102 renderer types grouped by family.
 // Match the left file-select's `— family —` label format so optgroup headers
 // read as headers (and don't blend into options like `process`, `cycle`).
 ;(function() {
@@ -1299,7 +1300,7 @@ function updateSourceDirty() {
 
 // ── Renderer file select ──────────────────────────────────────────────────────
 
-// Linear prev/next navigation through the 101 type files (skips shared/theme).
+// Linear prev/next navigation through the 102 type files (skips shared/theme).
 function getOrderedTypeFiles() {
   const opts = document.getElementById('file-select').options
   return Array.from(opts)

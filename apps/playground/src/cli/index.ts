@@ -46,6 +46,17 @@ export interface CliAdapter {
   classifyError(text: string, hadResume: boolean): ErrorCode
 }
 
+const CLAUDE_ALLOWED_TOOLS = [
+  'Bash(node *)',
+  'Bash(npm *)',
+  'Bash(npx *)',
+  'Bash(git status*)',
+  'Bash(git diff*)',
+  'Bash(git log*)',
+  'Bash(git add *)',
+  'Bash(git commit *)',
+].join(' ')
+
 export function defaultUserMessageForErrorCode(code: ErrorCode, rawErrorText: string): string {
   if (code === 'provider_quota') return 'The AI provider rate limit or quota was reached. Try again later or check provider billing and usage limits.'
   if (code === 'context_limit') return 'Context limit reached. Start a fresh chat or reduce the attached context.'
@@ -437,7 +448,7 @@ export const claudeAdapter: CliAdapter = {
       '--permission-mode', 'acceptEdits',
     ]
     for (const dir of opts.extraDirs) args.push('--add-dir', dir)
-    args.push('--allowedTools', 'Bash(node *) Bash(npm *) Bash(npx *)')
+    args.push('--allowedTools', CLAUDE_ALLOWED_TOOLS)
     args.push('--mcp-config', '{"mcpServers":{}}')
     args.push('--strict-mcp-config')
     if (opts.systemPrompt) args.push('--system-prompt', opts.systemPrompt)

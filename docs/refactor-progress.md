@@ -54,6 +54,7 @@ layout/measurement helpers, and smaller SVG emission helpers.
 | Matrix | `swot` | Done | Section routing, quadrant buckets, entry/quadrant/grid renderers, SVG wrapper split |
 | Matrix | `matrix-nxm` | Done | Header/cell wrapping, row height calculation, header/row/SVG renderers split |
 | Matrix | `comparison` | Done | Already split into validation/error, LR/TB renderers, shared text/row helpers |
+| Matrix | `table` | Done | Markdown/list table model parsing, column sizing, header/row/cell renderers split |
 | Hierarchy | `org-chart` | Done | Diagram measurement, connector, node box/text, SVG wrapper split |
 | Pyramid | `pyramid` | Done | Layer geometry, shape/main/side text renderers, SVG wrapper split |
 | Pyramid | `inverted-pyramid` | Done | Delegates to modular pyramid renderer |

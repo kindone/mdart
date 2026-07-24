@@ -1,6 +1,6 @@
 ---
 name: mdart
-description: Generate MdArt diagrams from structured intent — pick the right diagram type from 105+ layouts (process, list, hierarchy, comparison, cycle, matrix, pyramid, relationship, statistical, planning, technical, plot) and produce valid syntax. Use when the user asks for a diagram, chart, flowchart, mind map, comparison, org chart, timeline, kanban board, swot analysis, sequence diagram, state machine, gantt, funnel, sankey, treemap, line chart, scatter plot, bar chart, area chart, or any visual representation of structured information. Also use when generating ```mdart fenced blocks. Prefer mermaid only for complex conditional flow charts.
+description: Generate MdArt diagrams from structured intent — pick the right diagram type from 106+ layouts (process, list, hierarchy, comparison, cycle, matrix, pyramid, relationship, statistical, planning, technical, plot) and produce valid syntax. Use when the user asks for a diagram, chart, flowchart, mind map, comparison, org chart, timeline, kanban board, swot analysis, sequence diagram, state machine, gantt, funnel, sankey, treemap, line chart, scatter plot, bar chart, area chart, table, or any visual representation of structured information. Also use when generating ```mdart fenced blocks. Prefer mermaid only for complex conditional flow charts.
 ---
 
 # MdArt diagram generation
@@ -46,14 +46,14 @@ understandable, choose a better type or split the content.
 
 ## §1 — Family cheat sheet
 
-Eleven families. **105 type names**, of which **101 are distinct renderers** — 4 are pure aliases kept for backward compatibility (see "Aliases" at the bottom of this section). **Pick the family first**; escalate from the default to a specialised type only when a trigger is met.
+Eleven families. **106 type names**, of which **102 are distinct renderers** — 4 are pure aliases kept for backward compatibility (see "Aliases" at the bottom of this section). **Pick the family first**; escalate from the default to a specialised type only when a trigger is met.
 
 | Family | Default | Escalate when … |
 |---|---|---|
 | **Process** (sequential) | `process` | dates → `timeline-h` · long event text → `timeline-v` / `timeline-list` · narrowing → `funnel` · parallel actors → `swimlane` · phases → `phase-process` · long sequence wraps → `snake-process` · returns to start → `cycle` · branches by condition → `decision-tree` |
 | **List** (ordered or unordered facts) | `bullet-list` | ordered with long text → `circle-list` / `icon-list` · with status checkbox → `checklist` · with progress % → `progress-list` · equal-weight cards → `card-list` · paired pros/cons → `two-column-list` · with emoji → `icon-list` · numbered → `numbered-list` |
 | **Cycle** (recurring) | `cycle` | mechanical metaphor → `gear-cycle` · expanding spiral → `spiral` · no inherent direction → `nondirectional-cycle` · single feedback loop → `loop` |
-| **Matrix** (compare/classify) | `comparison` | exactly 2 things, +/- → `pros-cons` · 2 axes → `matrix-2x2` · market share → `bcg` · growth strategy → `ansoff` · 4 SWOT quadrants → `swot` · N×M grid → `matrix-nxm` |
+| **Matrix** (compare/classify) | `comparison` | generic fallback / markdown table → `table` · exactly 2 things, +/- → `pros-cons` · 2 axes → `matrix-2x2` · market share → `bcg` · growth strategy → `ansoff` · 4 SWOT quadrants → `swot` · N×M grid → `matrix-nxm` |
 | **Hierarchy** (parent → child) | `tree` | reporting line → `org-chart` (vertical) or `h-org-chart` (horizontal) · ideation → `mind-map` · branching choice → `decision-tree` · web pages → `sitemap` · tournament → `bracket` · text outline → `hierarchy-list` |
 | **Pyramid** (stacked tiers) | `pyramid` | inverted → `inverted-pyramid` · with body text → `pyramid-list` · diamond → `diamond-pyramid` · separated bands → `segmented-pyramid` |
 | **Relationship** (sets, overlap, balance) | `venn` | 3 circles → `venn-3` · 4 circles → `venn-4` · concentric rings → `concentric` · weighted scale → `balance` · opposing forces → `opposing-arrows` · many↔one → `converging` / `diverging` · interconnected mesh → `web` · grouped buckets → `cluster` |
@@ -128,6 +128,7 @@ If the user says "compare", "vs", "differences between", "tradeoffs":
 - Market share quadrant (stars/cash cows) → `bcg`
 - Growth strategy quadrant → `ansoff`
 - N×M grid (skills × people, features × tiers) → `matrix-nxm`
+- Generic tabular data, fallback matrix, or content already written as a markdown pipe table → `table`
 - 4 SWOT categories → `swot`
 
 **Do not** dump comparison data into `bullet-list` — the side-by-side structure is the whole point.
@@ -360,7 +361,7 @@ unreadable long before the data becomes complete.
 | `card-list` / `pyramid-list` body | 1 short sentence | ~80 chars |
 | `kanban` / `sprint-board` card | task title only, no description | ~40 chars |
 | Sequence / state-machine label | verb phrase or event name | ~24 chars |
-| Comparison / matrix-nxm cell | a value, not a sentence | ~30 chars |
+| Comparison / matrix-nxm / table cell | a value, not a sentence | ~30 chars |
 | Vertical timeline item (`timeline-v`, `timeline-list`) | date/name + short event phrase | ~80 chars |
 
 **Compression techniques** (apply before emitting the fence):
@@ -417,7 +418,7 @@ shapes; others put labels in wider horizontal text lanes. Pick accordingly:
 |---|---|
 | `timeline-v`, `timeline-list` | `process`, `timeline-h`, `arrow-process` |
 | `circle-list`, `icon-list`, `card-list`, `pyramid-list`, `hierarchy-list` | `cycle`, `gear-cycle`, `circle-process` |
-| `comparison` / `matrix-nxm` cells with short values | `pyramid`, `step-up`, `step-down` |
+| `comparison` / `matrix-nxm` / `table` cells with short values | `pyramid`, `step-up`, `step-down` |
 
 Rule: if the content is a chronological story with named dates and explanatory
 phrases, use `timeline-v` or `timeline-list`, not `process` or `timeline-h`.
@@ -498,10 +499,11 @@ top-level (parents) vs children. Put the **longer** axis as parents.
 | Type | Top-level → | Children → | Implication |
 |---|---|---|---|
 | `matrix-nxm` | rows | columns | put more-numerous axis as top-level |
+| `table` | rows | columns | generic fallback; markdown pipe-table syntax is also accepted |
 | `heatmap` | rows | columns | put more-numerous axis as top-level |
 | `swimlane` | `- Lane` (bullet items) | `- Task` (bullet items) | already row-oriented; many lanes are fine |
 
-For `matrix-nxm` / `heatmap`: if you're plotting "10 people × 4 skills", the people are top-level (10 rows), skills are children (4 columns) — *not* the other way around.
+For `matrix-nxm` / `table` / `heatmap`: if you're plotting "10 people × 4 skills", the people are top-level (10 rows), skills are children (4 columns) — *not* the other way around.
 
 ### c. Column-oriented types with hard column budgets
 
@@ -548,7 +550,7 @@ collapses both into one undifferentiated text blob, defeating the renderer.
 | Statistical | `progress-list`, `bullet-chart`, `gauge`, `radar`, `waffle`, `scorecard` | the numeric magnitude (bar fill, dial angle, etc.) |
 | Statistical | `sankey` | flow volume on `→ Target: 42` |
 | Statistical | `heatmap` | cell colour intensity |
-| Matrix | `comparison`, `matrix-nxm` | the cell content |
+| Matrix | `comparison`, `matrix-nxm`, `table` | the cell content |
 | Technical | `entity` | field type — `name: text [PK]` |
 | Technical | `sequence` | message text on `→ Target: message` |
 | Technical | `state-machine` | event label on `→ NextState: event` |

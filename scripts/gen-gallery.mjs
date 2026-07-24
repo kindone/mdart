@@ -95,7 +95,7 @@ const FAMILIES = [
   {
     name: 'Matrix',
     slug: 'matrix',
-    desc: 'Comparisons, SWOT, 2×2 grids, BCG, and Ansoff.',
+    desc: 'Comparisons, SWOT, 2×2 grids, BCG, Ansoff, and generic tables.',
     layouts: [
       { name: 'swot', source: `type: swot\ntitle: Product Launch\n+ Strong brand\n+ Experienced team\n- High CAC\n- No mobile app\n? Asia-Pacific expansion\n? Enterprise tier\n! New competitor funding\n! Regulatory changes` },
       { name: 'pros-cons', source: `type: pros-cons\n- Pros\n  - Fast time to market\n  - Low upfront cost\n  - Flexible scaling\n- Cons\n  - Vendor lock-in\n  - Less customization\n  - Ongoing SaaS fees` },
@@ -104,6 +104,7 @@ const FAMILIES = [
       { name: 'bcg', source: `type: bcg\ntitle: Product Portfolio\n- Stars\n  - Platform API\n  - Analytics Pro\n- Question Marks\n  - Mobile SDK\n  - AI Assistant\n- Cash Cows\n  - Core SaaS\n- Dogs\n  - Legacy Export` },
       { name: 'ansoff', source: `type: ansoff\ntitle: Growth Strategy\n- Market Penetration\n  - Loyalty program\n  - Upsell campaigns\n- Product Development\n  - Mobile app\n  - API v2\n- Market Development\n  - Asia-Pacific\n- Diversification\n  - Marketplace` },
       { name: 'matrix-nxm', source: `type: matrix-nxm\ntitle: Skills Matrix\n- Alice\n  - Expert\n  - Proficient\n  - Learning\n- Bob\n  - Proficient\n  - Expert\n  - Expert\n- Carol\n  - Learning\n  - Proficient\n  - Expert` },
+      { name: 'table', source: `type: table\ntitle: Generic Decision Table\n\n| Criterion | Option A | Option B | Notes |\n|---|---|---|---|\n| Startup cost | Low | Medium | Existing vendor discount applies |\n| Operational fit | Strong | Moderate | Option B needs new runbooks |\n| Risk | Medium | Low | Contract review still pending |` },
     ],
   },
   {

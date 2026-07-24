@@ -1,0 +1,8 @@
+type: table
+title: Generic Decision Table
+
+| Criterion | Option A | Option B | Notes |
+|---|---|---|---|
+| Startup cost | Low | Medium | Existing vendor discount applies |
+| Operational fit | Strong | Moderate | Option B needs new runbooks |
+| Risk | Medium | Low | Contract review still pending |

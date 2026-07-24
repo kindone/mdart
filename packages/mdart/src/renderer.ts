@@ -64,6 +64,7 @@ import { render as renderMatrix2x2 } from './layouts/matrix/matrix-2x2'
 import { render as renderBcg } from './layouts/matrix/bcg'
 import { render as renderAnsoff } from './layouts/matrix/ansoff'
 import { render as renderMatrixNxm } from './layouts/matrix/matrix-nxm'
+import { render as renderTable } from './layouts/matrix/table'
 
 // hierarchy family
 import { render as renderOrgChart } from './layouts/hierarchy/org-chart'
@@ -194,6 +195,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
   bcg: renderBcg,
   ansoff: renderAnsoff,
   'matrix-nxm': renderMatrixNxm,
+  table: renderTable,
 
   // hierarchy family
   'org-chart': renderOrgChart,

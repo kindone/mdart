@@ -81,7 +81,7 @@ const KNOWN_TYPES = new Set([
   'cycle', 'donut-cycle', 'gear-cycle', 'spiral', 'block-cycle', 'segmented-cycle',
   'nondirectional-cycle', 'multidirectional-cycle', 'loop',
   // matrix
-  'swot', 'pros-cons', 'comparison', 'matrix-2x2', 'bcg', 'ansoff', 'matrix-nxm',
+  'swot', 'pros-cons', 'comparison', 'matrix-2x2', 'bcg', 'ansoff', 'matrix-nxm', 'table',
   // hierarchy
   'org-chart', 'tree', 'h-org-chart', 'hierarchy-list', 'radial-tree',
   'decision-tree', 'sitemap', 'bracket', 'bracket-tree', 'mind-map',
@@ -124,7 +124,7 @@ const TYPE_FAMILY: Record<string, string> = {
   'nondirectional-cycle': 'cycle', 'multidirectional-cycle': 'cycle', loop: 'cycle',
   // matrix
   swot: 'matrix', 'pros-cons': 'matrix', comparison: 'matrix',
-  'matrix-2x2': 'matrix', bcg: 'matrix', ansoff: 'matrix', 'matrix-nxm': 'matrix',
+  'matrix-2x2': 'matrix', bcg: 'matrix', ansoff: 'matrix', 'matrix-nxm': 'matrix', table: 'matrix',
   // hierarchy
   'org-chart': 'hierarchy', tree: 'hierarchy', 'h-org-chart': 'hierarchy',
   'hierarchy-list': 'hierarchy', 'radial-tree': 'hierarchy',
