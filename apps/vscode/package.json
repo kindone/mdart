@@ -2,7 +2,7 @@
   "name": "vscode-mdart",
   "displayName": "MdArt Diagrams",
   "description": "Renders mdart diagram fences inline in the VS Code Markdown Preview.",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "publisher": "mdart",
   "license": "MIT",
   "engines": {
