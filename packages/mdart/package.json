@@ -24,7 +24,8 @@
     "!dist/**/*.test.d.ts.map",
     "src",
     "!src/**/*.test.ts",
-    "skills"
+    "skills",
+    "docs"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node scripts/build-esm.js",

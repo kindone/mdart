@@ -5,22 +5,26 @@ Reference content that teaches an AI agent (Claude Code, opencode, etc.) to use 
 ## Structure
 
 ```
-packages/mdart/skills/
-├── README.md          (this file)
-└── mdart/
-    ├── SKILL.md           (always loaded when triggered: cheat sheet + decision tree)
-    └── anti-patterns.md   (loaded on demand: 7 categories of failure modes)
+packages/mdart/
+├── docs/
+│   └── mdart.md           (comprehensive cross-agent reference: type catalog,
+│                            selection guide, plot syntax, authoring rules)
+└── skills/
+    └── mdart/
+        ├── SKILL.md           (thin behavioral wrapper: always loaded when triggered;
+        │                       points to docs/mdart.md for the full reference)
+        └── anti-patterns.md   (loaded on demand: 7 categories of failure modes)
 ```
 
-`packages/mdart/package.json` lists `"skills"` in its `files` array, so the entire `skills/` directory is included in the npm package. Consumers receive it inside `node_modules/mdart/skills/` whenever they install mdart.
+Both `"docs"` and `"skills"` are listed in `packages/mdart/package.json`'s `files` array, so both directories are included in the npm package. Consumers receive them inside `node_modules/mdart/` whenever they install mdart.
 
 ## How consumers use it
 
-Each project that wants the skill copies it into its own `.claude/skills/` directory — the per-project convention that Claude (and other agents) discover. Typical flow, e.g. for steward:
+Each project copies the skill and docs from the npm package. Typical flow, e.g. for steward:
 
 ```bash
 # In steward's package.json:
-"sync:mdart": "rm -rf node_modules/mdart && npm install --include=dev && rm -rf .claude/skills/mdart && cp -r node_modules/mdart/skills/mdart .claude/skills/mdart"
+"sync:mdart": "rm -rf node_modules/mdart && npm install --include=dev && mkdir -p .claude/skills/mdart && cp node_modules/mdart/skills/mdart/anti-patterns.md .claude/skills/mdart/anti-patterns.md && cp node_modules/mdart/docs/mdart.md docs/mdart.md"
 ```
 
 Then:
@@ -29,7 +33,11 @@ Then:
 cd ~/claude-steward && npm run sync:mdart
 ```
 
-That single command pulls a fresh mdart bundle *and* refreshes the project's skill copy. After running, `<project>/.claude/skills/mdart/SKILL.md` is the current canonical skill content.
+That single command pulls a fresh mdart bundle and refreshes:
+- `docs/mdart.md` — the comprehensive cross-agent reference (type catalog, selection guide, plot syntax, authoring rules)
+- `.claude/skills/mdart/anti-patterns.md` — the full failure-mode catalog
+
+**`SKILL.md` is intentionally not overwritten.** Consumer projects maintain their own thin `SKILL.md` that points to their local `docs/mdart.md`. This lets each consumer add context (e.g. steward-specific artifact notes) without the sync clobbering it. If you're setting up a new consumer, copy `node_modules/mdart/skills/mdart/SKILL.md` once as a starting point, then keep it locally.
 
 ## Why per-project rather than `~/.claude/skills/`
 
