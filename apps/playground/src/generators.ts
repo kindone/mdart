@@ -14,7 +14,7 @@ const FAMILIES: Record<string, string[]> = {
   relationship: ['venn', 'venn-3', 'venn-4', 'concentric', 'balance', 'counterbalance', 'opposing-arrows', 'web', 'cluster', 'target', 'radial', 'converging', 'diverging', 'plus'],
   statistical: ['progress-list', 'bullet-chart', 'scorecard', 'treemap', 'sankey', 'waffle', 'gauge', 'radar', 'heatmap'],
   planning: ['kanban', 'gantt', 'gantt-lite', 'sprint-board', 'timeline', 'milestone', 'wbs'],
-  technical: ['layered-arch', 'entity', 'network', 'pipeline', 'sequence', 'state-machine', 'class'],
+  technical: ['layered-arch', 'entity', 'network', 'pipeline', 'sequence', 'state-machine', 'flowchart', 'class'],
   plot: ['line-chart', 'scatter', 'area-chart', 'bar-chart'],
 }
 

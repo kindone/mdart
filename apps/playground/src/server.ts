@@ -197,6 +197,7 @@ const ALLOWED_LAB_FILES = new Set([
   'layouts/technical/pipeline.ts',
   'layouts/technical/sequence.ts',
   'layouts/technical/state-machine.ts',
+  'layouts/technical/flowchart.ts',
   'layouts/technical/class.ts',
   // plot family
   'layouts/plot/line-chart.ts',
