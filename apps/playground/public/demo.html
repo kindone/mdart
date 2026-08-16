@@ -432,6 +432,11 @@ pre.int-code {
 .chat-msg-body tr:nth-child(even) td { background: #252525; }
 .chat-typing::after { content: '▋'; animation: blink .8s step-end infinite; color: #c084fc; }
 @keyframes blink { 50% { opacity: 0; } }
+.chat-thinking { color: #888; font-size: 12px; font-style: italic; display: flex; align-items: center; gap: 6px; }
+.chat-thinking-dots::after { content: ''; animation: thinking-dots 1.2s steps(4, end) infinite; }
+@keyframes thinking-dots { 0%,100% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+.chat-thinking-time { color: #666; font-size: 11px; font-variant-numeric: tabular-nums; }
+.chat-thinking-warn { color: #dcdcaa; font-size: 11px; margin-top: 4px; display: block; }
 .chat-empty { color: #555; font-size: 12px; text-align: center; padding: 32px 16px; line-height: 1.7; }
 .chat-notice { font-size: 11px; color: #4ec9b0; text-align: center; padding: 4px 8px; opacity: .8; }
 .chat-input-area {
@@ -2089,6 +2094,7 @@ function appendStreamingMessage() {
   div.className = 'chat-msg assistant'
   const body = document.createElement('div')
   body.className = 'chat-msg-body chat-typing'
+  body.innerHTML = '<span class="chat-thinking">Thinking<span class="chat-thinking-dots"></span><span class="chat-thinking-time"></span></span>'
   div.innerHTML = `<span class="chat-msg-role">${assistantLabel(activeSession()?.cli)}</span>`
   div.appendChild(body)
   msgs.appendChild(div)
@@ -2101,7 +2107,7 @@ function appendStreamingMessage() {
  * Updates bodyEl with streamed text. Returns the accumulated text.
  * Clears localStorage pending job on done/error.
  */
-async function connectToStream(jobId, bodyEl) {
+async function connectToStream(jobId, bodyEl, onFirstToken = null) {
   let accumulated = ''
   try {
     const streamRes = await fetch(`/lab/chat/stream/${jobId}`)
@@ -2134,12 +2140,14 @@ async function connectToStream(jobId, bodyEl) {
         if (evtName === 'chunk') {
           const ev = parsed.type === 'stream_event' ? parsed.event : null
           if (ev?.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
+            if (accumulated === '' && onFirstToken) onFirstToken()
             accumulated += ev.delta.text
             bodyEl.innerHTML = mdToHtml(accumulated)
             bodyEl.classList.add('chat-typing')
             document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight
           }
           if (parsed.type === 'text' && parsed.part?.text) {
+            if (accumulated === '' && onFirstToken) onFirstToken()
             accumulated += parsed.part.text
             bodyEl.innerHTML = mdToHtml(accumulated)
             bodyEl.classList.add('chat-typing')
@@ -2195,9 +2203,30 @@ async function sendChat() {
   syncChatChrome()
   const bodyEl = appendStreamingMessage()
 
+  // Elapsed-time ticker — updates "Thinking… 0:12" label until first token arrives
+  let thinkingSec = 0
+  let firstTokenReceived = false
+  const thinkingTimer = setInterval(() => {
+    if (firstTokenReceived) { clearInterval(thinkingTimer); return }
+    thinkingSec++
+    const timeEl = bodyEl.querySelector('.chat-thinking-time')
+    if (timeEl) {
+      const m = Math.floor(thinkingSec / 60), s = thinkingSec % 60
+      timeEl.textContent = ` · ${m}:${String(s).padStart(2, '0')}`
+    }
+    // Soft warning at 2 minutes — no hard kill, user decides
+    if (thinkingSec === 120) {
+      const thinkEl = bodyEl.querySelector('.chat-thinking')
+      if (thinkEl) thinkEl.insertAdjacentHTML('afterend', '<span class="chat-thinking-warn">⚠ Still waiting — the API may be slow or stalled.</span>')
+    }
+  }, 1000)
+
   // Generate a stable jobId stored in localStorage so we can reconnect if the page closes
   const jobId = crypto.randomUUID()
   localStorage.setItem(PENDING_JOB_KEY, JSON.stringify({ jobId, sessionId: activeSessionId, timestamp: Date.now() }))
+
+  // Signal first-token receipt to stop the thinking indicator
+  const onFirstToken = () => { firstTokenReceived = true; clearInterval(thinkingTimer) }
 
   try {
     const startRes = await fetch('/lab/chat', {
@@ -2206,7 +2235,7 @@ async function sendChat() {
       body: JSON.stringify({ message, context, jobId, sessionId: activeSessionId }),
     })
     if (!startRes.ok) throw new Error(`Start failed: ${startRes.status}`)
-    await connectToStream(jobId, bodyEl)
+    await connectToStream(jobId, bodyEl, onFirstToken)
     // Refresh history from server after stream completes
     const updated = await fetchHistory(activeSessionId)
     if (updated) {
@@ -2232,6 +2261,7 @@ async function sendChat() {
     bodyEl.classList.remove('chat-typing')
     localStorage.removeItem(PENDING_JOB_KEY)
   } finally {
+    clearInterval(thinkingTimer)
     chatStreaming = false
     document.getElementById('btn-chat-send').disabled = false
     syncChatChrome()
