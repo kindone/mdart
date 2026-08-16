@@ -22,9 +22,12 @@ const DIA_HH  = 46    // decision diamond half-height
 const TERM_W  = 110   // terminal pill full width
 const TERM_H  = 34    // terminal pill full height
 
-const LAYER_GAP    = 96   // vertical center-to-center between layers
+const EDGE_CLEARANCE = 26  // min face-to-face gap between adjacent nodes
+                            // = 2×ENTER_PAD + 20 px min visible arrow
+                            // Gap between layers l and l+1: maxHH(l) + maxHH(l+1) + EDGE_CLEARANCE
 const BRANCH_DX    = 166  // horizontal offset from trunk to right branch column
-const BACK_ARC_X   = W - 18  // x of right-margin backward-edge arc
+const BACK_ARC_X      = W - 18  // x of right-margin backward-edge arc  (= 562)
+const BACK_ARC_LEFT_X = 18       // x of left-margin backward-edge arc
 const ENTER_PAD    = 3    // gap between edge endpoint and node face
 const HOP_R        = 5    // radius of crossing-hop arc on backward H1 segment
 
@@ -179,7 +182,30 @@ function buildLayout(spec: MdArtSpec): FlowLayout {
     if (!cols.has(id))   cols.set(id, 0)
   }
 
-  const cx = W / 2
+  // ── Adaptive per-layer y positions ───────────────────────────────────────
+  // Gap between layers l and l+1 = maxHH(l) + maxHH(l+1) + EDGE_CLEARANCE.
+  // This keeps process→process pairs compact (~70 px) while giving
+  // decision→decision pairs the room they need (~118 px).
+  const maxLayer = Math.max(...[...layers.values()], 0)
+  const layerMaxHH = new Map<number, number>()
+  for (const [id, item] of items) {
+    const l  = layers.get(id) ?? 0
+    const nh = HH[nodeType(item)]
+    if ((layerMaxHH.get(l) ?? 0) < nh) layerMaxHH.set(l, nh)
+  }
+  const yOf = new Map<number, number>([[0, titleH + 30]])
+  for (let l = 1; l <= maxLayer; l++) {
+    const prev = yOf.get(l - 1)!
+    const gap  = (layerMaxHH.get(l - 1) ?? PROC_H / 2)
+               + (layerMaxHH.get(l)     ?? PROC_H / 2)
+               + EDGE_CLEARANCE
+    yOf.set(l, prev + gap)
+  }
+
+  // Centre all columns horizontally: shift cx so the span [0 … maxCol] is
+  // symmetric around W/2.  For a single-column layout this leaves cx = W/2.
+  const maxCol = cols.size > 0 ? Math.max(...cols.values()) : 0
+  const cx     = W / 2 - maxCol * BRANCH_DX / 2
   const nodes = new Map<string, FNode>()
   for (const [id, item] of items) {
     const type   = nodeType(item)
@@ -190,7 +216,7 @@ function buildLayout(spec: MdArtSpec): FlowLayout {
       id, type, display, url: urlRaw ?? undefined, srcItem: item,
       layer, col,
       x: cx + col * BRANCH_DX,
-      y: titleH + 30 + layer * LAYER_GAP,
+      y: yOf.get(layer)!,
     })
   }
 
@@ -206,10 +232,9 @@ function buildLayout(spec: MdArtSpec): FlowLayout {
     }
   }
 
-  const maxLayer = Math.max(...[...nodes.values()].map(n => n.layer), 0)
   return {
     titleH, nodes, edges,
-    height: titleH + 30 + maxLayer * LAYER_GAP + PROC_H + 30,
+    height: yOf.get(maxLayer)! + (layerMaxHH.get(maxLayer) ?? PROC_H / 2) + 30,
   }
 }
 
@@ -239,6 +264,27 @@ function renderTitle(title: string | undefined, theme: MdArtTheme): string {
     : ''
 }
 
+/**
+ * Split a diamond label into 1 or 2 lines.
+ * Short labels (≤ MAX1 chars) stay on one line. Longer labels are split at the
+ * space closest to the midpoint so both halves fit within the diamond face.
+ */
+function diamondLines(text: string): [string] | [string, string] {
+  const MAX1 = 13  // max chars on a single centred line
+  const MAX2 = 13  // max chars per line when wrapping
+  if (text.length <= MAX1) return [text]
+  const mid = Math.floor(text.length / 2)
+  let bestIdx = -1, bestDist = Infinity
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === ' ') {
+      const d = Math.abs(i - mid)
+      if (d < bestDist) { bestDist = d; bestIdx = i }
+    }
+  }
+  if (bestIdx < 0) return [tt(text, MAX1)]  // no space — fall back to truncation
+  return [tt(text.slice(0, bestIdx), MAX2), tt(text.slice(bestIdx + 1), MAX2)]
+}
+
 function renderNodeSvg(node: FNode, theme: MdArtTheme): string {
   const { x, y, type, display, srcItem } = node
   const title = itemTitleTag(srcItem)
@@ -260,10 +306,18 @@ function renderNodeSvg(node: FNode, theme: MdArtTheme): string {
       ].join('')
     }
     case 'decision': {
-      const pts = `${x.toFixed(1)},${(y-DIA_HH).toFixed(1)} ${(x+DIA_HW).toFixed(1)},${y.toFixed(1)} ${x.toFixed(1)},${(y+DIA_HH).toFixed(1)} ${(x-DIA_HW).toFixed(1)},${y.toFixed(1)}`
+      const pts   = `${x.toFixed(1)},${(y-DIA_HH).toFixed(1)} ${(x+DIA_HW).toFixed(1)},${y.toFixed(1)} ${x.toFixed(1)},${(y+DIA_HH).toFixed(1)} ${(x-DIA_HW).toFixed(1)},${y.toFixed(1)}`
+      const lines  = diamondLines(display)
+      const LDY    = 7  // half-gap between two lines (px)
+      const textSvg = lines.length === 1
+        ? `<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" ${FONT_SANS_ATTR}>${lines[0]}</text>`
+        : [
+            `<text x="${x.toFixed(1)}" y="${(y - LDY + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" ${FONT_SANS_ATTR}>${lines[0]}</text>`,
+            `<text x="${x.toFixed(1)}" y="${(y + LDY + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" ${FONT_SANS_ATTR}>${lines[1]}</text>`,
+          ].join('')
       return [
         `<polygon points="${pts}" fill="${theme.surface}" stroke="${theme.primary}99" stroke-width="1.5"><title>${escapeXml(display)}</title></polygon>`,
-        `<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" ${FONT_SANS_ATTR}>${tt(display, 13)}</text>`,
+        textSvg,
       ].join('')
     }
     default: { // process
@@ -368,29 +422,46 @@ function renderEdge(
   let lx: number, ly: number, la: 'start' | 'middle' | 'end' = 'middle'
 
   if (edge.backward) {
-    // Arc along right margin: exit right of src → up → enter right of dst
-    const sx = src.x + HW[src.type] + ENTER_PAD
-    const sy = src.y
-    const dx = dst.x + HW[dst.type] + ENTER_PAD
-    const dy = dst.y
-    const mx = Math.max(BACK_ARC_X, sx + 20, dx + 20)
-    // Rounded-corner rectangular arc — three segments joined by quadratic arcs:
-    //   ① horizontal exit  →  ② vertical right-margin run  →  ③ horizontal entry
-    // The arrowhead always sits on a pure-horizontal final H segment, so
-    // orient="auto" snaps it to exactly leftward with no visual mismatch.
-    // (The previous cubic bezier had the tangent correct at t=1 but the curve
-    // visually appeared diagonal in the 50-60 px leading up to the endpoint.)
-    const R      = 10
-    const hopXs  = hops?.get(`${edge.from}→${edge.to}`) ?? []
-    d = [
-      `M${sx.toFixed(1)},${sy.toFixed(1)}`,
-      buildH1(sx, sy, mx - R, hopXs),
-      `Q${mx},${sy.toFixed(1)} ${mx},${(sy - R).toFixed(1)}`,
-      `V${(dy + R).toFixed(1)}`,
-      `Q${mx},${dy.toFixed(1)} ${(mx - R).toFixed(1)},${dy.toFixed(1)}`,
-      `H${dx.toFixed(1)}`,
-    ].join(' ')
-    lx = mx - 5; ly = (sy + dy) / 2; la = 'end'
+    // Rounded-corner rectangular arc — three segments joined by quadratic corners:
+    //   ① horizontal exit  →  ② vertical margin run  →  ③ horizontal entry
+    // When the destination is to the LEFT of the source (cross-column back-edge)
+    // we route along the LEFT margin so the two right-margin arcs don't overlap.
+    const R = 10
+    if (dst.x < src.x) {
+      // ── Left-margin arc: exit left face of src → up → enter left face of dst ──
+      const sx = src.x - HW[src.type] - ENTER_PAD
+      const sy = src.y
+      const dx = dst.x - HW[dst.type] - ENTER_PAD
+      const dy = dst.y
+      // Swing ~50px past the destination's left face — matches right-arc visual weight
+      const mx = Math.max(BACK_ARC_LEFT_X, dx - 50)
+      d = [
+        `M${sx.toFixed(1)},${sy.toFixed(1)}`,
+        `H${(mx + R).toFixed(1)}`,
+        `Q${mx},${sy.toFixed(1)} ${mx},${(sy - R).toFixed(1)}`,
+        `V${(dy + R).toFixed(1)}`,
+        `Q${mx},${dy.toFixed(1)} ${(mx + R).toFixed(1)},${dy.toFixed(1)}`,
+        `H${dx.toFixed(1)}`,
+      ].join(' ')
+      lx = mx + 5; ly = (sy + dy) / 2; la = 'start'
+    } else {
+      // ── Right-margin arc: exit right face of src → up → enter right face of dst ──
+      const sx = src.x + HW[src.type] + ENTER_PAD
+      const sy = src.y
+      const dx = dst.x + HW[dst.type] + ENTER_PAD
+      const dy = dst.y
+      const mx = Math.max(BACK_ARC_X, sx + 20, dx + 20)
+      const hopXs = hops?.get(`${edge.from}→${edge.to}`) ?? []
+      d = [
+        `M${sx.toFixed(1)},${sy.toFixed(1)}`,
+        buildH1(sx, sy, mx - R, hopXs),
+        `Q${mx},${sy.toFixed(1)} ${mx},${(sy - R).toFixed(1)}`,
+        `V${(dy + R).toFixed(1)}`,
+        `Q${mx},${dy.toFixed(1)} ${(mx - R).toFixed(1)},${dy.toFixed(1)}`,
+        `H${dx.toFixed(1)}`,
+      ].join(' ')
+      lx = mx - 5; ly = (sy + dy) / 2; la = 'end'
+    }
 
   } else if (src.col === dst.col) {
     // Same column → straight vertical
