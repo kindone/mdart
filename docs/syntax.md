@@ -205,6 +205,12 @@ title: System Health
 
 `state-machine` extras: `[final]` attr on a state adds a double border; states named `End` or `Final` are auto-detected as final.
 
+`network` extras: nodes are arranged in a ring; edges are quadratic Bézier curves bowed away from the centre by default (bidi pairs bow to opposite sides for clarity). Use `edges: straight` to opt into straight lines.
+
+| Option | Example | Effect |
+|---|---|---|
+| `edges:` | `edges: straight` | `straight` = straight lines; `curved` = default quadratic Bézier |
+
 ```mdart sequence
 title: Login Flow
 - Client

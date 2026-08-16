@@ -393,6 +393,8 @@ edges:
 | `sequence` | Actors + `→ Target: message` children | `- Browser` / `  → API: GET /users` |
 | `state-machine` | States + `→ NextState: event` children | `- Idle` / `  → Running: start` |
 
+**`network` layout notes:** nodes are arranged in a ring. Edges are quadratic Bézier curves bowed outward from the ring centre by default; bidi pairs bow to opposite sides for visual separation. Use `edges: straight` for simpler topologies.
+
 ### Global options (front-matter)
 
 | Key | Values | Default |
@@ -402,6 +404,7 @@ edges:
 | `title` | string | none |
 | `direction` | `LR` \| `TB` | layout-dependent |
 | `animate` | `true` \| `false` | `true` |
+| `edges` | `curved` \| `straight` | `curved` (network only) |
 
 ---
 

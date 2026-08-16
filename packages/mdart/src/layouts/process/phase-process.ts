@@ -38,10 +38,14 @@ function titleHeight(spec: MdArtSpec): number {
   return spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
 }
 
+function effectiveChildCount(item: MdArtItem): number {
+  return item.children.length + (item.value ? 1 : 0)
+}
+
 function resolveLayout(spec: MdArtSpec): PhaseLayout {
   const n = Math.min(spec.items.length, MAX_PHASES)
   const shownItems = spec.items.slice(0, n)
-  const maxChildren = Math.max(...shownItems.map(item => item.children.length), 2)
+  const maxChildren = Math.max(...shownItems.map(effectiveChildCount), 2)
   const titleH = titleHeight(spec)
   const colH = HEADER_H + maxChildren * ROW_H + BODY_BOTTOM_PAD
   return {
@@ -54,16 +58,28 @@ function resolveLayout(spec: MdArtSpec): PhaseLayout {
   }
 }
 
+function synthesizeValueChild(item: MdArtItem): MdArtItem {
+  if (!item.value) return item
+  const valueChild: MdArtItem = {
+    label: item.value,
+    attrs: [],
+    children: [],
+    flowChildren: [],
+  }
+  return { ...item, children: [valueChild, ...item.children] }
+}
+
 function placePhases(spec: MdArtSpec, layout: PhaseLayout, theme: MdArtTheme): PhasePlacement[] {
   return spec.items.slice(0, layout.n).map((item, index) => {
+    const enriched = synthesizeValueChild(item)
     const t = layout.n > 1 ? index / (layout.n - 1) : 0
     return {
-      item,
+      item: enriched,
       index,
       x: index * (layout.colW + GAP),
       y: layout.titleH,
       fill: lerpColor(theme.primary, theme.secondary, t),
-      display: displayLabel(item),
+      display: displayLabel(enriched, { value: true }),
     }
   })
 }

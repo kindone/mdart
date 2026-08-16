@@ -44,6 +44,9 @@ export interface MdArtSpec {
 
   raw: string
 
+  // ── Network ───────────────────────────────────────────────────────────────
+  edgeStyle?: 'straight' | 'curved'  // network: `edges: straight` opts out of default curved bézier
+
   // ── Animation ─────────────────────────────────────────────────────────────
   animate?: boolean     // false = disable; undefined = use global/default (on)
   animateSpeed?: number // multiplier: >1 = faster, <1 = slower (default 1.0)
@@ -331,6 +334,10 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
         const b = asBool(val); if (b !== null) spec.grid = b
       } else if (key === 'ticks') {
         const b = asBool(val); if (b !== null) spec.ticks = b
+      } else if (key === 'edges') {
+        // `edges: straight|curved` — network edge style opt-in (body-level `edges:` section is separate)
+        const v = val.toLowerCase()
+        if (v === 'straight' || v === 'curved') spec.edgeStyle = v
       } else if (key === 'shade-y' || key === 'shade-x') {
         const r = parseRangeWithLabel(val)
         if (r) {

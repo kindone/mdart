@@ -1096,6 +1096,24 @@ export function contrastColor(
 
 // ── Geometry helpers ─────────────────────────────────────────────────────────
 
+/**
+ * Exact intersection of a ray from a rectangle center (cx, cy) in the unit
+ * direction (nx, ny) with the rectangle boundary (half-width hw, half-height hh),
+ * plus an optional outward pad. Used by network and state-machine to compute
+ * precise arrow anchor points on node/state box edges.
+ */
+export function boxEdge(
+  cx: number, cy: number,
+  nx: number, ny: number,
+  hw: number, hh: number,
+  pad = 0,
+): { x: number; y: number } {
+  const tx = Math.abs(nx) > 1e-9 ? (hw + pad) / Math.abs(nx) : Infinity
+  const ty = Math.abs(ny) > 1e-9 ? (hh + pad) / Math.abs(ny) : Infinity
+  const t = Math.min(tx, ty)
+  return { x: cx + nx * t, y: cy + ny * t }
+}
+
 export function regularPolygonPoints(
   cx: number,
   cy: number,

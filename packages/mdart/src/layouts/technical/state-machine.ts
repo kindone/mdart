@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabelValue, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
+import { escapeXml, tt, renderEmpty, aWrap, itemTitleTag, displayLabelValue, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, wrapItem, shouldInstrument, FONT_SANS_ATTR, boxEdge } from '../shared'
 
 const W = 580
 const H = 380
@@ -16,7 +16,7 @@ const STATE_RX = 6
 const STATE_TEXT_W = STATE_W - 8
 const STATE_TEXT_H = STATE_H - 6
 const EDGE_EXIT_PAD = 2
-const EDGE_ENTER_PAD = 10
+const EDGE_ENTER_PAD = 3
 const CURVE_MAG = 30
 const BIDI_CURVE_MAG = 44
 const LABEL_CURVE_DELTA = 12
@@ -87,22 +87,12 @@ function renderTitle(theme: MdArtTheme, title: string | undefined): string {
 
 function renderDefs(theme: MdArtTheme): string {
   return `<defs>
-    <marker id="sm-a" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+    <marker id="sm-a" markerWidth="7" markerHeight="7" refX="7" refY="3.5" orient="auto">
       <path d="M0,0 L7,3.5 L0,7 Z" fill="${theme.accent}99"/>
     </marker>
   </defs>`
 }
 
-/**
- * Exact intersection of a ray from the rectangle center (cx, cy) in the unit
- * direction (nx, ny) with the rectangle boundary (hw x hh), plus outward pad.
- */
-function boxEdge(cx: number, cy: number, nx: number, ny: number, hw: number, hh: number, pad = 0): Point {
-  const tx = Math.abs(nx) > 1e-9 ? (hw + pad) / Math.abs(nx) : Infinity
-  const ty = Math.abs(ny) > 1e-9 ? (hh + pad) / Math.abs(ny) : Infinity
-  const t = Math.min(tx, ty)
-  return { x: cx + nx * t, y: cy + ny * t }
-}
 
 function renderSelfTransition(src: Point, value: string | undefined, theme: MdArtTheme): string {
   const bx = src.x + STATE_W / 2

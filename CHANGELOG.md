@@ -8,6 +8,15 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## [Unreleased]
 
+### Added
+
+- **`network` curved edges.** Ring-layout edges are now quadratic Bézier curves bowed outward from the ring centre (actual bow ~10% of chord). Bidi pairs bow to opposite sides for visual separation. New front-matter option `edges: straight` opts back into straight lines; `edges: curved` is explicit default.
+- **`boxEdge()` shared helper.** Precise ray–rectangle intersection exported from `layouts/shared.ts`; used by both `network` and `state-machine` for exact anchor points on box faces.
+
+### Changed
+
+- **`network` + `state-machine` arrowhead proximity.** `EDGE_ENTER_PAD` reduced from 10 → 3 px and marker `refX` advanced to the arrow tip so arrowheads land within ~3 px of their target box instead of ~8 px away.
+
 ## [0.3.0] — 2026-05-10
 
 ### Added
