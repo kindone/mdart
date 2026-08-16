@@ -2223,7 +2223,7 @@ async function sendChat() {
 
   // Generate a stable jobId stored in localStorage so we can reconnect if the page closes
   const jobId = crypto.randomUUID()
-  localStorage.setItem(PENDING_JOB_KEY, JSON.stringify({ jobId, sessionId: activeSessionId, timestamp: Date.now() }))
+  localStorage.setItem(PENDING_JOB_KEY, JSON.stringify({ jobId, sessionId: activeSessionId, timestamp: Date.now(), message }))
 
   // Signal first-token receipt to stop the thinking indicator
   const onFirstToken = () => { firstTokenReceived = true; clearInterval(thinkingTimer) }
@@ -2274,15 +2274,35 @@ async function attemptReconnect(jobId) {
   document.getElementById('btn-chat-send').disabled = true
   syncChatChrome()
   const bodyEl = appendStreamingMessage()
-  bodyEl.innerHTML = '<em style="color:#888;font-size:12px">Reconnecting to in-progress response…</em>'
-  bodyEl.classList.add('chat-typing')
+  // Show reconnect notice; thinking indicator is already in the bubble from appendStreamingMessage
+  const thinkEl = bodyEl.querySelector('.chat-thinking')
+  if (thinkEl) thinkEl.insertAdjacentHTML('beforebegin', '<em style="color:#888;font-size:11px;display:block;margin-bottom:4px">Reconnected — resuming response…</em>')
+
+  let reconnectSec = 0
+  let firstTokenReceived = false
+  const thinkingTimer = setInterval(() => {
+    if (firstTokenReceived) { clearInterval(thinkingTimer); return }
+    reconnectSec++
+    const timeEl = bodyEl.querySelector('.chat-thinking-time')
+    if (timeEl) {
+      const m = Math.floor(reconnectSec / 60), s = reconnectSec % 60
+      timeEl.textContent = ` · ${m}:${String(s).padStart(2, '0')}`
+    }
+    if (reconnectSec === 120) {
+      const th = bodyEl.querySelector('.chat-thinking')
+      if (th) th.insertAdjacentHTML('afterend', '<span class="chat-thinking-warn">⚠ Still waiting — the API may be slow or stalled.</span>')
+    }
+  }, 1000)
+  const onFirstToken = () => { firstTokenReceived = true; clearInterval(thinkingTimer) }
+
   try {
-    await connectToStream(jobId, bodyEl)
+    await connectToStream(jobId, bodyEl, onFirstToken)
   } catch (err) {
     bodyEl.innerHTML = `<span style="color:#f44747">Reconnect error: ${escHtml(err.message)}</span>`
     bodyEl.classList.remove('chat-typing')
     localStorage.removeItem(PENDING_JOB_KEY)
   } finally {
+    clearInterval(thinkingTimer)
     chatStreaming = false
     document.getElementById('btn-chat-send').disabled = false
     syncChatChrome()
@@ -2392,25 +2412,23 @@ function checkPendingJob() {
   const sessionExists = sessions.find(s => s.id === pending.sessionId)
   if (!sessionExists) { localStorage.removeItem(PENDING_JOB_KEY); return }
 
-  const chatToggle = document.getElementById('btn-chat-toggle')
-  chatToggle.style.position = 'relative'
-  const badge = document.createElement('span')
-  badge.id = 'chat-pending-badge'
-  badge.style.cssText = 'position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#c084fc;display:block'
-  chatToggle.appendChild(badge)
-
-  async function onOpen() {
-    const b = document.getElementById('chat-pending-badge')
-    if (b) b.remove()
+  // Auto-reconnect: open the chat panel if needed, restore the user message, then resume the stream
+  async function doReconnect() {
     if (pending.sessionId && pending.sessionId !== activeSessionId) {
       await switchToSession(pending.sessionId)
     }
-    setTimeout(() => attemptReconnect(pending.jobId), 100)
+    // Re-show the user's message that was lost on reload
+    if (pending.message) appendMessage('user', pending.message)
+    await attemptReconnect(pending.jobId)
   }
-  if (document.getElementById('chat-panel').classList.contains('open')) {
-    onOpen()
+
+  const panel = document.getElementById('chat-panel')
+  if (panel.classList.contains('open')) {
+    setTimeout(doReconnect, 100)
   } else {
-    chatToggle.addEventListener('click', onOpen, { once: true })
+    // Open the panel automatically — user was mid-conversation
+    document.getElementById('btn-chat-toggle').click()
+    setTimeout(doReconnect, 300)
   }
 }
 
