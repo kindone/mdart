@@ -27,7 +27,7 @@ Pick the **family** first; escalate to a specialist type only when a trigger is 
 | **Relationship** (sets, overlap, balance) | `venn` | 3 circles → `venn-3` · 4 circles → `venn-4` · concentric rings → `concentric` · weighted scale → `balance` · opposing forces → `opposing-arrows` · many↔one → `converging` / `diverging` · mesh → `web` · grouped buckets → `cluster` |
 | **Statistical** (data viz) | `progress-list` | composite KPI → `bullet-chart` · multi-metric → `scorecard` · area=quantity → `treemap` · flows with volumes → `sankey` · share of 100 → `waffle` · single dial → `gauge` · multi-axis → `radar` · 2-D value matrix → `heatmap` |
 | **Planning** (project / time) | `gantt-lite` | full board → `kanban` · sprint → `sprint-board` · pure schedule → `gantt` · milestones only → `milestone` · work breakdown → `wbs` · chronological log → `timeline` |
-| **Technical** (system) | `network` | tiered system → `layered-arch` · DB schema → `entity` · message flow → `sequence` · state transitions → `state-machine` · OOP class → `class` · build/CI stages → `pipeline` |
+| **Technical** (system) | `network` | tiered system → `layered-arch` · DB schema → `entity` · message flow → `sequence` · state transitions → `state-machine` · top-down flowchart with branches/loops → `flowchart` · OOP class → `class` · build/CI stages → `pipeline` |
 | **Plot** (x-y data) | `line-chart` | discrete points → `scatter` · filled area → `area-chart` · grouped / stacked bars → `bar-chart` |
 
 ### Aliases
@@ -54,7 +54,7 @@ Four names render identically to a canonical host. Prefer the alias when it bett
 | **Relationship** (14) | `venn`, `venn-3`, `venn-4`, `concentric`, `balance`, `counterbalance`, `opposing-arrows`, `web`, `cluster`, `target`, `radial`, `converging`, `diverging`, `plus` |
 | **Statistical** (9) | `progress-list`, `bullet-chart`, `scorecard`, `treemap`, `sankey`, `waffle`, `gauge`, `radar`, `heatmap` |
 | **Planning** (7) | `kanban`, `gantt`, `gantt-lite`, `sprint-board`, `timeline`, `milestone`, `wbs` |
-| **Technical** (7) | `layered-arch`, `entity`, `network`, `pipeline`, `sequence`, `state-machine`, `class` |
+| **Technical** (8) | `layered-arch`, `entity`, `network`, `pipeline`, `sequence`, `state-machine`, `flowchart`, `class` |
 | **Plot** (4) | `line-chart`, `scatter`, `area-chart`, `bar-chart` |
 
 ---
@@ -107,6 +107,7 @@ Walk these rules **in order — first match wins**.
 - General graph / mesh → `network`
 - Time-ordered messages between actors → `sequence`
 - States and transitions → `state-machine`
+- Top-down process flow with conditions and backward edges (loops) → `flowchart`
 - Build / CI stages → `pipeline`
 - Single feedback loop → `loop`
 - Many → one or one → many → `converging` / `diverging`
@@ -142,7 +143,7 @@ Walk these rules **in order — first match wins**.
 - Explicit phases → `phase-process`
 - 7+ steps that wrap → `snake-process`
 - Steps escalate / decline → `step-up` / `step-down`
-- Branches on condition → `decision-tree` or `state-machine`
+- Branches on condition → `decision-tree`, `state-machine`, or `flowchart` (top-down, with backward edges)
 - Parallel lanes → `swimlane`
 - Returns to start → `cycle` (or `loop` for feedback)
 
@@ -300,6 +301,7 @@ When a node carries a label *and* a value (number, type, status, target), the pa
 | Technical | `entity` | field type — `name: text [PK]` |
 | Technical | `sequence` | message text on `→ Target: message` |
 | Technical | `state-machine` | event label on `→ NextState: event` |
+| Technical | `flowchart` | edge label on `→ Target: label` |
 | List | `two-column-list`, `card-list`, `timeline-list` | right-side / sub-text value |
 | Planning | `gantt-lite`, `milestone`, `timeline` | dates, week ranges |
 
@@ -392,6 +394,7 @@ edges:
 | `matrix-2x2`, `bcg`, `ansoff` | 4-group headings | `- Stars` / `  - Product A (large)` |
 | `sequence` | Actors + `→ Target: message` children | `- Browser` / `  → API: GET /users` |
 | `state-machine` | States + `→ NextState: event` children | `- Idle` / `  → Running: start` |
+| `flowchart` | Nodes + `→ Target: label` children; `[start]` / `[end]` / `[decision]` attrs | `- Login [decision]` / `  → Dashboard: ok` / `  → Login: failed` |
 
 ### Global options (front-matter)
 

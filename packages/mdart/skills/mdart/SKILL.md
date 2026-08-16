@@ -1,6 +1,6 @@
 ---
 name: mdart
-description: Generate MdArt diagrams from structured intent — pick the right diagram type from 106+ layouts (process, list, hierarchy, comparison, cycle, matrix, pyramid, relationship, statistical, planning, technical, plot) and produce valid syntax. Use when the user asks for a diagram, chart, flowchart, mind map, comparison, org chart, timeline, kanban board, swot analysis, sequence diagram, state machine, gantt, funnel, sankey, treemap, line chart, scatter plot, bar chart, area chart, table, or any visual representation of structured information. Also use when generating ```mdart fenced blocks. Prefer mermaid only for complex conditional flow charts.
+description: Generate MdArt diagrams from structured intent — pick the right diagram type from 107+ layouts (process, list, hierarchy, comparison, cycle, matrix, pyramid, relationship, statistical, planning, technical, plot) and produce valid syntax. Use when the user asks for a diagram, chart, flowchart, mind map, comparison, org chart, timeline, kanban board, swot analysis, sequence diagram, state machine, gantt, funnel, sankey, treemap, line chart, scatter plot, bar chart, area chart, table, or any visual representation of structured information. Also use when generating ```mdart fenced blocks. For flowcharts use mdart `flowchart` type; prefer mermaid only when you need orthogonal routing, parallel fork/join, or 3+ exits from a single node.
 ---
 
 # MdArt diagram generation
@@ -60,4 +60,4 @@ For the full failure-mode catalog, read `anti-patterns.md` in this skill directo
 
 ---
 
-*Version: derived from mdart v0.3.0 · `docs/mdart.md` is the canonical cross-agent reference · regenerate via `scripts/regen-skill.md`.*
+*Version: derived from mdart v0.3.0+ · `docs/mdart.md` is the canonical cross-agent reference · regenerate via `scripts/regen-skill.md`.*
