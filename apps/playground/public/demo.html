@@ -2071,6 +2071,15 @@ function renderHistory() {
   if (!chatHistory.length) { empty.style.display = ''; syncChatChrome(); return }
   empty.style.display = 'none'
   for (const msg of chatHistory) appendMessage(msg.role, msg.content, false)
+  // Warn when history is long — accumulated context slows responses and raises token cost.
+  // 30+ messages ≈ 15 exchanges; suggest clearing to keep the session snappy.
+  if (chatHistory.length >= 30) {
+    const warn = document.createElement('div')
+    warn.className = 'chat-notice'
+    warn.style.cssText = 'color:#dcdcaa;border-top:1px solid #5e5e3c;margin-top:6px;padding-top:6px'
+    warn.textContent = `⚠ Long session (${chatHistory.length} messages) — responses may slow down. Consider clearing history (↺) to start fresh.`
+    msgs.appendChild(warn)
+  }
   msgs.scrollTop = msgs.scrollHeight
   syncChatChrome()
 }

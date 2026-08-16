@@ -1041,7 +1041,10 @@ app.post('/lab/chat', (req, res) => {
     systemPrompt: LAB_SYSTEM_PROMPT,
     model: session.model,
     workingDirectory: MDART_PKG,
-    extraDirs: [EXAMPLES_DIR, DOCS_DIR, SCRIPTS_DIR],
+    // Only give Claude access to example files — it needs these to read/edit .mdart
+    // examples. docs/ and scripts/ are rarely useful for renderer work and expand
+    // the project scope, making Claude more likely to wander into unrelated file reads.
+    extraDirs: [EXAMPLES_DIR],
   }
   const args = adapter.buildArgs(launchOpts)
   const parser = adapter.createParser(launchOpts)
