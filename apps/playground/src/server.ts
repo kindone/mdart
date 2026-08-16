@@ -1183,19 +1183,72 @@ Curated mdart + markdown showcases:
   apps/playground/examples/{mdart,markdown}/*.{mdart,md}
 You can edit these directly when the user asks to tweak an example.
 
-## Key types
+## Types (parser.ts)
 
-MdArtSpec   — spec.type, spec.title, spec.items (MdArtItem[]), spec.colors?
-MdArtItem   — item.label, item.value?, item.children[], item.attrs[]
-MdArtTheme  — primary, secondary, accent, muted, bg, surface, border,
-               text, textMuted, danger, warning, palette (string[])
+\`\`\`typescript
+interface MdArtItem {
+  label: string
+  value?: string            // "label: value" colon-split
+  attrs: string[]           // [attr1, attr2] bracket annotations
+  children: MdArtItem[]    // indented bullet children (containment)
+  flowChildren: MdArtItem[] // → prefixed children (directed edges)
+  prefix?: '+' | '-' | '?' | '!'  // SWOT quadrant chars
+  isMilestone?: boolean     // * prefix (gantt)
+}
+
+interface MdArtSpec {
+  type: string; title?: string; direction?: 'LR' | 'TB'
+  items: MdArtItem[]
+  nodes?: string[]                          // explicit node list (network)
+  edges?: Array<{from: string, to: string}> // explicit edge list (network)
+  columns?: string[]                        // header row (matrix-nxm, heatmap)
+  colors?: Record<string, string | string[]>
+  edgeStyle?: 'straight' | 'curved'        // network renderer option
+  animate?: boolean; animateSpeed?: number
+}
+
+interface MdArtTheme {
+  primary: string; secondary: string; accent: string
+  muted: string; bg: string; surface: string; border: string
+  text: string; textMuted: string; danger: string; warning: string
+  palette: string[]   // ordered series / categorical colours
+}
+\`\`\`
 
 ## Shared helpers (layouts/shared.ts)
 
-svgWrap(inner, W, H, theme)  — wraps content in a full <svg> with bg rect
-escapeXml(str)               — escapes & < > for SVG text nodes
-tt(str, max)                 — truncates with ellipsis
-renderEmpty(theme)           — placeholder SVG for empty input
+\`\`\`typescript
+// Font attribute strings — paste directly onto SVG <text> elements
+FONT_SANS_ATTR: string   // font-family="'Noto Sans', Inter, …"
+FONT_MONO_ATTR: string
+
+// SVG wrappers
+svgWrap(inner: string, W: number, H: number, theme: MdArtTheme): string
+escapeXml(s: string): string
+renderEmpty(theme: MdArtTheme): string  // placeholder when input is empty
+
+// Text truncation / wrapping
+tt(s: string, max: number, item?: ItemLike): string  // truncate with "…"
+wrapLabel(text: string, perLine: number, maxLines: number): string[]
+
+// Label / link helpers
+parseLink(label: string): { display: string; url: string | null }
+displayLabel(item: MdArtItem): { display: string; url: string | null }
+aWrap(content: string, url: string | null): string  // <a href> wrapper if url set
+itemTitleTag(item: ItemLike): string  // <title>full label</title> for accessibility
+
+// Animation & instrumentation
+shouldAnimate(spec: MdArtSpec): boolean
+shouldInstrument(): boolean
+wrapItem(content: string, i: number, animate: boolean, instrument: boolean): string
+seqSpotlightCSS(n: number, spec: MdArtSpec, options?: SeqSpotlightOptions): string
+animateSpeed(spec: MdArtSpec): number
+
+// Text measurement
+estimateTextWidth(s: string, fontSize: number): number
+fitTextToWidthShared(text: string, maxW: number, minFont: number, maxFont: number,
+                     attrs?: string): FitTextResult
+\`\`\`
 
 ## Your role
 
@@ -1205,7 +1258,10 @@ renderEmpty(theme)           — placeholder SVG for empty input
 - After editing a file the user clicks Apply to rebuild (~250 ms) and preview
 - Help author mdart source diagrams and explain syntax
 
-Keep responses concise. Show code diffs when suggesting changes.`
+Keep responses concise. Show code diffs when suggesting changes.
+The user's current file and mdart source are sent with the first message of each
+session (or when they change) — you don't need to re-read them from disk unless
+you need content beyond what was provided.`
 
 /** GET /health */
 app.get('/health', (_req, res) => {

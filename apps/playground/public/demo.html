@@ -1893,6 +1893,8 @@ window.addEventListener('resize', () => { if (!isMobile()) showMobPane('editor')
 
 const ACTIVE_SESSION_KEY = 'mdart-active-session'
 const PENDING_JOB_KEY    = 'mdart-pending-job'
+// Track last context string sent per session so we don't re-send unchanged file content
+const lastSentContext = new Map()  // sessionId → context string
 const DEFAULT_CHAT_META = {
   available: false,
   defaultCli: 'claude',
@@ -2196,6 +2198,10 @@ async function sendChat() {
     } else if (monacoEditor) {
       context = `Current ${mode} source:\n\`\`\`\n${monacoEditor.getValue().slice(0,2000)}\n\`\`\``
     }
+    // Skip re-sending context that hasn't changed since the last message in this session.
+    // The previous context is already in the conversation history and cached by the API.
+    if (context && context === lastSentContext.get(activeSessionId)) context = ''
+    else if (context) lastSentContext.set(activeSessionId, context)
   }
 
   chatStreaming = true
@@ -2364,6 +2370,7 @@ document.getElementById('btn-session-clear').addEventListener('click', async () 
   if (!confirm('Clear this session\'s history?')) return
   await clearSessionHistory(activeSessionId)
   chatHistory = []
+  lastSentContext.delete(activeSessionId)  // next message must re-send context
   renderHistory()
   const s = sessions.find(s => s.id === activeSessionId)
   if (s) { s.messageCount = 0; populateSessionSelect() }
@@ -2373,6 +2380,7 @@ document.getElementById('btn-session-clear').addEventListener('click', async () 
 document.getElementById('btn-session-delete').addEventListener('click', async () => {
   if (sessions.length <= 1) { alert('Cannot delete the only session.'); return }
   if (!confirm('Delete this session?')) return
+  lastSentContext.delete(activeSessionId)
   await deleteSession(activeSessionId)
   sessions = sessions.filter(s => s.id !== activeSessionId)
   activeSessionId = sessions[0].id
