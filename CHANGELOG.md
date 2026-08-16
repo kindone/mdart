@@ -10,6 +10,8 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ### Added
 
+- **`flowchart` type.** New top-down flowchart renderer. Node shapes: filled pill (`[start]`), double-border pill (`[end]`), diamond (`[decision]`), rounded rect (default). Layout: BFS-layered, forward-DAG with merge-column resolution; backward edges (loops) drawn as right-margin arcs. Supports edge labels (`→ Target: yes`). Scoped to presentation use: no orthogonal routing, no parallel fork/join — use Mermaid for those.
+
 - **`network` curved edges.** Ring-layout edges are now quadratic Bézier curves bowed outward from the ring centre (actual bow ~10% of chord). Bidi pairs bow to opposite sides for visual separation. New front-matter option `edges: straight` opts back into straight lines; `edges: curved` is explicit default.
 - **`boxEdge()` shared helper.** Precise ray–rectangle intersection exported from `layouts/shared.ts`; used by both `network` and `state-machine` for exact anchor points on box faces.
 

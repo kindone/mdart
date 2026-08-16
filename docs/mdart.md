@@ -392,6 +392,7 @@ edges:
 | `matrix-2x2`, `bcg`, `ansoff` | 4-group headings | `- Stars` / `  - Product A (large)` |
 | `sequence` | Actors + `→ Target: message` children | `- Browser` / `  → API: GET /users` |
 | `state-machine` | States + `→ NextState: event` children | `- Idle` / `  → Running: start` |
+| `flowchart` | Nodes + `→ Target: label` children; shape via `[start]` `[end]` `[decision]` attrs | `- Check [decision]` / `  → Next: yes` / `  → Alt: no` |
 
 **`network` layout notes:** nodes are arranged in a ring. Edges are quadratic Bézier curves bowed outward from the ring centre by default; bidi pairs bow to opposite sides for visual separation. Use `edges: straight` for simpler topologies.
 

@@ -202,8 +202,35 @@ title: System Health
 | `network` | infrastructure nodes | connections (label optional) |
 | `sequence` | actors | ordered messages (return arrows auto-inferred) |
 | `state-machine` | states | transitions with event label |
+| `flowchart` | process / decision nodes | directed edges with optional labels |
 
 `state-machine` extras: `[final]` attr on a state adds a double border; states named `End` or `Final` are auto-detected as final.
+
+`flowchart` extras: nodes are laid out top-down. Node shape is controlled by `[attr]`:
+
+| Attr | Shape | Auto-detected labels |
+|---|---|---|
+| `[start]` | filled pill | `Start` |
+| `[end]` | double-border pill | `End` |
+| `[decision]` | diamond | — |
+| *(none)* | rounded rect | — |
+
+Decisions have exactly two outgoing edges (label them `yes`/`no` via `→ Target: yes`). Backward edges (loops) are drawn as right-margin arcs.
+
+```mdart flowchart
+title: Order Processing
+- Start [start]
+  → Check Stock
+- Check Stock [decision]
+  → Process Order: yes
+  → Notify OOS: no
+- Notify OOS
+  → End [end]
+- Process Order
+  → Ship Item
+- Ship Item
+  → End [end]
+```
 
 `network` extras: nodes are arranged in a ring; edges are quadratic Bézier curves bowed away from the centre by default (bidi pairs bow to opposite sides for clarity). Use `edges: straight` to opt into straight lines.
 

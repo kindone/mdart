@@ -128,6 +128,7 @@ import { render as renderNetwork } from './layouts/technical/network'
 import { render as renderPipeline } from './layouts/technical/pipeline'
 import { render as renderSequence } from './layouts/technical/sequence'
 import { render as renderStateMachine } from './layouts/technical/state-machine'
+import { render as renderFlowchart } from './layouts/technical/flowchart'
 import { render as renderClass } from './layouts/technical/class'
 
 // plot family (x-y plots)
@@ -259,6 +260,7 @@ const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
   pipeline: renderPipeline,
   sequence: renderSequence,
   'state-machine': renderStateMachine,
+  flowchart: renderFlowchart,
   class: renderClass,
 
   // plot family
