@@ -26,6 +26,7 @@ const LAYER_GAP    = 96   // vertical center-to-center between layers
 const BRANCH_DX    = 166  // horizontal offset from trunk to right branch column
 const BACK_ARC_X   = W - 18  // x of right-margin backward-edge arc
 const ENTER_PAD    = 3    // gap between edge endpoint and node face
+const HOP_R        = 5    // radius of crossing-hop arc on backward H1 segment
 
 // Half-sizes keyed by node type (for edge anchor computation)
 const HW: Record<NodeType, number> = { start: TERM_W/2, end: TERM_W/2, process: PROC_W/2, decision: DIA_HW }
@@ -137,8 +138,10 @@ function assignCols(startId: string, adj: Adj, backward: Set<string>): Map<strin
     const fwd = (adj.get(id) ?? []).filter(e => !backward.has(`${id}→${e.to}`))
     fwd.forEach(({ to }, i) => {
       const newCol = i === 0 ? pc : pc + 1
-      // Merge nodes: keep the minimum column (trunk wins over branch)
-      cols.set(to, cols.has(to) ? Math.min(cols.get(to)!, newCol) : newCol)
+      // First-visit wins: trunk beats branch because BFS reaches trunk nodes first.
+      // Never override an already-assigned column — that would snap merge nodes back
+      // to col=0 and cause downstream same-column edges to draw through other nodes.
+      if (!cols.has(to)) cols.set(to, newCol)
       if (!visited.has(to)) { visited.add(to); queue.push(to) }
     })
   }
@@ -277,6 +280,65 @@ function renderNode(node: FNode, index: number, theme: MdArtTheme, animate: bool
   return wrapItem(renderNodeSvg(node, theme), index, animate, instrument)
 }
 
+// ── Crossing detection ─────────────────────────────────────────────────────
+
+/**
+ * For each backward arc, find every x position where its H1 (horizontal exit)
+ * segment is crossed by the V segment of a forward branch edge (col → col+1).
+ * Returns a map keyed by "from→to" edge id → sorted crossing x list.
+ *
+ * Only H1 is checked (the horizontal exit at sy). H2 (horizontal entry at dy)
+ * is always above or below any forward V segment in valid flowchart layouts.
+ */
+function detectCrossings(edges: FEdge[], nodes: Map<string, FNode>): Map<string, number[]> {
+  const result    = new Map<string, number[]>()
+  const fwdBranch = edges.filter(e =>
+    !e.backward && (nodes.get(e.from)?.col ?? 0) < (nodes.get(e.to)?.col ?? 0))
+  const bwdEdges  = edges.filter(e => e.backward)
+
+  for (const bwd of bwdEdges) {
+    const bwdSrc = nodes.get(bwd.from); const bwdDst = nodes.get(bwd.to)
+    if (!bwdSrc || !bwdDst) continue
+    const sx    = bwdSrc.x + HW[bwdSrc.type] + ENTER_PAD
+    const sy    = bwdSrc.y
+    const dxBwd = bwdDst.x + HW[bwdDst.type] + ENTER_PAD
+    const mx    = Math.max(BACK_ARC_X, sx + 20, dxBwd + 20)
+    const h1End = mx - 10  // corner-arc R=10
+
+    for (const fwd of fwdBranch) {
+      const fwdSrc = nodes.get(fwd.from); const fwdDst = nodes.get(fwd.to)
+      if (!fwdSrc || !fwdDst) continue
+      // V segment of forward edge: x = fwdDst.x, y ∈ [fwdSrc.y, fwdDst.y - HH - pad]
+      const vx  = fwdDst.x
+      const vy1 = fwdSrc.y
+      const vy2 = fwdDst.y - HH[fwdDst.type] - ENTER_PAD
+      if (sx <= vx && vx <= h1End && vy1 <= sy && sy <= vy2) {
+        const key = `${bwd.from}→${bwd.to}`
+        const arr = result.get(key) ?? []
+        arr.push(vx)
+        result.set(key, arr)
+      }
+    }
+  }
+  for (const [k, xs] of result) result.set(k, xs.sort((a, b) => a - b))
+  return result
+}
+
+/** Build the H1 path string, inserting upward hop arcs at each crossing x. */
+function buildH1(sx: number, sy: number, endX: number, hopXs: number[]): string {
+  if (!hopXs.length) return `H${endX.toFixed(1)}`
+  const parts: string[] = []
+  let cur = sx
+  for (const cx of hopXs) {
+    if (cx - HOP_R > cur) parts.push(`H${(cx - HOP_R).toFixed(1)}`)
+    // sweep=1 → arc bends upward (y decreases) — visually bridges over the forward edge
+    parts.push(`A${HOP_R},${HOP_R} 0 0,1 ${(cx + HOP_R).toFixed(1)},${sy.toFixed(1)}`)
+    cur = cx + HOP_R
+  }
+  if (cur < endX) parts.push(`H${endX.toFixed(1)}`)
+  return parts.join(' ')
+}
+
 // ── Edge rendering ─────────────────────────────────────────────────────────
 
 function edgeLabelSvg(
@@ -292,7 +354,11 @@ function edgeLabelSvg(
   ].join('')
 }
 
-function renderEdge(edge: FEdge, nodes: Map<string, FNode>, theme: MdArtTheme): string {
+function renderEdge(
+  edge: FEdge, nodes: Map<string, FNode>, theme: MdArtTheme,
+  animate = false, nodeIndex?: Map<string, number>,
+  hops?: Map<string, number[]>,
+): string {
   const src = nodes.get(edge.from)
   const dst = nodes.get(edge.to)
   if (!src || !dst) return ''
@@ -308,8 +374,23 @@ function renderEdge(edge: FEdge, nodes: Map<string, FNode>, theme: MdArtTheme): 
     const dx = dst.x + HW[dst.type] + ENTER_PAD
     const dy = dst.y
     const mx = Math.max(BACK_ARC_X, sx + 20, dx + 20)
-    d  = `M${sx.toFixed(1)},${sy.toFixed(1)} C${mx},${sy.toFixed(1)} ${mx},${dy.toFixed(1)} ${dx.toFixed(1)},${dy.toFixed(1)}`
-    lx = mx + 5; ly = (sy + dy) / 2; la = 'start'
+    // Rounded-corner rectangular arc — three segments joined by quadratic arcs:
+    //   ① horizontal exit  →  ② vertical right-margin run  →  ③ horizontal entry
+    // The arrowhead always sits on a pure-horizontal final H segment, so
+    // orient="auto" snaps it to exactly leftward with no visual mismatch.
+    // (The previous cubic bezier had the tangent correct at t=1 but the curve
+    // visually appeared diagonal in the 50-60 px leading up to the endpoint.)
+    const R      = 10
+    const hopXs  = hops?.get(`${edge.from}→${edge.to}`) ?? []
+    d = [
+      `M${sx.toFixed(1)},${sy.toFixed(1)}`,
+      buildH1(sx, sy, mx - R, hopXs),
+      `Q${mx},${sy.toFixed(1)} ${mx},${(sy - R).toFixed(1)}`,
+      `V${(dy + R).toFixed(1)}`,
+      `Q${mx},${dy.toFixed(1)} ${(mx - R).toFixed(1)},${dy.toFixed(1)}`,
+      `H${dx.toFixed(1)}`,
+    ].join(' ')
+    lx = mx - 5; ly = (sy + dy) / 2; la = 'end'
 
   } else if (src.col === dst.col) {
     // Same column → straight vertical
@@ -339,10 +420,19 @@ function renderEdge(edge: FEdge, nodes: Map<string, FNode>, theme: MdArtTheme): 
     lx = (p1x + p2x) / 2; ly = (p1y + p2y) / 2; la = 'middle'
   }
 
-  return [
-    `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="1.5" marker-end="url(#fc-arr)"/>`,
-    edgeLabelSvg(edge.label, lx, ly, la, theme),
-  ].join('')
+  const inner =
+    `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="1.5" marker-end="url(#fc-arr)"/>` +
+    edgeLabelSvg(edge.label, lx, ly, la, theme)
+
+  if (animate && nodeIndex) {
+    // Forward edges appear with the destination node (arrow "arrives" with its target).
+    // Backward edges appear with the source node — the loop-back path is revealed
+    // when the branching node is introduced, not when the already-visible target was.
+    const slotId  = edge.backward ? edge.from : edge.to
+    const slotIdx = nodeIndex.get(slotId) ?? 0
+    return `<g class="mdart-arr-n${slotIdx}">${inner}</g>`
+  }
+  return inner
 }
 
 // ── Export ─────────────────────────────────────────────────────────────────
@@ -357,12 +447,16 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   // Stable render order: lower layers first, then by col (for animation indexing)
   const nodeList = [...nodes.values()].sort((a, b) => a.layer - b.layer || a.col - b.col)
+  // Map node id → its index in nodeList so edges can reference the destination slot
+  const nodeIndex = new Map(nodeList.map((n, i) => [n.id, i]))
+  // Pre-compute where backward arcs cross forward branch edges so we can draw hops
+  const crossings = detectCrossings(edges, nodes)
 
   const parts: string[] = [
     renderDefs(theme),
     renderTitle(spec.title, theme),
     // Edges drawn first (below nodes)
-    ...edges.map(e => renderEdge(e, nodes, theme)),
+    ...edges.map(e => renderEdge(e, nodes, theme, animate, nodeIndex, crossings)),
     // Nodes on top
     ...nodeList.map((n, i) => renderNode(n, i, theme, animate, instrument)),
   ]
