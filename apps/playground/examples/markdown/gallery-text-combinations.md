@@ -323,6 +323,33 @@ title: Preview Dependency Network
   -> Built client bundle and cached static assets
 ```
 
+### Flowchart with decision branches and backward edge
+
+```mdart
+type: flowchart
+title: Checkout Flow
+
+- Start [start]
+  → Review Cart
+- Review Cart
+  → Apply Coupon [decision]
+- Apply Coupon [decision]
+  → Validate Coupon: yes
+  → Enter Payment: no
+- Validate Coupon [decision]
+  → Apply Discount: valid
+  → Review Cart: invalid
+- Apply Discount
+  → Enter Payment
+- Enter Payment
+  → Charge Card [decision]
+- Charge Card [decision]
+  → Confirm Order: success
+  → Enter Payment: declined
+- Confirm Order
+  → End [end]
+```
+
 ### Class members and modifiers
 
 ```mdart

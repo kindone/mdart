@@ -1265,6 +1265,32 @@ title: Order Lifecycle
 - Cancelled [final]
 ```
 
+### `flowchart`
+
+```mdart
+type: flowchart
+title: User Signup Flow
+
+- Start [start]
+  → Enter Details
+- Enter Details
+  → Validate Form [decision]
+- Validate Form [decision]
+  → Check Email: valid
+  → Show Errors: invalid
+- Show Errors
+  → Enter Details
+- Check Email [decision]
+  → Send Verification: available
+  → Show Errors: taken
+- Send Verification
+  → Verify Email
+- Verify Email
+  → Activate Account
+- Activate Account
+  → End [end]
+```
+
 ### `class`
 
 ```mdart
