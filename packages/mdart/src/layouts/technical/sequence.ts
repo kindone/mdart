@@ -358,8 +358,8 @@ function resolveLayout(spec: MdArtSpec): SequenceLayout | null {
   const actorBoxY = titleH + ACTOR_BOX_TOP_GAP
   const lifeY1   = titleH + actorH + PAD_V
 
-  const { laid: laidEvents, endY } = layoutEventsAt(events, lifeY1)
-  const lifeY2 = Math.max(endY + PAD_V, lifeY1 + MSG_GAP + PAD_V)
+  const { laid: laidEvents, endY } = layoutEventsAt(events, lifeY1 + PAD_V)
+  const lifeY2 = Math.max(endY + PAD_V, lifeY1 + MSG_GAP + PAD_V * 2)
   const h      = lifeY2 + LIFE_BOTTOM_PAD
 
   return {
@@ -586,12 +586,12 @@ function renderRegionBox(
   const boxW = layout.w - 2 * REGION_BOX_MARGIN
   const parts: string[] = []
 
-  // Main dashed border
+  // Main dashed border — stronger opacity so it's legible on dark backgrounds
   parts.push(
-    `<rect x="${boxX}" y="${lev.y.toFixed(1)}" width="${boxW.toFixed(1)}" height="${lev.h.toFixed(1)}" rx="4" fill="${theme.accent}08" stroke="${theme.accent}66" stroke-width="1" stroke-dasharray="5,3"/>`,
+    `<rect x="${boxX}" y="${lev.y.toFixed(1)}" width="${boxW.toFixed(1)}" height="${lev.h.toFixed(1)}" rx="4" fill="${theme.accent}0d" stroke="${theme.accent}aa" stroke-width="1.5" stroke-dasharray="6,3"/>`,
   )
 
-  // First-branch label tag — top-left corner
+  // First-branch label tag — top-left corner, overlaps the border (standard UML fragment style)
   const mainTag = regionTagText(lev.event.regionType, lev.branches[0]?.label ?? '')
   parts.push(renderRegionTag(boxX, lev.y, mainTag, theme))
 
@@ -601,11 +601,12 @@ function renderRegionBox(
     if (br.dividerY === undefined) continue
     const lineY = br.dividerY + Math.round(BRANCH_DIV_H / 2)
     parts.push(
-      `<line x1="${boxX}" y1="${lineY}" x2="${(boxX + boxW).toFixed(1)}" y2="${lineY}" stroke="${theme.accent}66" stroke-width="1" stroke-dasharray="5,3"/>`,
+      `<line x1="${boxX}" y1="${lineY}" x2="${(boxX + boxW).toFixed(1)}" y2="${lineY}" stroke="${theme.accent}99" stroke-width="1.5" stroke-dasharray="6,3"/>`,
     )
     const tagText = contTagText(lev.event.regionType, br.label)
-    const tagY    = lineY - Math.round(REGION_TAG_H / 2)
-    parts.push(renderRegionTag(boxX + boxW, tagY, tagText, theme, true))
+    // Tag sits above the divider line, left-aligned — consistent with the main tag
+    const tagY = lineY - REGION_TAG_H
+    parts.push(renderRegionTag(boxX, tagY, tagText, theme))
   }
 
   return wrapItem(parts.join(''), animIdx, animate, instrument)

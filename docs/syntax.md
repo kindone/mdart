@@ -53,7 +53,7 @@ Arrow chain shorthand: `Step 1 -> Step 2 -> Step 3`
 - `+`, `?`, `!` prefix items (SWOT-style) are treated as plain items in any non-SWOT type
 - `-` items in `swot` are treated as weaknesses at top level, plain bullets when nested
 
-**Caveat — flow-only diagram types:** `sequence`, `state-machine`, and `network` interpret children as **edges/messages**, not containment. Use `-> Target: message` for those — a plain `- Target` child is still parsed (it lands in the same flow slot) but reads less clearly to anyone editing the source. Recommendation: pick `->` for these three types, and `-` everywhere else.
+**Caveat — edge-oriented diagram types:** `state-machine` and `network` interpret children as **edges**, not containment. Use `-> Target: message` for those. `sequence` uses a flat message model — write `- A -> B: msg` as top-level items (see the sequence section below for full syntax).
 
 **Indentation** — the indent step is auto-detected per fence. Use **2 spaces, 4 spaces, or 1 tab** — whichever you prefer, as long as it's consistent within a single block. The parser uses the smallest non-zero leading-whitespace count it sees as the unit; all deeper levels must be a multiple of it. Don't mix styles inside one fence.
 
@@ -204,14 +204,35 @@ title: System Health
 | `state-machine` | states | transitions with event label |
 | `flowchart` | process / decision nodes | directed edges with optional labels |
 
-`sequence` extras:
+`sequence` — messages are top-level items; actors are inferred from first appearance.
+
+**Message syntax** (two equivalent forms):
+
+```
+- Client → Server: POST /data [+]   ← flat form  (preferred)
+- Client                             ← nested form (still supported)
+  → Server: POST /data [+]
+```
+
+`→` and `->` are interchangeable everywhere.
+
+**Region fragments** — use indented children as branch body; `else`/`elif`/`and` split branches:
+
+| Keyword | Continuation | Use |
+|---|---|---|
+| `alt: condition` | `else:` / `elif: cond` | Conditional — one branch fires |
+| `opt: condition` | *(none)* | Optional block |
+| `loop: description` | *(none)* | Repetition |
+| `par:` / `par: label` | `and:` / `and: label` | Parallel execution |
+
+**Other extras:**
 
 | Feature | Syntax | Effect |
 |---|---|---|
-| Activation bar start | `→ Target: msg [+]` or `[activate]` | Draws a thick bar on Target's lifeline from this message |
-| Activation bar end | `→ Target: msg [-]` or `[deactivate]` | Ends the bar on the *sending* actor at this message |
-| Divider | `- --- Label` top-level item (no children) | Horizontal rule with italic label across all lifelines |
-| Adaptive width | automatic | Canvas expands beyond 600 px when actors need ≥ 110 px each |
+| Activation bar | `[+]` on arrow | Opens bar on target actor |
+| Deactivation | `[-]` on arrow | Closes bar on sending actor |
+| Divider | `- divider: Label` or `- --- Label` | Horizontal rule with italic label |
+| Adaptive width | automatic | Canvas expands when actors exceed 600 px |
 
 `state-machine` extras: `[final]` attr on a state adds a double border; states named `End` or `Final` are auto-detected as final.
 
@@ -249,16 +270,18 @@ title: Order Processing
 
 ```mdart sequence
 title: Login Flow
-- Client
-  -> Auth: POST /login [+]
-- --- Validate
-- Auth
-  -> DB: SELECT user [+]
-- DB
-  -> Auth: user row [-]
-- --- Respond
-- Auth
-  -> Client: 200 OK + token [-]
+
+- Client -> Auth: POST /login [+]
+
+- divider: Validate
+
+- Auth -> DB: SELECT user [+]
+- DB -> Auth: user row [-]
+
+- alt: user found
+  - Auth -> Client: 200 OK + token [-]
+  - else:
+    - Auth -> Client: 401 Unauthorized [-]
 ```
 
 <picture>
