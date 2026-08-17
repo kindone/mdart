@@ -371,13 +371,23 @@ function resolveLayout(spec: MdArtSpec): SequenceLayout | null {
 
 // ── Activation bar computation ────────────────────────────────────────────────
 
-function flattenLaidMessages(laid: LayoutEvent[]): Array<{ event: MessageEvent; y: number }> {
-  const result: Array<{ event: MessageEvent; y: number }> = []
+interface FlatMsg { event: MessageEvent; y: number; regionBottomY?: number }
+
+/**
+ * Flatten all messages in layout order, annotating each with the bottom y
+ * of its immediately containing region (if any).  Used by computeActivations
+ * so that a [-] deactivation inside a region extends the bar to the region
+ * boundary rather than ending it at the arrow's own y — which is the correct
+ * UML semantic: the caller is active for the whole duration of the fragment.
+ */
+function flattenLaidMessages(laid: LayoutEvent[], regionBottomY?: number): FlatMsg[] {
+  const result: FlatMsg[] = []
   for (const lev of laid) {
     if (lev.kind === 'message') {
-      result.push({ event: lev.event, y: lev.y })
+      result.push({ event: lev.event, y: lev.y, regionBottomY })
     } else if (lev.kind === 'region') {
-      for (const br of lev.branches) result.push(...flattenLaidMessages(br.events))
+      const bottom = lev.y + lev.h
+      for (const br of lev.branches) result.push(...flattenLaidMessages(br.events, bottom))
     }
   }
   return result
@@ -387,13 +397,16 @@ function computeActivations(layout: SequenceLayout): Map<string, Activation[]> {
   const result = new Map<string, Activation[]>()
   const open   = new Map<string, number>()
 
-  for (const { event: msg, y } of flattenLaidMessages(layout.laidEvents)) {
+  for (const { event: msg, y, regionBottomY } of flattenLaidMessages(layout.laidEvents)) {
     if (msg.activateTarget) open.set(msg.to, y)
     if (msg.deactivateSender) {
       const y1 = open.get(msg.from)
       if (y1 !== undefined) {
+        // If deactivating inside a region, extend to the region bottom so the
+        // bar spans the whole fragment (either branch may execute at runtime).
+        const y2 = regionBottomY !== undefined ? Math.max(y, regionBottomY) : y
         const list = result.get(msg.from) ?? []
-        list.push({ y1, y2: y })
+        list.push({ y1, y2 })
         result.set(msg.from, list)
         open.delete(msg.from)
       }
