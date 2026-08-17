@@ -177,7 +177,7 @@ const FAMILIES = [
       { name: 'entity', source: `type: entity\ntitle: Core Schema\n- sessions\n  - id [PK]\n  - project_id [FK]\n  - title\n  - created_at\n- projects\n  - id [PK]\n  - name\n  - path\n- artifacts\n  - id [PK]\n  - session_id [FK]\n  - type` },
       { name: 'network', source: `type: network\ntitle: Service Topology\n- Browser\n  → API Server\n  → CDN\n- API Server\n  → Worker\n  → SQLite\n- Worker\n  → Claude CLI\n  → MCP Server` },
       { name: 'pipeline', source: `type: pipeline\ntitle: CI/CD Pipeline\n- Source → Lint → Test → Build → Deploy → Monitor` },
-      { name: 'sequence', source: `type: sequence\ntitle: Auth Flow\n- Browser\n  → API: POST /login\n- API\n  → DB: SELECT user\n- DB\n  → API: user row\n- API\n  → Browser: Set-Cookie` },
+      { name: 'sequence', source: `type: sequence\ntitle: User Login\n\n- Client -> Auth: POST /login [+]\n\n- divider: Validate credentials\n\n- Auth -> DB: SELECT user [+]\n- DB -> Auth: { hash } [-]\n\n- alt: password match\n  - Auth -> Client: 200 OK + token [-]\n  - else:\n    - Auth -> Client: 401 Unauthorized [-]` },
       { name: 'state-machine', source: `type: state-machine\ntitle: Order Lifecycle\n- Pending\n  → Processing: payment ok\n  → Cancelled: timeout\n- Processing\n  → Shipped: packed\n  → Pending: retry\n- Shipped\n  → Delivered: confirmed\n- Delivered [final]\n- Cancelled [final]` },
       { name: 'class', source: `type: class\ntitle: Domain Model\n- Animal [abstract]\n  - + name\n  - + species\n  - + speak() [abstract]\n- Dog\n  - - breed\n  - + speak()\n  - + fetch()\n- Cat [interface]\n  - + purr()\n  - + scratch()` },
     ],

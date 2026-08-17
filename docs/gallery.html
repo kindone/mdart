@@ -177,7 +177,7 @@ section { margin-bottom: 3.5rem; }
 <a href="#list" class="nav-link">List <span class="nav-count">15</span></a>
 <a href="#cycle" class="nav-link">Cycle <span class="nav-count">9</span></a>
 <a href="#hierarchy" class="nav-link">Hierarchy <span class="nav-count">9</span></a>
-<a href="#matrix" class="nav-link">Matrix <span class="nav-count">7</span></a>
+<a href="#matrix" class="nav-link">Matrix <span class="nav-count">8</span></a>
 <a href="#pyramid" class="nav-link">Pyramid <span class="nav-count">5</span></a>
 <a href="#relationship" class="nav-link">Relationship <span class="nav-count">13</span></a>
 <a href="#statistical" class="nav-link">Statistical <span class="nav-count">9</span></a>
@@ -1270,7 +1270,7 @@ title: Product Strategy
   <section id="matrix">
     <div class="family-header">
       <h2>Matrix</h2>
-      <p>Comparisons, SWOT, 2×2 grids, BCG, and Ansoff.</p>
+      <p>Comparisons, SWOT, 2×2 grids, BCG, Ansoff, and generic tables.</p>
     </div>
     
     <div class="card" id="swot">
@@ -1448,6 +1448,28 @@ title: Skills Matrix
           <picture>
             <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/matrix-nxm.svg">
             <img alt="matrix-nxm" src="./examples/gallery/matrix-nxm-light.svg">
+          </picture>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="table">
+      <div class="card-header">
+        <code class="card-name">table</code>
+      </div>
+      <div class="card-body">
+        <div class="card-code"><pre>type: table
+title: Generic Decision Table
+
+| Criterion | Option A | Option B | Notes |
+|---|---|---|---|
+| Startup cost | Low | Medium | Existing vendor discount applies |
+| Operational fit | Strong | Moderate | Option B needs new runbooks |
+| Risk | Medium | Low | Contract review still pending |</pre></div>
+        <div class="card-svg">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/table.svg">
+            <img alt="table" src="./examples/gallery/table-light.svg">
           </picture>
         </div>
       </div>
@@ -2326,15 +2348,19 @@ title: CI/CD Pipeline
       </div>
       <div class="card-body">
         <div class="card-code"><pre>type: sequence
-title: Auth Flow
-- Browser
-  → API: POST /login
-- API
-  → DB: SELECT user
-- DB
-  → API: user row
-- API
-  → Browser: Set-Cookie</pre></div>
+title: User Login
+
+- Client -&gt; Auth: POST /login [+]
+
+- divider: Validate credentials
+
+- Auth -&gt; DB: SELECT user [+]
+- DB -&gt; Auth: { hash } [-]
+
+- alt: password match
+  - Auth -&gt; Client: 200 OK + token [-]
+  - else:
+    - Auth -&gt; Client: 401 Unauthorized [-]</pre></div>
         <div class="card-svg">
           <picture>
             <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/sequence.svg">

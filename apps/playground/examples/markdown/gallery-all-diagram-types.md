@@ -1,6 +1,6 @@
 # MdArt Diagram Gallery
 
-Every layout type (101 total across 11 families) with its mdart source.
+Every layout type (102 total across 11 families) with its mdart source.
 
 ## Process
 
@@ -724,6 +724,19 @@ title: Skills Matrix
   - Expert
 ```
 
+### `table`
+
+```mdart
+type: table
+title: Generic Decision Table
+
+| Criterion | Option A | Option B | Notes |
+|---|---|---|---|
+| Startup cost | Low | Medium | Existing vendor discount applies |
+| Operational fit | Strong | Moderate | Option B needs new runbooks |
+| Risk | Medium | Low | Contract review still pending |
+```
+
 ## Pyramid
 
 ### `pyramid`
@@ -1237,15 +1250,19 @@ title: CI/CD Pipeline
 
 ```mdart
 type: sequence
-title: Auth Flow
-- Browser
-  → API: POST /login
-- API
-  → DB: SELECT user
-- DB
-  → API: user row
-- API
-  → Browser: Set-Cookie
+title: User Login
+
+- Client -> Auth: POST /login [+]
+
+- divider: Validate credentials
+
+- Auth -> DB: SELECT user [+]
+- DB -> Auth: { hash } [-]
+
+- alt: password match
+  - Auth -> Client: 200 OK + token [-]
+  - else:
+    - Auth -> Client: 401 Unauthorized [-]
 ```
 
 ### `state-machine`
@@ -1263,32 +1280,6 @@ title: Order Lifecycle
   → Delivered: confirmed
 - Delivered [final]
 - Cancelled [final]
-```
-
-### `flowchart`
-
-```mdart
-type: flowchart
-title: User Signup Flow
-
-- Start [start]
-  → Enter Details
-- Enter Details
-  → Validate Form [decision]
-- Validate Form [decision]
-  → Check Email: valid
-  → Show Errors: invalid
-- Show Errors
-  → Enter Details
-- Check Email [decision]
-  → Send Verification: available
-  → Show Errors: taken
-- Send Verification
-  → Verify Email
-- Verify Email
-  → Activate Account
-- Activate Account
-  → End [end]
 ```
 
 ### `class`

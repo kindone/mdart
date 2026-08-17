@@ -891,7 +891,7 @@ title: Product Strategy
 
 ## Matrix
 
-_Comparisons, SWOT, 2×2 grids, BCG, and Ansoff._
+_Comparisons, SWOT, 2×2 grids, BCG, Ansoff, and generic tables._
 
 ### `swot`
 
@@ -1043,6 +1043,24 @@ title: Skills Matrix
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/matrix-nxm.svg">
   <img alt="matrix-nxm" src="./examples/gallery/matrix-nxm-light.svg">
+</picture>
+
+### `table`
+
+```
+type: table
+title: Generic Decision Table
+
+| Criterion | Option A | Option B | Notes |
+|---|---|---|---|
+| Startup cost | Low | Medium | Existing vendor discount applies |
+| Operational fit | Strong | Moderate | Option B needs new runbooks |
+| Risk | Medium | Low | Contract review still pending |
+```
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/table.svg">
+  <img alt="table" src="./examples/gallery/table-light.svg">
 </picture>
 
 ---
@@ -1763,15 +1781,19 @@ title: CI/CD Pipeline
 
 ```
 type: sequence
-title: Auth Flow
-- Browser
-  → API: POST /login
-- API
-  → DB: SELECT user
-- DB
-  → API: user row
-- API
-  → Browser: Set-Cookie
+title: User Login
+
+- Client -> Auth: POST /login [+]
+
+- divider: Validate credentials
+
+- Auth -> DB: SELECT user [+]
+- DB -> Auth: { hash } [-]
+
+- alt: password match
+  - Auth -> Client: 200 OK + token [-]
+  - else:
+    - Auth -> Client: 401 Unauthorized [-]
 ```
 
 <picture>
