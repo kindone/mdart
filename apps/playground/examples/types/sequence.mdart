@@ -1,17 +1,23 @@
 type: sequence
 title: Checkout Flow
 
-- Client
-  → Gateway: POST /orders [+]
-- --- Validate
-- Gateway
-  → Inventory: check stock [+]
-- Inventory
-  → Gateway: ok [-]
-- Gateway
-  → Payment: charge card [+]
-- --- Respond
-- Payment
-  → Gateway: authorised [-]
-- Gateway
-  → Client: 201 Created [-]
+- Client → Gateway: POST /checkout [+]
+
+- opt: cart not empty
+  - Gateway → Cart: validate items
+  - Cart → Gateway: ok
+
+- alt: payment method
+  - Gateway → Stripe: charge card [+]
+  - Stripe → Gateway: authorised [-]
+  - else:
+    - Gateway → Client: 402 Payment Required
+
+- divider: Fulfillment
+
+- par: notify parties
+  - Gateway → Email: send receipt
+  - and:
+    - Gateway → DB: INSERT order
+
+- Gateway → Client: 201 Created [-]

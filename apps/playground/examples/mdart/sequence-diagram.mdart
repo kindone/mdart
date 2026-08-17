@@ -1,21 +1,21 @@
 type: sequence
 title: OAuth 2.0 Code Flow
 
-- Browser
-  → Auth Server: GET /authorize?client_id=… [+]
-- --- User authenticates
-- Auth Server
-  → Browser: 302 + code [-]
-- Browser
-  → Auth Server: POST /token (code) [+]
-- Auth Server
-  → Browser: { access_token, refresh_token } [-]
-- --- API call
-- Browser
-  → API Server: GET /profile (Bearer token) [+]
-- API Server
-  → Auth Server: GET /introspect [+]
-- Auth Server
-  → API Server: { active: true, sub: "u42" } [-]
-- API Server
-  → Browser: { id, email, name } [-]
+- Browser → Auth Server: GET /authorize?client_id=… [+]
+
+- divider: User authenticates
+
+- Auth Server → Browser: 302 + code [-]
+- Browser → Auth Server: POST /token (code) [+]
+- Auth Server → Browser: { access_token, refresh_token } [-]
+
+- divider: API call
+
+- Browser → API Server: GET /profile (Bearer token) [+]
+
+- alt: token valid
+  - API Server → Auth Server: GET /introspect [+]
+  - Auth Server → API Server: { active: true } [-]
+  - API Server → Browser: { id, email, name } [-]
+  - else:
+    - API Server → Browser: 401 Unauthorized [-]

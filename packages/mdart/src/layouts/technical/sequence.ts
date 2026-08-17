@@ -1,45 +1,90 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, tt, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag, displayLabelValue, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
+import {
+  escapeXml, tt, wrapLabel, renderEmpty, parseLink, aWrap,
+  itemTitleTag, displayLabelValue, shouldAnimate, seqSpotlightCSS,
+  wrapItem, shouldInstrument, FONT_SANS_ATTR,
+} from '../shared'
 
 // ── Layout constants ──────────────────────────────────────────────────────────
-const BASE_W = 600          // minimum canvas width; expands when actors need more room
-const MIN_COL_W = 110       // narrowest a single column can be
-const TITLE_H_WITH_TITLE = 30
-const TITLE_H_NO_TITLE = 8
-const MSG_GAP = 36
-const PAD_V = 16
-const ACTOR_LH = 13
-const ACTOR_VPAD = 7
-const ACTOR_MAX_LINES = 2
-const ACTOR_MAX_W = 96
-const ACTOR_SIDE_PAD = 16
-const ACTOR_TEXT_PAD = 10
-const ACTOR_FONT_SIZE = 11
-const ACTOR_BOX_TOP_GAP = 8
-const LIFE_BOTTOM_PAD = 16
-const SELF_LOOP_EXT_RATIO = 0.38
+const BASE_W               = 600
+const MIN_COL_W            = 110
+const TITLE_H_WITH_TITLE   = 30
+const TITLE_H_NO_TITLE     = 8
+const MSG_GAP              = 36
+const PAD_V                = 16
+const ACTOR_LH             = 13
+const ACTOR_VPAD           = 7
+const ACTOR_MAX_LINES      = 2
+const ACTOR_MAX_W          = 96
+const ACTOR_SIDE_PAD       = 16
+const ACTOR_TEXT_PAD       = 10
+const ACTOR_FONT_SIZE      = 11
+const ACTOR_BOX_TOP_GAP    = 8
+const LIFE_BOTTOM_PAD      = 16
+const SELF_LOOP_EXT_RATIO  = 0.38
 const SELF_LOOP_DROP_RATIO = 0.55
-const SELF_LABEL_CHAR_PX = 5
+const SELF_LABEL_CHAR_PX   = 5
 const MESSAGE_LABEL_CHAR_PX = 7
-const ACTIVATION_BAR_W = 10
+const ACTIVATION_BAR_W     = 10
+// Region box constants
+const REGION_BOX_MARGIN    = 6    // left/right margin from canvas edge
+const REGION_PAD_TOP       = 20   // space from box top to first event (≥ tag height 14)
+const REGION_PAD_BOTTOM    = 8    // space from last event to box bottom
+const BRANCH_DIV_H         = 22   // total height of branch-divider transition
+const REGION_MIN_BRANCH_H  = MSG_GAP  // min event area for an empty branch
+const REGION_TAG_H         = 14
+const REGION_TAG_CHAR_PX   = 5.5
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── SeqEvent model ────────────────────────────────────────────────────────────
 
-interface Message {
+interface MessageEvent {
+  kind: 'message'
   from: string
   to: string
   msg: string
-  isDivider?: boolean
-  dividerLabel?: string
-  activateTarget?: boolean   // [+] or [activate] on the arrow — bar starts on `to`
-  deactivateSender?: boolean // [-] or [deactivate] on the arrow — bar ends on `from`
+  activateTarget?: boolean
+  deactivateSender?: boolean
 }
 
-interface Activation {
-  y1: number
-  y2: number
+interface DividerEvent {
+  kind: 'divider'
+  label: string
 }
+
+interface RegionBranch {
+  label: string       // condition / branch label (may be empty)
+  events: SeqEvent[]
+}
+
+interface RegionEvent {
+  kind: 'region'
+  regionType: 'alt' | 'opt' | 'loop' | 'par'
+  branches: RegionBranch[]
+}
+
+type SeqEvent = MessageEvent | DividerEvent | RegionEvent
+
+// ── Layout types ──────────────────────────────────────────────────────────────
+
+interface LayoutMsg    { kind: 'message'; event: MessageEvent; y: number }
+interface LayoutDiv    { kind: 'divider'; event: DividerEvent; y: number }
+interface LayoutRegion {
+  kind: 'region'
+  event: RegionEvent
+  y: number
+  h: number
+  branches: LayoutBranch[]
+}
+type LayoutEvent = LayoutMsg | LayoutDiv | LayoutRegion
+
+interface LayoutBranch {
+  label: string
+  dividerY?: number   // undefined for the first branch
+  events: LayoutEvent[]
+}
+
+interface Activation { y1: number; y2: number }
 
 interface ActorRender {
   actor: string
@@ -52,7 +97,7 @@ interface ActorRender {
 
 interface SequenceLayout {
   actors: string[]
-  messages: Message[]
+  laidEvents: LayoutEvent[]
   actorRenders: ActorRender[]
   titleH: number
   colW: number
@@ -62,58 +107,231 @@ interface SequenceLayout {
   lifeY1: number
   lifeY2: number
   h: number
-  w: number   // dynamic total canvas width
+  w: number
 }
 
-// ── Data collection ───────────────────────────────────────────────────────────
+// ── Keyword sets ──────────────────────────────────────────────────────────────
 
-function collectSequence(spec: MdArtSpec): { actors: string[]; messages: Message[]; itemByActor: Map<string, MdArtItem> } {
-  const messages: Message[] = []
+const REGION_OPENERS = new Set(['alt', 'opt', 'loop', 'par'])
+const REGION_CONTS   = new Set(['else', 'elif', 'and'])
+const DIVIDER_KEYS   = new Set(['divider', 'section'])
+
+// ── Event collection ──────────────────────────────────────────────────────────
+
+function addActor(actors: string[], name: string): void {
+  if (name && !actors.includes(name)) actors.push(name)
+}
+
+function parseFlatMessage(item: MdArtItem, actors: string[]): MessageEvent | null {
+  const arrowIdx = item.label.indexOf('→')
+  if (arrowIdx < 0) return null
+  const from = item.label.slice(0, arrowIdx).trim()
+  const to   = item.label.slice(arrowIdx + 1).trim()
+  if (!from || !to) return null
+  addActor(actors, from)
+  addActor(actors, to)
+  return {
+    kind: 'message',
+    from, to,
+    msg: item.value ?? '',
+    activateTarget:   item.attrs.includes('+') || item.attrs.includes('activate') || undefined,
+    deactivateSender: item.attrs.includes('-') || item.attrs.includes('deactivate') || undefined,
+  }
+}
+
+/**
+ * Build region branches from a region item's children.
+ * Continuation keywords (else/elif/and) that appear as children of the region
+ * item split its body into branches — this is the indented form:
+ *
+ *   - alt: condition
+ *     - A → B: msg
+ *     - else:
+ *       - A → C: fallback
+ */
+function buildBranches(
+  regionItem: MdArtItem,
+  actors: string[],
+  itemByActor: Map<string, MdArtItem>,
+): RegionBranch[] {
+  const branches: RegionBranch[] = [{ label: regionItem.value ?? '', events: [] }]
+  for (const child of regionItem.children) {
+    const lkey = child.label.toLowerCase()
+    if (REGION_CONTS.has(lkey)) {
+      // Continuation as child: start a new branch whose events come from this child's children
+      branches.push({
+        label: child.value ?? '',
+        events: collectItemEvents(child.children, actors, itemByActor),
+      })
+    } else {
+      // Normal event: add to the current (last) branch
+      const evs = collectItemEvents([child], actors, itemByActor)
+      branches[branches.length - 1].events.push(...evs)
+    }
+  }
+  return branches
+}
+
+function collectItemEvents(
+  items: MdArtItem[],
+  actors: string[],
+  itemByActor: Map<string, MdArtItem>,
+): SeqEvent[] {
+  const events: SeqEvent[] = []
+  let i = 0
+  while (i < items.length) {
+    const item = items[i]
+    const lkey = item.label.toLowerCase()
+
+    if (REGION_OPENERS.has(lkey)) {
+      const regionType = lkey as RegionEvent['regionType']
+      const branches = buildBranches(item, actors, itemByActor)
+      i++
+      // Absorb sibling continuations (the flat form: alt and else as top-level siblings)
+      while (i < items.length && REGION_CONTS.has(items[i].label.toLowerCase())) {
+        const cont = items[i]
+        branches.push({
+          label: cont.value ?? '',
+          events: collectItemEvents(cont.children, actors, itemByActor),
+        })
+        i++
+      }
+      events.push({ kind: 'region', regionType, branches })
+
+    } else if (REGION_CONTS.has(lkey)) {
+      // Orphan continuation — already consumed by a preceding region opener, skip
+      i++
+
+    } else if (DIVIDER_KEYS.has(lkey) || item.label.startsWith('---')) {
+      const label = DIVIDER_KEYS.has(lkey) ? (item.value ?? '') : item.label.slice(3).trim()
+      events.push({ kind: 'divider', label })
+      i++
+
+    } else if (item.label.includes('→')) {
+      // Flat message: "A → B" with optional ": message" value
+      const msg = parseFlatMessage(item, actors)
+      if (msg) events.push(msg)
+      i++
+
+    } else {
+      // Actor with children (old nested form) OR bare actor ordering hint
+      const actor = item.label
+      if (actor) {
+        addActor(actors, actor)
+        itemByActor.set(actor, item)
+      }
+      // Emit messages from old-form flow children (→-prefixed children have no → in label)
+      for (const fc of item.children) {
+        if (fc.label.includes('→')) {
+          // Nested flat message (e.g. "A → B" as a child of an actor block)
+          const msg = parseFlatMessage(fc, actors)
+          if (msg) events.push(msg)
+        } else if (
+          actor &&
+          !REGION_OPENERS.has(fc.label.toLowerCase()) &&
+          !REGION_CONTS.has(fc.label.toLowerCase())
+        ) {
+          // Old-form: → Target: msg  (fc.label = target, fc.value = message text)
+          const to = fc.label.trim()
+          if (!to) continue
+          addActor(actors, to)
+          events.push({
+            kind: 'message',
+            from: actor, to,
+            msg: fc.value ?? '',
+            activateTarget:   fc.attrs.includes('+') || fc.attrs.includes('activate') || undefined,
+            deactivateSender: fc.attrs.includes('-') || fc.attrs.includes('deactivate') || undefined,
+          })
+        }
+      }
+      i++
+    }
+  }
+  return events
+}
+
+function collectSequence(spec: MdArtSpec): {
+  actors: string[]
+  events: SeqEvent[]
+  itemByActor: Map<string, MdArtItem>
+} {
   const actors: string[] = []
   const itemByActor = new Map<string, MdArtItem>()
-  const addActor = (name: string) => {
-    if (!actors.includes(name)) actors.push(name)
+  const events = collectItemEvents(spec.items, actors, itemByActor)
+  return { actors, events, itemByActor }
+}
+
+// ── Layout computation ────────────────────────────────────────────────────────
+
+function layoutEventsAt(events: SeqEvent[], y0: number): { laid: LayoutEvent[]; endY: number } {
+  const laid: LayoutEvent[] = []
+  let y = y0
+
+  for (const ev of events) {
+    if (ev.kind === 'message') {
+      laid.push({ kind: 'message', event: ev, y })
+      y += MSG_GAP
+    } else if (ev.kind === 'divider') {
+      laid.push({ kind: 'divider', event: ev, y })
+      y += MSG_GAP
+    } else {
+      // Region: pad top, lay out each branch, pad bottom
+      const regionStartY = y
+      y += REGION_PAD_TOP
+      const laidBranches: LayoutBranch[] = []
+
+      for (let bi = 0; bi < ev.branches.length; bi++) {
+        const br = ev.branches[bi]
+        const dividerY = bi === 0 ? undefined : y
+        if (bi > 0) y += BRANCH_DIV_H
+
+        const branchStartY = y
+        const { laid: branchEvents, endY: branchEnd } = layoutEventsAt(br.events, y)
+        // Ensure minimum height even for empty branches
+        y = branchStartY + Math.max(branchEnd - branchStartY, REGION_MIN_BRANCH_H)
+
+        laidBranches.push({ label: br.label, dividerY, events: branchEvents })
+      }
+
+      y += REGION_PAD_BOTTOM
+      laid.push({
+        kind: 'region',
+        event: ev,
+        y: regionStartY,
+        h: y - regionStartY,
+        branches: laidBranches,
+      })
+    }
   }
 
-  spec.items.forEach(item => {
-    // Divider: top-level item whose label starts with --- and has no flow-children
-    if (item.label.startsWith('---') && item.flowChildren.length === 0) {
-      const dividerLabel = item.label.slice(3).trim()
-      messages.push({ from: '', to: '', msg: '', isDivider: true, dividerLabel })
-      return
+  return { laid, endY: y }
+}
+
+function countLayoutEvents(laid: LayoutEvent[]): number {
+  let n = 0
+  for (const lev of laid) {
+    n++
+    if (lev.kind === 'region') {
+      for (const br of lev.branches) n += countLayoutEvents(br.events)
     }
-
-    addActor(item.label)
-    itemByActor.set(item.label, item)
-    item.flowChildren.forEach(fc => {
-      addActor(fc.label)
-      const activate = fc.attrs.includes('+') || fc.attrs.includes('activate')
-      const deactivate = fc.attrs.includes('-') || fc.attrs.includes('deactivate')
-      messages.push({
-        from: item.label,
-        to: fc.label,
-        msg: fc.value ?? '',
-        activateTarget: activate || undefined,
-        deactivateSender: deactivate || undefined,
-      })
-    })
-  })
-
-  return { actors, messages, itemByActor }
+  }
+  return n
 }
 
-// ── Layout resolution ─────────────────────────────────────────────────────────
-
-function actorX(layout: SequenceLayout, index: number): number {
-  return (index + 0.5) * layout.colW
+function actorX(colW: number, index: number): number {
+  return (index + 0.5) * colW
 }
 
-function buildActorRenders(actors: string[], itemByActor: Map<string, MdArtItem>, actorW: number): ActorRender[] {
+function buildActorRenders(
+  actors: string[],
+  itemByActor: Map<string, MdArtItem>,
+  actorW: number,
+): ActorRender[] {
   const charBudget = Math.max(8, Math.floor((actorW - ACTOR_TEXT_PAD) / 6.5))
   return actors.map(actor => {
     const sourceItem = itemByActor.get(actor)
-    const fallback = parseLink(actor)
-    const visible = sourceItem ? displayLabelValue(sourceItem) : fallback
+    const fallback   = parseLink(actor)
+    const visible    = sourceItem ? displayLabelValue(sourceItem) : fallback
     const { lines, truncated } = wrapLabel(visible.display, charBudget, ACTOR_MAX_LINES)
     return {
       actor,
@@ -127,37 +345,50 @@ function buildActorRenders(actors: string[], itemByActor: Map<string, MdArtItem>
 }
 
 function resolveLayout(spec: MdArtSpec): SequenceLayout | null {
-  const { actors, messages, itemByActor } = collectSequence(spec)
+  const { actors, events, itemByActor } = collectSequence(spec)
   if (actors.length === 0) return null
 
-  const titleH = spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
-  const colW = Math.max(MIN_COL_W, BASE_W / actors.length)
-  const w = colW * actors.length
-  const actorW = Math.min(colW - ACTOR_SIDE_PAD, ACTOR_MAX_W)
+  const titleH   = spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
+  const colW     = Math.max(MIN_COL_W, BASE_W / actors.length)
+  const w        = colW * actors.length
+  const actorW   = Math.min(colW - ACTOR_SIDE_PAD, ACTOR_MAX_W)
   const actorRenders = buildActorRenders(actors, itemByActor, actorW)
-  const maxActorLines = actorRenders.reduce((m, actor) => Math.max(m, actor.lines.length), 1)
-  const actorH = ACTOR_VPAD * 2 + maxActorLines * ACTOR_LH
-  const h = titleH + actorH + PAD_V + Math.max(messages.length, 1) * MSG_GAP + PAD_V + LIFE_BOTTOM_PAD
+  const maxActorLines = actorRenders.reduce((m, a) => Math.max(m, a.lines.length), 1)
+  const actorH   = ACTOR_VPAD * 2 + maxActorLines * ACTOR_LH
   const actorBoxY = titleH + ACTOR_BOX_TOP_GAP
-  const lifeY1 = titleH + actorH + PAD_V
-  const lifeY2 = h - LIFE_BOTTOM_PAD
+  const lifeY1   = titleH + actorH + PAD_V
 
-  return { actors, messages, actorRenders, titleH, colW, actorW, actorH, actorBoxY, lifeY1, lifeY2, h, w }
+  const { laid: laidEvents, endY } = layoutEventsAt(events, lifeY1)
+  const lifeY2 = Math.max(endY + PAD_V, lifeY1 + MSG_GAP + PAD_V)
+  const h      = lifeY2 + LIFE_BOTTOM_PAD
+
+  return {
+    actors, laidEvents, actorRenders,
+    titleH, colW, actorW, actorH, actorBoxY,
+    lifeY1, lifeY2, h, w,
+  }
 }
 
 // ── Activation bar computation ────────────────────────────────────────────────
 
+function flattenLaidMessages(laid: LayoutEvent[]): Array<{ event: MessageEvent; y: number }> {
+  const result: Array<{ event: MessageEvent; y: number }> = []
+  for (const lev of laid) {
+    if (lev.kind === 'message') {
+      result.push({ event: lev.event, y: lev.y })
+    } else if (lev.kind === 'region') {
+      for (const br of lev.branches) result.push(...flattenLaidMessages(br.events))
+    }
+  }
+  return result
+}
+
 function computeActivations(layout: SequenceLayout): Map<string, Activation[]> {
   const result = new Map<string, Activation[]>()
-  const open = new Map<string, number>() // actor name → y where its bar started
+  const open   = new Map<string, number>()
 
-  layout.messages.forEach((msg, idx) => {
-    if (msg.isDivider) return
-    const y = layout.lifeY1 + PAD_V + idx * MSG_GAP
-
-    if (msg.activateTarget) {
-      open.set(msg.to, y)
-    }
+  for (const { event: msg, y } of flattenLaidMessages(layout.laidEvents)) {
+    if (msg.activateTarget) open.set(msg.to, y)
     if (msg.deactivateSender) {
       const y1 = open.get(msg.from)
       if (y1 !== undefined) {
@@ -167,9 +398,8 @@ function computeActivations(layout: SequenceLayout): Map<string, Activation[]> {
         open.delete(msg.from)
       }
     }
-  })
+  }
 
-  // Auto-close any still-open bars at the bottom of the lifeline
   open.forEach((y1, actor) => {
     const list = result.get(actor) ?? []
     list.push({ y1, y2: layout.lifeY2 - 4 })
@@ -198,8 +428,15 @@ function renderMarkers(theme: MdArtTheme): string {
   </defs>`
 }
 
-function renderActor(layout: SequenceLayout, actor: ActorRender, index: number, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
-  const x = actorX(layout, index)
+function renderActor(
+  layout: SequenceLayout,
+  actor: ActorRender,
+  index: number,
+  theme: MdArtTheme,
+  animate: boolean,
+  instrument: boolean,
+): string {
+  const x = actorX(layout.colW, index)
   const textBlockH = actor.lines.length * ACTOR_LH
   const textStartY = layout.actorBoxY + (layout.actorH - textBlockH) / 2 + ACTOR_LH - 2
   const fullTip = actor.truncated ? `<title>${escapeXml(actor.display)}</title>` : ''
@@ -207,23 +444,27 @@ function renderActor(layout: SequenceLayout, actor: ActorRender, index: number, 
     .map((line, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : ACTOR_LH}">${escapeXml(line)}</tspan>`)
     .join('')
   const unit = [
-    `<rect x="${(x - layout.actorW/2).toFixed(1)}" y="${layout.actorBoxY.toFixed(1)}" width="${layout.actorW.toFixed(1)}" height="${layout.actorH}" rx="5" fill="${theme.accent}22" stroke="${theme.accent}aa" stroke-width="1.5">${actor.tip}</rect>`,
+    `<rect x="${(x - layout.actorW / 2).toFixed(1)}" y="${layout.actorBoxY.toFixed(1)}" width="${layout.actorW.toFixed(1)}" height="${layout.actorH}" rx="5" fill="${theme.accent}22" stroke="${theme.accent}aa" stroke-width="1.5">${actor.tip}</rect>`,
     aWrap(`<text x="${x.toFixed(1)}" y="${textStartY.toFixed(1)}" text-anchor="middle" font-size="${ACTOR_FONT_SIZE}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${fullTip}${spans}</text>`, actor.url),
     `<line x1="${x.toFixed(1)}" y1="${layout.lifeY1.toFixed(1)}" x2="${x.toFixed(1)}" y2="${layout.lifeY2.toFixed(1)}" stroke="${theme.textMuted}9a" stroke-width="1" stroke-dasharray="4,4"/>`,
   ].join('')
   return wrapItem(unit, index, animate, instrument)
 }
 
-function renderActivationBars(layout: SequenceLayout, activations: Map<string, Activation[]>, theme: MdArtTheme): string {
+function renderActivationBars(
+  layout: SequenceLayout,
+  activations: Map<string, Activation[]>,
+  theme: MdArtTheme,
+): string {
   if (activations.size === 0) return ''
   const bars: string[] = []
   for (const [actor, intervals] of activations) {
     const actorIdx = layout.actors.indexOf(actor)
     if (actorIdx < 0) continue
-    const cx = actorX(layout, actorIdx)
+    const cx = actorX(layout.colW, actorIdx)
     for (const { y1, y2 } of intervals) {
       bars.push(
-        `<rect x="${(cx - ACTIVATION_BAR_W / 2).toFixed(1)}" y="${y1.toFixed(1)}" width="${ACTIVATION_BAR_W}" height="${(y2 - y1).toFixed(1)}" rx="2" fill="${theme.accent}22" stroke="${theme.accent}" stroke-width="1.5"/>`
+        `<rect x="${(cx - ACTIVATION_BAR_W / 2).toFixed(1)}" y="${y1.toFixed(1)}" width="${ACTIVATION_BAR_W}" height="${(y2 - y1).toFixed(1)}" rx="2" fill="${theme.accent}22" stroke="${theme.accent}" stroke-width="1.5"/>`,
       )
     }
   }
@@ -231,7 +472,7 @@ function renderActivationBars(layout: SequenceLayout, activations: Map<string, A
 }
 
 function renderDivider(layout: SequenceLayout, y: number, label: string, theme: MdArtTheme): string {
-  const lineY = y - MSG_GAP / 4   // sit above the mid-gap point
+  const lineY = y + MSG_GAP / 4
   const w = layout.w
   const parts: string[] = [
     `<line x1="8" y1="${lineY.toFixed(1)}" x2="${(w - 8).toFixed(1)}" y2="${lineY.toFixed(1)}" stroke="${theme.textMuted}55" stroke-width="1" stroke-dasharray="4,2"/>`,
@@ -246,11 +487,19 @@ function renderDivider(layout: SequenceLayout, y: number, label: string, theme: 
   return parts.join('')
 }
 
-function renderSelfMessage(layout: SequenceLayout, message: Message, actorIndex: number, y: number, theme: MdArtTheme): string {
-  const x1 = actorX(layout, actorIndex)
+function renderSelfMessage(
+  layout: SequenceLayout,
+  message: MessageEvent,
+  actorIndex: number,
+  y: number,
+  theme: MdArtTheme,
+): string {
+  const x1 = actorX(layout.colW, actorIndex)
   const loopExt = layout.colW * SELF_LOOP_EXT_RATIO
   const lx = x1 + loopExt
-  const nextLifeline = actorIndex < layout.actors.length - 1 ? actorX(layout, actorIndex + 1) : layout.w - 8
+  const nextLifeline = actorIndex < layout.actors.length - 1
+    ? actorX(layout.colW, actorIndex + 1)
+    : layout.w - 8
   const maxCharsLoop = Math.max(12, Math.floor((nextLifeline - x1 - 8) / SELF_LABEL_CHAR_PX))
   return [
     `<path d="M${x1.toFixed(1)},${y.toFixed(1)} C${lx.toFixed(1)},${(y - 10).toFixed(1)} ${lx.toFixed(1)},${(y + 10).toFixed(1)} ${x1.toFixed(1)},${(y + MSG_GAP * SELF_LOOP_DROP_RATIO).toFixed(1)}" fill="none" stroke="${theme.accent}cc" stroke-width="1.5" marker-end="url(#sq-a)"/>`,
@@ -258,9 +507,16 @@ function renderSelfMessage(layout: SequenceLayout, message: Message, actorIndex:
   ].join('')
 }
 
-function renderCrossMessage(layout: SequenceLayout, message: Message, fromIndex: number, toIndex: number, y: number, theme: MdArtTheme): string {
-  const x1 = actorX(layout, fromIndex)
-  const x2 = actorX(layout, toIndex)
+function renderCrossMessage(
+  layout: SequenceLayout,
+  message: MessageEvent,
+  fromIndex: number,
+  toIndex: number,
+  y: number,
+  theme: MdArtTheme,
+): string {
+  const x1 = actorX(layout.colW, fromIndex)
+  const x2 = actorX(layout.colW, toIndex)
   const isReturn = toIndex < fromIndex
   const dir = x2 > x1 ? 1 : -1
   const ex1 = x1 + dir * 4
@@ -273,21 +529,116 @@ function renderCrossMessage(layout: SequenceLayout, message: Message, fromIndex:
   ].join('')
 }
 
-function renderMessage(layout: SequenceLayout, message: Message, index: number, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
-  const y = layout.lifeY1 + PAD_V + index * MSG_GAP
-
-  if (message.isDivider) {
-    const unit = renderDivider(layout, y, message.dividerLabel ?? '', theme)
-    return wrapItem(unit, layout.actors.length + index, animate, instrument)
-  }
-
+function renderMessage(
+  layout: SequenceLayout,
+  message: MessageEvent,
+  y: number,
+  animIdx: number,
+  theme: MdArtTheme,
+  animate: boolean,
+  instrument: boolean,
+): string {
   const fromIndex = layout.actors.indexOf(message.from)
-  const toIndex = layout.actors.indexOf(message.to)
+  const toIndex   = layout.actors.indexOf(message.to)
   if (fromIndex < 0 || toIndex < 0) return ''
   const unit = fromIndex === toIndex
     ? renderSelfMessage(layout, message, fromIndex, y, theme)
     : renderCrossMessage(layout, message, fromIndex, toIndex, y, theme)
-  return wrapItem(unit, layout.actors.length + index, animate, instrument)
+  return wrapItem(unit, animIdx, animate, instrument)
+}
+
+// ── Region box rendering ──────────────────────────────────────────────────────
+
+function regionTagText(regionType: string, branchLabel: string): string {
+  return branchLabel ? `${regionType} [${branchLabel}]` : regionType
+}
+
+function contTagText(regionType: string, branchLabel: string): string {
+  if (regionType === 'par') return branchLabel ? `and [${branchLabel}]` : 'and'
+  // alt / opt
+  return branchLabel ? `elif [${branchLabel}]` : 'else'
+}
+
+function renderRegionTag(
+  x: number,
+  y: number,
+  text: string,
+  theme: MdArtTheme,
+  alignRight = false,
+): string {
+  const tw = Math.min(text.length * REGION_TAG_CHAR_PX + 10, 200)
+  const rx = alignRight ? x - tw : x
+  return [
+    `<rect x="${rx.toFixed(1)}" y="${y.toFixed(1)}" width="${tw.toFixed(1)}" height="${REGION_TAG_H}" rx="2" fill="${theme.accent}33" stroke="${theme.accent}88" stroke-width="1"/>`,
+    `<text x="${(rx + 5).toFixed(1)}" y="${(y + REGION_TAG_H - 4).toFixed(1)}" font-size="${REGION_TAG_H - 5}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(text)}</text>`,
+  ].join('')
+}
+
+function renderRegionBox(
+  lev: LayoutRegion,
+  layout: SequenceLayout,
+  theme: MdArtTheme,
+  animIdx: number,
+  animate: boolean,
+  instrument: boolean,
+): string {
+  const boxX = REGION_BOX_MARGIN
+  const boxW = layout.w - 2 * REGION_BOX_MARGIN
+  const parts: string[] = []
+
+  // Main dashed border
+  parts.push(
+    `<rect x="${boxX}" y="${lev.y.toFixed(1)}" width="${boxW.toFixed(1)}" height="${lev.h.toFixed(1)}" rx="4" fill="${theme.accent}08" stroke="${theme.accent}66" stroke-width="1" stroke-dasharray="5,3"/>`,
+  )
+
+  // First-branch label tag — top-left corner
+  const mainTag = regionTagText(lev.event.regionType, lev.branches[0]?.label ?? '')
+  parts.push(renderRegionTag(boxX, lev.y, mainTag, theme))
+
+  // Branch dividers + tags for subsequent branches
+  for (let bi = 1; bi < lev.branches.length; bi++) {
+    const br = lev.branches[bi]
+    if (br.dividerY === undefined) continue
+    const lineY = br.dividerY + Math.round(BRANCH_DIV_H / 2)
+    parts.push(
+      `<line x1="${boxX}" y1="${lineY}" x2="${(boxX + boxW).toFixed(1)}" y2="${lineY}" stroke="${theme.accent}66" stroke-width="1" stroke-dasharray="5,3"/>`,
+    )
+    const tagText = contTagText(lev.event.regionType, br.label)
+    const tagY    = lineY - Math.round(REGION_TAG_H / 2)
+    parts.push(renderRegionTag(boxX + boxW, tagY, tagText, theme, true))
+  }
+
+  return wrapItem(parts.join(''), animIdx, animate, instrument)
+}
+
+// ── Recursive layout renderer ─────────────────────────────────────────────────
+
+function renderLaidEvents(
+  laid: LayoutEvent[],
+  layout: SequenceLayout,
+  theme: MdArtTheme,
+  animate: boolean,
+  instrument: boolean,
+  counter: { idx: number },
+): string[] {
+  const parts: string[] = []
+  for (const lev of laid) {
+    if (lev.kind === 'message') {
+      const svg = renderMessage(layout, lev.event, lev.y, counter.idx++, theme, animate, instrument)
+      if (svg) parts.push(svg)
+    } else if (lev.kind === 'divider') {
+      const unit = renderDivider(layout, lev.y, lev.event.label, theme)
+      parts.push(wrapItem(unit, counter.idx++, animate, instrument))
+    } else {
+      // Region box first (renders behind messages)
+      parts.push(renderRegionBox(lev, layout, theme, counter.idx++, animate, instrument))
+      // Then contained events recursively
+      for (const br of lev.branches) {
+        parts.push(...renderLaidEvents(br.events, layout, theme, animate, instrument, counter))
+      }
+    }
+  }
+  return parts
 }
 
 function renderSvg(layout: SequenceLayout, spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {
@@ -303,17 +654,22 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const layout = resolveLayout(spec)
   if (!layout) return renderEmpty(theme)
 
-  const animate = shouldAnimate(spec)
+  const animate    = shouldAnimate(spec)
   const instrument = shouldInstrument()
   const activations = computeActivations(layout)
 
-  const parts = [
+  const totalItems = layout.actors.length + countLayoutEvents(layout.laidEvents)
+  const counter    = { idx: layout.actors.length }
+
+  const parts: string[] = [
     renderMarkers(theme),
-    ...layout.actorRenders.map((actor, index) => renderActor(layout, actor, index, theme, animate, instrument)),
+    ...layout.actorRenders.map((actor, i) =>
+      renderActor(layout, actor, i, theme, animate, instrument),
+    ),
     renderActivationBars(layout, activations, theme),
-    ...layout.messages.map((message, index) => renderMessage(layout, message, index, theme, animate, instrument)).filter(Boolean),
+    ...renderLaidEvents(layout.laidEvents, layout, theme, animate, instrument, counter),
   ]
 
-  if (animate) parts.unshift(seqSpotlightCSS(layout.actors.length + layout.messages.length, spec, { scale: false }))
+  if (animate) parts.unshift(seqSpotlightCSS(totalItems, spec, { scale: false }))
   return renderSvg(layout, spec, theme, parts)
 }
