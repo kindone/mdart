@@ -200,9 +200,18 @@ title: System Health
 | Type | Nodes are | Edges are |
 |---|---|---|
 | `network` | infrastructure nodes | connections (label optional) |
-| `sequence` | actors | ordered messages (return arrows auto-inferred) |
+| `sequence` | actors | ordered messages; right-to-left auto-dashed as return |
 | `state-machine` | states | transitions with event label |
 | `flowchart` | process / decision nodes | directed edges with optional labels |
+
+`sequence` extras:
+
+| Feature | Syntax | Effect |
+|---|---|---|
+| Activation bar start | `→ Target: msg [+]` or `[activate]` | Draws a thick bar on Target's lifeline from this message |
+| Activation bar end | `→ Target: msg [-]` or `[deactivate]` | Ends the bar on the *sending* actor at this message |
+| Divider | `- --- Label` top-level item (no children) | Horizontal rule with italic label across all lifelines |
+| Adaptive width | automatic | Canvas expands beyond 600 px when actors need ≥ 110 px each |
 
 `state-machine` extras: `[final]` attr on a state adds a double border; states named `End` or `Final` are auto-detected as final.
 
@@ -241,13 +250,15 @@ title: Order Processing
 ```mdart sequence
 title: Login Flow
 - Client
-  -> Auth: POST /login
+  -> Auth: POST /login [+]
+- --- Validate
 - Auth
-  -> DB: SELECT user
+  -> DB: SELECT user [+]
 - DB
-  -> Auth: user row
+  -> Auth: user row [-]
+- --- Respond
 - Auth
-  -> Client: 200 OK + token
+  -> Client: 200 OK + token [-]
 ```
 
 <picture>

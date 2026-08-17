@@ -10,6 +10,10 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ### Added
 
+- **`sequence` activation bars.** `[+]` / `[activate]` on a message activates the target actor (thick bar on its lifeline); `[-]` / `[deactivate]` ends the bar on the sending actor. Bars render behind arrows so they don't obscure labels.
+- **`sequence` dividers.** A top-level item `- --- Label` (no children) inserts a faint dashed horizontal rule with an italic italic label across all lifelines, dividing the sequence into named phases.
+- **`sequence` adaptive canvas width.** The SVG viewport now expands beyond 600 px when actor count × minimum column width (110 px) would exceed it, preventing label truncation on wide diagrams.
+
 - **`flowchart` type.** New top-down flowchart renderer. Node shapes: filled pill (`[start]`), double-border pill (`[end]`), diamond (`[decision]`), rounded rect (default). Layout: BFS-layered, forward-DAG with merge-column resolution; backward edges (loops) drawn as right-margin arcs. Supports edge labels (`→ Target: yes`). Scoped to presentation use: no orthogonal routing, no parallel fork/join — use Mermaid for those.
 
 - **`network` curved edges.** Ring-layout edges are now quadratic Bézier curves bowed outward from the ring centre (actual bow ~10% of chord). Bidi pairs bow to opposite sides for visual separation. New front-matter option `edges: straight` opts back into straight lines; `edges: curved` is explicit default.

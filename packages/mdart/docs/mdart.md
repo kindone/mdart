@@ -280,7 +280,7 @@ Horizontal canvas space is bounded; vertical space scrolls. **Put the longer axi
 
 - `comparison`: default (TB) puts items as rows, attributes as columns — correct for most cases. Add `direction: LR` only when **attributes > items** (e.g. 3 products × 12 features → LR gives 12 rows × 3 columns).
 - `matrix-nxm`, `table`, `heatmap`: top-level items = rows, children = columns. Always put the more-numerous axis as top-level.
-- `kanban`, `sprint-board`, `sequence`, `class`: top-level items become **columns** by design — cap count and split rather than adding more columns.
+- `kanban`, `sprint-board`, `sequence`, `class`: top-level items become **columns** by design — cap count and split rather than adding more columns. In `sequence`, use `- --- Label` (no children) as a divider row rather than a new actor column.
 - `org-chart` vs `h-org-chart`: vertical (many levels) vs horizontal (many siblings).
 
 ### Typed values — use `:` not `-` or `—`
@@ -299,7 +299,7 @@ When a node carries a label *and* a value (number, type, status, target), the pa
 | Statistical | `heatmap` | cell colour intensity |
 | Matrix | `comparison`, `matrix-nxm`, `table` | cell content |
 | Technical | `entity` | field type — `name: text [PK]` |
-| Technical | `sequence` | message text on `→ Target: message` |
+| Technical | `sequence` | message text on `→ Target: message`; `[+]`/`[-]` for activation bars; `- --- Label` for dividers |
 | Technical | `state-machine` | event label on `→ NextState: event` |
 | Technical | `flowchart` | edge label on `→ Target: label` |
 | List | `two-column-list`, `card-list`, `timeline-list` | right-side / sub-text value |
@@ -392,7 +392,7 @@ edges:
 | `network` (graph) | `nodes:` / `edges:` sections | see above |
 | `venn` | Groups + `∩` intersection peer | `- Engineering` / `- Product` / `- Engineering ∩ Product` |
 | `matrix-2x2`, `bcg`, `ansoff` | 4-group headings | `- Stars` / `  - Product A (large)` |
-| `sequence` | Actors + `→ Target: message` children | `- Browser` / `  → API: GET /users` |
+| `sequence` | Actors + `→ Target: message` children; `[+]`/`[-]` or `[activate]`/`[deactivate]` for activation bars; `- --- Label` items for dividers | `- Client` / `  → Server: POST /login [+]` / `- --- Phase 2` |
 | `state-machine` | States + `→ NextState: event` children | `- Idle` / `  → Running: start` |
 | `flowchart` | Nodes + `→ Target: label` children; `[start]` / `[end]` / `[decision]` attrs | `- Login [decision]` / `  → Dashboard: ok` / `  → Login: failed` |
 

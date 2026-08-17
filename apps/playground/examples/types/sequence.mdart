@@ -2,10 +2,12 @@ type: sequence
 title: Auth Flow
 
 - Browser
-  → API: POST /login
+  → API: POST /login [+]
+- --- Validate
 - API
-  → DB: SELECT user
+  → DB: SELECT user [+]
 - DB
-  → API: user row
+  → API: user row [-]
+- --- Respond
 - API
-  → Browser: Set-Cookie
+  → Browser: Set-Cookie [-]

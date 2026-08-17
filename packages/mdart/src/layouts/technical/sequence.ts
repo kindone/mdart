@@ -2,7 +2,9 @@ import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { escapeXml, tt, wrapLabel, renderEmpty, parseLink, aWrap, itemTitleTag, displayLabelValue, shouldAnimate, seqSpotlightCSS, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
-const W = 600
+// ── Layout constants ──────────────────────────────────────────────────────────
+const BASE_W = 600          // minimum canvas width; expands when actors need more room
+const MIN_COL_W = 110       // narrowest a single column can be
 const TITLE_H_WITH_TITLE = 30
 const TITLE_H_NO_TITLE = 8
 const MSG_GAP = 36
@@ -20,11 +22,23 @@ const SELF_LOOP_EXT_RATIO = 0.38
 const SELF_LOOP_DROP_RATIO = 0.55
 const SELF_LABEL_CHAR_PX = 5
 const MESSAGE_LABEL_CHAR_PX = 7
+const ACTIVATION_BAR_W = 10
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Message {
   from: string
   to: string
   msg: string
+  isDivider?: boolean
+  dividerLabel?: string
+  activateTarget?: boolean   // [+] or [activate] on the arrow — bar starts on `to`
+  deactivateSender?: boolean // [-] or [deactivate] on the arrow — bar ends on `from`
+}
+
+interface Activation {
+  y1: number
+  y2: number
 }
 
 interface ActorRender {
@@ -48,7 +62,10 @@ interface SequenceLayout {
   lifeY1: number
   lifeY2: number
   h: number
+  w: number   // dynamic total canvas width
 }
+
+// ── Data collection ───────────────────────────────────────────────────────────
 
 function collectSequence(spec: MdArtSpec): { actors: string[]; messages: Message[]; itemByActor: Map<string, MdArtItem> } {
   const messages: Message[] = []
@@ -59,16 +76,33 @@ function collectSequence(spec: MdArtSpec): { actors: string[]; messages: Message
   }
 
   spec.items.forEach(item => {
+    // Divider: top-level item whose label starts with --- and has no flow-children
+    if (item.label.startsWith('---') && item.flowChildren.length === 0) {
+      const dividerLabel = item.label.slice(3).trim()
+      messages.push({ from: '', to: '', msg: '', isDivider: true, dividerLabel })
+      return
+    }
+
     addActor(item.label)
     itemByActor.set(item.label, item)
     item.flowChildren.forEach(fc => {
       addActor(fc.label)
-      messages.push({ from: item.label, to: fc.label, msg: fc.value ?? '' })
+      const activate = fc.attrs.includes('+') || fc.attrs.includes('activate')
+      const deactivate = fc.attrs.includes('-') || fc.attrs.includes('deactivate')
+      messages.push({
+        from: item.label,
+        to: fc.label,
+        msg: fc.value ?? '',
+        activateTarget: activate || undefined,
+        deactivateSender: deactivate || undefined,
+      })
     })
   })
 
   return { actors, messages, itemByActor }
 }
+
+// ── Layout resolution ─────────────────────────────────────────────────────────
 
 function actorX(layout: SequenceLayout, index: number): number {
   return (index + 0.5) * layout.colW
@@ -97,7 +131,8 @@ function resolveLayout(spec: MdArtSpec): SequenceLayout | null {
   if (actors.length === 0) return null
 
   const titleH = spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
-  const colW = W / actors.length
+  const colW = Math.max(MIN_COL_W, BASE_W / actors.length)
+  const w = colW * actors.length
   const actorW = Math.min(colW - ACTOR_SIDE_PAD, ACTOR_MAX_W)
   const actorRenders = buildActorRenders(actors, itemByActor, actorW)
   const maxActorLines = actorRenders.reduce((m, actor) => Math.max(m, actor.lines.length), 1)
@@ -107,12 +142,48 @@ function resolveLayout(spec: MdArtSpec): SequenceLayout | null {
   const lifeY1 = titleH + actorH + PAD_V
   const lifeY2 = h - LIFE_BOTTOM_PAD
 
-  return { actors, messages, actorRenders, titleH, colW, actorW, actorH, actorBoxY, lifeY1, lifeY2, h }
+  return { actors, messages, actorRenders, titleH, colW, actorW, actorH, actorBoxY, lifeY1, lifeY2, h, w }
 }
 
-function renderTitle(theme: MdArtTheme, title: string | undefined): string {
+// ── Activation bar computation ────────────────────────────────────────────────
+
+function computeActivations(layout: SequenceLayout): Map<string, Activation[]> {
+  const result = new Map<string, Activation[]>()
+  const open = new Map<string, number>() // actor name → y where its bar started
+
+  layout.messages.forEach((msg, idx) => {
+    if (msg.isDivider) return
+    const y = layout.lifeY1 + PAD_V + idx * MSG_GAP
+
+    if (msg.activateTarget) {
+      open.set(msg.to, y)
+    }
+    if (msg.deactivateSender) {
+      const y1 = open.get(msg.from)
+      if (y1 !== undefined) {
+        const list = result.get(msg.from) ?? []
+        list.push({ y1, y2: y })
+        result.set(msg.from, list)
+        open.delete(msg.from)
+      }
+    }
+  })
+
+  // Auto-close any still-open bars at the bottom of the lifeline
+  open.forEach((y1, actor) => {
+    const list = result.get(actor) ?? []
+    list.push({ y1, y2: layout.lifeY2 - 4 })
+    result.set(actor, list)
+  })
+
+  return result
+}
+
+// ── SVG rendering ─────────────────────────────────────────────────────────────
+
+function renderTitle(theme: MdArtTheme, title: string | undefined, w: number): string {
   return title
-    ? `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
+    ? `<text x="${w / 2}" y="20" text-anchor="middle" font-size="13" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(title)}</text>`
     : ''
 }
 
@@ -143,11 +214,43 @@ function renderActor(layout: SequenceLayout, actor: ActorRender, index: number, 
   return wrapItem(unit, index, animate, instrument)
 }
 
+function renderActivationBars(layout: SequenceLayout, activations: Map<string, Activation[]>, theme: MdArtTheme): string {
+  if (activations.size === 0) return ''
+  const bars: string[] = []
+  for (const [actor, intervals] of activations) {
+    const actorIdx = layout.actors.indexOf(actor)
+    if (actorIdx < 0) continue
+    const cx = actorX(layout, actorIdx)
+    for (const { y1, y2 } of intervals) {
+      bars.push(
+        `<rect x="${(cx - ACTIVATION_BAR_W / 2).toFixed(1)}" y="${y1.toFixed(1)}" width="${ACTIVATION_BAR_W}" height="${(y2 - y1).toFixed(1)}" rx="2" fill="${theme.accent}22" stroke="${theme.accent}" stroke-width="1.5"/>`
+      )
+    }
+  }
+  return bars.join('')
+}
+
+function renderDivider(layout: SequenceLayout, y: number, label: string, theme: MdArtTheme): string {
+  const lineY = y - MSG_GAP / 4   // sit above the mid-gap point
+  const w = layout.w
+  const parts: string[] = [
+    `<line x1="8" y1="${lineY.toFixed(1)}" x2="${(w - 8).toFixed(1)}" y2="${lineY.toFixed(1)}" stroke="${theme.textMuted}55" stroke-width="1" stroke-dasharray="4,2"/>`,
+  ]
+  if (label) {
+    const tw = label.length * 5.5 + 12
+    parts.push(
+      `<rect x="${((w - tw) / 2).toFixed(1)}" y="${(lineY - 9).toFixed(1)}" width="${tw.toFixed(1)}" height="11" rx="2" fill="${theme.bg}"/>`,
+      `<text x="${(w / 2).toFixed(1)}" y="${(lineY - 1).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.textMuted}" ${FONT_SANS_ATTR} font-style="italic">${escapeXml(label)}</text>`,
+    )
+  }
+  return parts.join('')
+}
+
 function renderSelfMessage(layout: SequenceLayout, message: Message, actorIndex: number, y: number, theme: MdArtTheme): string {
   const x1 = actorX(layout, actorIndex)
   const loopExt = layout.colW * SELF_LOOP_EXT_RATIO
   const lx = x1 + loopExt
-  const nextLifeline = actorIndex < layout.actors.length - 1 ? actorX(layout, actorIndex + 1) : W - 8
+  const nextLifeline = actorIndex < layout.actors.length - 1 ? actorX(layout, actorIndex + 1) : layout.w - 8
   const maxCharsLoop = Math.max(12, Math.floor((nextLifeline - x1 - 8) / SELF_LABEL_CHAR_PX))
   return [
     `<path d="M${x1.toFixed(1)},${y.toFixed(1)} C${lx.toFixed(1)},${(y - 10).toFixed(1)} ${lx.toFixed(1)},${(y + 10).toFixed(1)} ${x1.toFixed(1)},${(y + MSG_GAP * SELF_LOOP_DROP_RATIO).toFixed(1)}" fill="none" stroke="${theme.accent}cc" stroke-width="1.5" marker-end="url(#sq-a)"/>`,
@@ -172,6 +275,12 @@ function renderCrossMessage(layout: SequenceLayout, message: Message, fromIndex:
 
 function renderMessage(layout: SequenceLayout, message: Message, index: number, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
   const y = layout.lifeY1 + PAD_V + index * MSG_GAP
+
+  if (message.isDivider) {
+    const unit = renderDivider(layout, y, message.dividerLabel ?? '', theme)
+    return wrapItem(unit, layout.actors.length + index, animate, instrument)
+  }
+
   const fromIndex = layout.actors.indexOf(message.from)
   const toIndex = layout.actors.indexOf(message.to)
   if (fromIndex < 0 || toIndex < 0) return ''
@@ -182,11 +291,13 @@ function renderMessage(layout: SequenceLayout, message: Message, index: number, 
 }
 
 function renderSvg(layout: SequenceLayout, spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {
-  return `<svg viewBox="0 0 ${W} ${layout.h}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
-  ${renderTitle(theme, spec.title)}
+  return `<svg viewBox="0 0 ${layout.w} ${layout.h}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
+  ${renderTitle(theme, spec.title, layout.w)}
   ${parts.join('\n  ')}
 </svg>`
 }
+
+// ── Entry point ───────────────────────────────────────────────────────────────
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const layout = resolveLayout(spec)
@@ -194,9 +305,12 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
 
   const animate = shouldAnimate(spec)
   const instrument = shouldInstrument()
+  const activations = computeActivations(layout)
+
   const parts = [
     renderMarkers(theme),
     ...layout.actorRenders.map((actor, index) => renderActor(layout, actor, index, theme, animate, instrument)),
+    renderActivationBars(layout, activations, theme),
     ...layout.messages.map((message, index) => renderMessage(layout, message, index, theme, animate, instrument)).filter(Boolean),
   ]
 
