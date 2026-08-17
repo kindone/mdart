@@ -1,13 +1,17 @@
 type: sequence
-title: Auth Flow
+title: Checkout Flow
 
-- Browser
-  → API: POST /login [+]
+- Client
+  → Gateway: POST /orders [+]
 - --- Validate
-- API
-  → DB: SELECT user [+]
-- DB
-  → API: user row [-]
+- Gateway
+  → Inventory: check stock [+]
+- Inventory
+  → Gateway: ok [-]
+- Gateway
+  → Payment: charge card [+]
 - --- Respond
-- API
-  → Browser: Set-Cookie [-]
+- Payment
+  → Gateway: authorised [-]
+- Gateway
+  → Client: 201 Created [-]
