@@ -219,6 +219,43 @@ export function truncate(s: string, max: number): string {
 }
 
 /**
+ * Expand a hyphen-connected word into line-breakable segments.
+ * "position-awareness" → ["position-", "awareness"]
+ * "cross-encoder"      → ["cross-", "encoder"]
+ * "multi-part-word"    → ["multi-", "part-", "word"]
+ *
+ * Rules:
+ *  - Only split at hyphens that are flanked by alphanumeric chars on both
+ *    sides (avoids leading/trailing hyphens and double-hyphens).
+ *  - Words that contain inline markdown markers (*, ~, `, _) are left
+ *    unexpanded so we don't split inside a styling span.
+ *
+ * When adjacent segments are placed on the same line, the caller must join
+ * them WITHOUT a space (segment ends with '-', so `line.endsWith('-')` is
+ * the signal). When they land on different lines the leading part keeps its
+ * trailing '-' just like a typeset soft-hyphen.
+ */
+function expandAtHyphens(word: string): string[] {
+  if (/[*~`_]/.test(word)) return [word]   // leave markdown tokens intact
+  const parts: string[] = []
+  let start = 0
+  for (let i = 0; i < word.length; i++) {
+    if (
+      word[i] === '-' &&
+      i > 0 &&
+      i < word.length - 1 &&
+      /[a-zA-Z0-9À-ɏ]/.test(word[i - 1]) &&
+      /[a-zA-Z0-9À-ɏ]/.test(word[i + 1])
+    ) {
+      parts.push(word.slice(start, i + 1))  // include the hyphen in the left part
+      start = i + 1
+    }
+  }
+  parts.push(word.slice(start))
+  return parts.filter(Boolean)
+}
+
+/**
  * Word-wrap `label` into at most `maxLines` lines of `perLineChars` characters.
  * Automatically strips markdown-link syntax `[text](url)` — `url` is returned
  * separately so callers can wrap the rendered element with `aWrap(el, url)`.
@@ -247,7 +284,9 @@ export function wrapLabel(
     ? (s: string) => estimateTextWidth(s, fs) <= pxW
     : (s: string) => visibleTextLength(s) <= perLineChars
 
-  const words = trimmed.split(/\s+/)
+  // Expand hyphen-connected compounds so they can break at the hyphen.
+  // "position-awareness" → ["position-", "awareness"]; plain words unchanged.
+  const words = trimmed.split(/\s+/).flatMap(expandAtHyphens)
   const lines: string[] = []
   let wordIdx = 0
   // Tracks the single-word-too-long case separately from "leftover words
@@ -264,7 +303,11 @@ export function wrapLabel(
   while (wordIdx < words.length && lines.length < maxLines) {
     let line = ''
     while (wordIdx < words.length) {
-      const next = line ? `${line} ${words[wordIdx]}` : words[wordIdx]
+      // When the current line ends with '-' the next segment is the tail of a
+      // hyphen-split compound — join without a space so "real-" + "time"
+      // renders as "real-time", not "real- time".
+      const join = line.endsWith('-') ? '' : ' '
+      const next = line ? `${line}${join}${words[wordIdx]}` : words[wordIdx]
       if (fits(next)) { line = next; wordIdx++ }
       else break
     }
