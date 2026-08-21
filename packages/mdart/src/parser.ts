@@ -184,14 +184,27 @@ function parseLabelValue(raw: string): { label: string; value?: string } {
 }
 
 function parseItem(rawLine: string): MdArtItem {
+  // 0. Strip leading markdown-style checkbox marker if present.
+  //    "[ ]" → open (strip from label, no state change)
+  //    "[x]" / "[X]" → done (strip from label, add "done" attr so the
+  //    checklist renderer treats it like "Item [done]")
+  let checkboxDone = false
+  let line = rawLine
+  const cbMatch = line.match(/^\[([ xX])\]\s+(.*)$/)
+  if (cbMatch) {
+    checkboxDone = cbMatch[1].toLowerCase() === 'x'
+    line = cbMatch[2]
+  }
+
   // 1. Pull off trailing [attrs] from the whole line ("label [x]" or "label: value [x]").
-  const tailParsed = parseAttrs(rawLine)
+  const tailParsed = parseAttrs(line)
   // 2. Split label from value on the first non-URL colon.
   const { label: rawLabel, value } = parseLabelValue(tailParsed.cleanLabel)
   // 3. Also check the label portion for its own [attrs] ("label [x]: value").
   const labelParsed = parseAttrs(rawLabel)
   const label = labelParsed.cleanLabel
   const attrs = [...labelParsed.attrs, ...tailParsed.attrs]
+  if (checkboxDone && !attrs.includes('done')) attrs.push('done')
   return {
     label,
     value,

@@ -45,6 +45,7 @@ function safe(s: string): string {
     .replace(/&&/g, 'xx')  // escaped ampersands can become the typeable alias
     .replace(/\n/g, ' ')
     .replace(/^\s*$/, 'x') // not blank
+    .trim()                 // parser trims labels; test labels must match
 }
 
 // ── ¬∃ crash ─────────────────────────────────────────────────────────────────
@@ -339,6 +340,89 @@ describe('∀ label with [attr]: attr extracted, not in label', () => {
 
 })
 
+// ── Leading checkbox marker [ ] / [x] / [X] ──────────────────────────────────
+// Markdown-style checkbox at the start of a label is stripped and mapped to
+// a state marker: [ ] → open (no attr), [x]/[X] → done (adds "done" attr).
+
+describe('leading checkbox marker: [ ] strips, [x]/[X] strips and adds done', () => {
+
+  it('[ ] prefix: label stripped, no done attr', { timeout: 15000 }, () => {
+    forAll(
+      (label: string) => {
+        const l = safe(label)
+        const src = `- [ ] ${l}`
+        const spec = parseMdArt(src)
+        if (spec.items.length !== 1) return true
+        return spec.items[0].label === l
+          && !spec.items[0].attrs.includes('done')
+          && !spec.items[0].label.includes('[ ]')
+      },
+      genLabelPlain,
+    )
+  })
+
+  it('[x] prefix: label stripped, done attr added', { timeout: 15000 }, () => {
+    forAll(
+      (label: string) => {
+        const l = safe(label)
+        const src = `- [x] ${l}`
+        const spec = parseMdArt(src)
+        if (spec.items.length !== 1) return true
+        return spec.items[0].label === l
+          && spec.items[0].attrs.includes('done')
+          && !spec.items[0].label.includes('[x]')
+      },
+      genLabelPlain,
+    )
+  })
+
+  it('[X] prefix: label stripped, done attr added (uppercase)', { timeout: 15000 }, () => {
+    forAll(
+      (label: string) => {
+        const l = safe(label)
+        const src = `- [X] ${l}`
+        const spec = parseMdArt(src)
+        if (spec.items.length !== 1) return true
+        return spec.items[0].label === l
+          && spec.items[0].attrs.includes('done')
+      },
+      genLabelPlain,
+    )
+  })
+
+  it('[x] prefix + trailing [extra]: both attrs present', { timeout: 15000 }, () => {
+    forAll(
+      (label: string) => {
+        const l = safe(label)
+        const src = `- [x] ${l} [extra]`
+        const spec = parseMdArt(src)
+        if (spec.items.length !== 1) return true
+        return spec.items[0].label === l
+          && spec.items[0].attrs.includes('done')
+          && spec.items[0].attrs.includes('extra')
+      },
+      genLabelPlain,
+    )
+  })
+
+  it('[no] trailing: NOT stripped (not a checkbox marker — only [ ]/[x]/[X] are)', { timeout: 15000 }, () => {
+    forAll(
+      (label: string) => {
+        const l = safe(label)
+        // [no] in trailing position → extracted as a regular attr, NOT as a
+        // checkbox marker (only [ ], [x], [X] are recognised as such).
+        const src = `- ${l} [no]`
+        const spec = parseMdArt(src)
+        if (spec.items.length !== 1) return true
+        return spec.items[0].attrs.includes('no')
+          && spec.items[0].label === l
+      },
+      genLabelPlain,
+    )
+  })
+
+})
+
 // ── ∩ intersection detection ──────────────────────────────────────────────────
 
 describe('∀ label containing ∩: isIntersection is true', () => {
@@ -378,7 +462,10 @@ describe('∀ Unicode labels: parseMdArt parses correctly', () => {
     forAll(
       (label: string) => {
         // Unicode label — strip newlines and leading bullets
-        const l = label.replace(/\n/g, ' ').replace(/^[\-*+?!]\s*/, '').trim() || 'x'
+        let l = label.replace(/\n/g, ' ').replace(/^[\-*+?!]\s*/, '').trim() || 'x'
+        // Also strip leading checkbox marker if present (parser strips it)
+        l = l.replace(/^\[([ xX])\]\s+/, '')
+        if (!l) l = 'x'
         const src = `- ${l}`
         const spec = parseMdArt(src)
         return spec.items.length >= 1 && spec.items[0].label === l

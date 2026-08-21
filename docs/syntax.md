@@ -1192,6 +1192,17 @@ palette: #7c3aed, #0891b2, #059669, #d97706, #be185d
 | `[static]` | class methods | Underlined |
 | `[PK]` / `[FK->t]` | entity fields | Key badges |
 
+**Markdown-style checkbox syntax** — `checklist` also accepts leading `[ ]` / `[x]` / `[X]` markers (GitHub-style checkboxes):
+
+```mdart checklist
+- [ ] Open task
+- [x] Completed task
+- [X] Also completed (uppercase)
+```
+
+- `[ ]` → empty checkbox (open)
+- `[x]` or `[X]` → checked checkbox (equivalent to `[done]`)
+
 **`[done]` / `[active]`** — mark completed and in-progress items in task-tracking layouts:
 
 ```mdart sprint-board
