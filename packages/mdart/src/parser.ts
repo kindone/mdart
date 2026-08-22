@@ -154,8 +154,8 @@ function parseLabelValue(raw: string): { label: string; value?: string } {
     if (inDQ) continue
     if (c === '(') { parenD++; continue }
     if (c === ')') { if (parenD > 0) parenD--; continue }
-    if (c === '[') { brackD++; continue }
-    if (c === ']') { if (brackD > 0) brackD--; continue }
+    if (c === '[' || c === '\x00') { brackD++; continue }
+    if (c === ']' || c === '\x01') { if (brackD > 0) brackD--; continue }
     if (c === '{') { braceD++; continue }
     if (c === '}') { if (braceD > 0) braceD--; continue }
     if (c !== ':') continue
@@ -176,7 +176,7 @@ function parseLabelValue(raw: string): { label: string; value?: string } {
     colonIdx = i
     break
   }
-  const unescape = (s: string) => s.replace(/\\:/g, ':')
+  const unescape = (s: string) => s.replace(/\\:/g, ':').replace(/\\→/g, '→').replace(/\\->/g, '->')
   if (colonIdx === -1) return { label: unescape(raw.trim()) }
   const label = unescape(raw.slice(0, colonIdx).trim())
   const value = unescape(raw.slice(colonIdx + 1).trim())
@@ -184,12 +184,23 @@ function parseLabelValue(raw: string): { label: string; value?: string } {
 }
 
 function parseItem(rawLine: string): MdArtItem {
+  // Pre-protect escaped brackets so they survive both parseAttrs passes.
+  // \[content] → NUL+content+SOH  (matched pair → restores to [content])
+  // \[          → NUL             (unmatched open → restores to [)
+  // These sentinels (0x00 / 0x01) never appear in real user input.
+  const withProtectedBrackets = rawLine
+    .replace(/\\\[([^\]]*)\]/g, '\x00$1\x01')
+    .replace(/\\\[/g, '\x00')
+
+  const restoreBrackets = (s: string) =>
+    s.replace(/\x00([^\x01]*)\x01/g, '[$1]').replace(/\x00/g, '[')
+
   // 0. Strip leading markdown-style checkbox marker if present.
   //    "[ ]" → open (strip from label, no state change)
   //    "[x]" / "[X]" → done (strip from label, add "done" attr so the
   //    checklist renderer treats it like "Item [done]")
   let checkboxDone = false
-  let line = rawLine
+  let line = withProtectedBrackets
   const cbMatch = line.match(/^\[([ xX])\]\s+(.*)$/)
   if (cbMatch) {
     checkboxDone = cbMatch[1].toLowerCase() === 'x'
@@ -199,10 +210,12 @@ function parseItem(rawLine: string): MdArtItem {
   // 1. Pull off trailing [attrs] from the whole line ("label [x]" or "label: value [x]").
   const tailParsed = parseAttrs(line)
   // 2. Split label from value on the first non-URL colon.
-  const { label: rawLabel, value } = parseLabelValue(tailParsed.cleanLabel)
+  const { label: rawLabel, value: rawValue } = parseLabelValue(tailParsed.cleanLabel)
   // 3. Also check the label portion for its own [attrs] ("label [x]: value").
   const labelParsed = parseAttrs(rawLabel)
-  const label = labelParsed.cleanLabel
+  // 4. Restore escaped brackets in label and value.
+  const label = restoreBrackets(labelParsed.cleanLabel)
+  const value = rawValue ? restoreBrackets(rawValue) : undefined
   const attrs = [...labelParsed.attrs, ...tailParsed.attrs]
   if (checkboxDone && !attrs.includes('done')) attrs.push('done')
   return {
