@@ -1,6 +1,6 @@
 # MdArt Diagram Gallery
 
-Every layout type (102 total across 11 families) with its mdart source.
+Every layout type (103 total across 11 families) with its mdart source.
 
 ## Process
 
@@ -1263,6 +1263,30 @@ title: User Login
   - Auth -> Client: 200 OK + token [-]
   - else:
     - Auth -> Client: 401 Unauthorized [-]
+```
+
+### `flowchart`
+
+```mdart
+type: flowchart
+title: Retry with Backoff
+
+- Start [start]
+  → Send Request
+- Send Request
+  → Check Response [decision]
+- Check Response [decision]
+  → Process Data: success
+  → Retry? [decision]: error
+- Retry? [decision]
+  → Wait & Retry: attempts left
+  → Fail: max retries
+- Wait & Retry
+  → Send Request
+- Process Data
+  → End [end]
+- Fail
+  → End [end]
 ```
 
 ### `state-machine`

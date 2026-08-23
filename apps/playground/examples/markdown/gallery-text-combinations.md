@@ -350,6 +350,28 @@ title: Checkout Flow
   → End [end]
 ```
 
+### Sequence with regions, activation bars, and divider
+
+```mdart
+type: sequence
+title: Password Reset Flow
+
+- User → App: POST /forgot-password [+]
+
+- divider: Rate check
+
+- App → RateLimit: check IP [+]
+- alt: within limit
+  - RateLimit → App: ok [-]
+  - App → DB: INSERT reset_token [+]
+  - DB → App: token [-]
+  - App → Email: send link
+  - App → User: 200 Accepted [-]
+  - else:
+    - RateLimit → App: throttled [-]
+    - App → User: 429 Too Many Requests [-]
+```
+
 ### Class members and modifiers
 
 ```mdart
