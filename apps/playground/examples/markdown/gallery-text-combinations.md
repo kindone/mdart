@@ -350,26 +350,26 @@ title: Checkout Flow
   → End [end]
 ```
 
-### Sequence with regions, activation bars, and divider
+### Sequence with long message text, activation bars, divider, and alt region
 
 ```mdart
 type: sequence
 title: Password Reset Flow
 
-- User → App: POST /forgot-password [+]
+- User → Gateway: POST /auth/password-reset with verified email and client fingerprint [+]
 
-- divider: Rate check
+- divider: Rate limit check and token generation
 
-- App → RateLimit: check IP [+]
-- alt: within limit
-  - RateLimit → App: ok [-]
-  - App → DB: INSERT reset_token [+]
-  - DB → App: token [-]
-  - App → Email: send link
-  - App → User: 200 Accepted [-]
+- Gateway → RateLimit: evaluate rolling window for source IP and account identifier [+]
+- alt: within per-account and per-IP limit thresholds
+  - RateLimit → Gateway: allowed — 4 of 5 daily resets consumed [-]
+  - Gateway → DB: INSERT reset_tokens with 6-hour expiry and account lock escalation flag [+]
+  - DB → Gateway: token persisted with idempotency key for duplicate-submission safety [-]
+  - Gateway → Email: dispatch transactional message with HMAC-signed single-use link [-]
+  - Gateway → User: 202 Accepted — check your inbox, link expires in 6 hours [-]
   - else:
-    - RateLimit → App: throttled [-]
-    - App → User: 429 Too Many Requests [-]
+    - RateLimit → Gateway: denied — daily reset limit reached for this account [-]
+    - Gateway → User: 429 Too Many Requests — wait 24 hours or contact support [-]
 ```
 
 ### Class members and modifiers
