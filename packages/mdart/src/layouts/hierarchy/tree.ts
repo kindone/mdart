@@ -118,7 +118,7 @@ function renderConnector(node: RenderedNode, boxH: number, theme: MdArtTheme): s
 function renderNodeBox(node: RenderedNode, boxH: number, theme: MdArtTheme): string {
   const bx = node.x - BOX_W / 2
   const by = node.y - boxH / 2
-  return `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${BOX_W}" height="${boxH}" rx="6" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${itemTitleTag(node)}</rect>`
+  return `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${BOX_W}" height="${boxH}" rx="6" fill="${theme.accent}18" stroke="${theme.accent}aa" stroke-width="1.2">${itemTitleTag(node)}</rect>`
 }
 
 function renderNodeText(node: RenderedNode, fit: TreeNodeFit, theme: MdArtTheme): string {

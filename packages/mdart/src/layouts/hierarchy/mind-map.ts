@@ -104,7 +104,7 @@ function mlText(
 
 function renderCenter(label: string, fit: FitBlock, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
   return wrapItem(
-    `<ellipse cx="${cx}" cy="${cy}" rx="${CENTER_RX}" ry="${CENTER_RY}" fill="${theme.surface}" stroke="${theme.accent}" stroke-width="1.5"/>` +
+    `<ellipse cx="${cx}" cy="${cy}" rx="${CENTER_RX}" ry="${CENTER_RY}" fill="${theme.primary}22" stroke="${theme.accent}" stroke-width="1.5"/>` +
     mlText(cx, cy, fit.results[0], label, fit.fontSize, fit.lineHeight, theme.text, '600'),
     0,
     animate,
@@ -129,14 +129,14 @@ function renderBranch(
   const texts: string[] = []
 
   connectors.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${point.x.toFixed(1)}" y2="${point.y.toFixed(1)}" stroke="${theme.accent}99" stroke-width="2"/>`)
-  shapes.push(`<ellipse cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" rx="${BRANCH_RX}" ry="${BRANCH_RY}" fill="${theme.surface}" stroke="${theme.accent}cc" stroke-width="1">${itemTitleTag(branch)}</ellipse>`)
+  shapes.push(`<ellipse cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" rx="${BRANCH_RX}" ry="${BRANCH_RY}" fill="${theme.accent}18" stroke="${theme.accent}cc" stroke-width="1">${itemTitleTag(branch)}</ellipse>`)
   texts.push(mlText(point.x, point.y, branchFit.results[0], displayLabelValue(branch).display, branchFit.fontSize, branchFit.lineHeight, theme.text, 'normal'))
 
   branch.children.forEach((sub, subIndex) => {
     const subFit = subFits[subStart + subIndex]
     const subPos = subPoint(point, subIndex, branch.children.length)
     connectors.push(`<line x1="${point.x.toFixed(1)}" y1="${point.y.toFixed(1)}" x2="${subPos.x.toFixed(1)}" y2="${subPos.y.toFixed(1)}" stroke="${theme.textMuted}" stroke-width="1" opacity="0.7"/>`)
-    shapes.push(`<ellipse cx="${subPos.x.toFixed(1)}" cy="${subPos.y.toFixed(1)}" rx="${SUB_RX}" ry="${SUB_RY}" fill="${theme.surface}" stroke="${theme.textMuted}aa" stroke-width="1">${itemTitleTag(sub)}</ellipse>`)
+    shapes.push(`<ellipse cx="${subPos.x.toFixed(1)}" cy="${subPos.y.toFixed(1)}" rx="${SUB_RX}" ry="${SUB_RY}" fill="${theme.textMuted}12" stroke="${theme.textMuted}aa" stroke-width="1">${itemTitleTag(sub)}</ellipse>`)
     texts.push(mlText(subPos.x, subPos.y, subFit.results[0], displayLabelValue(sub).display, subFit.fontSize, subFit.lineHeight, theme.textMuted, 'normal'))
   })
 

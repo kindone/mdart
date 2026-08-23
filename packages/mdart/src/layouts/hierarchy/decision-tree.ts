@@ -109,7 +109,7 @@ function renderDecisionNode(node: RenderedNode, fit: NodeFit, theme: MdArtTheme)
   const spans = fit.lines
     .map((line, li) => `<tspan x="${x}" dy="${li === 0 ? 0 : fit.lineHeight.toFixed(1)}">${escapeXml(line)}</tspan>`)
     .join('')
-  return `<polygon points="${x},${(y - DECISION_H).toFixed(1)} ${(x + DECISION_W).toFixed(1)},${y} ${x},${(y + DECISION_H).toFixed(1)} ${(x - DECISION_W).toFixed(1)},${y}" fill="${theme.surface}" stroke="${theme.primary}aa" stroke-width="1.5">${itemTip}</polygon>` +
+  return `<polygon points="${x},${(y - DECISION_H).toFixed(1)} ${(x + DECISION_W).toFixed(1)},${y} ${x},${(y + DECISION_H).toFixed(1)} ${(x - DECISION_W).toFixed(1)},${y}" fill="${theme.primary}18" stroke="${theme.primary}aa" stroke-width="1.5">${itemTip}</polygon>` +
     aWrap(`<text x="${x}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fit.fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${itemTip}${truncTip}${spans}</text>`, fit.url)
 }
 
@@ -122,7 +122,7 @@ function renderLeafNode(node: RenderedNode, fit: NodeFit, theme: MdArtTheme): st
   const spans = fit.lines
     .map((line, li) => `<tspan x="${x.toFixed(1)}" dy="${li === 0 ? 0 : fit.lineHeight.toFixed(1)}">${escapeXml(line)}</tspan>`)
     .join('')
-  return `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${LEAF_W}" height="${LEAF_H}" rx="5" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${itemTip}</rect>` +
+  return `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${LEAF_W}" height="${LEAF_H}" rx="5" fill="${theme.accent}18" stroke="${theme.accent}aa" stroke-width="1.2">${itemTip}</rect>` +
     aWrap(`<text x="${x.toFixed(1)}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${fit.fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR}>${itemTip}${truncTip}${spans}</text>`, fit.url)
 }
 

@@ -135,7 +135,7 @@ function renderNodeBox(node: HNode, theme: MdArtTheme): string {
   const bx = node.x - NODE_W / 2
   const by = node.y - NODE_H / 2
   const itemTip = itemTitleTag({ label: node.label, value: node.value, attrs: node.attrs })
-  return `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="5" fill="${theme.surface}" stroke="${theme.accent}88" stroke-width="1.2">${itemTip}</rect>`
+  return `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="5" fill="${theme.accent}18" stroke="${theme.accent}aa" stroke-width="1.2">${itemTip}</rect>`
 }
 
 function renderNodeText(node: HNode, theme: MdArtTheme): string {
