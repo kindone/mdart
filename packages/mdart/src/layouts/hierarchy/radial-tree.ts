@@ -45,7 +45,7 @@ function subPoint(branch: { angle: number; x: number; y: number }, index: number
 function renderSubNodeAt(branch: { x: number; y: number }, point: { x: number; y: number }, sub: MdArtItem, theme: MdArtTheme): string {
   const { display, url } = displayLabelValue(sub)
   return `<line x1="${branch.x.toFixed(1)}" y1="${branch.y.toFixed(1)}" x2="${point.x.toFixed(1)}" y2="${point.y.toFixed(1)}" stroke="${theme.border}88" stroke-width="1.5"/>` +
-    `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${SUB_NODE_R}" fill="${theme.muted}" stroke="${theme.accent}88" stroke-width="1.2">${itemTitleTag(sub)}</circle>` +
+    `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${SUB_NODE_R}" fill="${theme.accent}18" stroke="${theme.accent}88" stroke-width="1.2">${itemTitleTag(sub)}</circle>` +
     aWrap(`<text x="${point.x.toFixed(1)}" y="${(point.y + 3.5).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.text}" ${FONT_SANS_ATTR}>${tt(display, 9, sub)}</text>`, url)
 }
 
@@ -53,12 +53,12 @@ function renderBranchLabel(branch: MdArtItem, x: number, y: number, theme: MdArt
   const { display, url } = displayLabelValue(branch)
   const words = display.split(' ')
   if (words.length === 1) {
-    return aWrap(`<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.bg}" font-weight="700" ${FONT_SANS_ATTR}>${tt(display, 9, branch)}</text>`, url)
+    return aWrap(`<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${theme.text}" font-weight="700" ${FONT_SANS_ATTR}>${tt(display, 9, branch)}</text>`, url)
   }
   const mid = Math.ceil(words.length / 2)
   return aWrap(
-    `<text x="${x.toFixed(1)}" y="${(y - 1).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.bg}" font-weight="700" ${FONT_SANS_ATTR}>${tt(words.slice(0, mid).join(' '), 9)}</text>` +
-    `<text x="${x.toFixed(1)}" y="${(y + 9).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.bg}" font-weight="700" ${FONT_SANS_ATTR}>${tt(words.slice(mid).join(' '), 9)}</text>`,
+    `<text x="${x.toFixed(1)}" y="${(y - 1).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.text}" font-weight="700" ${FONT_SANS_ATTR}>${tt(words.slice(0, mid).join(' '), 9)}</text>` +
+    `<text x="${x.toFixed(1)}" y="${(y + 9).toFixed(1)}" text-anchor="middle" font-size="8" fill="${theme.text}" font-weight="700" ${FONT_SANS_ATTR}>${tt(words.slice(mid).join(' '), 9)}</text>`,
     url,
   )
 }
@@ -70,7 +70,10 @@ function renderBranch(branch: MdArtItem, index: number, count: number, theme: Md
   branch.children.forEach((sub, subIndex) => {
     unit.push(renderSubNodeAt(point, subPoint(point, subIndex, branch.children.length), sub, theme))
   })
-  unit.push(`<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${BRANCH_NODE_R}" fill="${theme.primary}" stroke="${theme.bg}" stroke-width="2">${itemTitleTag(branch)}</circle>`)
+  unit.push(
+    `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${BRANCH_NODE_R}" fill="${theme.bg}"/>` +
+    `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${BRANCH_NODE_R}" fill="${theme.primary}28" stroke="${theme.primary}" stroke-width="1.5">${itemTitleTag(branch)}</circle>`
+  )
   unit.push(renderBranchLabel(branch, point.x, point.y, theme))
   return wrapItem(unit.join(''), index + 1, animate, instrument)
 }
@@ -78,16 +81,17 @@ function renderBranch(branch: MdArtItem, index: number, count: number, theme: Md
 function renderCenterLabel(label: string, theme: MdArtTheme): string {
   const words = label.split(' ')
   if (words.length === 1) {
-    return `<text x="${CX}" y="${CY + 4}" text-anchor="middle" font-size="11" fill="${theme.bg}" font-weight="700" ${FONT_SANS_ATTR}>${tt(label, 12)}</text>`
+    return `<text x="${CX}" y="${CY + 4}" text-anchor="middle" font-size="11" fill="${theme.text}" font-weight="700" ${FONT_SANS_ATTR}>${tt(label, 12)}</text>`
   }
   const mid = Math.ceil(words.length / 2)
-  return `<text x="${CX}" y="${CY - 2}" text-anchor="middle" font-size="10" fill="${theme.bg}" font-weight="700" ${FONT_SANS_ATTR}>${tt(words.slice(0, mid).join(' '), 12)}</text>` +
-    `<text x="${CX}" y="${CY + 11}" text-anchor="middle" font-size="10" fill="${theme.bg}" font-weight="700" ${FONT_SANS_ATTR}>${tt(words.slice(mid).join(' '), 12)}</text>`
+  return `<text x="${CX}" y="${CY - 2}" text-anchor="middle" font-size="10" fill="${theme.text}" font-weight="700" ${FONT_SANS_ATTR}>${tt(words.slice(0, mid).join(' '), 12)}</text>` +
+    `<text x="${CX}" y="${CY + 11}" text-anchor="middle" font-size="10" fill="${theme.text}" font-weight="700" ${FONT_SANS_ATTR}>${tt(words.slice(mid).join(' '), 12)}</text>`
 }
 
 function renderCenter(label: string, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
   return wrapItem(
-    `<circle cx="${CX}" cy="${CY}" r="${CENTER_R}" fill="${theme.accent}" stroke="${theme.bg}" stroke-width="2"/>` +
+    `<circle cx="${CX}" cy="${CY}" r="${CENTER_R}" fill="${theme.bg}"/>` +
+    `<circle cx="${CX}" cy="${CY}" r="${CENTER_R}" fill="${theme.accent}28" stroke="${theme.accent}" stroke-width="1.5"/>` +
     renderCenterLabel(label, theme),
     0,
     animate,

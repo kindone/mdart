@@ -74,7 +74,7 @@ function renderDefs(theme: MdArtTheme): string {
 }
 
 function renderCircle(node: CircleNode, layout: CircleProcessLayout): string {
-  return `<circle cx="${node.cx.toFixed(1)}" cy="${layout.cy.toFixed(1)}" r="${layout.radius}" fill="${node.fill}33" stroke="${node.fill}" stroke-width="1.5">${itemTitleTag(node.item)}</circle>`
+  return `<circle cx="${node.cx.toFixed(1)}" cy="${layout.cy.toFixed(1)}" r="${layout.radius}" fill="${node.fill}28" stroke="${node.fill}" stroke-width="1.5">${itemTitleTag(node.item)}</circle>`
 }
 
 function renderText(node: CircleNode, layout: CircleProcessLayout, theme: MdArtTheme): string {

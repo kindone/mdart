@@ -98,10 +98,10 @@ function renderTitle(spec: MdArtSpec, theme: MdArtTheme): string {
 
 function renderBand(node: FunnelNode): string {
   const points = `${node.x},${node.y} ${node.x + node.w},${node.y} ${node.nextX + node.nextW},${node.y + STEP_H} ${node.nextX},${node.y + STEP_H}`
-  return `<polygon points="${points}" fill="${node.fill}">${itemTitleTag(node.item)}</polygon>`
+  return `<polygon points="${points}" fill="${node.fill}28" stroke="${node.fill}" stroke-width="1.5">${itemTitleTag(node.item)}</polygon>`
 }
 
-function renderMetricBlock(node: FunnelNode): string {
+function renderMetricBlock(node: FunnelNode, theme: MdArtTheme): string {
   const bandCx = W / 2
   const bandCy = node.y + STEP_H / 2
   const metricTextFull = node.metric.num !== null ? fmtNum(node.metric.num) : node.metric.raw!
@@ -122,14 +122,14 @@ function renderMetricBlock(node: FunnelNode): string {
   let content = captionTip
   captionLines.forEach((line, lineIndex) => {
     const ty = bandCy - totalH / 2 + lineIndex * captionFit.lineHeight + captionFit.lineHeight * 0.8
-    content += `<text x="${bandCx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${captionFit.fontSize}" fill="#fff" fill-opacity="0.85" ${FONT_SANS_ATTR} font-weight="700" letter-spacing="0.08em">${escapeXml(line)}</text>`
+    content += `<text x="${bandCx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${captionFit.fontSize}" fill="${theme.text}" fill-opacity="0.85" ${FONT_SANS_ATTR} font-weight="700" letter-spacing="0.08em">${escapeXml(line)}</text>`
   })
   const metricY = bandCy - totalH / 2 + captionLines.length * captionFit.lineHeight + metricFit.lineHeight * 0.8
   content = aWrap(content, node.display.url)
-  return content + `${metricTip}<text x="${bandCx}" y="${metricY.toFixed(1)}" text-anchor="middle" font-size="${metricFit.fontSize}" fill="#fff" ${FONT_SANS_ATTR} font-weight="800" letter-spacing="0.02em">${escapeXml(metricLines[0])}</text>`
+  return content + `${metricTip}<text x="${bandCx}" y="${metricY.toFixed(1)}" text-anchor="middle" font-size="${metricFit.fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="800" letter-spacing="0.02em">${escapeXml(metricLines[0])}</text>`
 }
 
-function renderLabelBlock(node: FunnelNode): string {
+function renderLabelBlock(node: FunnelNode, theme: MdArtTheme): string {
   const bandCx = W / 2
   const bandCy = node.y + STEP_H / 2
   const labelFit = fitTextToWidthShared([node.display.display], node.bandW, {
@@ -144,7 +144,7 @@ function renderLabelBlock(node: FunnelNode): string {
   let content = tip
   lines.forEach((line, lineIndex) => {
     const ty = bandCy - totalH / 2 + lineIndex * labelFit.lineHeight + labelFit.lineHeight * 0.8
-    content += `<text x="${bandCx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFit.fontSize}" fill="#fff" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(line)}</text>`
+    content += `<text x="${bandCx}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${labelFit.fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="700">${escapeXml(line)}</text>`
   })
   return aWrap(content, node.display.url)
 }
@@ -157,7 +157,7 @@ function renderConversion(node: FunnelNode, previous: FunnelNode | undefined, th
 }
 
 function renderNode(node: FunnelNode, previous: FunnelNode | undefined, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
-  const text = node.metric.raw !== null ? renderMetricBlock(node) : renderLabelBlock(node)
+  const text = node.metric.raw !== null ? renderMetricBlock(node, theme) : renderLabelBlock(node, theme)
   return wrapItem(renderBand(node) + text + renderConversion(node, previous, theme), node.index, animate, instrument)
 }
 

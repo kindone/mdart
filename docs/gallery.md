@@ -1,6 +1,6 @@
 # MdArt Layout Reference
 
-**102 layouts across 11 families.** Every layout type with its source and rendered output.
+**103 layouts across 11 families.** Every layout type with its source and rendered output.
 
 See the [interactive playground](https://github.com/mdart/mdart) for live editing, or open [gallery.html](./gallery.html) for a richer viewer.
 
@@ -15,7 +15,7 @@ See the [interactive playground](https://github.com/mdart/mdart) for live editin
 - [Relationship (13)](#relationship)
 - [Statistical (9)](#statistical)
 - [Planning (6)](#planning)
-- [Technical (7)](#technical)
+- [Technical (8)](#technical)
 - [Plot (4)](#plot)
 
 ---
@@ -1799,6 +1799,35 @@ title: User Login
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/sequence.svg">
   <img alt="sequence" src="./examples/gallery/sequence-light.svg">
+</picture>
+
+### `flowchart`
+
+```
+type: flowchart
+title: Retry with Backoff
+
+- Start [start]
+  → Send Request
+- Send Request
+  → Check Response [decision]
+- Check Response [decision]
+  → Process Data: success
+  → Retry? [decision]: error
+- Retry? [decision]
+  → Wait & Retry: attempts left
+  → Fail: max retries
+- Wait & Retry
+  → Send Request
+- Process Data
+  → End [end]
+- Fail
+  → End [end]
+```
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/flowchart.svg">
+  <img alt="flowchart" src="./examples/gallery/flowchart-light.svg">
 </picture>
 
 ### `state-machine`

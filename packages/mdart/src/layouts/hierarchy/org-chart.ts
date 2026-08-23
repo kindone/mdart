@@ -54,7 +54,7 @@ function renderConnector(node: RenderedNode, theme: MdArtTheme): string {
 function renderNodeBox(node: RenderedNode, theme: MdArtTheme): string {
   const bx = node.x - BOX_W / 2
   const by = node.y - BOX_H / 2
-  return `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="${BOX_RX}" fill="${theme.accent}18" stroke="${theme.accent}aa" stroke-width="1.2">${itemTitleTag(node)}</rect>`
+  return `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${BOX_W}" height="${BOX_H}" rx="${BOX_RX}" fill="${theme.accent}28" stroke="${theme.accent}" stroke-width="1.2">${itemTitleTag(node)}</rect>`
 }
 
 function renderNodeText(node: RenderedNode, theme: MdArtTheme): string {

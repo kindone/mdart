@@ -187,7 +187,7 @@ function renderConnectors(nodes: WaterfallNode[], layout: WaterfallLayout, anima
 }
 
 function renderNodeShape(node: WaterfallNode, layout: WaterfallLayout): string {
-  return `<rect x="${node.x.toFixed(1)}" y="${node.y.toFixed(1)}" width="${layout.boxW}" height="${BOX_H}" rx="5" fill="${node.fill}33" stroke="${node.fill}" stroke-width="1.5">${itemTitleTag(node.item)}</rect>`
+  return `<rect x="${node.x.toFixed(1)}" y="${node.y.toFixed(1)}" width="${layout.boxW}" height="${BOX_H}" rx="5" fill="${node.fill}28" stroke="${node.fill}" stroke-width="1.5">${itemTitleTag(node.item)}</rect>`
 }
 
 function renderNodeText(node: WaterfallNode, layout: WaterfallLayout, fit: StepTextFit, theme: MdArtTheme): string {

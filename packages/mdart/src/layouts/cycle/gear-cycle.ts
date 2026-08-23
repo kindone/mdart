@@ -79,7 +79,7 @@ function renderGearLabel(node: GearNode, theme: MdArtTheme): string {
 }
 
 function renderGearNode(node: GearNode, theme: MdArtTheme, animate: boolean): string {
-  const content = `<path d="${gearPath(node.x, node.y, node.outerR, node.innerR, node.teeth, node.phase)}" fill="${node.fill}" opacity="0.8">${itemTitleTag(node.item)}</path>` +
+  const content = `<path d="${gearPath(node.x, node.y, node.outerR, node.innerR, node.teeth, node.phase)}" fill="${node.fill}28" stroke="${node.fill}" stroke-width="1">${itemTitleTag(node.item)}</path>` +
     `<circle cx="${node.x}" cy="${node.y}" r="${node.centerR}" fill="${theme.bg}"/>` +
     renderGearLabel(node, theme)
   return animate ? `<g class="mdart-n${node.index}">${content}</g>` : content

@@ -8,7 +8,6 @@ const CX = W / 2
 const CY = H / 2
 const R = 150
 const NODE_R = 20
-const HALO = `stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill"`
 
 interface MultiNode {
   item: MdArtItem
@@ -59,13 +58,13 @@ function renderNode(node: MultiNode, theme: MdArtTheme, animate: boolean, instru
     labelMaxLines: 2,
     labelMaxLinesNoValue: 2,
   })
-  const content = `<circle cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${NODE_R}" fill="${node.fill}" stroke="${theme.bg}" stroke-width="2">${itemTitleTag(node.item)}</circle>` +
+  const content = `<circle cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${NODE_R}" fill="${theme.bg}"/>` +
+    `<circle cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${NODE_R}" fill="${node.fill}28" stroke="${node.fill}" stroke-width="1.5">${itemTitleTag(node.item)}</circle>` +
     renderFitBlock(node.x, node.y, fit, {
       labelFullText: node.display.display,
-      labelFill: '#ffffff',
-      valueFill: '#ffffff',
+      labelFill: theme.text,
+      valueFill: theme.text,
       labelWeight: '600',
-      extraAttrs: HALO,
       shapeBounds: { x: node.x - NODE_R, y: node.y - NODE_R, w: NODE_R * 2, h: NODE_R * 2, label: 'cycle-node' },
     })
   return wrapItem(content, node.index, animate, instrument)

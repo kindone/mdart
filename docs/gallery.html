@@ -182,7 +182,7 @@ section { margin-bottom: 3.5rem; }
 <a href="#relationship" class="nav-link">Relationship <span class="nav-count">13</span></a>
 <a href="#statistical" class="nav-link">Statistical <span class="nav-count">9</span></a>
 <a href="#planning" class="nav-link">Planning <span class="nav-count">6</span></a>
-<a href="#technical" class="nav-link">Technical <span class="nav-count">7</span></a>
+<a href="#technical" class="nav-link">Technical <span class="nav-count">8</span></a>
 <a href="#plot" class="nav-link">Plot <span class="nav-count">4</span></a>
 </nav>
 
@@ -190,7 +190,7 @@ section { margin-bottom: 3.5rem; }
   <div class="page-header">
     <h1>Layout Reference</h1>
     <p>Every MdArt layout type — source code alongside rendered output.</p>
-    <span class="layout-count">102 layouts across 11 families</span>
+    <span class="layout-count">103 layouts across 11 families</span>
   </div>
 
   
@@ -2365,6 +2365,39 @@ title: User Login
           <picture>
             <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/sequence.svg">
             <img alt="sequence" src="./examples/gallery/sequence-light.svg">
+          </picture>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="flowchart">
+      <div class="card-header">
+        <code class="card-name">flowchart</code>
+      </div>
+      <div class="card-body">
+        <div class="card-code"><pre>type: flowchart
+title: Retry with Backoff
+
+- Start [start]
+  → Send Request
+- Send Request
+  → Check Response [decision]
+- Check Response [decision]
+  → Process Data: success
+  → Retry? [decision]: error
+- Retry? [decision]
+  → Wait &amp; Retry: attempts left
+  → Fail: max retries
+- Wait &amp; Retry
+  → Send Request
+- Process Data
+  → End [end]
+- Fail
+  → End [end]</pre></div>
+        <div class="card-svg">
+          <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/flowchart.svg">
+            <img alt="flowchart" src="./examples/gallery/flowchart-light.svg">
           </picture>
         </div>
       </div>

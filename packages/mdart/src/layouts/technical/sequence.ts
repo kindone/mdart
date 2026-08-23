@@ -3,7 +3,7 @@ import type { MdArtTheme } from '../../theme'
 import {
   escapeXml, tt, wrapLabel, renderEmpty, parseLink, aWrap,
   itemTitleTag, displayLabelValue, shouldAnimate, seqSpotlightCSS,
-  wrapItem, shouldInstrument, FONT_SANS_ATTR,
+  wrapItem, shouldInstrument, FONT_SANS_ATTR, truncate, renderInlineMarkdown,
 } from '../shared'
 
 // ── Layout constants ──────────────────────────────────────────────────────────
@@ -536,10 +536,23 @@ function renderCrossMessage(
   const ex2 = x2 - dir * 8
   const midX = (ex1 + ex2) / 2
   const maxChars = Math.max(8, Math.floor(Math.abs(ex2 - ex1) / MESSAGE_LABEL_CHAR_PX))
-  return [
+  const parts: string[] = [
     `<line x1="${ex1.toFixed(1)}" y1="${y.toFixed(1)}" x2="${ex2.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${isReturn ? theme.textMuted : theme.accent}" stroke-width="1.5"${isReturn ? ' stroke-dasharray="5,3"' : ''} marker-end="${isReturn ? 'url(#sq-b)' : 'url(#sq-a)'}"/>`,
-    message.msg ? `<text x="${midX.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${tt(message.msg, maxChars)}</text>` : '',
-  ].join('')
+  ]
+  if (message.msg) {
+    if (message.msg.length <= maxChars) {
+      parts.push(`<text x="${midX.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${tt(message.msg, maxChars)}</text>`)
+    } else {
+      // Find word boundary for line break
+      let splitIdx = message.msg.lastIndexOf(' ', maxChars)
+      if (splitIdx <= 0) splitIdx = maxChars // No space found, fall back to char split
+      const line1 = message.msg.slice(0, splitIdx)
+      const line2 = message.msg.slice(splitIdx).trimStart()
+      parts.push(`<text x="${midX.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}><title>${escapeXml(message.msg)}</title>${renderInlineMarkdown(truncate(line1, maxChars))}</text>`)
+      parts.push(`<text x="${midX.toFixed(1)}" y="${(y + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${renderInlineMarkdown(truncate(line2, maxChars))}</text>`)
+    }
+  }
+  return parts.join('')
 }
 
 function renderMessage(

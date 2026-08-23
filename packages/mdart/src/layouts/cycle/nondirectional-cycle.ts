@@ -9,7 +9,6 @@ const CY = H / 2
 const TRACK_R = 145
 const NODE_R = 22
 const TRACK_STROKE = 14
-const HALO = `stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill"`
 
 interface CycleNode {
   item: MdArtItem
@@ -48,7 +47,7 @@ function renderTitle(spec: MdArtSpec, theme: MdArtTheme): string {
   return `<text x="${CX}" y="${CY + 5}" text-anchor="middle" font-size="12" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${escapeXml(spec.title)}</text>`
 }
 
-function renderNode(node: CycleNode, animate: boolean, instrument: boolean): string {
+function renderNode(node: CycleNode, animate: boolean, instrument: boolean, theme: MdArtTheme): string {
   const { w: nodeBoxW, h: nodeBoxH } = roundTextBox(NODE_R)
   const fit = fitLabelValueBlock(node.display.display, node.item.value, nodeBoxW, nodeBoxH, {
     labelUrl: node.display.url,
@@ -58,15 +57,15 @@ function renderNode(node: CycleNode, animate: boolean, instrument: boolean): str
     valueMaxSize: 8,
     valueMinSize: 6,
   })
-  const content = `<circle cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${NODE_R}" fill="${node.fill}">${itemTitleTag(node.item)}</circle>` +
+  const content = `<circle cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${NODE_R}" fill="${theme.bg}"/>` +
+    `<circle cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${NODE_R}" fill="${node.fill}28" stroke="${node.fill}" stroke-width="1.5">${itemTitleTag(node.item)}</circle>` +
     renderFitBlock(node.x, node.y, fit, {
       labelFullText: node.display.display,
       valueFullText: node.item.value ?? undefined,
-      labelFill: '#ffffff',
-      valueFill: '#ffffff',
+      labelFill: theme.text,
+      valueFill: theme.text,
       labelWeight: '600',
       valueWeight: '400',
-      extraAttrs: HALO,
       shapeBounds: { x: node.x - NODE_R, y: node.y - NODE_R, w: NODE_R * 2, h: NODE_R * 2, label: 'cycle-node' },
     })
   return wrapItem(content, node.index, animate, instrument)
@@ -90,7 +89,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const parts = [
     renderTrack(theme),
     renderTitle(spec, theme),
-    ...nodes.map(node => renderNode(node, animate, instrument)),
+    ...nodes.map(node => renderNode(node, animate, instrument, theme)),
   ].filter(Boolean)
 
   return renderSvg(spec, theme, parts)

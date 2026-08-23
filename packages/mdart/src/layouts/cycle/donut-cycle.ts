@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, contrastColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, shouldInstrument, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, FONT_SANS_ATTR } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, shouldInstrument, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, FONT_SANS_ATTR } from '../shared'
 
 const W = 400
 const H = 360
@@ -76,7 +76,7 @@ function segmentPath(segment: DonutSegment): string {
   return `M ${x1} ${y1} L ${x2} ${y2} A ${OUTER_R} ${OUTER_R} 0 ${largeArc} 1 ${x3} ${y3} L ${x4} ${y4} A ${INNER_R} ${INNER_R} 0 ${largeArc} 0 ${x1} ${y1} Z`
 }
 
-function renderSegment(segment: DonutSegment, layout: DonutLayout, animate: boolean, instrument: boolean): string {
+function renderSegment(segment: DonutSegment, layout: DonutLayout, animate: boolean, instrument: boolean, theme: MdArtTheme): string {
   const fit = fitLabelValueBlock(segment.display.display, segment.item.value, layout.boxW, layout.boxH, {
     labelUrl: segment.display.url,
     labelMaxSize: 10,
@@ -88,14 +88,13 @@ function renderSegment(segment: DonutSegment, layout: DonutLayout, animate: bool
     valueMaxLines: 1,
     gap: 2,
   })
-  const textColor = contrastColor(segment.fill)
   return `<g${animate ? ` class="mdart-n${segment.index}"` : ''}${instrument ? ` data-item-index="${segment.index}"` : ''}>` +
-    `<path d="${segmentPath(segment)}" fill="${segment.fill}">${itemTitleTag(segment.item)}</path>` +
+    `<path d="${segmentPath(segment)}" fill="${segment.fill}28" stroke="${segment.fill}" stroke-width="1">${itemTitleTag(segment.item)}</path>` +
     renderFitBlock(segment.labelX, segment.labelY, fit, {
       labelFullText: segment.display.display,
       valueFullText: segment.item.value,
-      labelFill: textColor,
-      valueFill: textColor,
+      labelFill: theme.text,
+      valueFill: theme.text,
       labelWeight: '600',
       valueExtraAttrs: 'opacity="0.85"',
     }) +
@@ -124,7 +123,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const instrument = shouldInstrument()
   const segments = placeSegments(spec, layout, theme)
   const parts = [
-    ...segments.map(segment => renderSegment(segment, layout, animate, instrument)),
+    ...segments.map(segment => renderSegment(segment, layout, animate, instrument, theme)),
     renderTitle(spec, theme),
   ].filter(Boolean)
 

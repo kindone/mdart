@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, contrastColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, shouldInstrument, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, FONT_SANS_ATTR } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, shouldInstrument, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, FONT_SANS_ATTR } from '../shared'
 
 const NODE_W = 100
 const NODE_H = 44
@@ -116,7 +116,7 @@ function renderArc(node: CycleNode, next: CycleNode, layout: CycleLayout, theme:
   return animate ? `<g class="mdart-arr-n${arrIndex}">${arc}</g>` : arc
 }
 
-function renderNode(node: CycleNode, layout: CycleLayout, animate: boolean, instrument: boolean): string {
+function renderNode(node: CycleNode, layout: CycleLayout, animate: boolean, instrument: boolean, theme: MdArtTheme): string {
   const fit = fitLabelValueBlock(node.display.display, node.item.value, layout.textW, layout.textH, {
     labelUrl: node.display.url,
     labelMaxSize: 11,
@@ -125,14 +125,13 @@ function renderNode(node: CycleNode, layout: CycleLayout, animate: boolean, inst
     valueMaxSize: 9,
     valueMinSize: 6.5,
   })
-  const textColor = contrastColor(node.fill)
   return `<g${animate ? ` class="mdart-n${node.index}"` : ''}${instrument ? ` data-item-index="${node.index}"` : ''}>` +
-    `<rect x="${(node.x - NODE_HW).toFixed(1)}" y="${(node.y - NODE_HH).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${node.fill}">${itemTitleTag(node.item)}</rect>` +
+    `<rect x="${(node.x - NODE_HW).toFixed(1)}" y="${(node.y - NODE_HH).toFixed(1)}" width="${NODE_W}" height="${NODE_H}" rx="6" fill="${node.fill}28" stroke="${node.fill}" stroke-width="1.5">${itemTitleTag(node.item)}</rect>` +
     renderFitBlock(node.x, node.y, fit, {
       labelFullText: node.display.display,
       valueFullText: node.item.value ?? undefined,
-      labelFill: textColor,
-      valueFill: textColor,
+      labelFill: theme.text,
+      valueFill: theme.text,
       labelWeight: '600',
       valueExtraAttrs: 'opacity="0.85"',
       shapeBounds: { x: node.x - NODE_HW, y: node.y - NODE_HH, w: NODE_W, h: NODE_H, label: 'cycle-node' },
@@ -164,7 +163,7 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const parts = [
     renderDefs(theme),
     ...nodes.map((node, index) => renderArc(node, nodes[(index + 1) % layout.n], layout, theme, animate)),
-    ...nodes.map(node => renderNode(node, layout, animate, instrument)),
+    ...nodes.map(node => renderNode(node, layout, animate, instrument, theme)),
     renderTitle(spec, layout, theme),
   ].filter(Boolean)
 

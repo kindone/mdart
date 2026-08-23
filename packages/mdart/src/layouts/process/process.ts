@@ -3,7 +3,6 @@ import type { MdArtTheme } from '../../theme'
 import {
   escapeXml,
   lerpColor,
-  contrastColor,
   itemTitleTag,
   displayLabel,
   shouldAnimate,
@@ -134,13 +133,13 @@ function renderTitle(spec: MdArtSpec, layout: ProcessLayout, theme: MdArtTheme):
 function renderHorizontalArrow(node: ProcessNode, previous: ProcessNode | undefined): string {
   if (!previous) return ''
   const ax = node.x - H_ARROW_W + 2
-  return `<polygon points="${ax},${node.cy - 7} ${ax + H_ARROW_W - 2},${node.cy} ${ax},${node.cy + 7}" fill="${previous.fill}" />`
+  return `<polygon points="${ax},${node.cy - 7} ${ax + H_ARROW_W - 2},${node.cy} ${ax},${node.cy + 7}" fill="${previous.fill}aa" />`
 }
 
 function renderVerticalArrow(node: ProcessNode, previous: ProcessNode | undefined): string {
   if (!previous) return ''
   const ay = node.y - V_ARROW_H + 2
-  return `<polygon points="${V_W / 2 - 8},${ay} ${V_W / 2 + 8},${ay} ${V_W / 2},${ay + V_ARROW_H - 2}" fill="${previous.fill}" />`
+  return `<polygon points="${V_W / 2 - 8},${ay} ${V_W / 2 + 8},${ay} ${V_W / 2},${ay + V_ARROW_H - 2}" fill="${previous.fill}aa" />`
 }
 
 function renderIncomingArrow(node: ProcessNode, previous: ProcessNode | undefined, layout: ProcessLayout): string {
@@ -149,7 +148,7 @@ function renderIncomingArrow(node: ProcessNode, previous: ProcessNode | undefine
     : renderVerticalArrow(node, previous)
 }
 
-function renderNode(node: ProcessNode, previous: ProcessNode | undefined, layout: ProcessLayout, animate: boolean, instrument: boolean): string {
+function renderNode(node: ProcessNode, previous: ProcessNode | undefined, layout: ProcessLayout, animate: boolean, instrument: boolean, theme: MdArtTheme): string {
   const fit = fitLabelValueBlock(node.display.display, node.item.value, node.w - (layout.direction === 'vertical' ? 24 : 12), node.h - 12, {
     labelUrl: node.display.url,
     labelMaxSize: 12,
@@ -165,12 +164,12 @@ function renderNode(node: ProcessNode, previous: ProcessNode | undefined, layout
   const attrs = `${animate ? ` class="mdart-n${node.index}"` : ''}${instrument ? ` data-item-index="${node.index}"` : ''}`
   return `<g${attrs}>` +
     renderIncomingArrow(node, previous, layout) +
-    `<rect x="${node.x}" y="${node.y}" width="${node.w}" height="${node.h}" rx="6" fill="${node.fill}" >${itemTitleTag(node.item)}</rect>` +
+    `<rect x="${node.x}" y="${node.y}" width="${node.w}" height="${node.h}" rx="6" fill="${node.fill}28" stroke="${node.fill}" stroke-width="1.5">${itemTitleTag(node.item)}</rect>` +
     renderFitBlock(node.cx, node.cy, fit, {
       labelFullText: node.display.display,
       valueFullText: node.item.value,
-      labelFill: contrastColor(node.fill),
-      valueFill: contrastColor(node.fill),
+      labelFill: theme.text,
+      valueFill: theme.text,
       labelWeight: '600',
       valueExtraAttrs: 'opacity="0.85"',
       shapeBounds: { x: node.x, y: node.y, w: node.w, h: node.h, label: 'process-node' },
@@ -178,8 +177,8 @@ function renderNode(node: ProcessNode, previous: ProcessNode | undefined, layout
   '</g>'
 }
 
-function renderNodes(layout: ProcessLayout, animate: boolean, instrument: boolean): string[] {
-  return layout.nodes.map((node, index) => renderNode(node, layout.nodes[index - 1], layout, animate, instrument))
+function renderNodes(layout: ProcessLayout, animate: boolean, instrument: boolean, theme: MdArtTheme): string[] {
+  return layout.nodes.map((node, index) => renderNode(node, layout.nodes[index - 1], layout, animate, instrument, theme))
 }
 
 function renderSvg(layout: ProcessLayout, spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {
@@ -199,6 +198,6 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const instrument = shouldInstrument()
   return renderSvg(layout, spec, theme, [
     renderTitle(spec, layout, theme),
-    ...renderNodes(layout, animate, instrument),
+    ...renderNodes(layout, animate, instrument, theme),
   ].filter(Boolean))
 }

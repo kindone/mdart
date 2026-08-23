@@ -97,7 +97,7 @@ function renderText(node: SegmentedNode, theme: MdArtTheme): string {
 }
 
 function renderNode(node: SegmentedNode, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
-  const content = `<path d="${segmentPath(node)}" fill="${node.fill}">${itemTitleTag(node.item)}</path>` +
+  const content = `<path d="${segmentPath(node)}" fill="${node.fill}28" stroke="${node.fill}" stroke-width="1">${itemTitleTag(node.item)}</path>` +
     `<line x1="${node.connectorX.toFixed(1)}" y1="${node.connectorY.toFixed(1)}" x2="${node.labelX.toFixed(1)}" y2="${node.labelY.toFixed(1)}" stroke="${node.fill}" stroke-width="1" opacity="0.7"/>` +
     renderText(node, theme)
   return wrapItem(content, node.index, animate, instrument)

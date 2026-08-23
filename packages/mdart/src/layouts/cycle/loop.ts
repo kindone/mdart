@@ -10,7 +10,6 @@ const NODE_ROW_GAP = 16
 const RETURN_BOTTOM_PAD = 28
 const FORWARD_ARROW_ID = 'lp-fwd'
 const RETURN_ARROW_ID = 'lp-ret'
-const HALO = `stroke="#000000" stroke-opacity="0.4" stroke-width="2.5" paint-order="stroke fill"`
 
 interface LoopLayout {
   n: number
@@ -131,7 +130,7 @@ function renderReturnArc(nodes: LoopNode[], layout: LoopLayout, theme: MdArtThem
   return animate ? `<g class="mdart-arr-n${layout.n}">${arrow}${label}</g>` : arrow + label
 }
 
-function renderLabel(node: LoopNode, layout: LoopLayout): string {
+function renderLabel(node: LoopNode, layout: LoopLayout, theme: MdArtTheme): string {
   const labelFit = fitTextToWidthShared([node.display.display], layout.nodeBoxW, {
     maxSize: layout.fontSize,
     minSize: 6.5,
@@ -144,7 +143,7 @@ function renderLabel(node: LoopNode, layout: LoopLayout): string {
   let content = tip
   lines.forEach((line, lineIndex) => {
     const ty = layout.rowY - totalH / 2 + lineIndex * lineHeight + lineHeight * 0.8
-    content += `<text x="${node.x.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="700" ${FONT_SANS_ATTR} fill="#ffffff" ${HALO}>${escapeXml(line)}</text>`
+    content += `<text x="${node.x.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${fontSize}" font-weight="700" ${FONT_SANS_ATTR} fill="${theme.text}">${escapeXml(line)}</text>`
   })
   return aWrap(content, node.display.url)
 }
@@ -169,8 +168,8 @@ function renderValue(node: LoopNode, layout: LoopLayout, theme: MdArtTheme): str
 }
 
 function renderNode(node: LoopNode, layout: LoopLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
-  const content = `<circle cx="${node.x.toFixed(1)}" cy="${layout.rowY}" r="${layout.nodeR}" fill="${node.fill}" stroke="${theme.bg}" stroke-width="2.5">${itemTitleTag(node.item)}</circle>` +
-    renderLabel(node, layout) +
+  const content = `<circle cx="${node.x.toFixed(1)}" cy="${layout.rowY}" r="${layout.nodeR}" fill="${node.fill}28" stroke="${node.fill}" stroke-width="1.5">${itemTitleTag(node.item)}</circle>` +
+    renderLabel(node, layout, theme) +
     renderBadge(node, layout, theme) +
     renderValue(node, layout, theme)
   return wrapItem(content, node.index, animate, instrument)

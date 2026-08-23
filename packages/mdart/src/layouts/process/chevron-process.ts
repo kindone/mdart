@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { lerpColor, contrastColor, titleEl, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument } from '../shared'
+import { lerpColor, titleEl, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument } from '../shared'
 import { render as renderProcess } from './process'
 
 const W = 600
@@ -99,12 +99,12 @@ function chevronPoints(chev: ChevronGeometry, layout: ChevronLayout): string {
   return `${x},${y} ${x + w - POINT_W},${y} ${x + w},${cy} ${x + w - POINT_W},${y + CHEV_H} ${x},${y + CHEV_H} ${x + POINT_W},${cy}`
 }
 
-function renderShape(chev: ChevronGeometry, layout: ChevronLayout, theme: MdArtTheme): string {
-  return `<polygon points="${chevronPoints(chev, layout)}" fill="${chev.fill}ee" stroke="${theme.bg}" stroke-width="2.5">${itemTitleTag(chev.item)}</polygon>`
+function renderShape(chev: ChevronGeometry, layout: ChevronLayout): string {
+  return `<polygon points="${chevronPoints(chev, layout)}" fill="${chev.fill}28" stroke="${chev.fill}" stroke-width="1.5">${itemTitleTag(chev.item)}</polygon>`
 }
 
-function renderText(chev: ChevronGeometry, layout: ChevronLayout): string {
-  const textColor = contrastColor(chev.fill)
+function renderText(chev: ChevronGeometry, layout: ChevronLayout, theme: MdArtTheme): string {
+  const textColor = theme.text
   const fit = fitLabelValueBlock(chev.display.display, chev.item.value, chev.bodyW, layout.textH, {
     labelUrl: chev.display.url,
     labelMaxSize: 10.5,
@@ -129,7 +129,7 @@ function renderText(chev: ChevronGeometry, layout: ChevronLayout): string {
 }
 
 function renderChevron(chev: ChevronGeometry, layout: ChevronLayout, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
-  return wrapItem(renderShape(chev, layout, theme) + renderText(chev, layout), chev.index, animate, instrument)
+  return wrapItem(renderShape(chev, layout) + renderText(chev, layout, theme), chev.index, animate, instrument)
 }
 
 function renderSvg(layout: ChevronLayout, theme: MdArtTheme, parts: string[]): string {

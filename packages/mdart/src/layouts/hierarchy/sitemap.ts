@@ -73,12 +73,13 @@ function nodeFontSize(level: number): number {
 }
 
 function renderNodeBox(node: SitemapNode, theme: MdArtTheme): string {
-  return `<rect x="${(node.x - boxW(node.level) / 2).toFixed(1)}" y="${(node.y - boxH(node.level) / 2).toFixed(1)}" width="${boxW(node.level)}" height="${boxH(node.level)}" rx="4" fill="${nodeFill(node.level, theme)}" stroke="${theme.bg}" stroke-width="1.5">${itemTitleTag(node)}</rect>`
+  const fill = nodeFill(node.level, theme)
+  return `<rect x="${(node.x - boxW(node.level) / 2).toFixed(1)}" y="${(node.y - boxH(node.level) / 2).toFixed(1)}" width="${boxW(node.level)}" height="${boxH(node.level)}" rx="4" fill="${fill}28" stroke="${fill}" stroke-width="1.5">${itemTitleTag(node)}</rect>`
 }
 
 function renderNodeText(node: SitemapNode, theme: MdArtTheme): string {
   const { display, url } = displayLabelValue(node)
-  return aWrap(`<text x="${node.x.toFixed(1)}" y="${(node.y + 4).toFixed(1)}" text-anchor="middle" font-size="${nodeFontSize(node.level)}" fill="${theme.bg}" ${FONT_SANS_ATTR} font-weight="600">${tt(display, 12, node)}</text>`, url)
+  return aWrap(`<text x="${node.x.toFixed(1)}" y="${(node.y + 4).toFixed(1)}" text-anchor="middle" font-size="${nodeFontSize(node.level)}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${tt(display, 12, node)}</text>`, url)
 }
 
 function renderNode(node: SitemapNode, index: number, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
