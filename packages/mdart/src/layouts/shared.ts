@@ -219,35 +219,65 @@ export function truncate(s: string, max: number): string {
 }
 
 /**
- * Expand a hyphen-connected word into line-breakable segments.
- * "position-awareness" → ["position-", "awareness"]
- * "cross-encoder"      → ["cross-", "encoder"]
- * "multi-part-word"    → ["multi-", "part-", "word"]
+ * Expand a word at any non-alphanumeric separator into line-breakable segments.
+ *
+ * Examples:
+ *   "position-awareness" → ["position-", "awareness"]
+ *   "Alice/Bob/Carter"   → ["Alice/", "Bob/", "Carter"]
+ *   "v1.2.3"             → ["v1.", "2.", "3"]
+ *   "key:value"          → ["key:", "value"]
+ *   "GET|POST|PUT"       → ["GET|", "POST|", "PUT"]
  *
  * Rules:
- *  - Only split at hyphens that are flanked by alphanumeric chars on both
- *    sides (avoids leading/trailing hyphens and double-hyphens).
- *  - Words that contain inline markdown markers (*, ~, `, _) are left
- *    unexpanded so we don't split inside a styling span.
+ *  - Split at any non-alphanumeric character that is flanked by alphanumeric
+ *    chars on both sides — avoids leading/trailing separators and runs of
+ *    separators (e.g. "--", "//").
+ *  - Characters in BREAK_EXCLUDED are never treated as split points even when
+ *    flanked, covering apostrophes in contractions/possessives, markdown
+ *    markers, and other intra-word punctuation.
+ *  - Words containing inline markdown markers (*, ~, `, _) are returned
+ *    as-is so we never split inside a styling span.
  *
- * When adjacent segments are placed on the same line, the caller must join
- * them WITHOUT a space (segment ends with '-', so `line.endsWith('-')` is
- * the signal). When they land on different lines the leading part keeps its
- * trailing '-' just like a typeset soft-hyphen.
+ * When adjacent segments land on the same line the caller joins them WITHOUT
+ * a space — detected by checking whether the current line ends with a
+ * non-alphanumeric character (the retained separator).
  */
-function expandAtHyphens(word: string): string[] {
-  if (/[*~`_]/.test(word)) return [word]   // leave markdown tokens intact
+
+// Characters that must NOT be used as break points even when they appear
+// between two alphanumeric chars.
+const BREAK_EXCLUDED = new Set([
+  "'",   // apostrophe — contractions (can't) and possessives (Alice's)
+  '"',   // straight double-quote
+  '.',   // dot — version numbers (v1.2.3), decimals (3.14), namespaces (com.example), filenames (main.go)
+  '`',   // backtick — markdown code span
+  '*',   // markdown bold/italic
+  '~',   // markdown strikethrough
+  '_',   // markdown italic / identifier separator
+  '@',   // email addresses, @mentions
+  '#',   // hashtags, hex colour codes (#ff0000)
+  '$',   // currency symbols, code sigils
+  '%',   // percentage suffix (42%)
+  '^',   // exponent notation
+  '\\',  // escape sequences
+])
+
+const ALNUM = /[a-zA-Z0-9À-ɏ]/
+
+function expandAtSeparators(word: string): string[] {
+  if (/[*~`_]/.test(word)) return [word]  // leave markdown tokens intact
   const parts: string[] = []
   let start = 0
   for (let i = 0; i < word.length; i++) {
+    const ch = word[i]
     if (
-      word[i] === '-' &&
+      !ALNUM.test(ch) &&
+      !BREAK_EXCLUDED.has(ch) &&
       i > 0 &&
       i < word.length - 1 &&
-      /[a-zA-Z0-9À-ɏ]/.test(word[i - 1]) &&
-      /[a-zA-Z0-9À-ɏ]/.test(word[i + 1])
+      ALNUM.test(word[i - 1]) &&
+      ALNUM.test(word[i + 1])
     ) {
-      parts.push(word.slice(start, i + 1))  // include the hyphen in the left part
+      parts.push(word.slice(start, i + 1))  // keep the separator on the left part
       start = i + 1
     }
   }
@@ -284,9 +314,9 @@ export function wrapLabel(
     ? (s: string) => estimateTextWidth(s, fs) <= pxW
     : (s: string) => visibleTextLength(s) <= perLineChars
 
-  // Expand hyphen-connected compounds so they can break at the hyphen.
-  // "position-awareness" → ["position-", "awareness"]; plain words unchanged.
-  const words = trimmed.split(/\s+/).flatMap(expandAtHyphens)
+  // Expand at any non-alphanumeric separator so compounds can wrap there.
+  // "position-awareness" → ["position-", "awareness"]; "v1.2.3" → ["v1.", "2.", "3"]
+  const words = trimmed.split(/\s+/).flatMap(expandAtSeparators)
   const lines: string[] = []
   let wordIdx = 0
   // Tracks the single-word-too-long case separately from "leftover words
@@ -303,10 +333,11 @@ export function wrapLabel(
   while (wordIdx < words.length && lines.length < maxLines) {
     let line = ''
     while (wordIdx < words.length) {
-      // When the current line ends with '-' the next segment is the tail of a
-      // hyphen-split compound — join without a space so "real-" + "time"
-      // renders as "real-time", not "real- time".
-      const join = line.endsWith('-') ? '' : ' '
+      // When the current line ends with a non-alphanumeric separator character
+      // (retained by expandAtSeparators) join the next segment without a space
+      // so "real-" + "time" → "real-time", "Alice/" + "Bob" → "Alice/Bob", etc.
+      const lastCh = line[line.length - 1]
+      const join = (lastCh && !ALNUM.test(lastCh)) ? '' : ' '
       const next = line ? `${line}${join}${words[wordIdx]}` : words[wordIdx]
       if (fits(next)) { line = next; wordIdx++ }
       else break
