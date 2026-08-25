@@ -155,8 +155,49 @@ function renderBranches(layout: MindMapLayout, branchFits: FitBlock[], subFits: 
   })
 }
 
-function renderSvg(parts: string[], theme: MdArtTheme): string {
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
+// ── Bounding-box computation ─────────────────────────────────────────────────
+
+const BBOX_PAD = 22  // margin around the tight content box
+
+interface BBox { x: number; y: number; w: number; h: number }
+
+/**
+ * Walk every rendered element and track the tightest rectangle that contains
+ * all ellipses (node centre ± rx/ry).  The viewBox is set to this box + PAD,
+ * so diagrams with fewer branches don't carry large empty margins.
+ */
+function computeBBox(layout: MindMapLayout): BBox {
+  let minX = cx - CENTER_RX, maxX = cx + CENTER_RX
+  let minY = cy - CENTER_RY, maxY = cy + CENTER_RY
+
+  const extend = (px: number, py: number, rx: number, ry: number) => {
+    if (px - rx < minX) minX = px - rx
+    if (px + rx > maxX) maxX = px + rx
+    if (py - ry < minY) minY = py - ry
+    if (py + ry > maxY) maxY = py + ry
+  }
+
+  const n = layout.branches.length
+  layout.branches.forEach((branch, i) => {
+    const pt = branchPoint(i, n)
+    extend(pt.x, pt.y, BRANCH_RX, BRANCH_RY)
+    branch.children.forEach((_, si) => {
+      const sp = subPoint(pt, si, branch.children.length)
+      extend(sp.x, sp.y, SUB_RX, SUB_RY)
+    })
+  })
+
+  return {
+    x: minX - BBOX_PAD,
+    y: minY - BBOX_PAD,
+    w: maxX - minX + 2 * BBOX_PAD,
+    h: maxY - minY + 2 * BBOX_PAD,
+  }
+}
+
+function renderSvg(parts: string[], theme: MdArtTheme, bbox: BBox): string {
+  const vb = `${bbox.x.toFixed(1)} ${bbox.y.toFixed(1)} ${bbox.w.toFixed(1)} ${bbox.h.toFixed(1)}`
+  return `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:${theme.bg};border-radius:8px">
   ${parts.join('\n  ')}
 </svg>`
 }
@@ -170,5 +211,5 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
     renderCenter(layout.centerLabel, fitCenter(layout.centerLabel), theme, animate, instrument),
   ]
   if (animate) parts.unshift(seqSpotlightCSS(layout.branches.length + 1, spec, { scale: false }))
-  return renderSvg(parts, theme)
+  return renderSvg(parts, theme, computeBBox(layout))
 }
