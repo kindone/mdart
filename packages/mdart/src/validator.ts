@@ -74,9 +74,11 @@ const KNOWN_TYPES = new Set([
   'circle-process', 'equation', 'segmented-bar', 'phase-process',
   'timeline-h', 'timeline-v', 'swimlane',
   // list
+  'list',
   'bullet-list', 'numbered-list', 'checklist', 'two-column-list', 'timeline-list',
   'block-list', 'chevron-list', 'card-list', 'zigzag-list', 'ribbon-list',
   'hexagon-list', 'trapezoid-list', 'tab-list', 'circle-list', 'icon-list',
+  'card-deck', 'zigzag-timeline', 'tabs',
   // cycle
   'cycle', 'donut-cycle', 'gear-cycle', 'spiral', 'block-cycle', 'segmented-cycle',
   'nondirectional-cycle', 'multidirectional-cycle', 'loop',
@@ -102,6 +104,14 @@ const KNOWN_TYPES = new Set([
   'line-chart', 'scatter', 'area-chart', 'bar-chart',
 ])
 
+// Valid `shape:` values for `type: list`. Kept in sync with LIST_SHAPES in
+// layouts/list/list.ts (validator.ts is deliberately renderer-free, see
+// header comment, so this can't be a shared import).
+const LIST_SHAPES = new Set([
+  'bullet', 'numbered', 'circle', 'icon', 'chevron', 'ribbon', 'trapezoid',
+  'two-column', 'block', 'hexagon',
+])
+
 // ── Family mapping ────────────────────────────────────────────────────────────
 
 const TYPE_FAMILY: Record<string, string> = {
@@ -113,11 +123,13 @@ const TYPE_FAMILY: Record<string, string> = {
   equation: 'process', 'segmented-bar': 'process', 'phase-process': 'process',
   'timeline-h': 'process', 'timeline-v': 'process', swimlane: 'process',
   // list
+  list: 'list',
   'bullet-list': 'list', 'numbered-list': 'list', checklist: 'list',
   'two-column-list': 'list', 'timeline-list': 'list', 'block-list': 'list',
   'chevron-list': 'list', 'card-list': 'list', 'zigzag-list': 'list',
   'ribbon-list': 'list', 'hexagon-list': 'list', 'trapezoid-list': 'list',
   'tab-list': 'list', 'circle-list': 'list', 'icon-list': 'list',
+  'card-deck': 'list', 'zigzag-timeline': 'list', tabs: 'list',
   // cycle
   cycle: 'cycle', 'donut-cycle': 'cycle', 'gear-cycle': 'cycle',
   spiral: 'cycle', 'block-cycle': 'cycle', 'segmented-cycle': 'cycle',
@@ -289,6 +301,16 @@ function runCommonChecks(spec: MdArtSpec, issues: ValidationIssue[]): void {
       suggestion: `Valid types include: process, tree, comparison, venn, cycle, kanban, sequence, and 90+ others. See the MdArt documentation.`,
     })
     return
+  }
+
+  // Unknown shape — only meaningful for the consolidated `list` type
+  if (spec.type === 'list' && spec.shape && !LIST_SHAPES.has(spec.shape)) {
+    issues.push({
+      level: 'error',
+      code: 'STRUCT_INVALID_ATTRIBUTE_VALUE',
+      message: `Unknown shape "${spec.shape}" for type "list".`,
+      suggestion: `Valid shapes: ${[...LIST_SHAPES].join(', ')}. Omit shape: to default to "bullet".`,
+    })
   }
 
   // Empty diagram — network type uses nodes/edges instead of items

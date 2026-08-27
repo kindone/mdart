@@ -112,7 +112,11 @@ type: zigzag-list
 type: zigzag-list
 - Containment: Feature flag disabled secondary enrichment path sdfasfd asd fasdf asdf sadfasdf asdfasdf asdfasdf ㄴㅁㅇㄹㅁㄴㅇㄹ
 `, 'zigzag-list')
-    const valueLines = [...svg.matchAll(/<text[^>]*fill="#6ee7b7"[\s\S]*?<\/text>/g)]
+    // list-category textMuted — zigzag-list was previously falling back to the
+    // process-category color (#6ee7b7) because it was missing from
+    // LAYOUT_CATEGORY in theme.ts; fixed as part of the list type/shape
+    // consolidation (see Type Consolidation Plan, Phase 0a/0b).
+    const valueLines = [...svg.matchAll(/<text[^>]*fill="#67e8f9"[\s\S]*?<\/text>/g)]
 
     expect(valueLines).toHaveLength(3)
     expect(svg).toContain('Feature flag disabled secondary')

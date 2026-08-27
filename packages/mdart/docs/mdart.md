@@ -3,7 +3,9 @@
 Markdown code-fence syntax that renders structured text into SVG diagrams.
 Triggered by ` ```mdart ` fences in chat; also a dedicated artifact type in supporting tools.
 
-**106 layout types across 11 families.** Always declare the type — either inline
+**111 registered type names across 11 families** (10 of which are `shape:`
+values under one consolidated `type: list` — see "Consolidated types" below).
+Always declare the type — either inline
 (` ```mdart process `) or in front matter (`type: process`). Do not emit a bare
 ` ```mdart ` fence: a standalone first line like `layered-arch` is parsed as
 diagram *content*, not as the layout type.
@@ -19,7 +21,7 @@ Pick the **family** first; escalate to a specialist type only when a trigger is 
 | Family | Default | Escalate when… |
 |---|---|---|
 | **Process** (sequential) | `process` | dates → `timeline-h` · long event text → `timeline-v` / `timeline-list` · narrowing → `funnel` · parallel actors → `swimlane` · phases → `phase-process` · long sequence wraps → `snake-process` · returns to start → `cycle` · branches → `decision-tree` |
-| **List** (ordered / unordered facts) | `bullet-list` | ordered with long text → `circle-list` / `icon-list` · status checkbox → `checklist` · progress % → `progress-list` · equal-weight cards → `card-list` · pros/cons pair → `two-column-list` · emoji → `icon-list` · numbered → `numbered-list` |
+| **List** (ordered / unordered facts) | `type: list` (`shape: bullet`, the default) | ordered with long text → `shape: circle` / `icon` · status checkbox → `checklist` · progress % → `progress-list` · equal-weight cards (max 4) → `card-deck` · pros/cons pair → `shape: two-column` · emoji → `shape: icon` · numbered → `shape: numbered` |
 | **Cycle** (recurring) | `cycle` | mechanical metaphor → `gear-cycle` · expanding spiral → `spiral` · no direction → `nondirectional-cycle` · single feedback loop → `loop` |
 | **Matrix** (compare / classify) | `comparison` | markdown table / generic fallback → `table` · 2 things +/- → `pros-cons` · 2 axes → `matrix-2x2` · market share → `bcg` · growth strategy → `ansoff` · 4 SWOT quadrants → `swot` · N×M grid → `matrix-nxm` |
 | **Hierarchy** (parent → child) | `tree` | reporting line → `org-chart` / `h-org-chart` · ideation → `mind-map` · branching choice → `decision-tree` · web pages → `sitemap` · tournament → `bracket` · text outline → `hierarchy-list` |
@@ -41,12 +43,49 @@ Four names render identically to a canonical host. Prefer the alias when it bett
 | `snake-process` | `bending-process` | metaphor is "snaking back and forth" |
 | `counterbalance` | `balance` | two sides actively oppose rather than weigh |
 
+### Renamed types
+
+These three were renamed for clarity (old name matched the `X-list` pattern
+of `type: list` shapes, which misled users into guessing `type: list, shape:
+card`/`zigzag`/`tab`). Old names still work — kept as permanent aliases —
+but new content should prefer the canonical name.
+
+| Old name (still works) | Canonical name | Why renamed |
+|---|---|---|
+| `card-list` | `card-deck` | hard-capped at 4 items (drops the rest) — "deck" sets that expectation, "list" contradicts it |
+| `zigzag-list` | `zigzag-timeline` | names the actual topology (alternating spine), not a leftover `-list` suffix |
+| `tab-list` | `tabs` | interactive single-panel-visible widget, not a static list at all |
+
+### Consolidated types
+
+**`type: list` absorbs 10 formerly-separate list types as `shape:` values** —
+they're pure visual reskins of the same item schema (`- Label: value [attrs]`
++ indented children), so they share one renderer:
+
+```
+type: list
+shape: bullet | numbered | circle | icon | chevron | ribbon | trapezoid | two-column | block | hexagon
+```
+
+Omit `shape:` to default to `bullet`. The old flat names (`bullet-list`,
+`circle-list`, `chevron-list`, `ribbon-list`, `trapezoid-list`,
+`two-column-list`, `block-list`, `hexagon-list`, `numbered-list`,
+`icon-list`) still work as permanent aliases — `type: circle-list` renders
+identically to `type: list, shape: circle`. An unrecognized `shape:` value
+is a hard validation error (`STRUCT_INVALID_ATTRIBUTE_VALUE`), never a
+silent fallback.
+
+`checklist`, `card-deck`, `zigzag-timeline`, and `tabs` remain separate,
+standalone types — each has either a different item schema (checklist's
+done-state) or different topology (deck/spine/tabbed-panel) from the
+`type: list` shape family, not just a different visual skin.
+
 ### Complete Type Listing
 
 | Family | Types |
 |---|---|
 | **Process** (18) | `process`, `chevron-process`, `arrow-process`, `circular-process`, `funnel`, `roadmap`, `waterfall`, `snake-process`, `step-up`, `step-down`, `circle-process`, `equation`, `bending-process`, `segmented-bar`, `phase-process`, `timeline-h`, `timeline-v`, `swimlane` |
-| **List** (15) | `bullet-list`, `numbered-list`, `checklist`, `two-column-list`, `timeline-list`, `block-list`, `chevron-list`, `card-list`, `zigzag-list`, `ribbon-list`, `hexagon-list`, `trapezoid-list`, `tab-list`, `circle-list`, `icon-list` |
+| **List** (5 standalone + `list` w/ 10 shapes) | `type: list` (shapes: `bullet`, `numbered`, `circle`, `icon`, `chevron`, `ribbon`, `trapezoid`, `two-column`, `block`, `hexagon`), plus standalone `checklist`, `timeline-list`, `card-deck`, `zigzag-timeline`, `tabs` |
 | **Cycle** (9) | `cycle`, `donut-cycle`, `gear-cycle`, `spiral`, `block-cycle`, `segmented-cycle`, `nondirectional-cycle`, `multidirectional-cycle`, `loop` |
 | **Matrix** (8) | `swot`, `pros-cons`, `comparison`, `matrix-2x2`, `bcg`, `ansoff`, `matrix-nxm`, `table` |
 | **Hierarchy** (10) | `org-chart`, `tree`, `h-org-chart`, `hierarchy-list`, `radial-tree`, `decision-tree`, `sitemap`, `bracket`, `bracket-tree`, `mind-map` |
@@ -256,7 +295,7 @@ MdArt nodes are **fixed-size shapes**, not paragraphs. Long labels overflow, tru
 | Pyramid tier (wide) | 1–4 words | ~32 chars |
 | Tree / org-chart / mind-map node | 1–4 words | ~28 chars |
 | SWOT / pros-cons / matrix-2x2 cell | short phrase | ~50 chars |
-| `card-list` / `pyramid-list` body | 1 short sentence | ~80 chars |
+| `card-deck` / `pyramid-list` body | 1 short sentence | ~80 chars |
 | `kanban` / `sprint-board` card | task title only | ~40 chars |
 | Sequence / state-machine label | verb phrase or event name | ~24 chars |
 | Comparison / matrix / table cell | a value, not a sentence | ~30 chars |
@@ -302,7 +341,7 @@ When a node carries a label *and* a value (number, type, status, target), the pa
 | Technical | `sequence` | message text on `→ Target: message`; `[+]`/`[-]` for activation bars; `- --- Label` for dividers |
 | Technical | `state-machine` | event label on `→ NextState: event` |
 | Technical | `flowchart` | edge label on `→ Target: label` |
-| List | `two-column-list`, `card-list`, `timeline-list` | right-side / sub-text value |
+| List | `type: list, shape: two-column`, `card-deck`, `timeline-list` | right-side / sub-text value |
 | Planning | `gantt-lite`, `milestone`, `timeline` | dates, week ranges |
 
 **When the parser splits and when it doesn't:**

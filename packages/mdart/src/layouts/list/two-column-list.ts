@@ -69,16 +69,18 @@ function computeLayout(item: MdArtItem): ItemLayout {
   return { lblLines, lblTrunc, lblUrl, capLines, capTrunc, caption, blockH, itemH: Math.max(MIN_ROW_H, PAD_V + blockH + PAD_V) }
 }
 
+// Row-major fill: item 0 → row 0 left, item 1 → row 0 right, item 2 → row 1
+// left, ... (matches block-list/hexagon-list). Previously column-major
+// (first half down the left column, then the rest down the right) — kept
+// as `half` below only for the rare odd-count last-row-left-only case.
 function resolveLayout(spec: MdArtSpec): ColumnLayout {
   const half = Math.ceil(spec.items.length / 2)
-  const maxRows = Math.max(half, spec.items.length - half)
+  const maxRows = Math.ceil(spec.items.length / 2)
   const titleH = titleHeight(spec)
   const itemLayouts = spec.items.map(computeLayout)
-  const leftLayouts = itemLayouts.slice(0, half)
-  const rightLayouts = itemLayouts.slice(half)
   const rowHeights = Array.from({ length: maxRows }, (_, row) => {
-    const lh = leftLayouts[row]?.itemH ?? MIN_ROW_H
-    const rh = rightLayouts[row]?.itemH ?? 0
+    const lh = itemLayouts[row * 2]?.itemH ?? MIN_ROW_H
+    const rh = itemLayouts[row * 2 + 1]?.itemH ?? 0
     return Math.max(lh, rh)
   })
 
@@ -101,7 +103,7 @@ function resolveLayout(spec: MdArtSpec): ColumnLayout {
 }
 
 function itemPlacement(spec: MdArtSpec, layout: ColumnLayout, row: number, right: boolean, theme: MdArtTheme): ColumnItemPlacement | null {
-  const index = right ? layout.half + row : row
+  const index = row * 2 + (right ? 1 : 0)
   const item = spec.items[index]
   if (!item) return null
   const t = spec.items.length > 1 ? index / (spec.items.length - 1) : 0

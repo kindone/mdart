@@ -29,21 +29,19 @@ import { render as renderTimelineV } from './layouts/process/timeline-v'
 import { render as renderSwimlane } from './layouts/process/swimlane'
 
 // list family
-import { render as renderBulletList } from './layouts/list/bullet-list'
-import { render as renderNumberedList } from './layouts/list/numbered-list'
+// Phase 0a of the type/shape consolidation plan: bullet/numbered/circle/
+// icon/chevron/ribbon/trapezoid/two-column/block/hexagon now live behind
+// one `type: list` dispatcher (./layouts/list/list.ts). The old flat type
+// names below are kept as hard aliases that force `shape` before
+// delegating to the same dispatcher — see LAYOUT_RENDERERS below.
+import { render as renderList } from './layouts/list/list'
 import { render as renderChecklist } from './layouts/list/checklist'
-import { render as renderTwoColumnList } from './layouts/list/two-column-list'
 import { render as renderTimelineList } from './layouts/list/timeline-list'
-import { render as renderBlockList } from './layouts/list/block-list'
-import { render as renderChevronList } from './layouts/list/chevron-list'
+// Phase 0b renames: card-list → card-deck, zigzag-list → zigzag-timeline,
+// tab-list → tabs. Old names kept as hard aliases, same render function.
 import { render as renderCardList } from './layouts/list/card-list'
 import { render as renderZigzagList } from './layouts/list/zigzag-list'
-import { render as renderRibbonList } from './layouts/list/ribbon-list'
-import { render as renderHexagonList } from './layouts/list/hexagon-list'
-import { render as renderTrapezoidList } from './layouts/list/trapezoid-list'
 import { render as renderTabList } from './layouts/list/tab-list'
-import { render as renderCircleList } from './layouts/list/circle-list'
-import { render as renderIconList } from './layouts/list/icon-list'
 
 // cycle family
 import { render as renderCycle } from './layouts/cycle/cycle'
@@ -161,21 +159,29 @@ const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
   swimlane: renderSwimlane,
 
   // list family
-  'bullet-list': renderBulletList,
-  'numbered-list': renderNumberedList,
+  list: renderList,
+  // Phase 0a hard aliases — force the corresponding shape, same dispatcher/
+  // renderer as `type: list, shape: <x>`, so these pick up the unified
+  // (reconciled) behavior rather than a frozen duplicate.
+  'bullet-list': (spec, theme) => renderList({ ...spec, shape: 'bullet' }, theme),
+  'numbered-list': (spec, theme) => renderList({ ...spec, shape: 'numbered' }, theme),
+  'circle-list': (spec, theme) => renderList({ ...spec, shape: 'circle' }, theme),
+  'icon-list': (spec, theme) => renderList({ ...spec, shape: 'icon' }, theme),
+  'chevron-list': (spec, theme) => renderList({ ...spec, shape: 'chevron' }, theme),
+  'ribbon-list': (spec, theme) => renderList({ ...spec, shape: 'ribbon' }, theme),
+  'trapezoid-list': (spec, theme) => renderList({ ...spec, shape: 'trapezoid' }, theme),
+  'two-column-list': (spec, theme) => renderList({ ...spec, shape: 'two-column' }, theme),
+  'block-list': (spec, theme) => renderList({ ...spec, shape: 'block' }, theme),
+  'hexagon-list': (spec, theme) => renderList({ ...spec, shape: 'hexagon' }, theme),
   checklist: renderChecklist,
-  'two-column-list': renderTwoColumnList,
   'timeline-list': renderTimelineList,
-  'block-list': renderBlockList,
-  'chevron-list': renderChevronList,
+  // Phase 0b renames — canonical name + permanent alias, unchanged behavior.
+  'card-deck': renderCardList,
   'card-list': renderCardList,
+  'zigzag-timeline': renderZigzagList,
   'zigzag-list': renderZigzagList,
-  'ribbon-list': renderRibbonList,
-  'hexagon-list': renderHexagonList,
-  'trapezoid-list': renderTrapezoidList,
+  tabs: renderTabList,
   'tab-list': renderTabList,
-  'circle-list': renderCircleList,
-  'icon-list': renderIconList,
 
   // cycle family
   cycle: renderCycle,

@@ -11,6 +11,8 @@ export interface MdArtItem {
 
 export interface MdArtSpec {
   type: string
+  /** Visual-variant discriminator within a consolidated type (e.g. `type: list, shape: bullet`). */
+  shape?: string
   theme?: string
   mode?: 'dark' | 'light'
   title?: string
@@ -318,6 +320,7 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
       const key = trimmed.slice(0, colonIdx).trim().toLowerCase()
       const val = trimmed.slice(colonIdx + 1).trim()
       if (key === 'type') spec.type = val
+      else if (key === 'shape') spec.shape = val.toLowerCase()
       else if (key === 'theme') spec.theme = val
       else if (key === 'mode') {
         const m = val.toLowerCase()

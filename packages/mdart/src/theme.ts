@@ -74,7 +74,9 @@ const THEME_ALIAS_TO_CATEGORY: Record<string, string> = {
 // Which theme category each layout type belongs to
 export const LAYOUT_CATEGORY: Record<string, string> = {
   // list
-  'bullet-list':'list','numbered-list':'list','icon-list':'list','two-column-list':'list','checklist':'list','timeline-list':'list',
+  'list':'list','bullet-list':'list','numbered-list':'list','icon-list':'list','two-column-list':'list','checklist':'list','timeline-list':'list',
+  'circle-list':'list','chevron-list':'list','ribbon-list':'list','trapezoid-list':'list','block-list':'list','hexagon-list':'list',
+  'card-deck':'list','card-list':'list','zigzag-timeline':'list','zigzag-list':'list','tabs':'list','tab-list':'list',
   // process
   'process':'process','chevron-process':'process','arrow-process':'process','circular-process':'process','funnel':'process','roadmap':'process','swimlane':'process','waterfall':'process','snake-process':'process',
   // cycle

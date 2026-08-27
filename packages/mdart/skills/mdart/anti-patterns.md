@@ -10,7 +10,7 @@ Each entry: short trigger you can self-check against, then the fix.
 
 The most frequent failure. When uncertain, the model picks the broadest possible type. Almost always there's a more semantic option.
 
-- **`process` for unordered items.** `process` implies sequential order with arrows. A list of features, principles, or qualities is not a process. → `bullet-list`, `block-list`, or `card-list`.
+- **`process` for unordered items.** `process` implies sequential order with arrows. A list of features, principles, or qualities is not a process. → `bullet-list`, `block-list`, or `card-deck`.
 - **`process` for ordered-but-descriptive lists.** Order alone is not enough.
   If arrows do not mean workflow, causality, transformation, or handoff, avoid
   `process`. For ordered lists with long text values, use `circle-list` or
@@ -42,7 +42,7 @@ The user's vocabulary is a hint, not a directive. Match the *data structure*, no
   - With status → `checklist`
   - With progress numbers → `progress-list`
   - With icons/emoji → `icon-list`
-  - Equal-weight cards → `card-list`
+  - Equal-weight cards → `card-deck`
   - Numbered steps → `numbered-list`
 - **"process"** can mean:
   - Equal-weight steps → `process`
@@ -62,7 +62,7 @@ Easy to confuse families when types overlap visually.
 - **`cycle` ≠ recurring task.** Cycle implies the *output* feeds back into the *input*. A weekly stand-up that just repeats is `process`, not `cycle`. Reserve `cycle` for true feedback loops.
 - **`network` ≠ ad-hoc tree.** If the structure is strictly hierarchical, use `tree` or `org-chart`. Reserve `network` for true graphs with multiple connections per node.
 - **`comparison` for 2 items only.** Use `pros-cons` (advantages/disadvantages) or `opposing-arrows` (forces) — both more visually direct than a 2-column comparison table.
-- **`class` for any data shape.** `class` is OOP-specific (members with visibility). For DB schemas → `entity`. For records with fields → `entity` or `card-list`.
+- **`class` for any data shape.** `class` is OOP-specific (members with visibility). For DB schemas → `entity`. For records with fields → `entity` or `card-deck`.
 
 ---
 
@@ -141,13 +141,13 @@ Even a good type pick can produce a bad diagram if syntax is sloppy.
 - **Using `process` when arrow-chain shorthand fits.** `A → B → C` (one line) is cleaner than `- A` / `- B` / `- C`. Prefer it for short flat sequences.
 - **Forgetting `→ Target` flow children when the type expects edges.** In `sankey`, edges are `→ Target (value)` flow children of the source. In `network` mesh mode, edges go in an explicit `edges:` section.
 - **Numeric values without `key: value`.** For statistical types, `- Item: 75` is required — `- Item 75` won't parse the value. Same for `progress-list` percentages.
-- **Duplicate keys inside one `comparison` option.** `comparison` builds a column for each unique child label (via `Set`) then resolves each cell with `find` — so the second `- Advantage: …` under the same option is silently dropped. Every key must appear **at most once per top-level item** (= one row per attribute per option). If you have multiple advantages to list, either (a) merge them into a single value (`- Advantage: Works today; covers 92 renderers`), (b) number them (`- Advantage 1:` / `- Advantage 2:`), or (c) use `matrix-2x2` / `card-list` for free-form per-option bullets.
+- **Duplicate keys inside one `comparison` option.** `comparison` builds a column for each unique child label (via `Set`) then resolves each cell with `find` — so the second `- Advantage: …` under the same option is silently dropped. Every key must appear **at most once per top-level item** (= one row per attribute per option). If you have multiple advantages to list, either (a) merge them into a single value (`- Advantage: Works today; covers 92 renderers`), (b) number them (`- Advantage 1:` / `- Advantage 2:`), or (c) use `matrix-2x2` / `card-deck` for free-form per-option bullets.
 - **Unkeyed `comparison` rows that are not parallel.** Child keys are the column names. Unkeyed children are allowed beside keyed rows, but they align positionally under an empty key. That works for parallel value-only lines such as `- Each particle has its own definite state` vs `- Neither particle has its own definite state`. It is wrong for row-specific summaries that do not have a matching peer. If a line has a real field name, use `Column: cell text` such as `- Momentum: Balances position and momentum spread` or `- Δp,Δx: Δx small, Δp large`.
 - **Conclusion or constraint as a fake `comparison` option.** Top-level
   comparison items must be peers with the same schema. `Wave aspect` and
   `Particle aspect` are comparable; `Cannot observe both simultaneously` is
   a conclusion about both, not a third comparable option. Put it in prose
-  outside the fence, a separate `card-list`, or recast it into the same
+  outside the fence, a separate `card-deck`, or recast it into the same
   shared keys only if it is genuinely another option.
 - **Dash or em-dash where a colon belongs.** `- Item — description` and
   `- Item - description` parse as one big label with `value` undefined. The
@@ -213,7 +213,7 @@ See SKILL.md §3 for length budgets per node kind. Common manifestations:
 | Better for longer text | Not for longer text |
 |---|---|
 | `timeline-v`, `timeline-list` | `process`, `timeline-h`, `arrow-process` |
-| `circle-list`, `icon-list`, `card-list`, `pyramid-list`, `hierarchy-list` | `cycle`, `gear-cycle`, `circle-process` |
+| `circle-list`, `icon-list`, `card-deck`, `pyramid-list`, `hierarchy-list` | `cycle`, `gear-cycle`, `circle-process` |
 | `comparison` / `matrix-nxm` with short cell values | `pyramid`, `step-up`, `step-down` |
 
 **Fix priority when a diagram feels too big:**

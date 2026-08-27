@@ -23,6 +23,11 @@ const ICON_FS = 14
 
 const LABEL_MAX = Math.max(12, Math.floor((W - TEXT_X - RIGHT_M) / 6.5))
 const CAP_MAX = Math.max(12, Math.floor((W - TEXT_X - RIGHT_M) / 5.2))
+const CHD_FS = 10.5
+const CHD_LH = 14
+const CHD_MAX = Math.max(12, Math.floor((W - TEXT_X - RIGHT_M) / 5.5))
+const CHD_TOP_GAP = 6
+const CHD_MARKER_R = 2.5
 
 interface IconParts {
   displayLabel: string
@@ -38,7 +43,9 @@ interface RowLayout {
   capLines: string[]
   capTrunc: boolean
   caption: string | null
+  chdLayouts: Array<{ lines: string[]; truncated: boolean }>
   blockH: number
+  firstChdY: number
   rowH: number
 }
 
@@ -70,8 +77,14 @@ function computeRowLayout(item: MdArtItem): RowLayout {
   const { lines: capLines, truncated: capTrunc } = caption
     ? wrapLabel(caption, CAP_MAX, 5)
     : { lines: [], truncated: false }
-  const blockH = lblLines.length * LBL_LH
+  const chdLayouts = item.children.map(ch => wrapLabel(ch.label, CHD_MAX, 3))
+  let blockH = lblLines.length * LBL_LH
     + (capLines.length > 0 ? SEC_G + capLines.length * CAP_LH : 0)
+  const firstChdY = blockH
+  if (chdLayouts.length > 0) {
+    const chdTotalLines = chdLayouts.reduce((s, { lines }) => s + lines.length, 0)
+    blockH += CHD_TOP_GAP + chdTotalLines * CHD_LH
+  }
   return {
     displayLabel,
     icon,
@@ -81,7 +94,9 @@ function computeRowLayout(item: MdArtItem): RowLayout {
     capLines,
     capTrunc,
     caption,
+    chdLayouts,
     blockH,
+    firstChdY,
     rowH: Math.max(MIN_H, PAD_T + blockH + PAD_B),
   }
 }
@@ -152,11 +167,30 @@ function renderDivider(row: IconRow, rowCount: number, theme: MdArtTheme): strin
   return `<line x1="${TEXT_X}" y1="${row.y + row.layout.rowH}" x2="${W - DIVIDER_RIGHT}" y2="${row.y + row.layout.rowH}" stroke="${theme.border}" stroke-width="0.5"/>`
 }
 
+function renderChildren(row: IconRow, theme: MdArtTheme): string {
+  const { chdLayouts, firstChdY } = row.layout
+  if (chdLayouts.length === 0) return ''
+  let cy = row.y + firstChdY + CHD_TOP_GAP
+  return row.item.children.map((child, childIndex) => {
+    const { lines, truncated } = chdLayouts[childIndex]
+    const markerY = cy + CHD_FS * 0.65
+    const tip = truncated ? `<title>${escapeXml(child.label)}</title>` : ''
+    const spans = lines
+      .map((line, li) => renderInlineMarkdown(line, { x: TEXT_X + 10, dy: li === 0 ? 0 : CHD_LH }))
+      .join('')
+    const svg = `<circle cx="${TEXT_X}" cy="${markerY.toFixed(1)}" r="${CHD_MARKER_R}" fill="${row.fill}" fill-opacity="0.7"/>` +
+      `<text x="${TEXT_X + 10}" y="${(cy + CHD_FS).toFixed(1)}" font-size="${CHD_FS}" fill="${theme.text}" fill-opacity="0.85" ${FONT_SANS_ATTR}>${tip}${spans}</text>`
+    cy += lines.length * CHD_LH
+    return svg
+  }).join('')
+}
+
 function renderRow(row: IconRow, rowCount: number, theme: MdArtTheme, animate: boolean, instrument: boolean): string[] {
   const unit = [
     renderIconMarker(row),
     renderLabel(row, theme),
     renderCaption(row, theme),
+    renderChildren(row, theme),
   ].join('')
   return [
     wrapItem(unit, row.index, animate, instrument),
