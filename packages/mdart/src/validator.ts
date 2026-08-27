@@ -122,6 +122,10 @@ const PROCESS_SHAPES = new Set([
 // in layouts/cycle/cycle-shapes.ts.
 const CYCLE_SHAPES = new Set(['default', 'donut', 'segmented', 'orbit', 'mesh', 'spiral'])
 
+// Valid `shape:` values for `type: pyramid`. Kept in sync with
+// PYRAMID_SHAPES in layouts/pyramid/pyramid-shapes.ts.
+const PYRAMID_SHAPES = new Set(['default', 'inverted', 'segmented', 'diamond'])
+
 // ── Family mapping ────────────────────────────────────────────────────────────
 
 const TYPE_FAMILY: Record<string, string> = {
@@ -336,6 +340,14 @@ function runCommonChecks(spec: MdArtSpec, issues: ValidationIssue[]): void {
       code: 'STRUCT_INVALID_ATTRIBUTE_VALUE',
       message: `Unknown shape "${spec.shape}" for type "cycle".`,
       suggestion: `Valid shapes: ${[...CYCLE_SHAPES].join(', ')}. Omit shape: for the plain ring; "segmented" is recommended for longer labels or higher item counts.`,
+    })
+  }
+  if (spec.type === 'pyramid' && spec.shape && !PYRAMID_SHAPES.has(spec.shape)) {
+    issues.push({
+      level: 'error',
+      code: 'STRUCT_INVALID_ATTRIBUTE_VALUE',
+      message: `Unknown shape "${spec.shape}" for type "pyramid".`,
+      suggestion: `Valid shapes: ${[...PYRAMID_SHAPES].join(', ')}. Omit shape: for the default (non-inverted) stack.`,
     })
   }
 

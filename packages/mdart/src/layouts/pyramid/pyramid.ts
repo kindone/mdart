@@ -35,7 +35,7 @@ function resolveLayout(spec: MdArtSpec): PyramidLayout {
   const layerH = Math.min(62, Math.max(28, (MAX_HEIGHT - marginTop - MARGIN_BOTTOM) / n))
   return {
     n,
-    inverted: spec.type === 'inverted-pyramid' || spec.type === 'inverted',
+    inverted: spec.type === 'inverted-pyramid' || spec.type === 'inverted' || spec.shape === 'inverted',
     marginTop,
     layerH,
     height: marginTop + n * layerH + MARGIN_BOTTOM,

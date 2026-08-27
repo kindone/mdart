@@ -74,11 +74,13 @@ import { render as renderBracketTree } from './layouts/hierarchy/bracket-tree'
 import { render as renderMindMap } from './layouts/hierarchy/mind-map'
 
 // pyramid family
-import { render as renderPyramid } from './layouts/pyramid/pyramid'
-import { render as renderInvertedPyramid } from './layouts/pyramid/inverted-pyramid'
+// Phase 3 of the type/shape consolidation plan: default/inverted/segmented/
+// diamond now live behind one `type: pyramid` dispatcher
+// (./layouts/pyramid/pyramid-shapes.ts). pyramid-list stays standalone
+// (content-packed bar-list, not a wedge shape — see plan for the
+// affordance-based exclusion reasoning).
+import { render as renderPyramidType } from './layouts/pyramid/pyramid-shapes'
 import { render as renderPyramidList } from './layouts/pyramid/pyramid-list'
-import { render as renderSegmentedPyramid } from './layouts/pyramid/segmented-pyramid'
-import { render as renderDiamondPyramid } from './layouts/pyramid/diamond-pyramid'
 
 // relationship family
 import { render as renderVenn } from './layouts/relationship/venn'
@@ -217,11 +219,11 @@ const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
   'mind-map': renderMindMap,
 
   // pyramid family
-  pyramid: renderPyramid,
-  'inverted-pyramid': renderInvertedPyramid,
+  pyramid: renderPyramidType,
+  'inverted-pyramid': (spec, theme) => renderPyramidType({ ...spec, shape: 'inverted' }, theme),
+  'segmented-pyramid': (spec, theme) => renderPyramidType({ ...spec, shape: 'segmented' }, theme),
+  'diamond-pyramid': (spec, theme) => renderPyramidType({ ...spec, shape: 'diamond' }, theme),
   'pyramid-list': renderPyramidList,
-  'segmented-pyramid': renderSegmentedPyramid,
-  'diamond-pyramid': renderDiamondPyramid,
 
   // relationship family
   venn: renderVenn,

@@ -25,7 +25,7 @@ Pick the **family** first; escalate to a specialist type only when a trigger is 
 | **Cycle** (recurring) | `type: cycle` (`shape: segmented` recommended; omit for `default` ring) | mechanical metaphor → `gear-cycle` · expanding spiral → `shape: spiral` · no direction → `shape: orbit` · single feedback loop → `loop` |
 | **Matrix** (compare / classify) | `comparison` | markdown table / generic fallback → `table` · 2 things +/- → `pros-cons` · 2 axes → `matrix-2x2` · market share → `bcg` · growth strategy → `ansoff` · 4 SWOT quadrants → `swot` · N×M grid → `matrix-nxm` |
 | **Hierarchy** (parent → child) | `tree` | reporting line → `org-chart` / `h-org-chart` · ideation → `mind-map` · branching choice → `decision-tree` · web pages → `sitemap` · tournament → `bracket` · text outline → `hierarchy-list` |
-| **Pyramid** (stacked tiers) | `pyramid` | inverted → `inverted-pyramid` · body text per layer → `pyramid-list` · diamond → `diamond-pyramid` · separated bands → `segmented-pyramid` |
+| **Pyramid** (stacked tiers) | `type: pyramid` (default stack) | inverted → `shape: inverted` · body text per layer → `pyramid-list` · diamond → `shape: diamond` · separated bands → `shape: segmented` |
 | **Relationship** (sets, overlap, balance) | `venn` | 3 circles → `venn-3` · 4 circles → `venn-4` · concentric rings → `concentric` · weighted scale → `balance` · opposing forces → `opposing-arrows` · many↔one → `converging` / `diverging` · mesh → `web` · grouped buckets → `cluster` |
 | **Statistical** (data viz) | `progress-list` | composite KPI → `bullet-chart` · multi-metric → `scorecard` · area=quantity → `treemap` · flows with volumes → `sankey` · share of 100 → `waffle` · single dial → `gauge` · multi-axis → `radar` · 2-D value matrix → `heatmap` |
 | **Planning** (project / time) | `gantt-lite` | full board → `kanban` · sprint → `sprint-board` · pure schedule → `gantt` · milestones only → `milestone` · work breakdown → `wbs` · chronological log → `timeline` |
@@ -125,16 +125,41 @@ types' ring-angle math; `block-cycle` requires an even item count and has
 no clean degrade path for odd counts; `loop` renders as a linear row, not a
 ring, at all.
 
+**`type: pyramid` absorbs 4 formerly-separate pyramid types as `shape:`
+values:**
+
+```
+type: pyramid
+shape: default | inverted | segmented | diamond
+```
+
+`type: pyramid` predates this consolidation, so omitting `shape:` stays
+backward-compatible — it resolves to `default` (the plain, non-inverted
+stack). Unlike `cycle`, there's no separate recommended shape here: all 4
+wedge shapes divide a fixed total height among N layers identically, none
+scales better with item count than the others. Old flat names
+(`inverted-pyramid` → `shape: inverted`, `segmented-pyramid`,
+`diamond-pyramid`) still work as permanent aliases.
+
+`pyramid-list` stays standalone — checked by both code-skeleton *and*
+content-affordance: it's a content-packed horizontal bar-list (badge +
+label + value + multi-line description, row height grows with content),
+not a typography-forward wedge shape like the other 4 (short label+value,
+fixed total height, cramped at high N). Different intent, not just a
+different picture. Cross-listing it as an alias under both `pyramid` and
+`list` (same renderer, dual registry entry) is a captured future-work idea
+— see the Type Consolidation Plan.
+
 ### Complete Type Listing
 
 | Family | Types |
 |---|---|
-| **Process** (9 standalone + `process` w/ 8 shapes) | `type: process` (shapes: `process`, `chevron`, `arrow`, `circle`, `ring`, `bending`, `step-up`, `step-down`), plus standalone `funnel`, `roadmap`, `waterfall`, `equation`, `segmented-bar`, `phase-process`, `timeline-h`, `timeline-v`, `swimlane` |
+| **Process** (9 standalone + `process` w/ 8 shapes) | `type: process` (shapes: `default`, `chevron`, `arrow`, `circle`, `ring`, `bending`, `step-up`, `step-down`), plus standalone `funnel`, `roadmap`, `waterfall`, `equation`, `segmented-bar`, `phase-process`, `timeline-h`, `timeline-v`, `swimlane` |
 | **List** (5 standalone + `list` w/ 10 shapes) | `type: list` (shapes: `bullet`, `numbered`, `circle`, `icon`, `chevron`, `ribbon`, `trapezoid`, `two-column`, `block`, `hexagon`), plus standalone `checklist`, `timeline-list`, `card-deck`, `zigzag-timeline`, `tabs` |
 | **Cycle** (3 standalone + `cycle` w/ 6 shapes) | `type: cycle` (shapes: `default`, `donut`, `segmented`, `orbit`, `mesh`, `spiral`), plus standalone `gear-cycle`, `block-cycle`, `loop` |
 | **Matrix** (8) | `swot`, `pros-cons`, `comparison`, `matrix-2x2`, `bcg`, `ansoff`, `matrix-nxm`, `table` |
 | **Hierarchy** (10) | `org-chart`, `tree`, `h-org-chart`, `hierarchy-list`, `radial-tree`, `decision-tree`, `sitemap`, `bracket`, `bracket-tree`, `mind-map` |
-| **Pyramid** (5) | `pyramid`, `inverted-pyramid`, `pyramid-list`, `segmented-pyramid`, `diamond-pyramid` |
+| **Pyramid** (1 standalone + `pyramid` w/ 4 shapes) | `type: pyramid` (shapes: `default`, `inverted`, `segmented`, `diamond`), plus standalone `pyramid-list` |
 | **Relationship** (14) | `venn`, `venn-3`, `venn-4`, `concentric`, `balance`, `counterbalance`, `opposing-arrows`, `web`, `cluster`, `target`, `radial`, `converging`, `diverging`, `plus` |
 | **Statistical** (9) | `progress-list`, `bullet-chart`, `scorecard`, `treemap`, `sankey`, `waffle`, `gauge`, `radar`, `heatmap` |
 | **Planning** (7) | `kanban`, `gantt`, `gantt-lite`, `sprint-board`, `timeline`, `milestone`, `wbs` |
