@@ -42,14 +42,13 @@ import { render as renderZigzagList } from './layouts/list/zigzag-list'
 import { render as renderTabList } from './layouts/list/tab-list'
 
 // cycle family
-import { render as renderCycle } from './layouts/cycle/cycle'
-import { render as renderDonutCycle } from './layouts/cycle/donut-cycle'
+// Phase 2 of the type/shape consolidation plan: default/donut/segmented/
+// orbit/mesh/spiral now live behind one `type: cycle` dispatcher
+// (./layouts/cycle/cycle-shapes.ts). Old flat type names registered below
+// as hard aliases. gear-cycle/block-cycle/loop stay standalone.
+import { render as renderCycleType } from './layouts/cycle/cycle-shapes'
 import { render as renderGearCycle } from './layouts/cycle/gear-cycle'
-import { render as renderSpiral } from './layouts/cycle/spiral'
 import { render as renderBlockCycle } from './layouts/cycle/block-cycle'
-import { render as renderSegmentedCycle } from './layouts/cycle/segmented-cycle'
-import { render as renderNondirectionalCycle } from './layouts/cycle/nondirectional-cycle'
-import { render as renderMultidirectionalCycle } from './layouts/cycle/multidirectional-cycle'
 import { render as renderLoop } from './layouts/cycle/loop'
 
 // matrix family
@@ -185,14 +184,14 @@ const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
   'tab-list': renderTabList,
 
   // cycle family
-  cycle: renderCycle,
-  'donut-cycle': renderDonutCycle,
+  cycle: renderCycleType,
+  'donut-cycle': (spec, theme) => renderCycleType({ ...spec, shape: 'donut' }, theme),
+  'segmented-cycle': (spec, theme) => renderCycleType({ ...spec, shape: 'segmented' }, theme),
+  'nondirectional-cycle': (spec, theme) => renderCycleType({ ...spec, shape: 'orbit' }, theme),
+  'multidirectional-cycle': (spec, theme) => renderCycleType({ ...spec, shape: 'mesh' }, theme),
+  spiral: (spec, theme) => renderCycleType({ ...spec, shape: 'spiral' }, theme),
   'gear-cycle': renderGearCycle,
-  spiral: renderSpiral,
   'block-cycle': renderBlockCycle,
-  'segmented-cycle': renderSegmentedCycle,
-  'nondirectional-cycle': renderNondirectionalCycle,
-  'multidirectional-cycle': renderMultidirectionalCycle,
   loop: renderLoop,
 
   // matrix family

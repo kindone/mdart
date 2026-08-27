@@ -22,7 +22,7 @@ Pick the **family** first; escalate to a specialist type only when a trigger is 
 |---|---|---|
 | **Process** (sequential) | `type: process` (default box layout) | dates → `timeline-h` · long event text → `timeline-v` / `timeline-list` · narrowing → `funnel` · parallel actors → `swimlane` · phases → `phase-process` · long sequence wraps → `shape: bending` · returns to start → `cycle` · branches → `decision-tree` |
 | **List** (ordered / unordered facts) | `type: list` (`shape: bullet`, the default) | ordered with long text → `shape: circle` / `icon` · status checkbox → `checklist` · progress % → `progress-list` · equal-weight cards (max 4) → `card-deck` · pros/cons pair → `shape: two-column` · emoji → `shape: icon` · numbered → `shape: numbered` |
-| **Cycle** (recurring) | `cycle` | mechanical metaphor → `gear-cycle` · expanding spiral → `spiral` · no direction → `nondirectional-cycle` · single feedback loop → `loop` |
+| **Cycle** (recurring) | `type: cycle` (`shape: segmented` recommended; omit for `default` ring) | mechanical metaphor → `gear-cycle` · expanding spiral → `shape: spiral` · no direction → `shape: orbit` · single feedback loop → `loop` |
 | **Matrix** (compare / classify) | `comparison` | markdown table / generic fallback → `table` · 2 things +/- → `pros-cons` · 2 axes → `matrix-2x2` · market share → `bcg` · growth strategy → `ansoff` · 4 SWOT quadrants → `swot` · N×M grid → `matrix-nxm` |
 | **Hierarchy** (parent → child) | `tree` | reporting line → `org-chart` / `h-org-chart` · ideation → `mind-map` · branching choice → `decision-tree` · web pages → `sitemap` · tournament → `bracket` · text outline → `hierarchy-list` |
 | **Pyramid** (stacked tiers) | `pyramid` | inverted → `inverted-pyramid` · body text per layer → `pyramid-list` · diamond → `diamond-pyramid` · separated bands → `segmented-pyramid` |
@@ -85,10 +85,10 @@ values** — same reskin logic:
 
 ```
 type: process
-shape: process | chevron | arrow | circle | ring | bending | step-up | step-down
+shape: default | chevron | arrow | circle | ring | bending | step-up | step-down
 ```
 
-Omit `shape:` for the default box layout (auto-switches horizontal/vertical
+`shape: default` (or omitting `shape:` — same thing) is the box layout (auto-switches horizontal/vertical
 by item count, same as before). An **explicit** `shape:` is always honored
 and never silently swapped for a different one — `arrow`/`chevron` used to
 fall back to plain boxes above 6–8 items; now they shrink to fit instead,
@@ -101,13 +101,37 @@ matching how `circle`/`ring`/`bending` already behaved. The old flat names
 between steps from numeric `value:`/child data, real behavior rather than a
 visual reskin.
 
+**`type: cycle` absorbs 5 formerly-separate cycle types as `shape:`
+values:**
+
+```
+type: cycle
+shape: default | donut | segmented | orbit | mesh | spiral
+```
+
+`type: cycle` predates this consolidation, so omitting `shape:` stays
+backward-compatible with existing content — it resolves to `default` (the
+plain ring), not to the recommendation below. **For new diagrams, prefer
+`shape: segmented`** — its labels sit outside the ring in a fixed-size box
+with a leader line, so text room per item doesn't shrink as item count
+grows, unlike `default`/`donut` where label space is divided among N items.
+Old flat names (`donut-cycle`, `segmented-cycle`, `nondirectional-cycle` →
+`shape: orbit`, `multidirectional-cycle` → `shape: mesh`, `spiral`) still
+work as permanent aliases.
+
+`gear-cycle`, `block-cycle`, and `loop` stay standalone — `gear-cycle` has
+4 hard-coded layouts selected by item count sharing none of the other
+types' ring-angle math; `block-cycle` requires an even item count and has
+no clean degrade path for odd counts; `loop` renders as a linear row, not a
+ring, at all.
+
 ### Complete Type Listing
 
 | Family | Types |
 |---|---|
 | **Process** (9 standalone + `process` w/ 8 shapes) | `type: process` (shapes: `process`, `chevron`, `arrow`, `circle`, `ring`, `bending`, `step-up`, `step-down`), plus standalone `funnel`, `roadmap`, `waterfall`, `equation`, `segmented-bar`, `phase-process`, `timeline-h`, `timeline-v`, `swimlane` |
 | **List** (5 standalone + `list` w/ 10 shapes) | `type: list` (shapes: `bullet`, `numbered`, `circle`, `icon`, `chevron`, `ribbon`, `trapezoid`, `two-column`, `block`, `hexagon`), plus standalone `checklist`, `timeline-list`, `card-deck`, `zigzag-timeline`, `tabs` |
-| **Cycle** (9) | `cycle`, `donut-cycle`, `gear-cycle`, `spiral`, `block-cycle`, `segmented-cycle`, `nondirectional-cycle`, `multidirectional-cycle`, `loop` |
+| **Cycle** (3 standalone + `cycle` w/ 6 shapes) | `type: cycle` (shapes: `default`, `donut`, `segmented`, `orbit`, `mesh`, `spiral`), plus standalone `gear-cycle`, `block-cycle`, `loop` |
 | **Matrix** (8) | `swot`, `pros-cons`, `comparison`, `matrix-2x2`, `bcg`, `ansoff`, `matrix-nxm`, `table` |
 | **Hierarchy** (10) | `org-chart`, `tree`, `h-org-chart`, `hierarchy-list`, `radial-tree`, `decision-tree`, `sitemap`, `bracket`, `bracket-tree`, `mind-map` |
 | **Pyramid** (5) | `pyramid`, `inverted-pyramid`, `pyramid-list`, `segmented-pyramid`, `diamond-pyramid` |

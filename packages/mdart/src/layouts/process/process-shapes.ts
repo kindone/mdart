@@ -32,7 +32,10 @@ import { renderStaircase } from '../shared'
 type ShapeRenderer = (spec: MdArtSpec, theme: MdArtTheme) => string
 
 const SHAPE_RENDERERS: Record<string, ShapeRenderer> = {
-  process: renderProcess,
+  // 'default' rather than 'process' — `type: process, shape: process` reads
+  // redundantly; 'default' is unambiguous and matches what omitting shape:
+  // already resolves to.
+  default: renderProcess,
   chevron: renderChevron,
   arrow: renderArrow,
   circle: renderCircle,

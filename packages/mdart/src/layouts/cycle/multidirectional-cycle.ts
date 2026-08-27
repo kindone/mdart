@@ -32,7 +32,7 @@ function placeNodes(spec: MdArtSpec, theme: MdArtTheme): MultiNode[] {
       x: CX + R * Math.cos(angle),
       y: CY + R * Math.sin(angle),
       fill: lerpColor(theme.primary, theme.secondary, t),
-      display: displayLabel(item),
+      display: displayLabel(item, { value: !!item.value }),
     }
   })
 }
@@ -51,17 +51,21 @@ function renderConnections(nodes: MultiNode[], theme: MdArtTheme): string[] {
 
 function renderNode(node: MultiNode, theme: MdArtTheme, animate: boolean, instrument: boolean): string {
   const { w: nodeBoxW, h: nodeBoxH } = roundTextBox(NODE_R)
-  const fit = fitLabelValueBlock(node.display.display, null, nodeBoxW, nodeBoxH, {
+  const fit = fitLabelValueBlock(node.display.display, node.item.value, nodeBoxW, nodeBoxH, {
     labelUrl: node.display.url,
     labelMaxSize: 10,
     labelMinSize: 6.5,
     labelMaxLines: 2,
     labelMaxLinesNoValue: 2,
+    valueMaxSize: 8,
+    valueMinSize: 6,
+    valueMaxLines: 1,
   })
   const content = `<circle cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${NODE_R}" fill="${theme.bg}"/>` +
     `<circle cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${NODE_R}" fill="${node.fill}28" stroke="${node.fill}" stroke-width="1.5">${itemTitleTag(node.item)}</circle>` +
     renderFitBlock(node.x, node.y, fit, {
       labelFullText: node.display.display,
+      valueFullText: node.item.value,
       labelFill: theme.text,
       valueFill: theme.text,
       labelWeight: '600',

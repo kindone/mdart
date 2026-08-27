@@ -115,8 +115,12 @@ const LIST_SHAPES = new Set([
 // Valid `shape:` values for `type: process`. Kept in sync with
 // PROCESS_SHAPES in layouts/process/process-shapes.ts.
 const PROCESS_SHAPES = new Set([
-  'process', 'chevron', 'arrow', 'circle', 'ring', 'bending', 'step-up', 'step-down',
+  'default', 'chevron', 'arrow', 'circle', 'ring', 'bending', 'step-up', 'step-down',
 ])
+
+// Valid `shape:` values for `type: cycle`. Kept in sync with CYCLE_SHAPES
+// in layouts/cycle/cycle-shapes.ts.
+const CYCLE_SHAPES = new Set(['default', 'donut', 'segmented', 'orbit', 'mesh', 'spiral'])
 
 // ── Family mapping ────────────────────────────────────────────────────────────
 
@@ -324,6 +328,14 @@ function runCommonChecks(spec: MdArtSpec, issues: ValidationIssue[]): void {
       code: 'STRUCT_INVALID_ATTRIBUTE_VALUE',
       message: `Unknown shape "${spec.shape}" for type "process".`,
       suggestion: `Valid shapes: ${[...PROCESS_SHAPES].join(', ')}. Omit shape: to use the default (auto-orientation) layout.`,
+    })
+  }
+  if (spec.type === 'cycle' && spec.shape && !CYCLE_SHAPES.has(spec.shape)) {
+    issues.push({
+      level: 'error',
+      code: 'STRUCT_INVALID_ATTRIBUTE_VALUE',
+      message: `Unknown shape "${spec.shape}" for type "cycle".`,
+      suggestion: `Valid shapes: ${[...CYCLE_SHAPES].join(', ')}. Omit shape: for the plain ring; "segmented" is recommended for longer labels or higher item counts.`,
     })
   }
 
