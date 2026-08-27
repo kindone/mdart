@@ -1,10 +1,9 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { lerpColor, titleEl, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument } from '../shared'
-import { render as renderVerticalFallback } from './process'
 
 const W = 600
-const MAX_ITEMS = 6
+const BOX_W_MIN = 28
 const TITLE_H_WITH_TITLE = 28
 const TITLE_H_NO_TITLE = 8
 const BOX_H = 70
@@ -44,7 +43,7 @@ function titleHeight(spec: MdArtSpec): number {
 function resolveLayout(spec: MdArtSpec): ArrowLayout {
   const n = spec.items.length
   const titleH = titleHeight(spec)
-  const boxW = Math.min(BOX_W_MAX, Math.floor((W - SIDE_PAD - (n - 1) * ARROW_W) / n))
+  const boxW = Math.max(BOX_W_MIN, Math.min(BOX_W_MAX, Math.floor((W - SIDE_PAD - (n - 1) * ARROW_W) / n)))
   const totalW = n * boxW + (n - 1) * ARROW_W
   return {
     n,
@@ -128,7 +127,6 @@ function renderSvg(layout: ArrowLayout, theme: MdArtTheme, parts: string[]): str
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.items.length === 0) return renderEmpty(theme)
-  if (spec.items.length > MAX_ITEMS) return renderVerticalFallback(spec, theme)
 
   const layout = resolveLayout(spec)
   const animate = shouldAnimate(spec)

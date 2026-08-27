@@ -20,7 +20,7 @@ Pick the **family** first; escalate to a specialist type only when a trigger is 
 
 | Family | Default | Escalate when… |
 |---|---|---|
-| **Process** (sequential) | `process` | dates → `timeline-h` · long event text → `timeline-v` / `timeline-list` · narrowing → `funnel` · parallel actors → `swimlane` · phases → `phase-process` · long sequence wraps → `snake-process` · returns to start → `cycle` · branches → `decision-tree` |
+| **Process** (sequential) | `type: process` (default box layout) | dates → `timeline-h` · long event text → `timeline-v` / `timeline-list` · narrowing → `funnel` · parallel actors → `swimlane` · phases → `phase-process` · long sequence wraps → `shape: bending` · returns to start → `cycle` · branches → `decision-tree` |
 | **List** (ordered / unordered facts) | `type: list` (`shape: bullet`, the default) | ordered with long text → `shape: circle` / `icon` · status checkbox → `checklist` · progress % → `progress-list` · equal-weight cards (max 4) → `card-deck` · pros/cons pair → `shape: two-column` · emoji → `shape: icon` · numbered → `shape: numbered` |
 | **Cycle** (recurring) | `cycle` | mechanical metaphor → `gear-cycle` · expanding spiral → `spiral` · no direction → `nondirectional-cycle` · single feedback loop → `loop` |
 | **Matrix** (compare / classify) | `comparison` | markdown table / generic fallback → `table` · 2 things +/- → `pros-cons` · 2 axes → `matrix-2x2` · market share → `bcg` · growth strategy → `ansoff` · 4 SWOT quadrants → `swot` · N×M grid → `matrix-nxm` |
@@ -80,11 +80,32 @@ standalone types — each has either a different item schema (checklist's
 done-state) or different topology (deck/spine/tabbed-panel) from the
 `type: list` shape family, not just a different visual skin.
 
+**`type: process` absorbs 8 formerly-separate process types as `shape:`
+values** — same reskin logic:
+
+```
+type: process
+shape: process | chevron | arrow | circle | ring | bending | step-up | step-down
+```
+
+Omit `shape:` for the default box layout (auto-switches horizontal/vertical
+by item count, same as before). An **explicit** `shape:` is always honored
+and never silently swapped for a different one — `arrow`/`chevron` used to
+fall back to plain boxes above 6–8 items; now they shrink to fit instead,
+matching how `circle`/`ring`/`bending` already behaved. The old flat names
+(`chevron-process`, `arrow-process`, `circle-process` → `shape: circle`,
+`circular-process` → `shape: ring`, `bending-process`/`snake-process` →
+`shape: bending`, `step-up`, `step-down`) still work as permanent aliases.
+
+`funnel` stays a standalone type — it computes conversion percentages
+between steps from numeric `value:`/child data, real behavior rather than a
+visual reskin.
+
 ### Complete Type Listing
 
 | Family | Types |
 |---|---|
-| **Process** (18) | `process`, `chevron-process`, `arrow-process`, `circular-process`, `funnel`, `roadmap`, `waterfall`, `snake-process`, `step-up`, `step-down`, `circle-process`, `equation`, `bending-process`, `segmented-bar`, `phase-process`, `timeline-h`, `timeline-v`, `swimlane` |
+| **Process** (9 standalone + `process` w/ 8 shapes) | `type: process` (shapes: `process`, `chevron`, `arrow`, `circle`, `ring`, `bending`, `step-up`, `step-down`), plus standalone `funnel`, `roadmap`, `waterfall`, `equation`, `segmented-bar`, `phase-process`, `timeline-h`, `timeline-v`, `swimlane` |
 | **List** (5 standalone + `list` w/ 10 shapes) | `type: list` (shapes: `bullet`, `numbered`, `circle`, `icon`, `chevron`, `ribbon`, `trapezoid`, `two-column`, `block`, `hexagon`), plus standalone `checklist`, `timeline-list`, `card-deck`, `zigzag-timeline`, `tabs` |
 | **Cycle** (9) | `cycle`, `donut-cycle`, `gear-cycle`, `spiral`, `block-cycle`, `segmented-cycle`, `nondirectional-cycle`, `multidirectional-cycle`, `loop` |
 | **Matrix** (8) | `swot`, `pros-cons`, `comparison`, `matrix-2x2`, `bcg`, `ansoff`, `matrix-nxm`, `table` |

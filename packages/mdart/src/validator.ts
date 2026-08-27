@@ -99,7 +99,7 @@ const KNOWN_TYPES = new Set([
   // planning
   'kanban', 'gantt', 'gantt-lite', 'sprint-board', 'timeline', 'milestone', 'wbs',
   // technical
-  'layered-arch', 'entity', 'network', 'pipeline', 'sequence', 'state-machine', 'class',
+  'layered-arch', 'entity', 'network', 'pipeline', 'sequence', 'state-machine', 'flowchart', 'class',
   // plot
   'line-chart', 'scatter', 'area-chart', 'bar-chart',
 ])
@@ -110,6 +110,12 @@ const KNOWN_TYPES = new Set([
 const LIST_SHAPES = new Set([
   'bullet', 'numbered', 'circle', 'icon', 'chevron', 'ribbon', 'trapezoid',
   'two-column', 'block', 'hexagon',
+])
+
+// Valid `shape:` values for `type: process`. Kept in sync with
+// PROCESS_SHAPES in layouts/process/process-shapes.ts.
+const PROCESS_SHAPES = new Set([
+  'process', 'chevron', 'arrow', 'circle', 'ring', 'bending', 'step-up', 'step-down',
 ])
 
 // ── Family mapping ────────────────────────────────────────────────────────────
@@ -160,7 +166,7 @@ const TYPE_FAMILY: Record<string, string> = {
   'sprint-board': 'planning', timeline: 'planning', milestone: 'planning', wbs: 'planning',
   // technical
   'layered-arch': 'technical', entity: 'technical', network: 'technical',
-  pipeline: 'technical', sequence: 'technical', 'state-machine': 'technical', class: 'technical',
+  pipeline: 'technical', sequence: 'technical', 'state-machine': 'technical', flowchart: 'technical', class: 'technical',
   // plot
   'line-chart': 'plot', scatter: 'plot', 'area-chart': 'plot', 'bar-chart': 'plot',
 }
@@ -303,13 +309,21 @@ function runCommonChecks(spec: MdArtSpec, issues: ValidationIssue[]): void {
     return
   }
 
-  // Unknown shape — only meaningful for the consolidated `list` type
+  // Unknown shape — only meaningful for consolidated types
   if (spec.type === 'list' && spec.shape && !LIST_SHAPES.has(spec.shape)) {
     issues.push({
       level: 'error',
       code: 'STRUCT_INVALID_ATTRIBUTE_VALUE',
       message: `Unknown shape "${spec.shape}" for type "list".`,
       suggestion: `Valid shapes: ${[...LIST_SHAPES].join(', ')}. Omit shape: to default to "bullet".`,
+    })
+  }
+  if (spec.type === 'process' && spec.shape && !PROCESS_SHAPES.has(spec.shape)) {
+    issues.push({
+      level: 'error',
+      code: 'STRUCT_INVALID_ATTRIBUTE_VALUE',
+      message: `Unknown shape "${spec.shape}" for type "process".`,
+      suggestion: `Valid shapes: ${[...PROCESS_SHAPES].join(', ')}. Omit shape: to use the default (auto-orientation) layout.`,
     })
   }
 

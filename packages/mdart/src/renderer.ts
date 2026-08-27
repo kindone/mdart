@@ -9,19 +9,17 @@ import type { MdArtTheme } from './theme'
 import type { ValidationIssue } from './validator'
 
 // process family
-import { render as renderProcess } from './layouts/process/process'
-import { render as renderChevronProcess } from './layouts/process/chevron-process'
-import { render as renderArrowProcess } from './layouts/process/arrow-process'
-import { render as renderCircularProcess } from './layouts/process/circular-process'
+// Phase 1 of the type/shape consolidation plan: process/chevron/arrow/
+// circle/ring/bending/step-up/step-down now live behind one `type: process`
+// dispatcher (./layouts/process/process-shapes.ts). Old flat type names are
+// registered below as hard aliases that force `shape` before delegating to
+// the same dispatcher. `funnel` stays standalone (numeric/conversion logic,
+// not a pure reskin).
+import { render as renderProcessType } from './layouts/process/process-shapes'
 import { render as renderFunnel } from './layouts/process/funnel'
 import { render as renderRoadmap } from './layouts/process/roadmap'
 import { render as renderWaterfall } from './layouts/process/waterfall'
-import { render as renderSnakeProcess } from './layouts/process/snake-process'
-import { render as renderStepDown } from './layouts/process/step-down'
-import { render as renderStepUp } from './layouts/process/step-up'
-import { render as renderCircleProcess } from './layouts/process/circle-process'
 import { render as renderEquation } from './layouts/process/equation'
-import { render as renderBendingProcess } from './layouts/process/bending-process'
 import { render as renderSegmentedBar } from './layouts/process/segmented-bar'
 import { render as renderPhaseProcess } from './layouts/process/phase-process'
 import { render as renderTimelineH } from './layouts/process/timeline-h'
@@ -139,19 +137,22 @@ type LayoutRenderer = (spec: MdArtSpec, theme: MdArtTheme) => string
 
 const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
   // process family
-  process: renderProcess,
-  'chevron-process': renderChevronProcess,
-  'arrow-process': renderArrowProcess,
-  'circular-process': renderCircularProcess,
+  process: renderProcessType,
+  // Phase 1 hard aliases — force the corresponding shape, same dispatcher/
+  // renderer as `type: process, shape: <x>`, so these pick up the unified
+  // (reconciled) fallback behavior rather than a frozen duplicate.
+  'chevron-process': (spec, theme) => renderProcessType({ ...spec, shape: 'chevron' }, theme),
+  'arrow-process': (spec, theme) => renderProcessType({ ...spec, shape: 'arrow' }, theme),
+  'circle-process': (spec, theme) => renderProcessType({ ...spec, shape: 'circle' }, theme),
+  'circular-process': (spec, theme) => renderProcessType({ ...spec, shape: 'ring' }, theme),
+  'bending-process': (spec, theme) => renderProcessType({ ...spec, shape: 'bending' }, theme),
+  'snake-process': (spec, theme) => renderProcessType({ ...spec, shape: 'bending' }, theme),
+  'step-up': (spec, theme) => renderProcessType({ ...spec, shape: 'step-up' }, theme),
+  'step-down': (spec, theme) => renderProcessType({ ...spec, shape: 'step-down' }, theme),
   funnel: renderFunnel,
   roadmap: renderRoadmap,
   waterfall: renderWaterfall,
-  'snake-process': renderSnakeProcess,
-  'step-down': renderStepDown,
-  'step-up': renderStepUp,
-  'circle-process': renderCircleProcess,
   equation: renderEquation,
-  'bending-process': renderBendingProcess,
   'segmented-bar': renderSegmentedBar,
   'phase-process': renderPhaseProcess,
   'timeline-h': renderTimelineH,

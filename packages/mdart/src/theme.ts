@@ -79,6 +79,7 @@ export const LAYOUT_CATEGORY: Record<string, string> = {
   'card-deck':'list','card-list':'list','zigzag-timeline':'list','zigzag-list':'list','tabs':'list','tab-list':'list',
   // process
   'process':'process','chevron-process':'process','arrow-process':'process','circular-process':'process','funnel':'process','roadmap':'process','swimlane':'process','waterfall':'process','snake-process':'process',
+  'circle-process':'process','step-up':'process','step-down':'process','bending-process':'process','timeline-h':'process','timeline-v':'process','phase-process':'process','segmented-bar':'process','equation':'process',
   // cycle
   'cycle':'cycle','gear-cycle':'cycle','donut-cycle':'cycle','figure-eight':'cycle','spiral':'cycle',
   'block-cycle':'cycle','segmented-cycle':'cycle','nondirectional-cycle':'cycle','multidirectional-cycle':'cycle','loop':'cycle',
@@ -100,7 +101,7 @@ export const LAYOUT_CATEGORY: Record<string, string> = {
   'kanban':'planning','gantt':'planning','gantt-lite':'planning','sprint-board':'planning','timeline':'planning','milestone':'planning','wbs':'planning',
   // technical
   'network':'technical','layered-arch':'technical','pipeline':'technical','entity':'technical',
-  'sequence':'technical','state-machine':'technical','class':'technical',
+  'sequence':'technical','state-machine':'technical','flowchart':'technical','class':'technical',
   // plot (x-y plots)
   'line-chart':'plot','scatter':'plot','area-chart':'plot','bar-chart':'plot',
 }

@@ -1,10 +1,9 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
 import { lerpColor, titleEl, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument } from '../shared'
-import { render as renderProcess } from './process'
 
 const W = 600
-const MAX_ITEMS = 8
+const CHEV_W_MIN = 24
 const TITLE_H_WITH_TITLE = 28
 const TITLE_H_NO_TITLE = 8
 const CHEV_H = 54
@@ -46,7 +45,7 @@ function titleHeight(spec: MdArtSpec): number {
 function resolveLayout(spec: MdArtSpec): ChevronLayout {
   const n = spec.items.length
   const titleH = titleHeight(spec)
-  const chevW = Math.floor((W - H_PAD - (n - 1) * GAP) / n)
+  const chevW = Math.max(CHEV_W_MIN, Math.floor((W - H_PAD - (n - 1) * GAP) / n))
   const startX = Math.floor((W - (n * chevW + (n - 1) * GAP)) / 2)
   const y = titleH + TOP_GAP
   return {
@@ -141,7 +140,6 @@ function renderSvg(layout: ChevronLayout, theme: MdArtTheme, parts: string[]): s
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   if (spec.items.length === 0) return renderEmpty(theme)
-  if (spec.items.length > MAX_ITEMS) return renderProcess(spec, theme)
 
   const layout = resolveLayout(spec)
   const animate = shouldAnimate(spec)
