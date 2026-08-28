@@ -89,7 +89,7 @@ function renderText(node: SegmentedNode, theme: MdArtTheme): string {
     labelMaxLinesNoValue: 3,
     valueMaxSize: 9,
     valueMinSize: 6.5,
-    valueMaxLines: 3,
+    valueMaxLines: 4,
     valueShare: 0.6,
     gap: 2,
   })
