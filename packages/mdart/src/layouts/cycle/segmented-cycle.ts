@@ -19,7 +19,18 @@ const LABEL_BOX_W = 92
 // only 90.7px of canvas left, vs. the 92px box assumes). Clamp per-node
 // below instead of just shrinking LABEL_BOX_W globally, since most nodes
 // have plenty of room.
-const EDGE_PAD = 6
+//
+// The bold (font-weight 600) node label is the tightest case: it shares
+// this box with the value line but renders noticeably wider per character
+// than estimateTextWidth's per-class averages assume (those are calibrated
+// for regular weight — there's no weight parameter). A label that the
+// estimate says clears the box by a comfortable margin can still clip the
+// canvas edge in the real bold rendering (e.g. "Communicate Plan" at
+// labelX=90.7 estimated at 76.6px against an 84.7px box — plenty of slack
+// on paper, visibly clipped in practice). Padding is wide enough to force
+// that case into a wrap instead of trusting the regular-weight estimate at
+// the edge.
+const EDGE_PAD = 20
 const MIN_LABEL_BOX_W = 60
 // Taller than a short label+value pair strictly needs, because this shape
 // is specifically recommended (see docs/mdart.md) for longer labels/values
