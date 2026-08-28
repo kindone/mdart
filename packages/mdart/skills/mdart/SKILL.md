@@ -1,6 +1,6 @@
 ---
 name: mdart
-description: Generate MdArt diagrams from structured intent — pick the right diagram type from 107+ layouts (process, list, hierarchy, comparison, cycle, matrix, pyramid, relationship, statistical, planning, technical, plot) and produce valid syntax. Use when the user asks for a diagram, chart, flowchart, mind map, comparison, org chart, timeline, kanban board, swot analysis, sequence diagram, state machine, gantt, funnel, sankey, treemap, line chart, scatter plot, bar chart, area chart, table, or any visual representation of structured information. Also use when generating ```mdart fenced blocks. For flowcharts use mdart `flowchart` type; prefer mermaid only when you need orthogonal routing, parallel fork/join, or 3+ exits from a single node.
+description: Generate MdArt diagrams from structured intent — pick the right diagram type from 112+ layouts (process, list, hierarchy, comparison, cycle, matrix, pyramid, relationship, statistical, planning, technical, plot; several are `shape:` variants of a consolidated type, e.g. `type: list, shape: bullet`) and produce valid syntax. Use when the user asks for a diagram, chart, flowchart, mind map, comparison, org chart, timeline, kanban board, swot analysis, sequence diagram, state machine, gantt, funnel, sankey, treemap, line chart, scatter plot, bar chart, area chart, table, or any visual representation of structured information. Also use when generating ```mdart fenced blocks. For flowcharts use mdart `flowchart` type; prefer mermaid only when you need orthogonal routing, parallel fork/join, or 3+ exits from a single node.
 ---
 
 # MdArt diagram generation
@@ -27,7 +27,7 @@ The comprehensive type catalog, selection guide, plot syntax, and authoring rule
 - **Consumer projects:** `node_modules/mdart/docs/mdart.md`
 
 Read that file when you need:
-- The Family Cheat Sheet or Complete Type Listing (106 types, 11 families)
+- The Family Cheat Sheet or Complete Type Listing (112 types, 11 families)
 - The Selection Guide (10 rules, first-match-wins)
 - Plot family syntax (series format, per-series attributes, front-matter keys)
 - Authoring rules (label density targets, orientation defaults, typed-value syntax)
@@ -50,7 +50,7 @@ Read that file when you need:
 
 ## Anti-patterns (quick reminders)
 
-- **Keyword match trap**: if the user said "timeline", match the *data structure* not the word.
+- **Keyword match trap**: if the user said "timeline", match the *data structure* not the word — plain chronological → `timeline`, status/progress tracking → `roadmap` (these two swapped meanings from what older training data may suggest), detail-rich log → `type: history`.
 - **Generic default**: `process` for unordered items, `bullet-list` for comparisons, `tree` for processes.
 - **Wrong family**: `pyramid` ≠ hierarchy; `cycle` ≠ recurring task; `network` ≠ tree.
 - **Verbose nodes**: sentences overflow fixed-size shapes — compress to noun phrases.
