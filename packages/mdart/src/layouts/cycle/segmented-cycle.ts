@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, lerpColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
+import { escapeXml, lerpColor, renderEmpty, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitLabelValueBlock, renderFitBlock, wrapLabel, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 const W = 440
 const H = 380
@@ -12,7 +12,13 @@ const LABEL_R = OUTER_R + 20
 const CONNECTOR_R = OUTER_R + 5
 const GAP_ANGLE = 0.03
 const LABEL_BOX_W = 92
-const LABEL_BOX_H = 40
+// Taller than a short label+value pair strictly needs, because this shape
+// is specifically recommended (see docs/mdart.md) for longer labels/values
+// at higher item counts — its whole selling point over `default`/`donut`
+// is that label space doesn't shrink as N grows, so it should actually let
+// multi-line values through instead of hard-capping at one line.
+const LABEL_BOX_H = 60
+const TITLE_BOX_W = INNER_R * 1.7
 
 interface SegmentedLayout {
   n: number
@@ -83,7 +89,8 @@ function renderText(node: SegmentedNode, theme: MdArtTheme): string {
     labelMaxLinesNoValue: 3,
     valueMaxSize: 9,
     valueMinSize: 6.5,
-    valueMaxLines: 1,
+    valueMaxLines: 3,
+    valueShare: 0.6,
     gap: 2,
   })
   return renderFitBlock(node.labelX, node.labelY, fit, {
@@ -105,7 +112,15 @@ function renderNode(node: SegmentedNode, theme: MdArtTheme, animate: boolean, in
 
 function renderTitle(spec: MdArtSpec, theme: MdArtTheme): string {
   if (!spec.title) return ''
-  return `<text x="${CX}" y="${CY + 5}" text-anchor="middle" font-size="12" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(spec.title)}</text>`
+  const FS = 12
+  const LH = 14
+  // Title sits in the empty hub inside INNER_R — wrap so a longer title
+  // doesn't silently overflow past the ring (there's no clipping, so an
+  // unwrapped long title would just bleed outward under the segments).
+  const { lines } = wrapLabel(spec.title, Math.floor(TITLE_BOX_W / 6), 3)
+  const startY = CY + 5 - ((lines.length - 1) * LH) / 2
+  const tspans = lines.map((line, i) => `<tspan x="${CX}" dy="${i === 0 ? 0 : LH}">${escapeXml(line)}</tspan>`).join('')
+  return `<text x="${CX}" y="${startY.toFixed(1)}" text-anchor="middle" font-size="${FS}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${tspans}</text>`
 }
 
 function renderSvg(layout: SegmentedLayout, spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string {

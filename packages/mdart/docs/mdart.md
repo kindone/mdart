@@ -165,6 +165,24 @@ or is it the **neutral, general-purpose** middle ground?
   last items are edge-anchored. This is a **different renderer than before**
   — `type: roadmap` used to be a plain alias of the horizontal timeline;
   it's now the status-aware one.
+
+  **The status is a bracket attr, not a `value:`** — this is the single
+  most common mistake, since `key: value` is the dominant pattern
+  everywhere else in mdart:
+
+  ```mdart roadmap
+  - Discovery [done]
+  - Core Build [done]
+  - Beta Launch [active]
+  - Public GA
+  - Enterprise Features
+  ```
+
+  `- Beta Launch: active` (a `value:`) does **not** trigger the checkmark/
+  accent styling — it just displays the literal text "active" as a label,
+  identical to plain `timeline`. Accepted status words: `done`/`past` for
+  completed, `active`/`current`/`now` for in-progress; anything else (or
+  no attr) renders as a plain upcoming item.
 - **Neutral, general-purpose chronological display → `timeline`.** Plain
   horizontal line, alternating labels, no status. Also a swap — `type:
   timeline` used to be the status-aware planning renderer; it's now the

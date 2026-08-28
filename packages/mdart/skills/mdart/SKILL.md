@@ -51,6 +51,7 @@ Read that file when you need:
 ## Anti-patterns (quick reminders)
 
 - **Keyword match trap**: if the user said "timeline", match the *data structure* not the word — plain chronological → `timeline`, status/progress tracking → `roadmap` (these two swapped meanings from what older training data may suggest), detail-rich log → `type: history`.
+- **`roadmap` status is `[done]`/`[active]`, not `: done`**: `- Beta Launch [active]`, never `- Beta Launch: active` — the latter is a `value:` and silently skips the checkmark/accent styling that's `roadmap`'s whole point.
 - **Generic default**: `process` for unordered items, `bullet-list` for comparisons, `tree` for processes.
 - **Wrong family**: `pyramid` ≠ hierarchy; `cycle` ≠ recurring task; `network` ≠ tree.
 - **Verbose nodes**: sentences overflow fixed-size shapes — compress to noun phrases.
