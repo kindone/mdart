@@ -765,7 +765,7 @@ type: venn
 - Engineering
   - Frontend
   - Backend
-- Product ∩ Engineering
+- Design ∩ Engineering
 ```
 
 ### `venn-3`
@@ -781,7 +781,7 @@ type: venn-3
 - Product
   - Features
   - UX
-- All Three ∩
+- Marketing ∩ Sales ∩ Product
 ```
 
 ### `venn-4`

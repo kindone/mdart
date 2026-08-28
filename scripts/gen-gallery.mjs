@@ -120,8 +120,8 @@ const FAMILIES = [
     slug: 'relationship',
     desc: 'Venn diagrams, concentric rings, and connection maps.',
     layouts: [
-      { name: 'venn', source: `type: venn\n- Design\n  - UX Research\n  - Prototyping\n- Engineering\n  - Frontend\n  - Backend\n- Product ∩ Engineering` },
-      { name: 'venn-3', source: `type: venn-3\n- Marketing\n  - Campaigns\n  - Content\n- Sales\n  - Pipeline\n  - Accounts\n- Product\n  - Features\n  - UX\n- All Three ∩` },
+      { name: 'venn', source: `type: venn\n- Design\n  - UX Research\n  - Prototyping\n- Engineering\n  - Frontend\n  - Backend\n- Design ∩ Engineering` },
+      { name: 'venn-3', source: `type: venn-3\n- Marketing\n  - Campaigns\n  - Content\n- Sales\n  - Pipeline\n  - Accounts\n- Product\n  - Features\n  - UX\n- Marketing ∩ Sales ∩ Product` },
       { name: 'venn-4', source: `type: venn-4\n- Strategy\n  - OKRs\n- Design\n  - Brand\n- Engineering\n  - Frontend\n- Data\n  - Analytics` },
       { name: 'concentric', source: `type: concentric\ntitle: Organizational Layers\n- Organization\n- Department\n- Team\n- Individual` },
       { name: 'balance', source: `type: balance\n- Benefits\n  - Speed\n  - Flexibility\n  - Cost\n- Risks\n  - Complexity\n  - Dependencies\n  - Maintenance` },
