@@ -17,13 +17,11 @@ import type { ValidationIssue } from './validator'
 // not a pure reskin).
 import { render as renderProcessType } from './layouts/process/process-shapes'
 import { render as renderFunnel } from './layouts/process/funnel'
-import { render as renderRoadmap } from './layouts/process/roadmap'
 import { render as renderWaterfall } from './layouts/process/waterfall'
 import { render as renderEquation } from './layouts/process/equation'
 import { render as renderSegmentedBar } from './layouts/process/segmented-bar'
 import { render as renderPhaseProcess } from './layouts/process/phase-process'
 import { render as renderTimelineH } from './layouts/process/timeline-h'
-import { render as renderTimelineV } from './layouts/process/timeline-v'
 import { render as renderSwimlane } from './layouts/process/swimlane'
 
 // list family
@@ -34,11 +32,10 @@ import { render as renderSwimlane } from './layouts/process/swimlane'
 // delegating to the same dispatcher — see LAYOUT_RENDERERS below.
 import { render as renderList } from './layouts/list/list'
 import { render as renderChecklist } from './layouts/list/checklist'
-import { render as renderTimelineList } from './layouts/list/timeline-list'
-// Phase 0b renames: card-list → card-deck, zigzag-list → zigzag-timeline,
-// tab-list → tabs. Old names kept as hard aliases, same render function.
+// Phase 0b rename still standing: card-list → card-deck. (zigzag-list/
+// zigzag-timeline and timeline-list folded into `type: history,
+// shape: alternating` in Phase 4 — see history-shapes.ts.)
 import { render as renderCardList } from './layouts/list/card-list'
-import { render as renderZigzagList } from './layouts/list/zigzag-list'
 import { render as renderTabList } from './layouts/list/tab-list'
 
 // cycle family
@@ -114,7 +111,18 @@ import { render as renderKanban } from './layouts/planning/kanban'
 import { render as renderGantt } from './layouts/planning/gantt'
 import { render as renderGanttLite } from './layouts/planning/gantt-lite'
 import { render as renderSprintBoard } from './layouts/planning/sprint-board'
-import { render as renderTimeline } from './layouts/planning/timeline'
+// Phase 4 of the type/shape consolidation plan: `timeline`/`roadmap`
+// intentionally SWAPPED which renderer they point to, based on an
+// affordance framework (progress/planning aspect -> roadmap; neutral
+// general-purpose chronological display -> timeline). Backward
+// compatibility was explicitly deprioritized for this swap — old
+// `type: timeline` content (previously status-aware) now renders the
+// plain chronological layout instead, and vice versa for `type: roadmap`.
+// `planning/timeline.ts`'s file name is now a misnomer (it's the
+// status-aware implementation, registered under the `roadmap` key) — not
+// renamed to minimize file churn, see this comment for the real mapping.
+import { render as renderStatusTimeline } from './layouts/planning/timeline'
+import { render as renderHistoryType } from './layouts/planning/history-shapes'
 import { render as renderMilestone } from './layouts/planning/milestone'
 import { render as renderWbs } from './layouts/planning/wbs'
 
@@ -151,13 +159,17 @@ const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
   'step-up': (spec, theme) => renderProcessType({ ...spec, shape: 'step-up' }, theme),
   'step-down': (spec, theme) => renderProcessType({ ...spec, shape: 'step-down' }, theme),
   funnel: renderFunnel,
-  roadmap: renderRoadmap,
+  // timeline/roadmap swap (Phase 4): `timeline` now renders the plain
+  // chronological layout (was `roadmap`'s content); `timeline-h` kept as
+  // an explicit-orientation alias of the same content. `roadmap` itself
+  // is registered in the planning family block (see above) — it now
+  // points at the status-aware renderer instead.
+  timeline: renderTimelineH,
+  'timeline-h': renderTimelineH,
   waterfall: renderWaterfall,
   equation: renderEquation,
   'segmented-bar': renderSegmentedBar,
   'phase-process': renderPhaseProcess,
-  'timeline-h': renderTimelineH,
-  'timeline-v': renderTimelineV,
   swimlane: renderSwimlane,
 
   // list family
@@ -176,12 +188,11 @@ const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
   'block-list': (spec, theme) => renderList({ ...spec, shape: 'block' }, theme),
   'hexagon-list': (spec, theme) => renderList({ ...spec, shape: 'hexagon' }, theme),
   checklist: renderChecklist,
-  'timeline-list': renderTimelineList,
-  // Phase 0b renames — canonical name + permanent alias, unchanged behavior.
+  // Phase 0b rename still standing — canonical name + permanent alias.
+  // (zigzag-list/zigzag-timeline/timeline-list registered in the planning
+  // family block now — folded into `type: history` in Phase 4.)
   'card-deck': renderCardList,
   'card-list': renderCardList,
-  'zigzag-timeline': renderZigzagList,
-  'zigzag-list': renderZigzagList,
   tabs: renderTabList,
   'tab-list': renderTabList,
 
@@ -257,7 +268,13 @@ const LAYOUT_RENDERERS: Record<string, LayoutRenderer> = {
   gantt: renderGantt,
   'gantt-lite': renderGanttLite,
   'sprint-board': renderSprintBoard,
-  timeline: renderTimeline,
+  // timeline/roadmap swap (Phase 4) — see import comments above
+  roadmap: renderStatusTimeline,
+  history: renderHistoryType,
+  'timeline-v': (spec, theme) => renderHistoryType({ ...spec, shape: 'default' }, theme),
+  'timeline-list': (spec, theme) => renderHistoryType({ ...spec, shape: 'alternating' }, theme),
+  'zigzag-timeline': (spec, theme) => renderHistoryType({ ...spec, shape: 'alternating' }, theme),
+  'zigzag-list': (spec, theme) => renderHistoryType({ ...spec, shape: 'alternating' }, theme),
   milestone: renderMilestone,
   wbs: renderWbs,
 

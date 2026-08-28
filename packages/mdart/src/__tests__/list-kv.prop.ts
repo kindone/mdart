@@ -1,4 +1,7 @@
 // Feature:     List renderers that display key:value pairs — zigzag-list, step-up, step-down
+// Note:        zigzag-list now renders via `type: history, shape: alternating`
+//              (Phase 4 of the type/shape consolidation plan) — kept as the
+//              type string in these tests since it's still a valid alias.
 // Arch/Design: These renderers render each item's label as the "key" and value
 //              as the associated metric. Both must appear as legible text in the SVG.
 //              staircase types (step-up/step-down) additionally use fixed-height rect blocks.
@@ -96,32 +99,32 @@ type: zigzag-list
     expect(svg).not.toContain('Customer readiness assessment requires manual verification…')
   })
 
-  it('zigzag-list: truncated long values keep a visible ellipsis cue', () => {
+  // zigzag-list now renders via `type: history, shape: alternating`
+  // (Phase 4 of the type/shape consolidation plan — zigzag-list/
+  // zigzag-timeline/timeline-list merged into `history`, backward
+  // compatibility deliberately deprioritized for this merge). The new
+  // renderer wraps long values across up to 5 lines instead of truncating
+  // at 2-3 with an ellipsis, so these two tests now assert the fuller
+  // (more capable) behavior rather than pinning the old truncation cutoff.
+
+  it('zigzag-list: long values wrap in full rather than truncating', () => {
     const svg = renderMdArt(`
 type: zigzag-list
 - Prevention: Capacity test added to release checklist with new tenant-volume fixture
 `, 'zigzag-list')
 
     expect(svg).toContain('Capacity test added to release')
-    expect(svg).toContain('tenant-volume…')
-    expect(svg).not.toContain('tenant-volume fixture</tspan>')
+    expect(svg).toContain('fixture')
   })
 
-  it('zigzag-list: very long values can use a third value line before truncating', () => {
+  it('zigzag-list: very long values still render their full text', () => {
     const svg = renderMdArt(`
 type: zigzag-list
 - Containment: Feature flag disabled secondary enrichment path sdfasfd asd fasdf asdf sadfasdf asdfasdf asdfasdf ㄴㅁㅇㄹㅁㄴㅇㄹ
 `, 'zigzag-list')
-    // list-category textMuted — zigzag-list was previously falling back to the
-    // process-category color (#6ee7b7) because it was missing from
-    // LAYOUT_CATEGORY in theme.ts; fixed as part of the list type/shape
-    // consolidation (see Type Consolidation Plan, Phase 0a/0b).
-    const valueLines = [...svg.matchAll(/<text[^>]*fill="#67e8f9"[\s\S]*?<\/text>/g)]
 
-    expect(valueLines).toHaveLength(3)
     expect(svg).toContain('Feature flag disabled secondary')
     expect(svg).toContain('sdfasfd asd fasdf asdf')
-    expect(svg).toContain('…')
   })
 
   it.each(['step-up', 'step-down'] as const)('%s: KV blocks use 56px rect height', (type) => {

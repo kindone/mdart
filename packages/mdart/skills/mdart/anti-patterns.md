@@ -26,11 +26,14 @@ The most frequent failure. When uncertain, the model picks the broadest possible
 
 The user's vocabulary is a hint, not a directive. Match the *data structure*, not the words.
 
-- **"timeline"** can mean three different things:
-  - Chronological log of events → `timeline` or `timeline-list`
-  - Chronological story with long event descriptions → `timeline-v` or `timeline-list`
+- **"timeline"** can mean several different things (note: `timeline`/`roadmap`
+  swapped meanings from what you might remember — `roadmap` is now the
+  status-aware one):
+  - Plain chronological log of events → `timeline`
+  - Status/progress tracking (done/active/past) → `roadmap`
+  - Detail-rich chronological log, long event descriptions → `type: history`
+    (`shape: default` single column, `shape: alternating` spine with cards)
   - Project tasks with dates → `gantt-lite`
-  - Future-facing plan → `roadmap`
 - **"tree"** can mean:
   - Conceptual taxonomy → `tree`
   - Reporting line → `org-chart`
@@ -48,8 +51,9 @@ The user's vocabulary is a hint, not a directive. Match the *data structure*, no
   - Equal-weight steps → `process`
   - Narrowing → `funnel`
   - Parallel actors → `swimlane`
-  - With dates → `timeline-h` or `roadmap`
-  - With long dated event text → `timeline-v` or `timeline-list`
+  - With dates, plain → `timeline`
+  - With dates, status-aware → `roadmap`
+  - With long dated event text → `type: history`
   - With phases → `phase-process`
 
 ---
@@ -75,8 +79,8 @@ Some types have implicit count constraints. Violating them produces awkward outp
 - **Venn with 5+ sets** doesn't fit `venn-4`. Switch to `cluster` or `concentric`.
 - **Process with 12+ steps** overflows the canvas. Use `snake-process` or `bending-process` (which auto-wrap).
 - **Horizontal timelines with sentence-length events** become cramped. Use
-  `timeline-v` or `timeline-list` so events stack vertically and the event
-  text can read horizontally.
+  `type: history` so events stack vertically and the event text can read
+  horizontally.
 - **Pyramid with 1 tier** is just a triangle — use `bullet-list`.
 - **SWOT with only positive items** — use `bullet-list` or `pros-cons`. SWOT's value is the four-quadrant tension.
 - **Matrix-nxm with 1 row** is a definition list — use `bullet-list`.
@@ -202,17 +206,17 @@ See SKILL.md §3 for length budgets per node kind. Common manifestations:
   `~~strike~~`, and `` `code` `` are for small emphasis only. They do not make
   sentence-length nodes readable, and they must not replace `key: value`
   rows, attributes, comparison columns, or a more suitable diagram type.
-- **Long historical / temporal events forced into `process` or `timeline-h`.**
+- **Long historical / temporal events forced into `process` or `timeline`.**
   A path like `Planck (1900): Energy is quantized` → `Einstein (1905): Light
   is quantized` is a chronological story, not compact process steps. Use
-  `timeline-v` or `timeline-list`; the dates stay ordered vertically and the
-  explanatory text gets horizontal reading space.
+  `type: history`; the dates stay ordered vertically and the explanatory
+  text gets horizontal reading space.
 
 **Text suitability quick check:**
 
 | Better for longer text | Not for longer text |
 |---|---|
-| `timeline-v`, `timeline-list` | `process`, `timeline-h`, `arrow-process` |
+| `type: history` (either shape) | `process`, `timeline`, `arrow-process` |
 | `circle-list`, `icon-list`, `card-deck`, `pyramid-list`, `hierarchy-list` | `cycle`, `gear-cycle`, `circle-process` |
 | `comparison` / `matrix-nxm` with short cell values | `pyramid`, `step-up`, `step-down` |
 

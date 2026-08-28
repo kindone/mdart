@@ -3,9 +3,10 @@
 Markdown code-fence syntax that renders structured text into SVG diagrams.
 Triggered by ` ```mdart ` fences in chat; also a dedicated artifact type in supporting tools.
 
-**111 registered type names across 11 families** (10 of which are `shape:`
-values under one consolidated `type: list` — see "Consolidated types" below).
-Always declare the type — either inline
+**112 registered type names across 11 families** (several of which are
+`shape:` values under consolidated types like `type: list`/`type: process`/
+`type: cycle`/`type: pyramid`/`type: history` — see "Consolidated types"
+below). Always declare the type — either inline
 (` ```mdart process `) or in front matter (`type: process`). Do not emit a bare
 ` ```mdart ` fence: a standalone first line like `layered-arch` is parsed as
 diagram *content*, not as the layout type.
@@ -20,7 +21,7 @@ Pick the **family** first; escalate to a specialist type only when a trigger is 
 
 | Family | Default | Escalate when… |
 |---|---|---|
-| **Process** (sequential) | `type: process` (default box layout) | dates → `timeline-h` · long event text → `timeline-v` / `timeline-list` · narrowing → `funnel` · parallel actors → `swimlane` · phases → `phase-process` · long sequence wraps → `shape: bending` · returns to start → `cycle` · branches → `decision-tree` |
+| **Process** (sequential) | `type: process` (default box layout) | dates → `timeline` (was `timeline-h`) · narrowing → `funnel` · parallel actors → `swimlane` · phases → `phase-process` · long sequence wraps → `shape: bending` · returns to start → `cycle` · branches → `decision-tree` |
 | **List** (ordered / unordered facts) | `type: list` (`shape: bullet`, the default) | ordered with long text → `shape: circle` / `icon` · status checkbox → `checklist` · progress % → `progress-list` · equal-weight cards (max 4) → `card-deck` · pros/cons pair → `shape: two-column` · emoji → `shape: icon` · numbered → `shape: numbered` |
 | **Cycle** (recurring) | `type: cycle` (`shape: segmented` recommended; omit for `default` ring) | mechanical metaphor → `gear-cycle` · expanding spiral → `shape: spiral` · no direction → `shape: orbit` · single feedback loop → `loop` |
 | **Matrix** (compare / classify) | `comparison` | markdown table / generic fallback → `table` · 2 things +/- → `pros-cons` · 2 axes → `matrix-2x2` · market share → `bcg` · growth strategy → `ansoff` · 4 SWOT quadrants → `swot` · N×M grid → `matrix-nxm` |
@@ -28,7 +29,7 @@ Pick the **family** first; escalate to a specialist type only when a trigger is 
 | **Pyramid** (stacked tiers) | `type: pyramid` (default stack) | inverted → `shape: inverted` · body text per layer → `pyramid-list` · diamond → `shape: diamond` · separated bands → `shape: segmented` |
 | **Relationship** (sets, overlap, balance) | `venn` | 3 circles → `venn-3` · 4 circles → `venn-4` · concentric rings → `concentric` · weighted scale → `balance` · opposing forces → `opposing-arrows` · many↔one → `converging` / `diverging` · mesh → `web` · grouped buckets → `cluster` |
 | **Statistical** (data viz) | `progress-list` | composite KPI → `bullet-chart` · multi-metric → `scorecard` · area=quantity → `treemap` · flows with volumes → `sankey` · share of 100 → `waffle` · single dial → `gauge` · multi-axis → `radar` · 2-D value matrix → `heatmap` |
-| **Planning** (project / time) | `gantt-lite` | full board → `kanban` · sprint → `sprint-board` · pure schedule → `gantt` · milestones only → `milestone` · work breakdown → `wbs` · chronological log → `timeline` |
+| **Planning** (project / time) | `gantt-lite` | full board → `kanban` · sprint → `sprint-board` · pure schedule → `gantt` · milestones only → `milestone` · work breakdown → `wbs` · status/progress tracking → `roadmap` · detailed chronological log → `history` |
 | **Technical** (system) | `network` | tiered system → `layered-arch` · DB schema → `entity` · message flow → `sequence` · state transitions → `state-machine` · top-down flowchart with branches/loops → `flowchart` · OOP class → `class` · build/CI stages → `pipeline` |
 | **Plot** (x-y data) | `line-chart` | discrete points → `scatter` · filled area → `area-chart` · grouped / stacked bars → `bar-chart` |
 
@@ -53,8 +54,10 @@ but new content should prefer the canonical name.
 | Old name (still works) | Canonical name | Why renamed |
 |---|---|---|
 | `card-list` | `card-deck` | hard-capped at 4 items (drops the rest) — "deck" sets that expectation, "list" contradicts it |
-| `zigzag-list` | `zigzag-timeline` | names the actual topology (alternating spine), not a leftover `-list` suffix |
 | `tab-list` | `tabs` | interactive single-panel-visible widget, not a static list at all |
+
+(`zigzag-list`/`zigzag-timeline` had a rename here too, but were later folded into
+`type: history` entirely — see "Consolidated types" below.)
 
 ### Consolidated types
 
@@ -75,9 +78,9 @@ identically to `type: list, shape: circle`. An unrecognized `shape:` value
 is a hard validation error (`STRUCT_INVALID_ATTRIBUTE_VALUE`), never a
 silent fallback.
 
-`checklist`, `card-deck`, `zigzag-timeline`, and `tabs` remain separate,
-standalone types — each has either a different item schema (checklist's
-done-state) or different topology (deck/spine/tabbed-panel) from the
+`checklist`, `card-deck`, and `tabs` remain separate, standalone types
+— each has either a different item schema (checklist's done-state) or
+different topology (deck/tabbed-panel) from the
 `type: list` shape family, not just a different visual skin.
 
 **`type: process` absorbs 8 formerly-separate process types as `shape:`
@@ -150,19 +153,61 @@ different picture. Cross-listing it as an alias under both `pyramid` and
 `list` (same renderer, dual registry entry) is a captured future-work idea
 — see the Type Consolidation Plan.
 
+### `timeline`/`roadmap` swap, and the new `history` type
+
+Three chronological-display types were reorganized by an affordance
+framework: does the diagram track **progress/planning status**
+(done/active/past), or is it **purely chronological** (just shows order),
+or is it the **neutral, general-purpose** middle ground?
+
+- **Progress/planning aspect → `roadmap`.** Status-aware: `[done]`/
+  `[active]`/`[past]` attrs render as checkmarks and accent coloring, first/
+  last items are edge-anchored. This is a **different renderer than before**
+  — `type: roadmap` used to be a plain alias of the horizontal timeline;
+  it's now the status-aware one.
+- **Neutral, general-purpose chronological display → `timeline`.** Plain
+  horizontal line, alternating labels, no status. Also a swap — `type:
+  timeline` used to be the status-aware planning renderer; it's now the
+  plain one (same content `timeline-h` always rendered, kept as an
+  explicit-orientation alias).
+- **Purely chronological, detail-rich, no status → `type: history`.**
+
+```
+type: history
+shape: default | alternating
+```
+
+`shape: default` (single column, dot + tag + main text + multi-line detail,
+row grows with content — was `timeline-v`) is the omitted-shape default:
+`history` is a brand-new type, so the versatility rule applies normally
+(no pre-existing bare-type behavior to preserve, unlike `timeline`/
+`roadmap` above). `shape: alternating` (vertical spine, items alternating
+left/right — was `timeline-list`/`zigzag-timeline`/`zigzag-list`) uses
+`timeline-list`'s richer per-item rendering (bordered card, label + caption
++ attrs) as the canonical implementation, not `zigzag-timeline`'s plainer
+box style.
+
+**Backward compatibility was explicitly deprioritized for this whole
+reorganization** — old `type: timeline` content renders differently now
+(swap), and old `zigzag-list`/`zigzag-timeline`/`timeline-list` content
+picks up the richer card style instead of its original box style. Old
+names still work as aliases into the new structure, but their *rendered
+output* is not guaranteed identical to before this change, unlike every
+other alias in this document.
+
 ### Complete Type Listing
 
 | Family | Types |
 |---|---|
-| **Process** (9 standalone + `process` w/ 8 shapes) | `type: process` (shapes: `default`, `chevron`, `arrow`, `circle`, `ring`, `bending`, `step-up`, `step-down`), plus standalone `funnel`, `roadmap`, `waterfall`, `equation`, `segmented-bar`, `phase-process`, `timeline-h`, `timeline-v`, `swimlane` |
-| **List** (5 standalone + `list` w/ 10 shapes) | `type: list` (shapes: `bullet`, `numbered`, `circle`, `icon`, `chevron`, `ribbon`, `trapezoid`, `two-column`, `block`, `hexagon`), plus standalone `checklist`, `timeline-list`, `card-deck`, `zigzag-timeline`, `tabs` |
+| **Process** (8 standalone + `process` w/ 8 shapes) | `type: process` (shapes: `default`, `chevron`, `arrow`, `circle`, `ring`, `bending`, `step-up`, `step-down`), plus standalone `funnel`, `timeline` (was `timeline-h`; note the swap — see "timeline/roadmap swap" above), `waterfall`, `equation`, `segmented-bar`, `phase-process`, `swimlane` |
+| **List** (3 standalone + `list` w/ 10 shapes) | `type: list` (shapes: `bullet`, `numbered`, `circle`, `icon`, `chevron`, `ribbon`, `trapezoid`, `two-column`, `block`, `hexagon`), plus standalone `checklist`, `card-deck`, `tabs` |
 | **Cycle** (3 standalone + `cycle` w/ 6 shapes) | `type: cycle` (shapes: `default`, `donut`, `segmented`, `orbit`, `mesh`, `spiral`), plus standalone `gear-cycle`, `block-cycle`, `loop` |
 | **Matrix** (8) | `swot`, `pros-cons`, `comparison`, `matrix-2x2`, `bcg`, `ansoff`, `matrix-nxm`, `table` |
 | **Hierarchy** (10) | `org-chart`, `tree`, `h-org-chart`, `hierarchy-list`, `radial-tree`, `decision-tree`, `sitemap`, `bracket`, `bracket-tree`, `mind-map` |
 | **Pyramid** (1 standalone + `pyramid` w/ 4 shapes) | `type: pyramid` (shapes: `default`, `inverted`, `segmented`, `diamond`), plus standalone `pyramid-list` |
 | **Relationship** (14) | `venn`, `venn-3`, `venn-4`, `concentric`, `balance`, `counterbalance`, `opposing-arrows`, `web`, `cluster`, `target`, `radial`, `converging`, `diverging`, `plus` |
 | **Statistical** (9) | `progress-list`, `bullet-chart`, `scorecard`, `treemap`, `sankey`, `waffle`, `gauge`, `radar`, `heatmap` |
-| **Planning** (7) | `kanban`, `gantt`, `gantt-lite`, `sprint-board`, `timeline`, `milestone`, `wbs` |
+| **Planning** (6 standalone + `history` w/ 2 shapes) | `kanban`, `gantt`, `gantt-lite`, `sprint-board`, `roadmap` (was the plain one; now status-aware — see swap above), `milestone`, `wbs`, plus `type: history` (shapes: `default`, `alternating`) |
 | **Technical** (8) | `layered-arch`, `entity`, `network`, `pipeline`, `sequence`, `state-machine`, `flowchart`, `class` |
 | **Plot** (4) | `line-chart`, `scatter`, `area-chart`, `bar-chart` |
 
@@ -225,9 +270,10 @@ Walk these rules **in order — first match wins**.
 
 - Tasks with start/end → `gantt` or `gantt-lite`
 - Milestones only → `milestone`
-- Chronological log → `timeline` or `timeline-list`
-- Long event descriptions → `timeline-v` or `timeline-list`
-- Future roadmap → `roadmap`
+- Plain chronological log → `timeline`
+- Status/progress tracking (done/active/past) → `roadmap`
+- Detail-rich chronological log → `type: history` (`shape: default` single
+  column, `shape: alternating` spine with left/right cards)
 - Phases without dates → `phase-process`
 
 **Do not** use `process` when dates are provided.
@@ -369,7 +415,7 @@ MdArt nodes are **fixed-size shapes**, not paragraphs. Long labels overflow, tru
 | `kanban` / `sprint-board` card | task title only | ~40 chars |
 | Sequence / state-machine label | verb phrase or event name | ~24 chars |
 | Comparison / matrix / table cell | a value, not a sentence | ~30 chars |
-| Vertical timeline (`timeline-v`, `timeline-list`) | date + short phrase | ~80 chars |
+| `type: history` (either shape) | date + short phrase | ~80 chars |
 
 **Compression:** drop articles and filler verbs; noun phrases over sentences; move detail into `title:` or a paragraph outside the fence; prefer `Name: 75%` over `Name (currently at 75%)`.
 
@@ -411,8 +457,8 @@ When a node carries a label *and* a value (number, type, status, target), the pa
 | Technical | `sequence` | message text on `→ Target: message`; `[+]`/`[-]` for activation bars; `- --- Label` for dividers |
 | Technical | `state-machine` | event label on `→ NextState: event` |
 | Technical | `flowchart` | edge label on `→ Target: label` |
-| List | `type: list, shape: two-column`, `card-deck`, `timeline-list` | right-side / sub-text value |
-| Planning | `gantt-lite`, `milestone`, `timeline` | dates, week ranges |
+| List | `type: list, shape: two-column`, `card-deck` | right-side / sub-text value |
+| Planning | `gantt-lite`, `milestone`, `roadmap`, `type: history` | dates, week ranges |
 
 **When the parser splits and when it doesn't:**
 
@@ -524,7 +570,7 @@ For the full failure-mode catalog see `anti-patterns.md` in the skill directory
 
 Quick checklist before emitting a fence:
 
-- **Keyword match trap** — if the user said "timeline", don't default to `timeline` — match the *data structure*, not the word. Could be `timeline-list`, `gantt-lite`, or `roadmap`.
+- **Keyword match trap** — if the user said "timeline", don't reach for the first match — match the *data structure*, not the word. Plain chronological order → `timeline`; status/progress tracking → `roadmap`; detail-rich log → `type: history`; date-driven schedule → `gantt-lite`.
 - **Generic default** — `process` for unordered items, `bullet-list` for comparisons, `tree` for processes are the top three failures.
 - **Wrong family** — `pyramid` ≠ hierarchy; `cycle` ≠ recurring task; `network` ≠ tree.
 - **Verbose node labels** — sentences inside shapes overflow. Compress to noun phrases.

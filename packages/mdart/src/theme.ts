@@ -74,12 +74,14 @@ const THEME_ALIAS_TO_CATEGORY: Record<string, string> = {
 // Which theme category each layout type belongs to
 export const LAYOUT_CATEGORY: Record<string, string> = {
   // list
-  'list':'list','bullet-list':'list','numbered-list':'list','icon-list':'list','two-column-list':'list','checklist':'list','timeline-list':'list',
+  'list':'list','bullet-list':'list','numbered-list':'list','icon-list':'list','two-column-list':'list','checklist':'list',
   'circle-list':'list','chevron-list':'list','ribbon-list':'list','trapezoid-list':'list','block-list':'list','hexagon-list':'list',
-  'card-deck':'list','card-list':'list','zigzag-timeline':'list','zigzag-list':'list','tabs':'list','tab-list':'list',
+  'card-deck':'list','card-list':'list','tabs':'list','tab-list':'list',
   // process
-  'process':'process','chevron-process':'process','arrow-process':'process','circular-process':'process','funnel':'process','roadmap':'process','swimlane':'process','waterfall':'process','snake-process':'process',
-  'circle-process':'process','step-up':'process','step-down':'process','bending-process':'process','timeline-h':'process','timeline-v':'process','phase-process':'process','segmented-bar':'process','equation':'process',
+  // (roadmap/timeline swapped Phase 4 — roadmap now planning-flavored,
+  // timeline now the plain process-family chronological display)
+  'process':'process','chevron-process':'process','arrow-process':'process','circular-process':'process','funnel':'process','swimlane':'process','waterfall':'process','snake-process':'process',
+  'circle-process':'process','step-up':'process','step-down':'process','bending-process':'process','timeline':'process','timeline-h':'process','phase-process':'process','segmented-bar':'process','equation':'process',
   // cycle
   'cycle':'cycle','gear-cycle':'cycle','donut-cycle':'cycle','figure-eight':'cycle','spiral':'cycle',
   'block-cycle':'cycle','segmented-cycle':'cycle','nondirectional-cycle':'cycle','multidirectional-cycle':'cycle','loop':'cycle',
@@ -98,7 +100,8 @@ export const LAYOUT_CATEGORY: Record<string, string> = {
   'treemap':'statistical','sankey':'statistical','bullet-chart':'statistical','progress-list':'statistical','scorecard':'statistical',
   'waffle':'statistical','gauge':'statistical','radar':'statistical','heatmap':'statistical',
   // planning
-  'kanban':'planning','gantt':'planning','gantt-lite':'planning','sprint-board':'planning','timeline':'planning','milestone':'planning','wbs':'planning',
+  'kanban':'planning','gantt':'planning','gantt-lite':'planning','sprint-board':'planning','roadmap':'planning','milestone':'planning','wbs':'planning',
+  'history':'planning','timeline-v':'planning','timeline-list':'planning','zigzag-timeline':'planning','zigzag-list':'planning',
   // technical
   'network':'technical','layered-arch':'technical','pipeline':'technical','entity':'technical',
   'sequence':'technical','state-machine':'technical','flowchart':'technical','class':'technical',

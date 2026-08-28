@@ -97,7 +97,7 @@ const KNOWN_TYPES = new Set([
   'progress-list', 'bullet-chart', 'scorecard', 'treemap', 'sankey',
   'waffle', 'gauge', 'radar', 'heatmap',
   // planning
-  'kanban', 'gantt', 'gantt-lite', 'sprint-board', 'timeline', 'milestone', 'wbs',
+  'kanban', 'gantt', 'gantt-lite', 'sprint-board', 'timeline', 'history', 'milestone', 'wbs',
   // technical
   'layered-arch', 'entity', 'network', 'pipeline', 'sequence', 'state-machine', 'flowchart', 'class',
   // plot
@@ -126,24 +126,32 @@ const CYCLE_SHAPES = new Set(['default', 'donut', 'segmented', 'orbit', 'mesh', 
 // PYRAMID_SHAPES in layouts/pyramid/pyramid-shapes.ts.
 const PYRAMID_SHAPES = new Set(['default', 'inverted', 'segmented', 'diamond'])
 
+// Valid `shape:` values for `type: history`. Kept in sync with
+// HISTORY_SHAPES in layouts/planning/history-shapes.ts.
+const HISTORY_SHAPES = new Set(['default', 'alternating'])
+
 // ── Family mapping ────────────────────────────────────────────────────────────
 
 const TYPE_FAMILY: Record<string, string> = {
   // process
+  // (roadmap/timeline swapped families too in Phase 4 — roadmap is now
+  // status-aware/planning-flavored, timeline is now the plain
+  // process-family chronological display; timeline-v/timeline-list/
+  // zigzag-timeline/zigzag-list moved to planning as `history` aliases)
   process: 'process', 'chevron-process': 'process', 'arrow-process': 'process',
-  'circular-process': 'process', funnel: 'process', roadmap: 'process',
+  'circular-process': 'process', funnel: 'process',
   waterfall: 'process', 'snake-process': 'process', 'bending-process': 'process',
   'step-down': 'process', 'step-up': 'process', 'circle-process': 'process',
   equation: 'process', 'segmented-bar': 'process', 'phase-process': 'process',
-  'timeline-h': 'process', 'timeline-v': 'process', swimlane: 'process',
+  timeline: 'process', 'timeline-h': 'process', swimlane: 'process',
   // list
   list: 'list',
   'bullet-list': 'list', 'numbered-list': 'list', checklist: 'list',
-  'two-column-list': 'list', 'timeline-list': 'list', 'block-list': 'list',
-  'chevron-list': 'list', 'card-list': 'list', 'zigzag-list': 'list',
+  'two-column-list': 'list', 'block-list': 'list',
+  'chevron-list': 'list', 'card-list': 'list',
   'ribbon-list': 'list', 'hexagon-list': 'list', 'trapezoid-list': 'list',
   'tab-list': 'list', 'circle-list': 'list', 'icon-list': 'list',
-  'card-deck': 'list', 'zigzag-timeline': 'list', tabs: 'list',
+  'card-deck': 'list', tabs: 'list',
   // cycle
   cycle: 'cycle', 'donut-cycle': 'cycle', 'gear-cycle': 'cycle',
   spiral: 'cycle', 'block-cycle': 'cycle', 'segmented-cycle': 'cycle',
@@ -171,7 +179,9 @@ const TYPE_FAMILY: Record<string, string> = {
   gauge: 'statistical', radar: 'statistical', heatmap: 'statistical',
   // planning
   kanban: 'planning', gantt: 'planning', 'gantt-lite': 'planning',
-  'sprint-board': 'planning', timeline: 'planning', milestone: 'planning', wbs: 'planning',
+  'sprint-board': 'planning', roadmap: 'planning', milestone: 'planning', wbs: 'planning',
+  history: 'planning', 'timeline-v': 'planning', 'timeline-list': 'planning',
+  'zigzag-timeline': 'planning', 'zigzag-list': 'planning',
   // technical
   'layered-arch': 'technical', entity: 'technical', network: 'technical',
   pipeline: 'technical', sequence: 'technical', 'state-machine': 'technical', flowchart: 'technical', class: 'technical',
@@ -348,6 +358,14 @@ function runCommonChecks(spec: MdArtSpec, issues: ValidationIssue[]): void {
       code: 'STRUCT_INVALID_ATTRIBUTE_VALUE',
       message: `Unknown shape "${spec.shape}" for type "pyramid".`,
       suggestion: `Valid shapes: ${[...PYRAMID_SHAPES].join(', ')}. Omit shape: for the default (non-inverted) stack.`,
+    })
+  }
+  if (spec.type === 'history' && spec.shape && !HISTORY_SHAPES.has(spec.shape)) {
+    issues.push({
+      level: 'error',
+      code: 'STRUCT_INVALID_ATTRIBUTE_VALUE',
+      message: `Unknown shape "${spec.shape}" for type "history".`,
+      suggestion: `Valid shapes: ${[...HISTORY_SHAPES].join(', ')}. Omit shape: for the single-column default.`,
     })
   }
 

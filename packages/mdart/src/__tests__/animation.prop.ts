@@ -127,7 +127,11 @@ describe('process family animation', () => {
 
 describe('zigzag-list / ribbon-list: brightness animation, no scale', () => {
 
-  it.each(['zigzag-list', 'ribbon-list'])('%s has mdart-bright-loop and no transform:scale', (type) => {
+  // zigzag-list dropped from this list-family check as of Phase 4 of the
+  // type/shape consolidation plan — it now renders via
+  // `type: history, shape: alternating` (planning family), which uses its
+  // own animation convention rather than list-family brightness-spotlight.
+  it.each(['ribbon-list'])('%s has mdart-bright-loop and no transform:scale', (type) => {
     forAll(
       (n: number) => {
         const labels = Array.from({ length: n }, (_, i) => `- Item ${i}`).join('\n')
@@ -286,7 +290,10 @@ describe('matrix and planning layout animation: fade-in, no scale', () => {
   })
 
   it('∀ planning types: mdart-n0 present, no transform:scale', { timeout: 15000 }, () => {
-    const PLANNING_TYPES = ['kanban', 'timeline', 'milestone']
+    // `roadmap` (not `timeline`) is the planning-family status-aware
+    // renderer as of Phase 4 of the type/shape consolidation plan —
+    // `timeline`/`roadmap` swapped which renderer they point to.
+    const PLANNING_TYPES = ['kanban', 'roadmap', 'milestone']
     forAll(
       (typeIdx: number) => {
         const type = PLANNING_TYPES[typeIdx % PLANNING_TYPES.length]
