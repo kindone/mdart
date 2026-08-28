@@ -12,6 +12,15 @@ const LABEL_R = OUTER_R + 20
 const CONNECTOR_R = OUTER_R + 5
 const GAP_ANGLE = 0.03
 const LABEL_BOX_W = 92
+// Safety margin from the canvas edge — `renderFitBlock` draws start/end
+// anchored text growing away from labelX, and at several item counts
+// labelX (CX ± LABEL_R) sits close enough to the edge that the full
+// LABEL_BOX_W would push the box past it (e.g. n=8: labelX=349.3 with
+// only 90.7px of canvas left, vs. the 92px box assumes). Clamp per-node
+// below instead of just shrinking LABEL_BOX_W globally, since most nodes
+// have plenty of room.
+const EDGE_PAD = 6
+const MIN_LABEL_BOX_W = 60
 // Taller than a short label+value pair strictly needs, because this shape
 // is specifically recommended (see docs/mdart.md) for longer labels/values
 // at higher item counts — its whole selling point over `default`/`donut`
@@ -35,6 +44,7 @@ interface SegmentedNode {
   connectorX: number
   connectorY: number
   anchor: 'start' | 'middle' | 'end'
+  labelBoxW: number
   fill: string
   display: ReturnType<typeof displayLabel>
 }
@@ -50,17 +60,27 @@ function placeNodes(spec: MdArtSpec, layout: SegmentedLayout, theme: MdArtTheme)
     const midAngle = (startAngle + endAngle) / 2
     const cosA = Math.cos(midAngle)
     const t = index / (layout.n - 1 || 1)
+    const labelX = CX + LABEL_R * Math.cos(midAngle)
+    const anchor = cosA > 0.3 ? 'start' : cosA < -0.3 ? 'end' : 'middle'
+    // Text grows rightward from labelX when anchor='start', leftward when
+    // 'end' — clamp the box to whatever room is actually left before the
+    // canvas edge so wrapping never lets a line overflow it.
+    const labelBoxW =
+      anchor === 'start' ? Math.max(MIN_LABEL_BOX_W, Math.min(LABEL_BOX_W, W - labelX - EDGE_PAD)) :
+      anchor === 'end' ? Math.max(MIN_LABEL_BOX_W, Math.min(LABEL_BOX_W, labelX - EDGE_PAD)) :
+      LABEL_BOX_W
     return {
       item,
       index,
       startAngle,
       endAngle,
       midAngle,
-      labelX: CX + LABEL_R * Math.cos(midAngle),
+      labelX,
       labelY: CY + LABEL_R * Math.sin(midAngle),
       connectorX: CX + CONNECTOR_R * Math.cos(midAngle),
       connectorY: CY + CONNECTOR_R * Math.sin(midAngle),
-      anchor: cosA > 0.3 ? 'start' : cosA < -0.3 ? 'end' : 'middle',
+      anchor,
+      labelBoxW,
       fill: lerpColor(theme.secondary, theme.primary, t),
       display: displayLabel(item, { value: true }),
     }
@@ -81,7 +101,7 @@ function segmentPath(node: SegmentedNode): string {
 }
 
 function renderText(node: SegmentedNode, theme: MdArtTheme): string {
-  const fit = fitLabelValueBlock(node.display.display, node.item.value, LABEL_BOX_W, LABEL_BOX_H, {
+  const fit = fitLabelValueBlock(node.display.display, node.item.value, node.labelBoxW, LABEL_BOX_H, {
     labelUrl: node.display.url,
     labelMaxSize: 10,
     labelMinSize: 6.5,
