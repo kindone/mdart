@@ -316,7 +316,21 @@ export function wrapLabel(
 
   // Expand at any non-alphanumeric separator so compounds can wrap there.
   // "position-awareness" → ["position-", "awareness"]; "v1.2.3" → ["v1.", "2.", "3"]
-  const words = trimmed.split(/\s+/).flatMap(expandAtSeparators)
+  // `glued[i]` tracks whether words[i] was produced by splitting a single
+  // whitespace-delimited token (no space when rejoined) vs. being its own
+  // token in the original text (needs a space). Inferring this from "does
+  // the line so far end in a non-alnum char" instead (as a prior version
+  // did) breaks any standalone symbol token — e.g. "product · market" with
+  // "·" as its own space-delimited word would silently lose the space
+  // after it, since "·" makes the line-so-far end in a non-alnum char too.
+  const words: string[] = []
+  const glued: boolean[] = []
+  for (const raw of trimmed.split(/\s+/)) {
+    expandAtSeparators(raw).forEach((frag, i) => {
+      words.push(frag)
+      glued.push(i > 0)
+    })
+  }
   const lines: string[] = []
   let wordIdx = 0
   // Tracks the single-word-too-long case separately from "leftover words
@@ -333,11 +347,11 @@ export function wrapLabel(
   while (wordIdx < words.length && lines.length < maxLines) {
     let line = ''
     while (wordIdx < words.length) {
-      // When the current line ends with a non-alphanumeric separator character
-      // (retained by expandAtSeparators) join the next segment without a space
-      // so "real-" + "time" → "real-time", "Alice/" + "Bob" → "Alice/Bob", etc.
-      const lastCh = line[line.length - 1]
-      const join = (lastCh && !ALNUM.test(lastCh)) ? '' : ' '
+      // Continuation fragments from expandAtSeparators join without a space
+      // ("real-" + "time" → "real-time", "Alice/" + "Bob" → "Alice/Bob");
+      // genuine standalone words (including lone symbol tokens like "·")
+      // always get a space, regardless of what character the line ends in.
+      const join = glued[wordIdx] ? '' : ' '
       const next = line ? `${line}${join}${words[wordIdx]}` : words[wordIdx]
       if (fits(next)) { line = next; wordIdx++ }
       else break

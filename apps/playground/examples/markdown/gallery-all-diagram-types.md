@@ -1,6 +1,6 @@
 # MdArt Diagram Gallery
 
-Every layout type (103 total across 11 families) with its mdart source.
+Every layout type (101 total across 11 families) with its mdart source.
 
 ## Process
 
@@ -56,10 +56,10 @@ type: funnel
 - Purchase
 ```
 
-### `roadmap`
+### `timeline`
 
 ```mdart
-type: roadmap
+type: timeline
 - Q1: Foundation
 - Q2: Beta Launch
 - Q3: Growth
@@ -160,30 +160,6 @@ type: phase-process
   - Sprint 2
 ```
 
-### `timeline-h`
-
-```mdart
-type: timeline-h
-- Kickoff: Jan
-- Design: Mar
-- Beta: Jun
-- Review: Sep
-- Ship: Dec
-```
-
-### `timeline-v`
-
-```mdart
-type: timeline-v
-- Project Kickoff: Jan '24
-  - Team assembled
-- Design Complete: Apr '24
-  - Approved
-- Beta Launch: Aug '24
-  - 500 early users
-- GA Release: Dec '24
-```
-
 ### `swimlane`
 
 ```mdart
@@ -244,17 +220,6 @@ type: two-column-list
 - Review: Demo to stakeholders
 ```
 
-### `timeline-list`
-
-```mdart
-type: timeline-list
-- 2022: Founded
-- 2023: Seed round
-- 2024: Product launch
-- 2025: Series A
-- 2026: Expansion
-```
-
 ### `block-list`
 
 ```mdart
@@ -283,10 +248,10 @@ type: chevron-list
 - Action
 ```
 
-### `card-list`
+### `card-deck`
 
 ```mdart
-type: card-list
+type: card-deck
 - Design
   - UI/UX
   - Figma
@@ -296,16 +261,6 @@ type: card-list
 - Growth
   - Marketing
   - Sales
-```
-
-### `zigzag-list`
-
-```mdart
-type: zigzag-list
-- Research
-- Prototype
-- Test
-- Launch
 ```
 
 ### `ribbon-list`
@@ -338,10 +293,10 @@ type: trapezoid-list
 - Foundation
 ```
 
-### `tab-list`
+### `tabs`
 
 ```mdart
-type: tab-list
+type: tabs
 - Team
   - Engineers
   - Designers
@@ -353,11 +308,14 @@ type: tab-list
   - GitHub
 ```
 
-### `circle-list`
+### `circle-list (with children)`
 
 ```mdart
-type: circle-list
+type: list
+shape: circle
 - Discovery: Research & requirements
+  - Stakeholder interviews
+  - Market analysis
 - Planning: Scope & architecture
 - Execution: Build & iterate
 - Launch: Monitor & optimize
@@ -1141,10 +1099,10 @@ title: Sprint 14
   - Unit tests: 4 [done]
 ```
 
-### `timeline`
+### `roadmap`
 
 ```mdart
-type: timeline
+type: roadmap
 title: Product Roadmap
 - Q1 '23: Kickoff [done]
 - Q2 '23: Alpha [done]
@@ -1179,6 +1137,28 @@ title: Platform v2
 - QA
   - Unit Tests
   - E2E
+```
+
+### `history`
+
+```mdart
+type: history
+- 2022: Founded
+- 2023: Seed round
+- 2024: Product launch
+- 2025: Series A
+- 2026: Expansion
+```
+
+### `history (alternating)`
+
+```mdart
+type: history
+shape: alternating
+- Research
+- Prototype
+- Test
+- Launch
 ```
 
 ## Technical

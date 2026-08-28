@@ -1,20 +1,20 @@
 # MdArt Layout Reference
 
-**103 layouts across 11 families.** Every layout type with its source and rendered output.
+**101 layouts across 11 families.** Every layout type with its source and rendered output.
 
 See the [interactive playground](https://github.com/mdart/mdart) for live editing, or open [gallery.html](./gallery.html) for a richer viewer.
 
 ## Contents
 
-- [Process (17)](#process)
-- [List (15)](#list)
+- [Process (15)](#process)
+- [List (13)](#list)
 - [Cycle (9)](#cycle)
 - [Hierarchy (9)](#hierarchy)
 - [Matrix (8)](#matrix)
 - [Pyramid (5)](#pyramid)
 - [Relationship (13)](#relationship)
 - [Statistical (9)](#statistical)
-- [Planning (6)](#planning)
+- [Planning (8)](#planning)
 - [Technical (8)](#technical)
 - [Plot (4)](#plot)
 
@@ -101,10 +101,10 @@ type: funnel
   <img alt="funnel" src="./examples/gallery/funnel-light.svg">
 </picture>
 
-### `roadmap`
+### `timeline`
 
 ```
-type: roadmap
+type: timeline
 - Q1: Foundation
 - Q2: Beta Launch
 - Q3: Growth
@@ -112,8 +112,8 @@ type: roadmap
 ```
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/roadmap.svg">
-  <img alt="roadmap" src="./examples/gallery/roadmap-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/timeline.svg">
+  <img alt="timeline" src="./examples/gallery/timeline-light.svg">
 </picture>
 
 ### `waterfall`
@@ -250,40 +250,6 @@ type: phase-process
   <img alt="phase-process" src="./examples/gallery/phase-process-light.svg">
 </picture>
 
-### `timeline-h`
-
-```
-type: timeline-h
-- Kickoff: Jan
-- Design: Mar
-- Beta: Jun
-- Review: Sep
-- Ship: Dec
-```
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/timeline-h.svg">
-  <img alt="timeline-h" src="./examples/gallery/timeline-h-light.svg">
-</picture>
-
-### `timeline-v`
-
-```
-type: timeline-v
-- Project Kickoff: Jan '24
-  - Team assembled
-- Design Complete: Apr '24
-  - Approved
-- Beta Launch: Aug '24
-  - 500 early users
-- GA Release: Dec '24
-```
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/timeline-v.svg">
-  <img alt="timeline-v" src="./examples/gallery/timeline-v-light.svg">
-</picture>
-
 ### `swimlane`
 
 ```
@@ -373,22 +339,6 @@ type: two-column-list
   <img alt="two-column-list" src="./examples/gallery/two-column-list-light.svg">
 </picture>
 
-### `timeline-list`
-
-```
-type: timeline-list
-- 2022: Founded
-- 2023: Seed round
-- 2024: Product launch
-- 2025: Series A
-- 2026: Expansion
-```
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/timeline-list.svg">
-  <img alt="timeline-list" src="./examples/gallery/timeline-list-light.svg">
-</picture>
-
 ### `block-list`
 
 ```
@@ -427,10 +377,10 @@ type: chevron-list
   <img alt="chevron-list" src="./examples/gallery/chevron-list-light.svg">
 </picture>
 
-### `card-list`
+### `card-deck`
 
 ```
-type: card-list
+type: card-deck
 - Design
   - UI/UX
   - Figma
@@ -443,23 +393,8 @@ type: card-list
 ```
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/card-list.svg">
-  <img alt="card-list" src="./examples/gallery/card-list-light.svg">
-</picture>
-
-### `zigzag-list`
-
-```
-type: zigzag-list
-- Research
-- Prototype
-- Test
-- Launch
-```
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/zigzag-list.svg">
-  <img alt="zigzag-list" src="./examples/gallery/zigzag-list-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/card-deck.svg">
+  <img alt="card-deck" src="./examples/gallery/card-deck-light.svg">
 </picture>
 
 ### `ribbon-list`
@@ -507,10 +442,10 @@ type: trapezoid-list
   <img alt="trapezoid-list" src="./examples/gallery/trapezoid-list-light.svg">
 </picture>
 
-### `tab-list`
+### `tabs`
 
 ```
-type: tab-list
+type: tabs
 - Team
   - Engineers
   - Designers
@@ -523,23 +458,26 @@ type: tab-list
 ```
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/tab-list.svg">
-  <img alt="tab-list" src="./examples/gallery/tab-list-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/tabs.svg">
+  <img alt="tabs" src="./examples/gallery/tabs-light.svg">
 </picture>
 
-### `circle-list`
+### `circle-list (with children)`
 
 ```
-type: circle-list
+type: list
+shape: circle
 - Discovery: Research & requirements
+  - Stakeholder interviews
+  - Market analysis
 - Planning: Scope & architecture
 - Execution: Build & iterate
 - Launch: Monitor & optimize
 ```
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/circle-list.svg">
-  <img alt="circle-list" src="./examples/gallery/circle-list-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/circle-list (with children).svg">
+  <img alt="circle-list (with children)" src="./examples/gallery/circle-list (with children)-light.svg">
 </picture>
 
 ### `icon-list`
@@ -1633,10 +1571,10 @@ title: Sprint 14
   <img alt="sprint-board" src="./examples/gallery/sprint-board-light.svg">
 </picture>
 
-### `timeline`
+### `roadmap`
 
 ```
-type: timeline
+type: roadmap
 title: Product Roadmap
 - Q1 '23: Kickoff [done]
 - Q2 '23: Alpha [done]
@@ -1646,8 +1584,8 @@ title: Product Roadmap
 ```
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/timeline.svg">
-  <img alt="timeline" src="./examples/gallery/timeline-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/roadmap.svg">
+  <img alt="roadmap" src="./examples/gallery/roadmap-light.svg">
 </picture>
 
 ### `milestone`
@@ -1686,6 +1624,38 @@ title: Platform v2
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/wbs.svg">
   <img alt="wbs" src="./examples/gallery/wbs-light.svg">
+</picture>
+
+### `history`
+
+```
+type: history
+- 2022: Founded
+- 2023: Seed round
+- 2024: Product launch
+- 2025: Series A
+- 2026: Expansion
+```
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/history.svg">
+  <img alt="history" src="./examples/gallery/history-light.svg">
+</picture>
+
+### `history (alternating)`
+
+```
+type: history
+shape: alternating
+- Research
+- Prototype
+- Test
+- Launch
+```
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./examples/gallery/history (alternating).svg">
+  <img alt="history (alternating)" src="./examples/gallery/history (alternating)-light.svg">
 </picture>
 
 ---
