@@ -549,7 +549,11 @@ function renderCrossMessage(
       const line1 = message.msg.slice(0, splitIdx)
       const line2 = message.msg.slice(splitIdx).trimStart()
       parts.push(`<text x="${midX.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}><title>${escapeXml(message.msg)}</title>${renderInlineMarkdown(truncate(line1, maxChars))}</text>`)
-      parts.push(`<text x="${midX.toFixed(1)}" y="${(y + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${renderInlineMarkdown(truncate(line2, maxChars))}</text>`)
+      // Line 2 is a separate <text> element — an SVG <title> only covers the
+      // element it's nested in, so line1's title doesn't extend hover
+      // coverage down to line2's glyphs. Duplicate it here so the full
+      // message tooltips regardless of which line the pointer is over.
+      parts.push(`<text x="${midX.toFixed(1)}" y="${(y + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}><title>${escapeXml(message.msg)}</title>${renderInlineMarkdown(truncate(line2, maxChars))}</text>`)
     }
   }
   return parts.join('')

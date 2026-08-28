@@ -149,7 +149,8 @@ function renderField(placement: ClassPlacement, layout: ClassLayout, field: MdAr
   const { display } = displayLabelValue(field)
   const { prefix, raw } = memberVisibility(display)
   const color = isPK ? theme.accent : isFK ? '#c4b5fd' : `${theme.textMuted}cc`
-  const unit = [`<text x="${(placement.x + 7).toFixed(1)}" y="${fy.toFixed(1)}" font-size="10" fill="${color}" ${FONT_MONO_ATTR}>${escapeXml(prefix + truncate(raw, layout.maxCharsPerField))}</text>`]
+  const truncatedTip = raw.length > layout.maxCharsPerField ? `<title>${escapeXml(prefix + raw)}</title>` : ''
+  const unit = [`<text x="${(placement.x + 7).toFixed(1)}" y="${fy.toFixed(1)}" font-size="10" fill="${color}" ${FONT_MONO_ATTR}>${truncatedTip}${escapeXml(prefix + truncate(raw, layout.maxCharsPerField))}</text>`]
 
   if (isPK || isFK) {
     const bc = isPK ? theme.accent : '#a78bfa'
@@ -171,7 +172,8 @@ function renderMethod(placement: ClassPlacement, layout: ClassLayout, method: Md
   const { display } = displayLabelValue(method)
   const { prefix, raw } = memberVisibility(display)
   const isStatic = method.attrs.includes('static')
-  return `<text x="${(placement.x + 7).toFixed(1)}" y="${my.toFixed(1)}" font-size="10" fill="${theme.primary}cc" ${FONT_MONO_ATTR}${isStatic ? ' text-decoration="underline"' : ''}>${escapeXml(prefix + truncate(raw, layout.maxCharsPerField))}</text>`
+  const truncatedTip = raw.length > layout.maxCharsPerField ? `<title>${escapeXml(prefix + raw)}</title>` : ''
+  return `<text x="${(placement.x + 7).toFixed(1)}" y="${my.toFixed(1)}" font-size="10" fill="${theme.primary}cc" ${FONT_MONO_ATTR}${isStatic ? ' text-decoration="underline"' : ''}>${truncatedTip}${escapeXml(prefix + truncate(raw, layout.maxCharsPerField))}</text>`
 }
 
 function renderMembers(placement: ClassPlacement, layout: ClassLayout, theme: MdArtTheme): string {
