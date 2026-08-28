@@ -1169,7 +1169,16 @@ function setMode(newMode) {
 
 function populateExampleSelect() {
   const sel = document.getElementById('example-select')
-  while (sel.options.length > 1) sel.remove(1)
+  // Clear everything after the placeholder option. `sel.remove(index)`
+  // only ever removes <option> elements (it indexes into `sel.options`,
+  // the flat option collection) — in renderer/generator mode this select
+  // is populated with <optgroup> wrappers, and removing their child
+  // <option>s one by one leaves the now-empty <optgroup> shells behind in
+  // the DOM. Every mode switch then stacked another full set of empty
+  // "— family —" headers on top of the stale ones instead of replacing
+  // them. Removing DOM children directly (options AND optgroups) instead
+  // of going through the options collection clears both.
+  while (sel.children.length > 1) sel.removeChild(sel.lastChild)
 
   if (mode === 'renderer' || mode === 'generator') {
     // Types grouped by family; `— family —` decorates the optgroup label
