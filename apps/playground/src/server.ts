@@ -32,7 +32,7 @@
 import express     from 'express'
 import path        from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { readFile, writeFile, readdir, copyFile, unlink, mkdir } from 'node:fs/promises'
+import { readFile, writeFile, readdir, copyFile, unlink, mkdir, stat } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { exec as execCb, spawn as spawnProc, spawnSync } from 'node:child_process'
 import { createInterface } from 'node:readline'
@@ -213,8 +213,38 @@ const ALLOWED_LAB_FILES = new Set([
 ])
 
 /**
- * Render mdartSource using a freshly built dist — copies dist to a temp file
- * so each call gets an isolated module (no Node ESM cache reuse).
+ * Load the lab's copy of the mdart renderer.
+ *
+ * renderFresh() must reflect edits applied via /lab/apply (which rebuilds
+ * `dist/index.js`) without a server restart — hence the temp-file import that
+ * sidesteps Node's ESM module cache. But re-importing the ~680 KB bundle on
+ * *every* render costs ~30 ms plus copy/unlink churn, which is very noticeable
+ * when arrow-key navigating the renderer gallery (each step = one render).
+ *
+ * So cache the imported module and only reload when `dist/index.js` actually
+ * changes (mtime), which is exactly when /lab/apply rebuilds it. A `stat` is
+ * sub-millisecond; the steady-state render path now does zero filesystem work.
+ */
+let labModuleCache: { mtimeMs: number; mod: { renderMdArt: typeof renderMdArt } } | null = null
+
+async function loadLabModule(): Promise<{ renderMdArt: typeof renderMdArt }> {
+  const { mtimeMs } = await stat(DIST_INDEX)
+  if (labModuleCache && labModuleCache.mtimeMs === mtimeMs) return labModuleCache.mod
+  // dist changed (or first load) — import a fresh copy under a unique name so
+  // Node's ESM cache doesn't hand back the previous build.
+  const tmp = path.join(tmpdir(), `mdart-lab-${mtimeMs}-${Math.random().toString(36).slice(2)}.mjs`)
+  await copyFile(DIST_INDEX, tmp)
+  try {
+    const mod = await import(`file://${tmp}`) as { renderMdArt: typeof renderMdArt }
+    labModuleCache = { mtimeMs, mod }
+    return mod
+  } finally {
+    await unlink(tmp).catch(() => {})
+  }
+}
+
+/**
+ * Render mdartSource using the lab's build of the renderer (see loadLabModule).
  */
 async function renderFresh(
   mdartSource: string,
@@ -224,15 +254,9 @@ async function renderFresh(
   animate?: boolean,
   hintType?: string,
 ): Promise<string> {
-  const tmp = path.join(tmpdir(), `mdart-lab-${Date.now()}-${Math.random().toString(36).slice(2)}.mjs`)
-  await copyFile(DIST_INDEX, tmp)
-  try {
-    const mod = await import(`file://${tmp}`) as { renderMdArt: typeof renderMdArt }
-    const cfg = buildCfg(mode, theme, debugTextBounds, animate)
-    return mod.renderMdArt(mdartSource, hintType, cfg)
-  } finally {
-    await unlink(tmp).catch(() => {})
-  }
+  const mod = await loadLabModule()
+  const cfg = buildCfg(mode, theme, debugTextBounds, animate)
+  return mod.renderMdArt(mdartSource, hintType, cfg)
 }
 
 /**
