@@ -230,12 +230,16 @@ class OpencodeParser implements CliParser {
   }
 }
 
+// Mirrors steward's curated Claude CLI model list (server/src/cli/claude-adapter.ts).
+// claude-fable-5 draws from a separate usage-credit pool and 429s with
+// "requires usage credits" if the account doesn't have any.
 const claudeModels: ModelOption[] = [
   { value: null, label: 'Default' },
-  { value: 'claude-opus-4-6', label: 'Opus 4.6' },
-  { value: 'claude-sonnet-4-6', label: 'Sonnet 4.6' },
-  { value: 'claude-opus-4-5', label: 'Opus 4.5' },
-  { value: 'claude-sonnet-4-5', label: 'Sonnet 4.5' },
+  { value: 'claude-sonnet-5', label: 'Sonnet 5' },
+  { value: 'claude-opus-5', label: 'Opus 5' },
+  { value: 'claude-opus-4-8', label: 'Opus 4.8' },
+  { value: 'claude-opus-4-7', label: 'Opus 4.7' },
+  { value: 'claude-fable-5', label: 'Fable 5 (usage credits)' },
   { value: 'claude-haiku-4-5', label: 'Haiku 4.5' },
 ]
 
@@ -246,17 +250,36 @@ const claudeModels: ModelOption[] = [
 //
 // `null` = no `--model` flag, lets opencode read OPENCODE_DEFAULT_MODEL.
 const opencodeModels: ModelOption[] = [
-  { value: null,                              label: 'Default (env)' },
-  // opencode-hosted — no API key required; free, rate-limited by opencode
-  { value: 'opencode/big-pickle',             label: 'Big Pickle (opencode, free)' },
-  { value: 'opencode/gpt-5-nano',             label: 'GPT-5 Nano (opencode, free)' },
-  { value: 'opencode/nemotron-3-super-free',  label: 'Nemotron 3 Super (opencode, free)' },
-  { value: 'opencode/minimax-m2.5-free',      label: 'MiniMax M2.5 (opencode, free)' },
-  { value: 'opencode/hy3-preview-free',       label: 'HY3 Preview (opencode, free)' },
+  { value: null,                                    label: 'Default (env)' },
+  // opencode Go subscription — requires opencode Go auth (`opencode auth login`)
+  { value: 'opencode-go/kimi-k2.7-code',            label: 'Kimi K2.7 Code (Go)' },
+  { value: 'opencode-go/kimi-k2.6',                 label: 'Kimi K2.6 (Go)' },
+  { value: 'opencode-go/deepseek-v4-pro',           label: 'DeepSeek V4 Pro (Go)' },
+  { value: 'opencode-go/deepseek-v4-flash',         label: 'DeepSeek V4 Flash (Go)' },
+  { value: 'opencode-go/minimax-m3',                label: 'MiniMax M3 (Go)' },
+  { value: 'opencode-go/minimax-m2.7',              label: 'MiniMax M2.7 (Go)' },
+  { value: 'opencode-go/qwen3.7-max',               label: 'Qwen 3.7 Max (Go)' },
+  { value: 'opencode-go/qwen3.7-plus',              label: 'Qwen 3.7 Plus (Go)' },
+  { value: 'opencode-go/qwen3.6-plus',              label: 'Qwen 3.6 Plus (Go)' },
+  { value: 'opencode-go/mimo-v2.5-pro',             label: 'Mimo V2.5 Pro (Go)' },
+  { value: 'opencode-go/mimo-v2.5',                 label: 'Mimo V2.5 (Go)' },
+  { value: 'opencode-go/glm-5.2',                   label: 'GLM 5.2 (Go)' },
+  { value: 'opencode-go/glm-5.1',                   label: 'GLM 5.1 (Go)' },
+  // opencode-hosted free — no API key required; rate-limited by opencode
+  { value: 'opencode/big-pickle',                   label: 'Big Pickle (opencode, free)' },
+  { value: 'opencode/deepseek-v4-flash-free',       label: 'DeepSeek V4 Flash (opencode, free)' },
+  { value: 'opencode/mimo-v2.5-free',               label: 'Mimo V2.5 (opencode, free)' },
+  { value: 'opencode/nemotron-3-ultra-free',        label: 'Nemotron 3 Ultra (opencode, free)' },
+  { value: 'opencode/north-mini-code-free',         label: 'North Mini Code (opencode, free)' },
   // Google — Gemini API key
-  { value: 'google/gemini-2.5-pro',           label: 'Gemini 2.5 Pro' },
-  { value: 'google/gemini-2.5-flash',         label: 'Gemini 2.5 Flash' },
-  { value: 'google/gemma-4-31b-it',           label: 'Gemma 4 31B' },
+  { value: 'google/gemini-3.5-flash',               label: 'Gemini 3.5 Flash' },
+  { value: 'google/gemini-3.1-pro-preview',         label: 'Gemini 3.1 Pro' },
+  { value: 'google/gemini-3.1-flash-lite',          label: 'Gemini 3.1 Flash Lite' },
+  { value: 'google/gemini-3-flash-preview',         label: 'Gemini 3 Flash' },
+  { value: 'google/gemini-2.5-pro',                 label: 'Gemini 2.5 Pro' },
+  { value: 'google/gemini-2.5-flash',               label: 'Gemini 2.5 Flash' },
+  { value: 'google/gemma-4-31b-it',                 label: 'Gemma 4 31B' },
+  { value: 'google/gemma-4-26b-a4b-it',             label: 'Gemma 4 26B' },
   // Anthropic — via opencode (separate from the Claude CLI adapter)
   { value: 'anthropic/claude-opus-4-6',       label: 'Opus 4.6 (via opencode)' },
   { value: 'anthropic/claude-sonnet-4-6',     label: 'Sonnet 4.6 (via opencode)' },
@@ -390,12 +413,14 @@ class CodexParser implements CliParser {
   }
 }
 
+// Mirrors steward's codex fallback list (server/src/cli/codex-adapter.ts).
+// Steward additionally probes `codex debug models` at runtime and prefers
+// that dynamic list when available; this demo always uses the static one.
 const codexModels: ModelOption[] = [
-  { value: null,           label: 'Default (codex picks)' },
-  { value: 'gpt-5.5',     label: 'GPT-5.5' },
-  { value: 'gpt-5.4',     label: 'GPT-5.4' },
-  { value: 'gpt-5.4-mini',label: 'GPT-5.4 Mini' },
-  { value: 'gpt-5.2',     label: 'GPT-5.2' },
+  { value: null,       label: 'Default (codex picks)' },
+  { value: 'gpt-5.5',  label: 'GPT-5.5' },
+  { value: 'gpt-5.4',  label: 'GPT-5.4' },
+  { value: 'gpt-5.2',  label: 'GPT-5.2' },
 ]
 
 function buildCodexEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
