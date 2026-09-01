@@ -40,13 +40,21 @@ function intersectionNames(label: string): string[] {
  *   - If this is the all-circles intersection, leave it at the centroid.
  *   - Otherwise push it outward from the all-circles centre by `spread`,
  *     so pairwise labels don't pile up on the central all-circles label.
+ *
+ * `spread` takes separate x/y multipliers (not one scalar) because layout4's
+ * grid is anisotropic (dx ≠ dy): a uniform multiplier pushes horizontal
+ * pairs (left/right) farther in absolute px than vertical pairs (top/bottom)
+ * for the same visual "spread", since it's applied to a shorter mid-centre
+ * vector on the y axis. Axis-aligned pairs only move along one axis anyway
+ * (their other mid-centre component is already 0), so this only changes
+ * magnitude, never introduces drift on the zero axis.
  */
 function intersectionPos(
   names: string[],
   circles: MdArtItem[],
   centres: { x: number; y: number }[],
   allCentre: { x: number; y: number },
-  spread: number,
+  spread: { x: number; y: number },
 ): { x: number; y: number } {
   const pts: { x: number; y: number }[] = []
   for (const n of names) {
@@ -61,8 +69,8 @@ function intersectionPos(
   // All-circles intersection stays put; partial intersections get spread out.
   if (pts.length === circles.length) return mid
   return {
-    x: allCentre.x + (mid.x - allCentre.x) * spread,
-    y: allCentre.y + (mid.y - allCentre.y) * spread,
+    x: allCentre.x + (mid.x - allCentre.x) * spread.x,
+    y: allCentre.y + (mid.y - allCentre.y) * spread.y,
   }
 }
 
@@ -97,7 +105,10 @@ function layout2(theme: MdArtTheme, titleH: number): Layout {
 function layout3(theme: MdArtTheme, titleH: number): Layout {
   const W = 560, H = 380 + titleH
   const cy = titleH + (H - titleH) / 2
-  const R = 105, off = 62
+  // R/off tuned for deeper lens overlap (was R=105/off=62, ~43px overlap
+  // depth) so pairwise/triple intersection labels have more physical room
+  // — see renderIntersectionLabels' charLimit for the matching text budget.
+  const R = 115, off = 58
   return {
     W, H, R,
     centres: [
@@ -105,7 +116,7 @@ function layout3(theme: MdArtTheme, titleH: number): Layout {
       { x: W / 2 + off, y: cy - off * 0.65 },
       { x: W / 2,       y: cy + off * 0.9 },
     ],
-    labelOff: [[-50, -R * 0.55], [50, -R * 0.55], [0, R * 0.6]],
+    labelOff: [[-R * 0.48, -R * 0.55], [R * 0.48, -R * 0.55], [0, R * 0.6]],
     colors: [theme.primary, theme.secondary, theme.accent],
   }
 }
@@ -113,7 +124,9 @@ function layout3(theme: MdArtTheme, titleH: number): Layout {
 function layout4(theme: MdArtTheme, titleH: number): Layout {
   const W = 560, H = 380 + titleH
   const cx = W / 2, cy = titleH + (H - titleH) / 2
-  const R = 105, dx = 60, dy = 44
+  // Deeper overlap (was R=105/dx=60/dy=44) to match the wider intersection
+  // text budget below.
+  const R = 112, dx = 52, dy = 40
   return {
     W, H, R,
     centres: [
@@ -121,8 +134,8 @@ function layout4(theme: MdArtTheme, titleH: number): Layout {
       { x: cx - dx, y: cy + dy }, { x: cx + dx, y: cy + dy },
     ],
     labelOff: [
-      [-R * 0.58, -R * 0.52], [R * 0.58, -R * 0.52],
-      [-R * 0.58,  R * 0.52], [R * 0.58,  R * 0.52],
+      [-R * 0.48, -R * 0.44], [R * 0.48, -R * 0.44],
+      [-R * 0.48,  R * 0.44], [R * 0.48,  R * 0.44],
     ],
     colors: [theme.primary, theme.secondary, theme.accent, theme.primary],
   }
@@ -152,28 +165,43 @@ function renderCircleLabels(circles: MdArtItem[], layout: Layout, n: number, ani
   circles.forEach((item, i) => {
     const c = layout.centres[i]
     const lx = c.x + layout.labelOff[i][0]
-    const ly = c.y + layout.labelOff[i][1]
     const labelFontSize = n === 2 ? 13 : (n === 3 ? 12 : 11)
     const labelMax = n === 2 ? 14 : (n === 3 ? 13 : 12)
     const labelStr = ellipsisIfDropped(item.label, item)
     const { lines, truncated, url } = wrapLabel(labelStr, labelMax)
     const lineH = labelFontSize + 2
+
+    const maxChildren = n === 2 ? 4 : 2
+    const childGap = n === 2 ? 12 : 14
+    const childSpacing = n === 2 ? 16 : 13
+    const childFs = n === 2 ? 10 : 8.5
+    const childCount = Math.min(item.children.length, maxChildren)
+
+    // `labelOff[i][1]` is the target vertical *centre* for the whole
+    // label+children block, not an anchor for the title's own baseline —
+    // otherwise a title that wraps to more lines, or has more children,
+    // just grows downward from a fixed point and drifts below the circle's
+    // visually balanced position. So: work out the full block's height
+    // first (title lines + optional children run), then derive the title's
+    // baseline (`ly`) by centring that whole span on the target.
+    const titleSpanH = (lines.length - 1) * lineH + labelFontSize
+    const childrenSpanH = childCount > 0 ? childGap + (childCount - 1) * childSpacing + childFs : 0
+    const blockH = titleSpanH + childrenSpanH
+    const targetCenter = c.y + layout.labelOff[i][1]
+    const ly = targetCenter - blockH / 2 + labelFontSize * 0.75
+
     const tip = truncated ? `<title>${escapeXml(item.label)}</title>` : ''
     const tspans = lines
       .map((line, lineIndex) => `<tspan x="${lx.toFixed(1)}" dy="${lineIndex === 0 ? 0 : lineH}">${escapeXml(line)}</tspan>`)
       .join('')
     parts.push(aWrap(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="${labelFontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${tip}${tspans}</text>`, url))
 
-    const maxChildren = n === 2 ? 4 : 2
-    const childGap = n === 2 ? 12 : 14
-    const childSpacing = n === 2 ? 16 : 13
     const childBaseY = ly + (lines.length - 1) * lineH + childGap
     item.children.slice(0, maxChildren).forEach((ch, j) => {
-      const fs = n === 2 ? 10 : 8.5
       const max = n === 2 ? 18 : 10
       const trunc = truncate(ch.label, max)
       const childTip = trunc !== ch.label ? `<title>${escapeXml(ch.label)}</title>` : ''
-      parts.push(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${(childBaseY + j * childSpacing).toFixed(1)}" text-anchor="middle" font-size="${fs}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${childTip}${escapeXml(trunc)}</text>`)
+      parts.push(`<text class="${animate ? `mdart-n${i}` : ''}" x="${lx.toFixed(1)}" y="${(childBaseY + j * childSpacing).toFixed(1)}" text-anchor="middle" font-size="${childFs}" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${childTip}${escapeXml(trunc)}</text>`)
     })
   })
   return parts
@@ -193,10 +221,10 @@ function intersectionPrimary(ix: MdArtItem, names: string[]): { primary: string,
 }
 
 function renderIntersectionChildren(children: MdArtItem[], x: number, y: number, lineCount: number, lineH: number, n: number, animate: boolean, classIndex: number, theme: MdArtTheme): string[] {
-  const maxChildren = n === 2 ? 3 : 1
+  const maxChildren = n === 2 ? 3 : 2
   const fs = 8
   const childLineH = 11
-  const charLimit = n === 2 ? 14 : 8
+  const charLimit = n === 2 ? 14 : 11
   const baseY = y + (lineCount - 1) * lineH + (n === 2 ? 10 : 7) + fs
   return children.slice(0, maxChildren).map((ch, index) => {
     const trunc = truncate(ch.label, charLimit)
@@ -208,17 +236,30 @@ function renderIntersectionChildren(children: MdArtItem[], x: number, y: number,
 function renderIntersectionLabels(intersects: MdArtItem[], circles: MdArtItem[], layout: Layout, n: number, animate: boolean, theme: MdArtTheme): string[] {
   const parts: string[] = []
   const centre = allCircleCentre(layout.centres)
-  const spread = n === 2 ? 1 : (n === 3 ? 2.0 : 1.6)
+  // Pushes pairwise labels away from the all-circle centroid so they land
+  // in the "pure pairwise" part of the lens, clear of the triple-overlap
+  // zone. Tuned against layout3/layout4's current R/off — if those change,
+  // re-check the pairwise label lands before the lens tip (zero-width) and
+  // past the other circles' encroachment boundary, not just re-tune blindly.
+  //
+  // n===4 uses separate x/y multipliers because layout4's grid is
+  // anisotropic (dx=52 > dy=40): the same scalar spread pushes left/right
+  // pairs (whose mid-centre vector runs along the longer dx axis) farther
+  // in absolute px than top/bottom pairs (along the shorter dy axis). The
+  // y multiplier is boosted more to compensate.
+  const spread = n === 2 ? { x: 1, y: 1 }
+    : n === 3 ? { x: 2.5, y: 2.5 }
+    : { x: 2.0, y: 2.3 }
   intersects.forEach((ix, i) => {
     const names = intersectionNames(ix.label)
     const pos = intersectionPos(names, circles, layout.centres, centre, spread)
-    const lineH = n === 2 ? 13 : 11
-    const fs = n === 2 ? 11 : 9
+    const lineH = n === 2 ? 13 : 12
+    const fs = n === 2 ? 11 : 9.5
     const fw = n === 2 ? '500' : '600'
     const classIndex = n + i
     const { primary, children } = intersectionPrimary(ix, names)
-    const charLimit = n === 2 ? 14 : 10
-    const { lines, truncated } = wrapLabel(primary, charLimit)
+    const charLimit = n === 2 ? 14 : 13
+    const { lines, truncated } = wrapLabel(primary, charLimit, 3)
     const startY = pos.y - (lines.length - 1) * lineH / 2 + (n === 2 ? -4 : 3)
     const tip = truncated ? `<title>${escapeXml(primary)}</title>` : ''
     const tspans = lines
