@@ -221,8 +221,8 @@ export function render(spec: MdArtSpec, theme: MdArtTheme): string {
   const branchFits = fitBranches(layout.branches)
   const subFits = fitSubs(layout.branches)
   const parts = [
-    renderCenter(layout.centerLabel, fitCenter(layout.centerLabel), theme, animate, instrument),
     ...renderBranches(layout, branchFits, subFits, theme, animate, instrument),
+    renderCenter(layout.centerLabel, fitCenter(layout.centerLabel), theme, animate, instrument),
   ]
   if (animate) parts.unshift(seqSpotlightCSS(animationCount, spec, { scale: false }))
   return renderSvg(parts, theme, computeBBox(layout))
