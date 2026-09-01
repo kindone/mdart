@@ -444,7 +444,12 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
     const arrowIdx  = chainLine.indexOf(' → ')
     const colonBeforeArrow = colonIdx !== -1 && colonIdx < arrowIdx
     const moreColonsAfterArrow = colonBeforeArrow && chainLine.indexOf(': ', arrowIdx) !== -1
-    const isKeyValueOnly = colonBeforeArrow && !moreColonsAfterArrow
+    // The colon only signals a key:value pair when the text before it is a
+    // bare key (a single identifier-like token). A colon buried in the first
+    // chain segment's prose — e.g. "Foo (sizing: 'flow') → Bar → Baz" — must
+    // not suppress chain splitting.
+    const preColonIsBareKey = colonBeforeArrow && /^[\w.-]+$/.test(chainLine.slice(0, colonIdx).trim())
+    const isKeyValueOnly = colonBeforeArrow && !moreColonsAfterArrow && preColonIsBareKey
     if (!isKeyValueOnly) {
       const parts = chainLine.split(' → ')
       spec.items = parts.map(p => parseItem(p.trim()))

@@ -124,6 +124,25 @@ describe('∀ n-item arrow chain: exactly n flat items', () => {
     )
   })
 
+  // Regression: a colon buried in the first segment's prose (e.g. a
+  // parenthetical "(sizing: 'flow')") must not be mistaken for a key:value
+  // pair and suppress chain splitting. Only a bare identifier before the
+  // colon (e.g. "direction: a → b") counts as key:value.
+  it('colon inside first-segment prose still splits the chain', () => {
+    const spec = parseMdArt(
+      "Package default (sizing: 'flow') → Host/plugin MdArtConfig → Per-fence front-matter (wins)",
+      'process',
+    )
+    return spec.items.length === 3
+      && spec.items[0].label === "Package default (sizing: 'flow')"
+      && spec.items.every(i => i.children.length === 0)
+  })
+
+  it('bare key:value with arrow in value is NOT split into a chain', () => {
+    const spec = parseMdArt('direction: any → any', 'process')
+    return spec.items.length <= 1
+  })
+
 })
 
 // ── Bullet list structure ─────────────────────────────────────────────────────
