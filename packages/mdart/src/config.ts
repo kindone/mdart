@@ -102,6 +102,22 @@ export interface MdArtConfig {
    * means `none`. `layout` and `svg` are accepted aliases for `red` and `blue`.
    */
   debugTextBounds?: boolean | TextBoundsDebugMode
+
+  /**
+   * Default display-sizing strategy for the root `<svg>` element. Per-fence
+   * `sizing:` front-matter overrides this.
+   *
+   * - `'flow'` (default) — the diagram fills the container width but is never
+   *   scaled *past its natural size*. Behaves like an `<img>` in a text column:
+   *   wide diagrams shrink to fit, already-legible ones are left alone. Best for
+   *   documents, chat, README embedding.
+   * - `'fit'` — the diagram scales up or down to fill a bounded box, preserving
+   *   aspect ratio (letterboxed). The host container must provide both width and
+   *   height. Best for slides, lightboxes, dashboard tiles.
+   * - `'raw'` — emit each layout's own root style untouched (`width:100%;
+   *   height:auto` with no ceiling). The pre-sizing behaviour; escape hatch.
+   */
+  sizing?: 'flow' | 'fit' | 'raw'
 }
 
 // ── Module-level singleton ────────────────────────────────────────────────────

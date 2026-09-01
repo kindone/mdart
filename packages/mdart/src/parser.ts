@@ -17,6 +17,8 @@ export interface MdArtSpec {
   mode?: 'dark' | 'light'
   title?: string
   direction?: 'LR' | 'TB'
+  /** Explicit width in px. Feeds width-sensitive layouts (e.g. table) and is
+   *  also applied as the rendered display width on the root <svg>. */
   width?: number
   items: MdArtItem[]
   nodes?: string[]        // for network graph sections
@@ -52,6 +54,17 @@ export interface MdArtSpec {
   // ── Animation ─────────────────────────────────────────────────────────────
   animate?: boolean     // false = disable; undefined = use global/default (on)
   animateSpeed?: number // multiplier: >1 = faster, <1 = slower (default 1.0)
+
+  // ── Display sizing (embedding hints — CSS on the root <svg>, not layout
+  //    coordinates). See applyRootSizing() in renderer.ts.
+  //    - `flow` (default): fill the container width but never upscale past the
+  //      diagram's natural size — behaves like an <img> in a text column.
+  //    - `fit`: scale up or down to fill a bounded box (slide, lightbox).
+  //    - `raw`: emit the layout's own root style untouched.
+  sizing?: 'flow' | 'fit' | 'raw'
+  maxWidth?: number     // px cap on rendered width (`max-width:`)
+  displayHeight?: number // px display height (`height:`) — mainly for sizing: fit
+  align?: 'left' | 'center'  // justification when narrower than the container
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -329,6 +342,16 @@ function _parseMdArt(raw: string, hintType?: string): MdArtSpec {
       else if (key === 'title') spec.title = val
       else if (key === 'direction') spec.direction = val as 'LR' | 'TB'
       else if (key === 'width') spec.width = parseInt(val, 10) || undefined
+      else if (key === 'max-width' || key === 'maxwidth') spec.maxWidth = parseInt(val, 10) || undefined
+      else if (key === 'height') spec.displayHeight = parseInt(val, 10) || undefined
+      else if (key === 'sizing') {
+        const s = val.toLowerCase()
+        if (s === 'flow' || s === 'fit' || s === 'raw') spec.sizing = s
+      }
+      else if (key === 'align') {
+        const a = val.toLowerCase()
+        if (a === 'left' || a === 'center' || a === 'centre') spec.align = a === 'centre' ? 'center' : a
+      }
       else if (['primary','secondary','accent','muted','bg','surface','border','text','textmuted','danger','warning'].includes(key)) {
         // Per-fence color override (e.g. `danger: #ff0000`)
         // Normalize camelCase lookup: textMuted can be entered as "textmuted" or "textMuted"

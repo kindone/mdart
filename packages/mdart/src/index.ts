@@ -5,7 +5,7 @@
  * Browser-only tab interactivity lives at the `mdart/preview` subpath.
  */
 
-export { renderMdArt, renderMdArtDetailed, KNOWN_TYPES } from './renderer'
+export { renderMdArt, renderMdArtDetailed, applyRootSizing, KNOWN_TYPES } from './renderer'
 export type { RenderResult }                     from './renderer'
 export { parseMdArt }                            from './parser'
 export { configureMdArt, resetMdArtConfig }      from './config'

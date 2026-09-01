@@ -366,6 +366,8 @@ export function renderMdArtDetailed(
       theme = { ...theme, ...spec.colors } as typeof theme
     }
 
+    const sizing = spec.sizing ?? pluginConfig?.sizing ?? globalCfg.sizing ?? 'flow'
+
     const renderer = LAYOUT_RENDERERS[spec.type]
     const effectiveCfg = { ...globalCfg, ...pluginConfig }
     const svg = withMdArtRenderConfig(effectiveCfg, () =>
@@ -382,7 +384,14 @@ export function renderMdArtDetailed(
         ? addTextBoundsOverlay(debugSvg, 'red')
         : lifted.svg
     }
-    return { svg: scopeSvgAnimation(debugSvg, raw, hintType, spec.type), issues }
+    const sizedSvg = applyRootSizing(debugSvg, {
+      sizing,
+      width: spec.width,
+      height: spec.displayHeight,
+      maxWidth: spec.maxWidth,
+      align: spec.align,
+    })
+    return { svg: scopeSvgAnimation(sizedSvg, raw, hintType, spec.type), issues }
   } catch (e) {
     return { svg: renderError(String(e)), issues }
   }
@@ -535,6 +544,83 @@ function stringAttr(attrs: string, name: string): string | null {
   if (quoted) return quoted[2]
   const unquoted = attrs.match(new RegExp(`\\b${escaped}=([^\\s>]+)`))
   return unquoted?.[1] ?? null
+}
+
+interface RootSizingOpts {
+  sizing: 'flow' | 'fit' | 'raw'
+  width?: number      // px — author `width:`
+  height?: number     // px — author `height:`
+  maxWidth?: number   // px — author `max-width:`
+  align?: 'left' | 'center'
+}
+
+/**
+ * Rewrite the `style` attribute on the root `<svg>` to implement the requested
+ * display-sizing strategy. Operates on the final assembled SVG string so every
+ * layout is handled uniformly regardless of what root style it emitted.
+ *
+ * - `flow` — `width:100%; height:auto; max-width:min(100%, <cap>px)` where
+ *   `<cap>` is the author's `max-width` or, failing that, the diagram's natural
+ *   width from the viewBox. The diagram fills the column but never upscales.
+ * - `fit`  — `width:100%; height:100%`; the container bounds it, aspect ratio is
+ *   preserved by the SVG default `preserveAspectRatio`.
+ * - `raw`  — leave the layout's own root style alone; only apply explicit
+ *   author overrides.
+ *
+ * Non-sizing declarations already on the root (`background`, `border-radius`)
+ * are preserved.
+ */
+export function applyRootSizing(svg: string, opts: RootSizingOpts): string {
+  if (!svg.startsWith('<svg')) return svg
+  const tagMatch = svg.match(/^<svg\b([^>]*)>/)
+  if (!tagMatch) return svg
+  const attrs = tagMatch[1]
+
+  const hasAuthorOverride =
+    opts.width != null || opts.height != null || opts.maxWidth != null || opts.align != null
+  if (opts.sizing === 'raw' && !hasAuthorOverride) return svg
+
+  // Intrinsic width from the viewBox ("minX minY width height").
+  const vb = attrs.match(/viewBox="\s*([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s*"/)
+  const intrinsicW = vb ? parseFloat(vb[3]) : undefined
+
+  // Existing style → ordered declaration map (preserves background etc.).
+  const decls = new Map<string, string>()
+  const styleMatch = attrs.match(/\sstyle="([^"]*)"/)
+  if (styleMatch) {
+    for (const chunk of styleMatch[1].split(';')) {
+      const i = chunk.indexOf(':')
+      if (i > 0) decls.set(chunk.slice(0, i).trim(), chunk.slice(i + 1).trim())
+    }
+  }
+
+  if (opts.sizing === 'fit') {
+    decls.set('width', opts.width != null ? `${opts.width}px` : '100%')
+    decls.set('height', opts.height != null ? `${opts.height}px` : '100%')
+    if (opts.maxWidth != null) decls.set('max-width', `${opts.maxWidth}px`)
+    else decls.delete('max-width')
+  } else if (opts.sizing === 'flow') {
+    decls.set('width', opts.width != null ? `${opts.width}px` : '100%')
+    decls.set('height', opts.height != null ? `${opts.height}px` : 'auto')
+    const cap = opts.maxWidth ?? intrinsicW
+    decls.set('max-width', cap != null ? `min(100%, ${cap}px)` : '100%')
+  } else {
+    // raw + author overrides only
+    if (opts.width != null) decls.set('width', `${opts.width}px`)
+    if (opts.height != null) decls.set('height', `${opts.height}px`)
+    if (opts.maxWidth != null) decls.set('max-width', `${opts.maxWidth}px`)
+  }
+
+  if (opts.align) {
+    decls.set('display', 'block')
+    decls.set('margin-inline', opts.align === 'center' ? 'auto' : '0')
+  }
+
+  const style = Array.from(decls, ([k, v]) => `${k}:${v}`).join(';')
+  const newAttrs = styleMatch
+    ? attrs.replace(/\sstyle="[^"]*"/, ` style="${style}"`)
+    : `${attrs} style="${style}"`
+  return `<svg${newAttrs}>` + svg.slice(tagMatch[0].length)
 }
 
 function scopeSvgAnimation(svg: string, raw: string, hintType: string | undefined, type: string): string {
