@@ -45,6 +45,28 @@ interface StateMachineLayout {
   transitionSet: Set<string>
 }
 
+/**
+ * States named only as transition targets (e.g. `→ complete: success`) but
+ * never declared as a top-level `- state` item are still real states. Mirror
+ * the `sequence` layout, which infers actors from message endpoints: synthesise
+ * a node for each such target so the transition is drawn instead of silently
+ * dropped. Implied states are appended after the declared ones, keeping index 0
+ * (the entry state) stable.
+ */
+function withImpliedStates(declared: MdArtItem[]): MdArtItem[] {
+  const seen = new Set(declared.map(state => state.label))
+  const implied: MdArtItem[] = []
+  declared.forEach(state => {
+    state.flowChildren.forEach(target => {
+      if (target.label && !seen.has(target.label)) {
+        seen.add(target.label)
+        implied.push({ label: target.label, attrs: [], children: [], flowChildren: [] })
+      }
+    })
+  })
+  return implied.length ? [...declared, ...implied] : declared
+}
+
 function resolveLayout(states: MdArtItem[], spec: MdArtSpec): StateMachineLayout {
   const titleH = spec.title ? TITLE_H_WITH_TITLE : TITLE_H_NO_TITLE
   const cx = W / 2
@@ -233,7 +255,7 @@ function renderSvg(spec: MdArtSpec, theme: MdArtTheme, parts: string[]): string 
 }
 
 export function render(spec: MdArtSpec, theme: MdArtTheme): string {
-  const states = spec.items
+  const states = withImpliedStates(spec.items)
   if (states.length === 0) return renderEmpty(theme)
 
   const animate = shouldAnimate(spec)
