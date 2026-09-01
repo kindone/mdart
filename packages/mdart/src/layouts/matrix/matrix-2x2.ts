@@ -1,6 +1,6 @@
 import type { MdArtItem, MdArtSpec } from '../../parser'
 import type { MdArtTheme } from '../../theme'
-import { escapeXml, itemTitleTag, displayLabel, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, renderWrappedText, centeredTextY, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
+import { escapeXml, itemTitleTag, displayLabelValue, shouldAnimate, seqSpotlightCSS, fitTextToWidthShared, renderWrappedText, centeredTextY, wrapItem, shouldInstrument, FONT_SANS_ATTR } from '../shared'
 
 const W = 500
 const CELL_W = W / 2
@@ -20,7 +20,7 @@ interface MatrixCell {
   y: number
   fill: string
   stroke: string
-  display: ReturnType<typeof displayLabel>
+  display: ReturnType<typeof displayLabelValue>
 }
 
 function resolveLayout(spec: MdArtSpec): MatrixLayout {
@@ -40,7 +40,7 @@ function placeCells(spec: MdArtSpec, layout: MatrixLayout, theme: MdArtTheme): M
       y: layout.titleH + row * CELL_H,
       fill: fills[index],
       stroke: strokes[index],
-      display: displayLabel(item),
+      display: displayLabelValue(item),
     }
   })
 }
@@ -51,15 +51,25 @@ function renderTitle(spec: MdArtSpec, theme: MdArtTheme): string {
 }
 
 function renderHeader(cell: MatrixCell): string {
+  // With no child bullets the header owns the whole cell, so let a longer
+  // statement wrap to fill it instead of clipping to a 2-line strip and
+  // wasting ~130px of empty space below. When children ARE present the
+  // header stays a compact top strip and the bullets take the rest.
+  const hasChildren = cell.item.children.length > 0
+  const boxH = hasChildren ? 34 : CELL_H - 24
+  const maxLines = hasChildren ? 2 : 8
   const headerFit = fitTextToWidthShared([cell.display.display], CELL_W - 24, {
     maxSize: 12,
     minSize: 7,
-    maxLines: 2,
-    boxH: 34,
+    maxLines,
+    boxH,
   })
+  const anchorY = hasChildren
+    ? centeredTextY(cell.y + 8, 28, headerFit.results[0].lines.length, headerFit.lineHeight)
+    : centeredTextY(cell.y, CELL_H, headerFit.results[0].lines.length, headerFit.lineHeight)
   return renderWrappedText(
     cell.x + CELL_W / 2,
-    centeredTextY(cell.y + 8, 28, headerFit.results[0].lines.length, headerFit.lineHeight),
+    anchorY,
     `text-anchor="middle" font-size="${headerFit.fontSize}" fill="${cell.stroke}" ${FONT_SANS_ATTR} font-weight="700"`,
     cell.display.display,
     { ...headerFit.results[0], url: cell.display.url },
@@ -70,7 +80,7 @@ function renderHeader(cell: MatrixCell): string {
 
 function renderChildren(cell: MatrixCell, theme: MdArtTheme): string {
   return cell.item.children.slice(0, 5).map((child, index) => {
-    const childDisplay = displayLabel(child)
+    const childDisplay = displayLabelValue(child)
     const bulletText = `• ${childDisplay.display}`
     const bulletFit = fitTextToWidthShared([bulletText], CELL_W - 24, {
       maxSize: 10,
