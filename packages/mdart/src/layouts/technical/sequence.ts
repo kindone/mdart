@@ -4,6 +4,7 @@ import {
   escapeXml, tt, wrapLabel, renderEmpty, parseLink, aWrap,
   itemTitleTag, displayLabelValue, shouldAnimate, seqSpotlightCSS,
   wrapItem, shouldInstrument, FONT_SANS_ATTR, truncate, renderInlineMarkdown,
+  estimateTextWidth,
 } from '../shared'
 
 // ── Layout constants ──────────────────────────────────────────────────────────
@@ -11,8 +12,8 @@ const BASE_W               = 600
 const MIN_COL_W            = 110
 const TITLE_H_WITH_TITLE   = 30
 const TITLE_H_NO_TITLE     = 8
-const MSG_GAP              = 36
-const PAD_V                = 16
+const MSG_GAP              = 46   // vertical gap between consecutive message arrows
+const PAD_V                = 22   // vertical gap between actor boxes and the lifeline/first arrow
 const ACTOR_LH             = 13
 const ACTOR_VPAD           = 7
 const ACTOR_MAX_LINES      = 2
@@ -29,12 +30,15 @@ const MESSAGE_LABEL_CHAR_PX = 7
 const ACTIVATION_BAR_W     = 10
 // Region box constants
 const REGION_BOX_MARGIN    = 6    // left/right margin from canvas edge
-const REGION_PAD_TOP       = 20   // space from box top to first event (≥ tag height 14)
-const REGION_PAD_BOTTOM    = 8    // space from last event to box bottom
-const BRANCH_DIV_H         = 22   // total height of branch-divider transition
-const REGION_MIN_BRANCH_H  = MSG_GAP  // min event area for an empty branch
 const REGION_TAG_H         = 14
-const REGION_TAG_CHAR_PX   = 5.5
+const REGION_INNER_GAP     = 16   // clear whitespace between a tag/divider line and the next event's label
+const REGION_PAD_TOP       = REGION_TAG_H + REGION_INNER_GAP  // box top → first event (tag height + clearance)
+const REGION_PAD_BOTTOM    = 8    // space from last event to box bottom
+const BRANCH_DIV_LINE_OFFSET = 12   // prior branch's end → divider line (room for tag above the line)
+const BRANCH_DIV_PAD_AFTER   = REGION_INNER_GAP  // divider line → next branch's first event
+const BRANCH_DIV_H         = BRANCH_DIV_LINE_OFFSET + BRANCH_DIV_PAD_AFTER  // total height of branch-divider transition
+const REGION_MIN_BRANCH_H  = MSG_GAP  // min event area for an empty branch
+const REGION_EXIT_GAP      = REGION_INNER_GAP  // box bottom border → next sibling event (mirrors entry clearance)
 
 // ── SeqEvent model ────────────────────────────────────────────────────────────
 
@@ -301,6 +305,12 @@ function layoutEventsAt(events: SeqEvent[], y0: number): { laid: LayoutEvent[]; 
         h: y - regionStartY,
         branches: laidBranches,
       })
+      // Unlike message/divider events (which always leave MSG_GAP of trailing
+      // clearance via `y += MSG_GAP` above), a region's `y` cursor lands
+      // exactly on the box's bottom border. Without this, the very next
+      // sibling event renders flush against — or visually overlapping —
+      // the box's bottom edge.
+      y += REGION_EXIT_GAP
     }
   }
 
@@ -371,23 +381,16 @@ function resolveLayout(spec: MdArtSpec): SequenceLayout | null {
 
 // ── Activation bar computation ────────────────────────────────────────────────
 
-interface FlatMsg { event: MessageEvent; y: number; regionBottomY?: number }
+interface FlatMsg { event: MessageEvent; y: number }
 
-/**
- * Flatten all messages in layout order, annotating each with the bottom y
- * of its immediately containing region (if any).  Used by computeActivations
- * so that a [-] deactivation inside a region extends the bar to the region
- * boundary rather than ending it at the arrow's own y — which is the correct
- * UML semantic: the caller is active for the whole duration of the fragment.
- */
-function flattenLaidMessages(laid: LayoutEvent[], regionBottomY?: number): FlatMsg[] {
+/** Flatten all messages (including ones nested inside region branches) into layout order. */
+function flattenLaidMessages(laid: LayoutEvent[]): FlatMsg[] {
   const result: FlatMsg[] = []
   for (const lev of laid) {
     if (lev.kind === 'message') {
-      result.push({ event: lev.event, y: lev.y, regionBottomY })
+      result.push({ event: lev.event, y: lev.y })
     } else if (lev.kind === 'region') {
-      const bottom = lev.y + lev.h
-      for (const br of lev.branches) result.push(...flattenLaidMessages(br.events, bottom))
+      for (const br of lev.branches) result.push(...flattenLaidMessages(br.events))
     }
   }
   return result
@@ -397,16 +400,19 @@ function computeActivations(layout: SequenceLayout): Map<string, Activation[]> {
   const result = new Map<string, Activation[]>()
   const open   = new Map<string, number>()
 
-  for (const { event: msg, y, regionBottomY } of flattenLaidMessages(layout.laidEvents)) {
+  for (const { event: msg, y } of flattenLaidMessages(layout.laidEvents)) {
     if (msg.activateTarget) open.set(msg.to, y)
     if (msg.deactivateSender) {
       const y1 = open.get(msg.from)
       if (y1 !== undefined) {
-        // If deactivating inside a region, extend to the region bottom so the
-        // bar spans the whole fragment (either branch may execute at runtime).
-        const y2 = regionBottomY !== undefined ? Math.max(y, regionBottomY) : y
+        // A matched deactivation ends the bar exactly at its own return
+        // message — that's the actual moment the callee stops executing.
+        // (An activation that's *never* explicitly closed before its
+        // enclosing branch/fragment ends falls through to the `open.forEach`
+        // fallback below instead, which is the only case where extending
+        // past the arrow's own y makes sense.)
         const list = result.get(msg.from) ?? []
-        list.push({ y1, y2 })
+        list.push({ y1, y2: y })
         result.set(msg.from, list)
         open.delete(msg.from)
       }
@@ -516,7 +522,10 @@ function renderSelfMessage(
   const maxCharsLoop = Math.max(12, Math.floor((nextLifeline - x1 - 8) / SELF_LABEL_CHAR_PX))
   return [
     `<path d="M${x1.toFixed(1)},${y.toFixed(1)} C${lx.toFixed(1)},${(y - 10).toFixed(1)} ${lx.toFixed(1)},${(y + 10).toFixed(1)} ${x1.toFixed(1)},${(y + MSG_GAP * SELF_LOOP_DROP_RATIO).toFixed(1)}" fill="none" stroke="${theme.accent}cc" stroke-width="1.5" marker-end="url(#sq-a)"/>`,
-    message.msg ? `<text x="${(x1 + 4).toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="start" font-size="9" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${tt(message.msg, maxCharsLoop)}</text>` : '',
+    // Label uses theme.text (not textMuted) — the self-loop curve and the
+    // actor's dashed lifeline both render in muted tones, so a muted label
+    // sitting right beside them would blend in rather than stand out.
+    message.msg ? `<text x="${(x1 + 4).toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="start" font-size="9" fill="${theme.text}" ${FONT_SANS_ATTR}>${tt(message.msg, maxCharsLoop)}</text>` : '',
   ].join('')
 }
 
@@ -539,21 +548,24 @@ function renderCrossMessage(
   const parts: string[] = [
     `<line x1="${ex1.toFixed(1)}" y1="${y.toFixed(1)}" x2="${ex2.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${isReturn ? theme.textMuted : theme.accent}" stroke-width="1.5"${isReturn ? ' stroke-dasharray="5,3"' : ''} marker-end="${isReturn ? 'url(#sq-b)' : 'url(#sq-a)'}"/>`,
   ]
+  // Label uses theme.text (not textMuted) — return messages draw their arrow
+  // in theme.textMuted (dashed), so a same-colored label sitting right above
+  // the line would blend into it rather than stand out.
   if (message.msg) {
     if (message.msg.length <= maxChars) {
-      parts.push(`<text x="${midX.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}>${tt(message.msg, maxChars)}</text>`)
+      parts.push(`<text x="${midX.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" ${FONT_SANS_ATTR}>${tt(message.msg, maxChars)}</text>`)
     } else {
       // Find word boundary for line break
       let splitIdx = message.msg.lastIndexOf(' ', maxChars)
       if (splitIdx <= 0) splitIdx = maxChars // No space found, fall back to char split
       const line1 = message.msg.slice(0, splitIdx)
       const line2 = message.msg.slice(splitIdx).trimStart()
-      parts.push(`<text x="${midX.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}><title>${escapeXml(message.msg)}</title>${renderInlineMarkdown(truncate(line1, maxChars))}</text>`)
+      parts.push(`<text x="${midX.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" ${FONT_SANS_ATTR}><title>${escapeXml(message.msg)}</title>${renderInlineMarkdown(truncate(line1, maxChars))}</text>`)
       // Line 2 is a separate <text> element — an SVG <title> only covers the
       // element it's nested in, so line1's title doesn't extend hover
       // coverage down to line2's glyphs. Duplicate it here so the full
       // message tooltips regardless of which line the pointer is over.
-      parts.push(`<text x="${midX.toFixed(1)}" y="${(y + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.textMuted}" ${FONT_SANS_ATTR}><title>${escapeXml(message.msg)}</title>${renderInlineMarkdown(truncate(line2, maxChars))}</text>`)
+      parts.push(`<text x="${midX.toFixed(1)}" y="${(y + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${theme.text}" ${FONT_SANS_ATTR}><title>${escapeXml(message.msg)}</title>${renderInlineMarkdown(truncate(line2, maxChars))}</text>`)
     }
   }
   return parts.join('')
@@ -594,13 +606,39 @@ function renderRegionTag(
   y: number,
   text: string,
   theme: MdArtTheme,
+  maxWidth: number,
   alignRight = false,
 ): string {
-  const tw = Math.min(text.length * REGION_TAG_CHAR_PX + 10, 200)
+  // Grow the tag pill to fit the full label — only clip when the label would
+  // exceed the enclosing region box's available width (`maxWidth`). A flat
+  // per-char pixel constant systematically under-measures real glyph widths
+  // for mixed-case / punctuation-heavy text, so the *measured* pill kept
+  // coming out narrower than the text actually rendered — the label spilled
+  // out past its own pill even though the number fit the estimate. Binary-
+  // search the character budget using the same calibrated `estimateTextWidth`
+  // measurer the rest of the renderer suite uses, then size the pill to that
+  // string's real measured width.
+  const fontSize = REGION_TAG_H - 5
+  const fits = (n: number) => estimateTextWidth(truncate(text, n), fontSize) + 10 <= maxWidth
+  let lo = 0, hi = text.length
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2)
+    if (fits(mid)) lo = mid; else hi = mid - 1
+  }
+  const maxChars = Math.max(3, lo)
+  const clipped  = truncate(text, maxChars)
+  // Small safety margin on top of the measured estimate — the browser's
+  // actual font metrics can run slightly wider than our calibrated estimator.
+  const tw = Math.min(estimateTextWidth(clipped, fontSize) * 1.12 + 10, maxWidth)
   const rx = alignRight ? x - tw : x
+  const innerW = Math.max(1, tw - 10)
   return [
     `<rect x="${rx.toFixed(1)}" y="${y.toFixed(1)}" width="${tw.toFixed(1)}" height="${REGION_TAG_H}" rx="2" fill="${theme.accent}33" stroke="${theme.accent}88" stroke-width="1"/>`,
-    `<text x="${(rx + 5).toFixed(1)}" y="${(y + REGION_TAG_H - 4).toFixed(1)}" font-size="${REGION_TAG_H - 5}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600">${escapeXml(text)}</text>`,
+    // textLength + lengthAdjust force the browser to fit the glyphs to
+    // innerW exactly, regardless of any drift between our pixel estimate and
+    // its real font metrics — a hard guarantee against the label visually
+    // spilling out of its own pill (the root cause of the original bug).
+    `<text x="${(rx + 5).toFixed(1)}" y="${(y + REGION_TAG_H - 4).toFixed(1)}" font-size="${fontSize}" fill="${theme.text}" ${FONT_SANS_ATTR} font-weight="600" textLength="${innerW.toFixed(1)}" lengthAdjust="spacingAndGlyphs">${tt(text, maxChars)}</text>`,
   ].join('')
 }
 
@@ -623,20 +661,20 @@ function renderRegionBox(
 
   // First-branch label tag — top-left corner, overlaps the border (standard UML fragment style)
   const mainTag = regionTagText(lev.event.regionType, lev.branches[0]?.label ?? '')
-  parts.push(renderRegionTag(boxX, lev.y, mainTag, theme))
+  parts.push(renderRegionTag(boxX, lev.y, mainTag, theme, boxW - 8))
 
   // Branch dividers + tags for subsequent branches
   for (let bi = 1; bi < lev.branches.length; bi++) {
     const br = lev.branches[bi]
     if (br.dividerY === undefined) continue
-    const lineY = br.dividerY + Math.round(BRANCH_DIV_H / 2)
+    const lineY = br.dividerY + BRANCH_DIV_LINE_OFFSET
     parts.push(
       `<line x1="${boxX}" y1="${lineY}" x2="${(boxX + boxW).toFixed(1)}" y2="${lineY}" stroke="${theme.accent}99" stroke-width="1.5" stroke-dasharray="6,3"/>`,
     )
     const tagText = contTagText(lev.event.regionType, br.label)
     // Tag sits above the divider line, left-aligned — consistent with the main tag
     const tagY = lineY - REGION_TAG_H
-    parts.push(renderRegionTag(boxX, tagY, tagText, theme))
+    parts.push(renderRegionTag(boxX, tagY, tagText, theme, boxW - 8))
   }
 
   return wrapItem(parts.join(''), animIdx, animate, instrument)
